@@ -1,0 +1,959 @@
+export const translations = {
+  fr: {
+    // Header / Navigation
+    title: "Chess Avatar Creator",
+    subtitle: "Créez une IA qui joue exactement comme vous. Compatible avec Fritz, ChessBase et Arena.",
+    myProfile: "Mon Profil",
+    installGuide: "UCI creator guide",
+    
+    // Analyze Page
+    analyzeProfile: "Analyser un Profil",
+    backToHome: "Retour à l'accueil",
+    loadingChessboard: "Chargement de l'échiquier...",
+    
+    // Search Section
+    platform: {
+      lichess: "Lichess",
+      chesscom: "Chess.com"
+    },
+    usernamePlaceholder: {
+      lichess: "Pseudo Lichess (ex: DrNykterstein)",
+      chesscom: "Pseudo Chess.com (ex: Hikaru)"
+    },
+    analyzeButton: "Analyser",
+    analyzing: "Analyse...",
+    
+    // Errors
+    errors: {
+      playerNotFound: "Joueur introuvable",
+      lichessPlayerNotFound: "Joueur Lichess introuvable",
+      chesscomPlayerNotFound: "Joueur Chess.com introuvable",
+      noGamesFound: "Aucune partie récente trouvée pour ce joueur",
+      genericError: "Une erreur est survenue"
+    },
+    
+    // Results Section
+    historyTitle: "Historique Analysé",
+    selectGame: "Sélectionnez une partie pour voir le replay",
+    victory: "Victoire",
+    draw: "Nulle",
+    defeat: "Défaite",
+    
+    // How It Works
+    howItWorks: {
+      title: "Comment ça marche ?",
+      step1: {
+        title: "1. Analysez",
+        description: "Entrez votre pseudo Lichess ou Chess.com et cliquez sur Analyser"
+      },
+      step2: {
+        title: "2. Personnalisez",
+        description: "Ajustez le niveau, le style de jeu et les ouvertures de votre bot"
+      },
+      step3: {
+        title: "3. Sauvegardez",
+        description: "Téléchargez le profil JSON ou sauvegardez-le dans le cloud"
+      },
+      step4: {
+        title: "4. Installez",
+        description: "Suivez le guide pour installer votre bot dans Fritz/Arena/ChessBase"
+      },
+      step5: {
+        title: "5. Jouez !",
+        description: "Affrontez votre clone IA directement en ligne ou dans votre logiciel"
+      },
+      tip: "Astuce : Vous pouvez aussi jouer contre votre bot directement sur ce site en cliquant sur \"Jouer Contre ce Moteur\""
+    },
+    
+    // Profile Page
+    profile: {
+      title: "Mon Profil & Bibliothèque",
+      myAccount: "Mon Compte",
+      myBots: "Mes Bots",
+      publicLibrary: "Bibliothèque Publique",
+      noBots: "Aucun bot sauvegardé",
+      createFirst: "Créez votre premier bot en analysant votre profil",
+      loading: "Chargement...",
+      signIn: "Se Connecter",
+      signOut: "Se déconnecter",
+      logout: "Déconnexion",
+      notConnected: "Non Connecté",
+      email: "Email",
+      savedProfiles: "Profils Sauvegardés",
+      noProfiles: "Aucun profil sauvegardé. Analysez un joueur et sauvegardez-le !",
+      public: "Public",
+      private: "Privé",
+      makePublic: "Rendre public",
+      makePrivate: "Rendre privé",
+      deleteProfile: "Supprimer le profil",
+      confirmDelete: "Êtes-vous sûr de vouloir supprimer ce profil ?",
+      elo: "ELO",
+      level: "Niveau",
+      style: "Style",
+      playAgainst: "Jouer contre ce profil",
+      viewDetails: "Voir les détails et modifier",
+      exportJson: "Exporter en JSON",
+      createdOn: "Créé le",
+      databaseNotConfigured: "Base de données Non Configurée",
+      databaseWarning: "La sauvegarde nécessite la configuration de Supabase. Consultez SUPABASE_SETUP.md pour les instructions.",
+      signInPrompt: "Connectez-vous pour sauvegarder vos profils et y accéder depuis n'importe quel appareil"
+    },
+    
+    // Games Page
+    games: {
+      title: "Mes Parties",
+      subtitle: "Historique de toutes vos parties jouées",
+      stats: "Statistiques",
+      totalGames: "Total Parties",
+      total: "Total",
+      wins: "Victoires",
+      victories: "Victoires",
+      losses: "Défaites",
+      defeats: "Défaites",
+      draws: "Nulles",
+      winRate: "Taux de Victoire",
+      winRateShort: "% Victoires",
+      searchOpponent: "Rechercher un adversaire...",
+      search: "Rechercher...",
+      filter: "Filtrer",
+      all: "Toutes",
+      win: "Victoires",
+      loss: "Défaites",
+      draw: "Nulles",
+      noGames: "Aucune partie trouvée",
+      noGamesFound: "Aucune partie trouvée",
+      startPlaying: "Jouez votre première partie pour la voir apparaître ici",
+      tryModifyFilters: "Essayez de modifier vos filtres",
+      loading: "Chargement des parties...",
+      opponent: "Adversaire",
+      result: "Résultat",
+      date: "Date",
+      duration: "Durée",
+      moves: "Coups",
+      color: "Couleur",
+      white: "Blancs",
+      black: "Noirs",
+      view: "Voir",
+      viewGame: "Voir la partie",
+      download: "Télécharger",
+      downloadPGN: "Télécharger PGN",
+      delete: "Supprimer",
+      confirmDelete: "Supprimer cette partie ?",
+      backToList: "Retour à la liste",
+      gameAgainst: "Partie contre",
+      history: "Historique des Parties",
+      supabaseNotConfigured: "Supabase non configuré. Les parties ne peuvent pas être sauvegardées.",
+      page: "Page",
+      of: "sur",
+      previous: "Précédent",
+      next: "Suivant"
+    },
+    
+    // Guide Page (UCI creator guide)
+    guide: {
+      title: "UCI creator guide",
+      subtitle: "Créez votre moteur UCI et jouez contre votre clone dans Fritz, ChessBase ou Arena.",
+      download: "Télécharger",
+      step1: {
+        title: "Préparez le dossier",
+        description: "Créez un dossier et téléchargez ces fichiers :",
+        files: [
+          "AvatarEngine.py",
+          "install_engine.bat",
+          "Stockfish",
+          "Votre profil JSON (généré depuis la page d'accueil)"
+        ],
+        warning: "Windows va afficher un avertissement",
+        warningText: "C'est normal ! Windows protège contre les fichiers .bat téléchargés. Cliquez sur \"Informations complémentaires\" puis \"Exécuter quand même\".",
+        tip: "Le code est 100% open source et visible dans les fichiers téléchargés."
+      },
+      step2: {
+        title: "Renommez votre profil",
+        description: "Renommez votre fichier JSON en profile.json (optionnel : le script détecte tout .json)"
+      },
+      step3: {
+        title: "Exécutez l'installation",
+        description: "Double-cliquez sur install_engine.bat (le script demande les droits administrateur). Suivez les instructions pour compiler AvatarEngine.exe avec PyInstaller."
+      },
+      step4: {
+        title: "Configurez votre logiciel",
+        fritzTitle: "Dans Fritz 20/ChessBase",
+        fritzSteps: [
+          "Ouvrir Fichier → Ouvrir → Modules (ou Module → Module UCI)",
+          "Cliquer sur Nouveau module / ... pour parcourir",
+          "Sélectionner AvatarEngine.exe",
+          "Votre bot apparaît dans la liste !"
+        ],
+        arenaTitle: "Dans Arena",
+        arenaSteps: [
+          "Ouvrir Modules → Installer un nouveau module",
+          "Sélectionner AvatarEngine.exe",
+          "Votre bot apparaît dans la liste !"
+        ]
+      },
+      troubleshooting: "Problèmes courants",
+      problems: {
+        pythonNotFound: "Python introuvable",
+        pythonNotFoundSolution: "Installez Python depuis python.org (cochez \"Add Python to PATH\")",
+        engineNotWorking: "Le moteur ne réagit pas",
+        engineNotWorkingSolution: "Vérifiez que Stockfish et profile.json sont dans le même dossier que AvatarEngine.exe.",
+        windowsBlocking: "Windows bloque le fichier .bat",
+        windowsBlockingSolution: "Clic droit → Propriétés → Cochez \"Débloquer\" → OK",
+        pipBlocked: "pip bloqué (Device Guard) / PyInstaller inaccessible",
+        pipBlockedSolution: "Contactez votre administrateur pour autoriser pip, ou compilez AvatarEngine.exe sur un PC où pip fonctionne puis copiez l'exe."
+      }
+    },
+
+    // Play Page
+    play: {
+      title: "Jouer en Ligne",
+      subtitle: "Affrontez votre clone IA ou d'autres bots",
+      selectBot: "Sélectionner un bot",
+      selectOpponent: "Choisissez votre adversaire",
+      selectBotDescription: "Sélectionnez un bot public pour commencer une partie",
+      loadFromFile: "Charger depuis un fichier",
+      myBots: "Mes bots",
+      publicBots: "Bots publics",
+      startGame: "Démarrer la partie",
+      loading: "Chargement...",
+      thinking: "Réflexion...",
+      yourTurn: "À vous de jouer",
+      gameOver: "Partie terminée",
+      newGame: "Nouvelle partie",
+      resign: "Abandonner",
+      ready: "Prêt",
+      finished: "Terminée",
+      configShort: "Config",
+      whiteSide: "Blancs",
+      blackSide: "Noirs"
+    },
+    
+    // Library / Profiles
+    library: {
+      title: "Bibliothèque de Profils",
+      publicLibrary: "Bibliothèque Publique",
+      searchPlaceholder: "Rechercher un joueur...",
+      search: "Rechercher",
+      visibility: "Visibilité",
+      sortBy: "Trier par",
+      all: "Tous",
+      public: "Publics",
+      private: "Privés",
+      myProfiles: "Mes Profils",
+      date: "Date",
+      elo: "ELO",
+      name: "Nom",
+      difficulty: "Niveau",
+      profiles: "profils",
+      noProfiles: "Aucun profil trouvé",
+      noPublicProfiles: "Aucun profil public disponible",
+      playAgainst: "Jouer",
+      viewDetails: "Détails",
+      exportJson: "Exporter",
+      platform: "Plateforme",
+      style: "Style",
+      aggression: "Aggr.",
+      depth: "Depth",
+      createdOn: "Créé le",
+      needsSupabase: "La bibliothèque publique nécessite la configuration de Supabase.",
+      checkDocs: "Consultez SUPABASE_SETUP.md pour les instructions."
+    },
+    
+    // Common
+    common: {
+      loading: "Chargement...",
+      error: "Erreur",
+      success: "Succès",
+      cancel: "Annuler",
+      confirm: "Confirmer",
+      save: "Sauvegarder",
+      delete: "Supprimer",
+      edit: "Modifier",
+      close: "Fermer",
+      back: "Retour",
+      next: "Suivant",
+      previous: "Précédent",
+      search: "Rechercher",
+      filter: "Filtrer",
+      download: "Télécharger",
+      upload: "Uploader",
+      share: "Partager"
+    },
+
+    // Game result modal
+    gameResult: {
+      titleWin: "Victoire !",
+      titleLoss: "Défaite",
+      titleDraw: "Partie Nulle",
+      subtitleWin: "Félicitations, vous avez gagné",
+      subtitleLoss: "Le bot a gagné cette fois",
+      subtitleDraw: "Match équitable",
+      performanceExcellent: "Excellente",
+      performanceGood: "Bonne",
+      performanceFair: "Correcte",
+      performanceToImprove: "À améliorer",
+      summaryA11y: "Résumé de la partie et statistiques",
+      moves: "Coups",
+      captures: "Captures",
+      checks: "Échecs",
+      precisionAndElo: "Précision & ELO estimés",
+      precision: "Précision",
+      whiteSide: "Blancs",
+      blackSide: "Noirs",
+      evaluations: "Évaluations",
+      rematch: "Revanche",
+      switchColor: "Changer couleur",
+      configure: "Configurer",
+      home: "Accueil"
+    },
+
+    // Header / nav
+    header: {
+      createBot: "Créer Bot",
+      profiles: "Profils",
+      games: "Parties",
+      guide: "Guide",
+      boardSettingsTitle: "Paramètres de l'échiquier"
+    },
+
+    // Evaluation bar
+    evaluationBar: {
+      evaluating: "Évaluation en cours...",
+      youDominatingWhite: "Vous (Blanc) dominez",
+      youDominatingBlack: "Vous (Noir) dominez",
+      blackDominating: "Noir domine",
+      whiteDominating: "Blanc domine",
+      equalPosition: "Position égale",
+      youDominate: "Vous dominez",
+      youDominateWidely: "Vous dominez largement",
+      opponentDominates: "Adversaire domine",
+      opponentDominatesWidely: "Adversaire domine largement",
+      black: "Noir",
+      white: "Blanc"
+    },
+
+    // Board / game messages (draw reasons, etc.)
+    board: {
+      drawStalemate: "Partie nulle - Pat (le joueur ne peut plus bouger sans se mettre en échec) ⚖️",
+      drawThreefold: "Partie nulle - Triple répétition (la même position s'est répétée 3 fois) ♻️",
+      draw50Moves: "Partie nulle - Règle des 50 coups (aucune prise ni mouvement de pion depuis 50 coups) ⏱️",
+      drawGeneric: "Partie nulle ⚖️",
+      drawInsufficient: "Partie nulle - Matériel insuffisant pour mater 🤝",
+      drawReasonKingVsKing: "Roi contre Roi",
+      drawReasonKingsBishop: "Roi et Fou contre Roi",
+      drawReasonKingsKnight: "Roi et Cavalier contre Roi",
+      drawReasonKingVsBishop: "Roi contre Roi et Fou",
+      drawReasonKingVsKnight: "Roi contre Roi et Cavalier",
+      drawReasonSameColorBishops: "Roi et Fou contre Roi et Fou (fous de même couleur)",
+      forcedLineLabel: "Ligne forcée",
+      forcedLineMoves: "coups",
+      flipBoard: "Retourner l'échiquier",
+      configuration: "Configuration",
+      checkmateBlack: "Les noirs gagnent par échec et mat ! 🏆",
+      checkmateWhite: "Les blancs gagnent par échec et mat ! 🏆",
+      blackWinsResignation: "Les noirs gagnent - Abandon",
+      whiteWinsResignation: "Les blancs gagnent - Abandon"
+    },
+
+    // Engine config / persona
+    engineConfig: {
+      difficultyBeginner: "Débutant",
+      difficultyIntermediate: "Intermédiaire",
+      difficultyAdvanced: "Avancé",
+      difficultyMaster: "Maître",
+      difficultyExpert: "Expert",
+      difficultyGrandmaster: "Grand Maître",
+      engineConfig: "Configuration Moteur",
+      engineConfigAdvanced: "Configuration Avancée du Moteur",
+      editProfile: "Éditer le profil",
+      edit: "Éditer",
+      noOpening: "Aucune ouverture",
+      configTab: "Configuration",
+      forcedLineTab: "Ligne Forcée",
+      configMode: "Mode de Configuration",
+      configModeAuto: "Les paramètres sont ajustés automatiquement selon le niveau",
+      configModeManual: "Vous contrôlez tous les paramètres individuellement",
+      configSummary: "Résumé de la Configuration",
+      forcedLineCustom: "Ligne forcée personnalisée",
+      forcedLineWhite: "Ligne forcée (Blancs)",
+      forcedLineBlack: "Ligne forcée (Noirs)",
+      applyConfig: "Appliquer la Configuration",
+      customizeParams: "Personnalisez les paramètres de jeu",
+      reset: "Réinitialiser",
+      openings: "Ouvertures",
+      auto: "Automatique",
+      manual: "Manuel",
+      difficultyLevel: "Niveau de Difficulté",
+      detailedParams: "Paramètres Détaillés",
+      engineParams: "Paramètres du Moteur",
+      configEditing: "Édition de la Configuration",
+      configDialogDescription: "Modifier les paramètres du moteur et des ouvertures",
+      advancedConfigDescription: "Ajustez les paramètres pour modifier le niveau et le style de jeu. Les changements seront appliqués à la prochaine partie.",
+      customAvatarUrl: "URL personnalisée",
+      defaultAvatar: "Avatar par défaut",
+      playAgainstProfile: "Jouer contre ce profil",
+      viewDetails: "Voir les détails",
+      exportJsonLabel: "Exporter en JSON"
+    },
+
+    // Chessboard settings modal
+    chessboardSettings: {
+      title: "Personnalisation de l'Échiquier",
+      description: "Personnalisez l'apparence et le comportement de l'échiquier",
+      reset: "Réinitialiser",
+      resetConfirm: "Réinitialiser tous les paramètres à leurs valeurs par défaut ?",
+      theme: "Thème",
+      pieces: "Pièces",
+      coordinates: "Coordonnées",
+      showCoordinates: "Afficher les coordonnées",
+      options: "Options",
+      colorThemes: "Thèmes de Couleurs",
+      showLegalMoves: "Afficher les coups légaux",
+      showLegalMovesDescription: "Affiche les cases où une pièce peut se déplacer"
+    },
+
+    // Game viewer / analysis
+    gameViewer: {
+      flipBoard: "Retourner l'échiquier",
+      resetToStart: "Réinitialiser au début",
+      start: "Début",
+      prevMove: "Coup précédent",
+      nextMove: "Coup suivant",
+      pause: "Mettre en pause",
+      playAuto: "Lire automatiquement"
+    },
+
+    // Forced line editor
+    forcedLine: {
+      customTitle: "Ligne Forcée Personnalisée",
+      uciSequence: "Séquence UCI",
+      sanNotation: "Notation Standard (SAN)",
+      invalidMove: "Coup invalide"
+    },
+
+    // Profile details modal (Statistics, Configuration, Avatar tabs)
+    profileDetails: {
+      statsTab: "Statistiques",
+      configTab: "Configuration",
+      avatarTab: "Avatar",
+      play: "Jouer",
+      createdOn: "Créé le",
+      overallResults: "Résultats Globaux",
+      gamesAnalyzed: "Parties Analysées",
+      averageMoves: "Moyenne de Coups",
+      playStyleDetected: "Style de Jeu Détecté",
+      mainStyle: "Style principal",
+      aggressiveness: "Agressivité",
+      openingRepertoire: "Répertoire d'Ouvertures",
+      favoriteOpening: "Ouverture Favorite",
+      edit: "Modifier",
+      playStyle: "Style de Jeu",
+      cpuThreads: "Threads CPU",
+      depth: "Profondeur",
+      thinkingTime: "Réflexion",
+      estimatedElo: "ELO Estimé",
+      levelLabel: "Niveau",
+      saveChanges: "Enregistrer les Modifications",
+      saving: "Enregistrement…",
+      cancel: "Annuler",
+      editAvatar: "Modifier l'Avatar",
+      currentAvatar: "Avatar Actuel",
+      newImageUrlLabel: "URL de la Nouvelle Image",
+      newImageUrlPlaceholder: "https://example.com/avatar.jpg",
+      enterImageUrlHint: "Entrez l'URL d'une image (formats supportés : JPG, PNG, WebP)",
+      updateAvatar: "Mettre à Jour l'Avatar"
+    },
+
+    // Other UI
+    ui: {
+      regenerateAnalysis: "Régénérer l'analyse",
+      prefersWin: "Préfère jouer pour gagner",
+      acceptsDraws: "Accepte plus facilement les nulles",
+      neutralEval: "Évaluation neutre",
+      playingStyle: "Style de Jeu",
+      yourStyle: "Votre Style",
+      invalidConfig: "Configuration invalide",
+      loadingEngine: "Chargement du moteur d'échecs..."
+    }
+  },
+  en: {
+    // Header / Navigation
+    title: "Chess Avatar Creator",
+    subtitle: "Create an AI that plays exactly like you. Compatible with Fritz, ChessBase and Arena.",
+    myProfile: "My Profile",
+    installGuide: "UCI creator guide",
+    
+    // Analyze Page
+    analyzeProfile: "Analyze a Profile",
+    backToHome: "Back to home",
+    loadingChessboard: "Loading chessboard...",
+    
+    // Search Section
+    platform: {
+      lichess: "Lichess",
+      chesscom: "Chess.com"
+    },
+    usernamePlaceholder: {
+      lichess: "Lichess username (e.g. DrNykterstein)",
+      chesscom: "Chess.com username (e.g. Hikaru)"
+    },
+    analyzeButton: "Analyze",
+    analyzing: "Analyzing...",
+    
+    // Errors
+    errors: {
+      playerNotFound: "Player not found",
+      lichessPlayerNotFound: "Lichess player not found",
+      chesscomPlayerNotFound: "Chess.com player not found",
+      noGamesFound: "No recent games found for this player",
+      genericError: "An error occurred"
+    },
+    
+    // Results Section
+    historyTitle: "Analyzed History",
+    selectGame: "Select a game to see the replay",
+    victory: "Victory",
+    draw: "Draw",
+    defeat: "Defeat",
+    
+    // How It Works
+    howItWorks: {
+      title: "How does it work?",
+      step1: {
+        title: "1. Analyze",
+        description: "Enter your Lichess or Chess.com username and click Analyze"
+      },
+      step2: {
+        title: "2. Customize",
+        description: "Adjust the level, playing style and openings of your bot"
+      },
+      step3: {
+        title: "3. Save",
+        description: "Download the JSON profile or save it to the cloud"
+      },
+      step4: {
+        title: "4. Install",
+        description: "Follow the guide to install your bot in Fritz/Arena/ChessBase"
+      },
+      step5: {
+        title: "5. Play!",
+        description: "Challenge your AI clone directly online or in your chess software"
+      },
+      tip: "Tip: You can also play against your bot directly on this site by clicking \"Play Against this Engine\""
+    },
+    
+    // Profile Page
+    profile: {
+      title: "My Profile & Library",
+      myAccount: "My Account",
+      myBots: "My Bots",
+      publicLibrary: "Public Library",
+      noBots: "No saved bots",
+      createFirst: "Create your first bot by analyzing your profile",
+      loading: "Loading...",
+      signIn: "Sign In",
+      signOut: "Sign Out",
+      logout: "Logout",
+      notConnected: "Not Connected",
+      email: "Email",
+      savedProfiles: "Saved Profiles",
+      noProfiles: "No saved profiles. Analyze a player and save it!",
+      public: "Public",
+      private: "Private",
+      makePublic: "Make public",
+      makePrivate: "Make private",
+      deleteProfile: "Delete profile",
+      confirmDelete: "Are you sure you want to delete this profile?",
+      elo: "ELO",
+      level: "Level",
+      style: "Style",
+      playAgainst: "Play against this profile",
+      viewDetails: "View details and edit",
+      exportJson: "Export as JSON",
+      createdOn: "Created on",
+      databaseNotConfigured: "Database Not Configured",
+      databaseWarning: "Saving requires Supabase configuration. See SUPABASE_SETUP.md for instructions.",
+      signInPrompt: "Sign in to save your profiles and access them from any device"
+    },
+    
+    // Games Page
+    games: {
+      title: "My Games",
+      subtitle: "History of all your played games",
+      stats: "Statistics",
+      totalGames: "Total Games",
+      total: "Total",
+      wins: "Wins",
+      victories: "Wins",
+      losses: "Losses",
+      defeats: "Losses",
+      draws: "Draws",
+      winRate: "Win Rate",
+      winRateShort: "% Wins",
+      searchOpponent: "Search for an opponent...",
+      search: "Search...",
+      filter: "Filter",
+      all: "All",
+      win: "Wins",
+      loss: "Losses",
+      draw: "Draws",
+      noGames: "No games found",
+      noGamesFound: "No games found",
+      startPlaying: "Play your first game to see it appear here",
+      tryModifyFilters: "Try modifying your filters",
+      loading: "Loading games...",
+      opponent: "Opponent",
+      result: "Result",
+      date: "Date",
+      duration: "Duration",
+      moves: "Moves",
+      color: "Color",
+      white: "White",
+      black: "Black",
+      view: "View",
+      viewGame: "View game",
+      download: "Download",
+      downloadPGN: "Download PGN",
+      delete: "Delete",
+      confirmDelete: "Delete this game?",
+      backToList: "Back to list",
+      gameAgainst: "Game against",
+      history: "Game History",
+      supabaseNotConfigured: "Supabase not configured. Games cannot be saved.",
+      page: "Page",
+      of: "of",
+      previous: "Previous",
+      next: "Next"
+    },
+    
+    // Guide Page (UCI creator guide)
+    guide: {
+      title: "UCI creator guide",
+      subtitle: "Create your UCI engine and play against your clone in Fritz, ChessBase or Arena.",
+      download: "Download",
+      step1: {
+        title: "Prepare the folder",
+        description: "Create a folder and download these files:",
+        files: [
+          "AvatarEngine.py",
+          "install_engine.bat",
+          "Stockfish",
+          "Your JSON profile (generated from the homepage)"
+        ],
+        warning: "Windows will display a warning",
+        warningText: "This is normal! Windows protects against downloaded .bat files. Click \"More info\" then \"Run anyway\".",
+        tip: "The code is 100% open source and visible in the downloaded files."
+      },
+      step2: {
+        title: "Rename your profile",
+        description: "Rename your JSON file to profile.json (optional: the script detects any .json)"
+      },
+      step3: {
+        title: "Run the installation",
+        description: "Double-click on install_engine.bat (the script will request administrator rights). Follow the instructions to compile AvatarEngine.exe with PyInstaller."
+      },
+      step4: {
+        title: "Configure your software",
+        fritzTitle: "In Fritz 20/ChessBase",
+        fritzSteps: [
+          "Open File → Open → Engines (or Module → UCI Module)",
+          "Click New Engine / ... to browse",
+          "Select AvatarEngine.exe",
+          "Your bot appears in the list!"
+        ],
+        arenaTitle: "In Arena",
+        arenaSteps: [
+          "Open Engines → Install new engine",
+          "Select AvatarEngine.exe",
+          "Your bot appears in the list!"
+        ]
+      },
+      troubleshooting: "Common Issues",
+      problems: {
+        pythonNotFound: "Python not found",
+        pythonNotFoundSolution: "Install Python from python.org (check \"Add Python to PATH\")",
+        engineNotWorking: "Engine not responding",
+        engineNotWorkingSolution: "Check that Stockfish and profile.json are in the same folder as AvatarEngine.exe.",
+        windowsBlocking: "Windows blocks the .bat file",
+        windowsBlockingSolution: "Right-click → Properties → Check \"Unblock\" → OK",
+        pipBlocked: "pip blocked (Device Guard) / PyInstaller unavailable",
+        pipBlockedSolution: "Contact your administrator to allow pip, or compile AvatarEngine.exe on a PC where pip works and copy the exe."
+      }
+    },
+
+    // Play Page
+    play: {
+      title: "Play Online",
+      subtitle: "Challenge your AI clone or other bots",
+      selectBot: "Select a bot",
+      selectOpponent: "Choose your opponent",
+      selectBotDescription: "Select a public bot to start a game",
+      loadFromFile: "Load from file",
+      myBots: "My bots",
+      publicBots: "Public bots",
+      startGame: "Start game",
+      loading: "Loading...",
+      thinking: "Thinking...",
+      yourTurn: "Your turn",
+      gameOver: "Game over",
+      newGame: "New game",
+      resign: "Resign",
+      ready: "Ready",
+      finished: "Finished",
+      configShort: "Config",
+      whiteSide: "White",
+      blackSide: "Black"
+    },
+    
+    // Library / Profiles
+    library: {
+      title: "Profile Library",
+      publicLibrary: "Public Library",
+      searchPlaceholder: "Search for a player...",
+      search: "Search",
+      visibility: "Visibility",
+      sortBy: "Sort by",
+      all: "All",
+      public: "Public",
+      private: "Private",
+      myProfiles: "My Profiles",
+      date: "Date",
+      elo: "ELO",
+      name: "Name",
+      difficulty: "Level",
+      profiles: "profiles",
+      noProfiles: "No profiles found",
+      noPublicProfiles: "No public profiles available",
+      playAgainst: "Play",
+      viewDetails: "Details",
+      exportJson: "Export",
+      platform: "Platform",
+      style: "Style",
+      aggression: "Aggr.",
+      depth: "Depth",
+      createdOn: "Created on",
+      needsSupabase: "The public library requires Supabase configuration.",
+      checkDocs: "Check SUPABASE_SETUP.md for instructions."
+    },
+    
+    // Common
+    common: {
+      loading: "Loading...",
+      error: "Error",
+      success: "Success",
+      cancel: "Cancel",
+      confirm: "Confirm",
+      save: "Save",
+      delete: "Delete",
+      edit: "Edit",
+      close: "Close",
+      back: "Back",
+      next: "Next",
+      previous: "Previous",
+      search: "Search",
+      filter: "Filter",
+      download: "Download",
+      upload: "Upload",
+      share: "Share"
+    },
+
+    // Game result modal
+    gameResult: {
+      titleWin: "Victory!",
+      titleLoss: "Defeat",
+      titleDraw: "Draw",
+      subtitleWin: "Congratulations, you won",
+      subtitleLoss: "The bot won this time",
+      subtitleDraw: "Fair match",
+      performanceExcellent: "Excellent",
+      performanceGood: "Good",
+      performanceFair: "Fair",
+      performanceToImprove: "Needs improvement",
+      summaryA11y: "Game summary and statistics",
+      moves: "Moves",
+      captures: "Captures",
+      checks: "Checks",
+      precisionAndElo: "Precision & estimated ELO",
+      precision: "Precision",
+      whiteSide: "White",
+      blackSide: "Black",
+      evaluations: "Evaluations",
+      rematch: "Rematch",
+      switchColor: "Switch color",
+      configure: "Configure",
+      home: "Home"
+    },
+
+    // Header / nav
+    header: {
+      createBot: "Create Bot",
+      profiles: "Profiles",
+      games: "Games",
+      guide: "Guide",
+      boardSettingsTitle: "Board settings"
+    },
+
+    // Evaluation bar
+    evaluationBar: {
+      evaluating: "Evaluating...",
+      youDominatingWhite: "You (White) are dominating",
+      youDominatingBlack: "You (Black) are dominating",
+      blackDominating: "Black is dominating",
+      whiteDominating: "White is dominating",
+      equalPosition: "Equal position",
+      youDominate: "You are dominating",
+      youDominateWidely: "You are dominating widely",
+      opponentDominates: "Opponent is dominating",
+      opponentDominatesWidely: "Opponent is dominating widely",
+      black: "Black",
+      white: "White"
+    },
+
+    // Board / game messages
+    board: {
+      drawStalemate: "Draw - Stalemate (player cannot move without being in check) ⚖️",
+      drawThreefold: "Draw - Threefold repetition (same position repeated 3 times) ♻️",
+      draw50Moves: "Draw - 50-move rule (no capture or pawn move in 50 moves) ⏱️",
+      drawGeneric: "Draw ⚖️",
+      drawInsufficient: "Draw - Insufficient material to mate 🤝",
+      drawReasonKingVsKing: "King vs King",
+      drawReasonKingsBishop: "King and Bishop vs King",
+      drawReasonKingsKnight: "King and Knight vs King",
+      drawReasonKingVsBishop: "King vs King and Bishop",
+      drawReasonKingVsKnight: "King vs King and Knight",
+      drawReasonSameColorBishops: "King and Bishop vs King and Bishop (same-color bishops)",
+      forcedLineLabel: "Forced line",
+      forcedLineMoves: "moves",
+      flipBoard: "Flip board",
+      configuration: "Configuration",
+      checkmateBlack: "Black wins by checkmate! 🏆",
+      checkmateWhite: "White wins by checkmate! 🏆",
+      blackWinsResignation: "Black wins - Resignation",
+      whiteWinsResignation: "White wins - Resignation"
+    },
+
+    // Engine config / persona
+    engineConfig: {
+      difficultyBeginner: "Beginner",
+      difficultyIntermediate: "Intermediate",
+      difficultyAdvanced: "Advanced",
+      difficultyMaster: "Master",
+      difficultyExpert: "Expert",
+      difficultyGrandmaster: "Grandmaster",
+      engineConfig: "Engine Configuration",
+      engineConfigAdvanced: "Advanced Engine Configuration",
+      editProfile: "Edit profile",
+      edit: "Edit",
+      noOpening: "No opening",
+      configTab: "Configuration",
+      forcedLineTab: "Forced Line",
+      configMode: "Configuration Mode",
+      configModeAuto: "Settings are adjusted automatically by level",
+      configModeManual: "You control all settings individually",
+      configSummary: "Configuration Summary",
+      forcedLineCustom: "Custom forced line",
+      forcedLineWhite: "Forced line (White)",
+      forcedLineBlack: "Forced line (Black)",
+      applyConfig: "Apply Configuration",
+      customizeParams: "Customize game settings",
+      reset: "Reset",
+      openings: "Openings",
+      auto: "Automatic",
+      manual: "Manual",
+      difficultyLevel: "Difficulty Level",
+      detailedParams: "Detailed Parameters",
+      engineParams: "Engine Parameters",
+      configEditing: "Configuration Editing",
+      configDialogDescription: "Modify engine and opening settings",
+      advancedConfigDescription: "Adjust settings to change level and playing style. Changes will apply to the next game.",
+      customAvatarUrl: "Custom URL",
+      defaultAvatar: "Default avatar",
+      playAgainstProfile: "Play against this profile",
+      viewDetails: "View details",
+      exportJsonLabel: "Export as JSON"
+    },
+
+    // Chessboard settings modal
+    chessboardSettings: {
+      title: "Board Customization",
+      description: "Customize the appearance and behavior of the board",
+      reset: "Reset",
+      resetConfirm: "Reset all settings to their default values?",
+      theme: "Theme",
+      pieces: "Pieces",
+      coordinates: "Coordinates",
+      showCoordinates: "Show coordinates",
+      options: "Options",
+      colorThemes: "Color Themes",
+      showLegalMoves: "Show legal moves",
+      showLegalMovesDescription: "Shows squares a piece can move to"
+    },
+
+    // Game viewer / analysis
+    gameViewer: {
+      flipBoard: "Flip board",
+      resetToStart: "Reset to start",
+      start: "Start",
+      prevMove: "Previous move",
+      nextMove: "Next move",
+      pause: "Pause",
+      playAuto: "Auto-play"
+    },
+
+    // Forced line editor
+    forcedLine: {
+      customTitle: "Custom Forced Line",
+      uciSequence: "UCI Sequence",
+      sanNotation: "Standard Notation (SAN)",
+      invalidMove: "Invalid move"
+    },
+
+    // Profile details modal (Statistics, Configuration, Avatar tabs)
+    profileDetails: {
+      statsTab: "Statistics",
+      configTab: "Configuration",
+      avatarTab: "Avatar",
+      play: "Play",
+      createdOn: "Created on",
+      overallResults: "Overall Results",
+      gamesAnalyzed: "Games Analyzed",
+      averageMoves: "Average Moves",
+      playStyleDetected: "Detected Play Style",
+      mainStyle: "Main style",
+      aggressiveness: "Aggressiveness",
+      openingRepertoire: "Opening Repertoire",
+      favoriteOpening: "Favorite Opening",
+      edit: "Edit",
+      playStyle: "Play Style",
+      cpuThreads: "CPU Threads",
+      depth: "Depth",
+      thinkingTime: "Thinking time",
+      estimatedElo: "Estimated ELO",
+      levelLabel: "Level",
+      saveChanges: "Save Changes",
+      saving: "Saving…",
+      cancel: "Cancel",
+      editAvatar: "Edit Avatar",
+      currentAvatar: "Current Avatar",
+      newImageUrlLabel: "New Image URL",
+      newImageUrlPlaceholder: "https://example.com/avatar.jpg",
+      enterImageUrlHint: "Enter an image URL (supported formats: JPG, PNG, WebP)",
+      updateAvatar: "Update Avatar"
+    },
+
+    // Other UI
+    ui: {
+      regenerateAnalysis: "Regenerate analysis",
+      prefersWin: "Prefers to play for a win",
+      acceptsDraws: "More willing to accept draws",
+      neutralEval: "Neutral evaluation",
+      playingStyle: "Playing Style",
+      yourStyle: "Your Style",
+      invalidConfig: "Invalid configuration",
+      loadingEngine: "Loading chess engine..."
+    }
+  }
+};
+
+export type Language = keyof typeof translations;
+export type TranslationKey = typeof translations.fr;

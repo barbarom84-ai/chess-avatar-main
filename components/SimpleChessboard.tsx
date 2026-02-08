@@ -1,0 +1,302 @@
+"use client";
+
+import { Chess } from "chess.js";
+import Image from "next/image";
+import { useState } from "react";
+import { useChessboardSettings } from "@/contexts/ChessboardSettingsContext";
+
+interface SimpleChessboardProps {
+  position: string;
+  onDrop?: (sourceSquare: string, targetSquare: string) => boolean;
+  orientation?: 'white' | 'black';
+  lastMove?: { from: string; to: string } | null;
+  arrows?: Array<{ from: string; to: string; color?: string }>;
+}
+
+export default function SimpleChessboard({ 
+  position, 
+  onDrop, 
+  orientation = 'white',
+  lastMove,
+  arrows = []
+}: SimpleChessboardProps) {
+  const { settings } = useChessboardSettings();
+  const { boardTheme, pieceSet, showLegalMoves, highlightLastMove, animationSpeed } = settings;
+  
+  const game = new Chess(position === "start" ? undefined : position);
+  const board = game.board();
+
+  const [draggedSquare, setDraggedSquare] = useState<string | null>(null);
+  const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
+  const [highlightedSquares, setHighlightedSquares] = useState<string[]>([]);
+  const [hoveredSquare, setHoveredSquare] = useState<string | null>(null);
+
+  const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+  const ranks = ['8', '7', '6', '5', '4', '3', '2', '1'];
+
+  // Inverser l'échiquier si orientation = black
+  const displayFiles = orientation === 'black' ? [...files].reverse() : files;
+  const displayRanks = orientation === 'black' ? [...ranks].reverse() : ranks;
+
+  const getPieceImage = (piece: { type: string; color: string }) => {
+    const color = piece.color === 'w' ? 'w' : 'b';
+    const type = piece.type.toUpperCase();
+    return `${pieceSet.path}/${color}${type}.png`;
+  };
+
+  // Durée d'animation en fonction des paramètres
+  const getAnimationDuration = () => {
+    switch (animationSpeed) {
+      case 'none': return '0ms';
+      case 'fast': return '100ms';
+      case 'normal': return '200ms';
+      case 'slow': return '400ms';
+      default: return '200ms';
+    }
+  };
+
+  const handleDragStart = (square: string, e: React.DragEvent) => {
+    if (!onDrop) return;
+    
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', square);
+    setDraggedSquare(square);
+
+    // Afficher les coups légaux si l'option est activée
+    if (showLegalMoves) {
+      const moves = game.moves({ square: square as any, verbose: true });
+      const targets = moves.map(m => m.to);
+      setHighlightedSquares(targets);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = (targetSquare: string, e: React.DragEvent) => {
+    e.preventDefault();
+    
+    if (!onDrop || !draggedSquare) return;
+
+    const success = onDrop(draggedSquare, targetSquare);
+    
+    setDraggedSquare(null);
+    setHighlightedSquares([]);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedSquare(null);
+    setHighlightedSquares([]);
+  };
+
+  // Mode click-to-move
+  const handleSquareClick = (square: string, piece: any) => {
+    if (!onDrop) return;
+
+    // Si une case est déjà sélectionnée
+    if (selectedSquare) {
+      // Si on clique sur la même case, on désélectionne
+      if (selectedSquare === square) {
+        setSelectedSquare(null);
+        setHighlightedSquares([]);
+        return;
+      }
+
+      // Si on clique sur une case valide, on fait le coup
+      if (highlightedSquares.includes(square)) {
+        const success = onDrop(selectedSquare, square);
+        setSelectedSquare(null);
+        setHighlightedSquares([]);
+        return;
+      }
+
+      // Sinon, si on clique sur une autre pièce, on la sélectionne
+      if (piece && piece.color === game.turn()) {
+        setSelectedSquare(square);
+        const moves = game.moves({ square: square as any, verbose: true });
+        const targets = moves.map(m => m.to);
+        setHighlightedSquares(targets);
+        return;
+      }
+
+      // Sinon, on désélectionne
+      setSelectedSquare(null);
+      setHighlightedSquares([]);
+    } else {
+      // Première sélection : si c'est une pièce du joueur actuel
+      if (piece && piece.color === game.turn()) {
+        setSelectedSquare(square);
+        const moves = game.moves({ square: square as any, verbose: true });
+        const targets = moves.map(m => m.to);
+        setHighlightedSquares(targets);
+      }
+    }
+  };
+
+  // Fonction pour convertir une case en coordonnées SVG
+  const squareToCoords = (square: string): { x: number; y: number } => {
+    const file = square[0];
+    const rank = square[1];
+    const fileIdx = displayFiles.indexOf(file);
+    const rankIdx = displayRanks.indexOf(rank);
+    // Centre de la case (en pourcentage)
+    const x = (fileIdx + 0.5) * 12.5; // 100% / 8 = 12.5%
+    const y = (rankIdx + 0.5) * 12.5;
+    return { x, y };
+  };
+
+  return (
+    <div className="w-full max-w-[500px] aspect-square bg-slate-800 p-2 rounded-lg shadow-2xl relative">
+      <div className="grid grid-cols-8 gap-0 w-full h-full">
+        {displayRanks.map((rank, rankIdx) =>
+          displayFiles.map((file, fileIdx) => {
+            const square = `${file}${rank}`;
+            const boardRankIdx = ranks.indexOf(rank);
+            const boardFileIdx = files.indexOf(file);
+            const piece = board[boardRankIdx][boardFileIdx];
+            const isLight = (boardRankIdx + boardFileIdx) % 2 === 0;
+            
+            const isDragging = draggedSquare === square;
+            const isSelected = selectedSquare === square;
+            const isHighlighted = showLegalMoves && highlightedSquares.includes(square);
+            const isHovered = hoveredSquare === square;
+            const isLastMove = highlightLastMove && lastMove && (lastMove.from === square || lastMove.to === square);
+            
+            // Couleur de la case (utilise le thème)
+            let bgColor = '';
+            if (isSelected) {
+              bgColor = boardTheme.selectedSquare;
+            } else if (isLastMove) {
+              bgColor = isLight ? boardTheme.lastMoveLight : boardTheme.lastMoveDark;
+            } else {
+              bgColor = isLight ? boardTheme.lightSquare : boardTheme.darkSquare;
+            }
+            
+            return (
+              <div
+                key={square}
+                style={{ 
+                  backgroundColor: bgColor,
+                  transition: `all ${getAnimationDuration()}`
+                }}
+                className={`relative flex items-center justify-center cursor-pointer ${
+                  isDragging ? 'opacity-50 scale-95' : ''
+                }`}
+                onDragOver={handleDragOver}
+                onDrop={(e) => handleDrop(square, e)}
+                onClick={() => handleSquareClick(square, piece)}
+                onMouseEnter={() => setHoveredSquare(square)}
+                onMouseLeave={() => setHoveredSquare(null)}
+              >
+                {piece && (
+                  <div 
+                    className={`w-[80%] h-[80%] relative transition-all duration-200 ${
+                      isDragging ? 'scale-110 rotate-6 opacity-70' : 'scale-100 rotate-0'
+                    } ${isSelected ? 'scale-110 drop-shadow-2xl' : ''} ${
+                      onDrop ? 'cursor-pointer hover:scale-105' : ''
+                    }`}
+                    draggable={!!onDrop}
+                    onDragStart={(e) => handleDragStart(square, e)}
+                    onDragEnd={handleDragEnd}
+                  >
+                    <Image
+                      src={getPieceImage(piece)}
+                      alt={`${piece.color}${piece.type}`}
+                      fill
+                      sizes="80px"
+                      className="object-contain drop-shadow-lg pointer-events-none"
+                      unoptimized
+                      draggable={false}
+                    />
+                  </div>
+                )}
+
+                {/* Indicateur de coup légal - Amélioré */}
+                {isHighlighted && (
+                  <div className={`absolute inset-0 flex items-center justify-center pointer-events-none z-10`}>
+                    {piece ? (
+                      // Case avec pièce adverse : bordure + coin
+                      <>
+                        <div className="w-full h-full border-[3px] border-green-500 rounded-sm opacity-50 animate-pulse" />
+                        <div className="absolute top-0 right-0 w-3 h-3 bg-green-500 rounded-bl-lg" />
+                        <div className="absolute bottom-0 left-0 w-3 h-3 bg-green-500 rounded-tr-lg" />
+                      </>
+                    ) : (
+                      // Case vide : point vert
+                      <div className="w-[30%] h-[30%] bg-green-500 rounded-full opacity-70 hover:opacity-100 transition-opacity" />
+                    )}
+                  </div>
+                )}
+                
+                {/* Indicateur de case sélectionnée */}
+                {isSelected && (
+                  <div className="absolute inset-0 border-4 border-blue-500 rounded-sm pointer-events-none z-10 animate-pulse" />
+                )}
+                
+                {/* Coordonnées */}
+                {fileIdx === 0 && (
+                  <span className="absolute top-0.5 left-1 text-[10px] font-semibold opacity-70" 
+                        style={{ color: isLight ? '#779954' : '#e9edcc' }}>
+                    {rank}
+                  </span>
+                )}
+                {rankIdx === displayRanks.length - 1 && (
+                  <span className="absolute bottom-0.5 right-1 text-[10px] font-semibold opacity-70"
+                        style={{ color: isLight ? '#779954' : '#e9edcc' }}>
+                    {file}
+                  </span>
+                )}
+              </div>
+            );
+          })
+        )}
+      </div>
+      
+      {/* Overlay SVG pour les flèches */}
+      {arrows.length > 0 && (
+        <svg 
+          className="absolute inset-0 pointer-events-none" 
+          viewBox="0 0 100 100"
+          style={{ width: '100%', height: '100%' }}
+        >
+          <defs>
+            <marker
+              id="arrowhead"
+              markerWidth="4"
+              markerHeight="4"
+              refX="2"
+              refY="2"
+              orient="auto"
+            >
+              <polygon
+                points="0 0, 4 2, 0 4"
+                fill="rgba(34, 197, 94, 0.8)"
+              />
+            </marker>
+          </defs>
+          {arrows.map((arrow, idx) => {
+            const from = squareToCoords(arrow.from);
+            const to = squareToCoords(arrow.to);
+            const color = arrow.color || 'rgba(34, 197, 94, 0.8)'; // Vert par défaut
+            
+            return (
+              <line
+                key={idx}
+                x1={`${from.x}%`}
+                y1={`${from.y}%`}
+                x2={`${to.x}%`}
+                y2={`${to.y}%`}
+                stroke={color}
+                strokeWidth="1.5"
+                markerEnd="url(#arrowhead)"
+                strokeLinecap="round"
+              />
+            );
+          })}
+        </svg>
+      )}
+    </div>
+  );
+}
