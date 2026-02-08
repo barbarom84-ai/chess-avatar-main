@@ -21,6 +21,8 @@ export interface PieceSet {
   id: string;
   name: string;
   path: string; // Chemin du dossier des pièces
+  ext: string;  // Extension des fichiers ('png' ou 'svg')
+  description?: string; // Description courte pour l'UI
 }
 
 export interface ChessboardSettings {
@@ -129,11 +131,38 @@ export const BOARD_THEMES: BoardTheme[] = [
 export const PIECE_SETS: PieceSet[] = [
   {
     id: 'neon-cyan',
-    name: 'Néon Cyan (Défaut)',
+    name: 'Néon Cyan',
     path: '/pieces',
+    ext: 'png',
+    description: 'Style néon avec circuits tech',
   },
-  // Possibilité d'ajouter d'autres sets plus tard
+  {
+    id: 'classic',
+    name: 'Classique',
+    path: '/pieces/classic',
+    ext: 'svg',
+    description: 'Pièces Staunton traditionnelles',
+  },
+  {
+    id: 'modern',
+    name: 'Moderne',
+    path: '/pieces/modern',
+    ext: 'svg',
+    description: 'Design plat et épuré',
+  },
+  {
+    id: 'symbol',
+    name: 'Symboles',
+    path: '/pieces/symbol',
+    ext: 'svg',
+    description: 'Symboles d\'échecs élégants',
+  },
 ];
+
+// Helper pour construire le chemin d'une image de pièce
+export function getPieceImagePath(pieceSet: PieceSet, color: string, type: string): string {
+  return `${pieceSet.path}/${color}${type}.${pieceSet.ext}`;
+}
 
 const defaultSettings: ChessboardSettings = {
   boardTheme: BOARD_THEMES[0], // Néon Cyan par défaut

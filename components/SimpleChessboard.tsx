@@ -3,7 +3,7 @@
 import { Chess } from "chess.js";
 import Image from "next/image";
 import { useState } from "react";
-import { useChessboardSettings } from "@/contexts/ChessboardSettingsContext";
+import { useChessboardSettings, getPieceImagePath } from "@/contexts/ChessboardSettingsContext";
 
 interface SimpleChessboardProps {
   position: string;
@@ -41,7 +41,7 @@ export default function SimpleChessboard({
   const getPieceImage = (piece: { type: string; color: string }) => {
     const color = piece.color === 'w' ? 'w' : 'b';
     const type = piece.type.toUpperCase();
-    return `${pieceSet.path}/${color}${type}.png`;
+    return getPieceImagePath(pieceSet, color, type);
   };
 
   // Durée d'animation en fonction des paramètres

@@ -409,7 +409,11 @@ export const translations = {
       options: "Options",
       colorThemes: "Thèmes de Couleurs",
       showLegalMoves: "Afficher les coups légaux",
-      showLegalMovesDescription: "Affiche les cases où une pièce peut se déplacer"
+      showLegalMovesDescription: "Affiche les cases où une pièce peut se déplacer",
+      pieceSets: "Sets de Pièces",
+      preview: "Aperçu",
+      whitePieces: "Pièces blanches",
+      blackPieces: "Pièces noires"
     },
 
     // Game viewer / analysis
@@ -886,7 +890,11 @@ export const translations = {
       options: "Options",
       colorThemes: "Color Themes",
       showLegalMoves: "Show legal moves",
-      showLegalMovesDescription: "Shows squares a piece can move to"
+      showLegalMovesDescription: "Shows squares a piece can move to",
+      pieceSets: "Piece Sets",
+      preview: "Preview",
+      whitePieces: "White pieces",
+      blackPieces: "Black pieces"
     },
 
     // Game viewer / analysis

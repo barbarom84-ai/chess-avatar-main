@@ -16,7 +16,9 @@ import {
   useChessboardSettings, 
   BOARD_THEMES, 
   PIECE_SETS,
-  type BoardTheme 
+  getPieceImagePath,
+  type BoardTheme,
+  type PieceSet
 } from "@/contexts/ChessboardSettingsContext";
 import { useLanguage } from "@/lib/language-context";
 
@@ -170,48 +172,134 @@ export default function ChessboardSettingsModal({ open, onOpenChange }: Chessboa
           <TabsContent value="pieces" className="space-y-4">
             <Card className="bg-slate-950 border-slate-800">
               <CardContent className="pt-6">
-                <h3 className="text-sm font-semibold text-slate-300 mb-4">Sets de Pièces</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {PIECE_SETS.map((pieceSet) => (
-                    <button
-                      key={pieceSet.id}
-                      onClick={() => updateSettings({ pieceSet })}
-                      className={`relative p-4 rounded-lg border-2 transition-all duration-200 text-left ${
-                        settings.pieceSet.id === pieceSet.id
-                          ? 'border-cyan-500 bg-cyan-500/10'
-                          : 'border-slate-700 hover:border-cyan-500/50 bg-slate-900'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-semibold text-slate-200">{pieceSet.name}</h4>
-                        {settings.pieceSet.id === pieceSet.id && (
-                          <div className="bg-cyan-500 rounded-full p-1">
-                            <Check className="h-3 w-3 text-white" />
+                <h3 className="text-sm font-semibold text-slate-300 mb-4">{t.chessboardSettings.pieceSets || 'Sets de Pièces'}</h3>
+                
+                <div className="flex flex-col md:flex-row gap-6">
+                  {/* Liste des sets de pièces */}
+                  <div className="flex-1">
+                    <div className="grid grid-cols-2 gap-3">
+                      {PIECE_SETS.map((pieceSet) => (
+                        <button
+                          key={pieceSet.id}
+                          onClick={() => updateSettings({ pieceSet })}
+                          className={`relative p-3 rounded-lg border-2 transition-all duration-200 text-left ${
+                            settings.pieceSet.id === pieceSet.id
+                              ? 'border-cyan-500 bg-cyan-500/10'
+                              : 'border-slate-700 hover:border-cyan-500/50 bg-slate-900'
+                          }`}
+                        >
+                          {settings.pieceSet.id === pieceSet.id && (
+                            <div className="absolute top-2 right-2 bg-cyan-500 rounded-full p-1">
+                              <Check className="h-3 w-3 text-white" />
+                            </div>
+                          )}
+
+                          <h4 className="font-semibold text-sm text-slate-200 mb-1">{pieceSet.name}</h4>
+                          {pieceSet.description && (
+                            <p className="text-[10px] text-slate-400 mb-2">{pieceSet.description}</p>
+                          )}
+                          
+                          {/* Aperçu des pièces en mini-grille */}
+                          <div className="flex gap-1 items-center justify-center bg-slate-800/60 p-2 rounded">
+                            {['wK', 'wQ', 'wR', 'wB', 'wN', 'wP'].map((piece) => (
+                              <img 
+                                key={piece}
+                                src={`${pieceSet.path}/${piece}.${pieceSet.ext}`}
+                                alt={piece}
+                                width={24}
+                                height={24}
+                                className="w-6 h-6 object-contain"
+                              />
+                            ))}
                           </div>
-                        )}
-                      </div>
-                      <p className="text-xs text-slate-400 mb-3">Style néon cyan avec circuits tech</p>
-                      
-                      {/* Aperçu de quelques pièces */}
-                      <div className="flex gap-2 items-center justify-center bg-slate-800/50 p-3 rounded">
-                        {['wK', 'wQ', 'wN', 'wB', 'wR', 'wP'].map((piece) => (
-                          <div key={piece} className="w-8 h-8 relative">
-                            <img 
-                              src={`${pieceSet.path}/${piece}.png`} 
-                              alt={piece}
-                              className="w-full h-full object-contain"
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Aperçu sur échiquier */}
+                  <div className="md:w-[220px] flex-shrink-0">
+                    <h4 className="text-xs font-semibold text-slate-400 mb-2">
+                      {t.chessboardSettings.preview || 'Aperçu'}: {settings.pieceSet.name}
+                    </h4>
+                    <div className="rounded-lg overflow-hidden border border-slate-700">
+                      {/* Mini échiquier 4x4 avec des pièces */}
+                      <div className="grid grid-cols-4 gap-0">
+                        {[
+                          // Row 1: Black pieces (top row)
+                          { piece: 'bR', light: true },
+                          { piece: 'bN', light: false },
+                          { piece: 'bB', light: true },
+                          { piece: 'bQ', light: false },
+                          // Row 2: Black pawns
+                          { piece: 'bP', light: false },
+                          { piece: 'bP', light: true },
+                          { piece: 'bP', light: false },
+                          { piece: 'bP', light: true },
+                          // Row 3: White pawns
+                          { piece: 'wP', light: true },
+                          { piece: 'wP', light: false },
+                          { piece: 'wP', light: true },
+                          { piece: 'wP', light: false },
+                          // Row 4: White pieces (bottom row)
+                          { piece: 'wR', light: false },
+                          { piece: 'wN', light: true },
+                          { piece: 'wB', light: false },
+                          { piece: 'wQ', light: true },
+                        ].map((cell, i) => (
+                          <div
+                            key={i}
+                            className="aspect-square flex items-center justify-center"
+                            style={{
+                              backgroundColor: cell.light 
+                                ? settings.boardTheme.lightSquare 
+                                : settings.boardTheme.darkSquare
+                            }}
+                          >
+                            <img
+                              src={`${settings.pieceSet.path}/${cell.piece}.${settings.pieceSet.ext}`}
+                              alt={cell.piece}
+                              className="w-[85%] h-[85%] object-contain"
                             />
                           </div>
                         ))}
                       </div>
-                    </button>
-                  ))}
-                </div>
-
-                <div className="mt-4 p-3 bg-blue-900/10 border border-blue-700/50 rounded-lg">
-                  <p className="text-xs text-blue-300">
-                    💡 <strong>Prochainement :</strong> D'autres sets de pièces seront disponibles (classique, moderne, minimaliste...)
-                  </p>
+                    </div>
+                    
+                    {/* Toutes les pièces du set sélectionné */}
+                    <div className="mt-3 p-3 bg-slate-900 rounded-lg border border-slate-800">
+                      <p className="text-[10px] text-slate-500 mb-2 uppercase tracking-wider font-semibold">
+                        {t.chessboardSettings.whitePieces || 'Pièces blanches'}
+                      </p>
+                      <div className="flex gap-1.5 mb-3">
+                        {['wK', 'wQ', 'wR', 'wB', 'wN', 'wP'].map((piece) => (
+                          <img 
+                            key={piece}
+                            src={`${settings.pieceSet.path}/${piece}.${settings.pieceSet.ext}`}
+                            alt={piece}
+                            width={32}
+                            height={32}
+                            className="w-8 h-8 object-contain drop-shadow"
+                          />
+                        ))}
+                      </div>
+                      <p className="text-[10px] text-slate-500 mb-2 uppercase tracking-wider font-semibold">
+                        {t.chessboardSettings.blackPieces || 'Pièces noires'}
+                      </p>
+                      <div className="flex gap-1.5">
+                        {['bK', 'bQ', 'bR', 'bB', 'bN', 'bP'].map((piece) => (
+                          <img 
+                            key={piece}
+                            src={`${settings.pieceSet.path}/${piece}.${settings.pieceSet.ext}`}
+                            alt={piece}
+                            width={32}
+                            height={32}
+                            className="w-8 h-8 object-contain drop-shadow"
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>

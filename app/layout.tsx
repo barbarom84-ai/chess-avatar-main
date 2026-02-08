@@ -20,6 +20,14 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Chess Avatar - AI Chess Bot Builder",
   description: "Analyze your chess games and create custom AI bots based on your playing style",
+  icons: {
+    icon: [
+      { url: "/knight-logo.png", type: "image/png" },
+    ],
+    apple: [
+      { url: "/knight-logo.png" },
+    ],
+  },
 };
 
 export default function RootLayout({

@@ -3,19 +3,23 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Globe, Sun, Moon } from "lucide-react";
+import { Globe, Sun, Moon, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useLanguage } from "@/lib/language-context";
 import { useTheme } from "@/lib/theme-context";
+import { useChessboardSettings, getPieceImagePath } from "@/contexts/ChessboardSettingsContext";
 import { useEffect, useState } from "react";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import ChessboardSettingsModal from "./ChessboardSettingsModal";
 
 export default function Navigation() {
   const pathname = usePathname();
   const { lang, setLang, t } = useLanguage();
   const { theme, toggleTheme } = useTheme();
+  const { settings } = useChessboardSettings();
   const [user, setUser] = useState<any>(null);
+  const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
     if (!isSupabaseConfigured || !supabase) return;
@@ -76,7 +80,7 @@ export default function Navigation() {
           
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 text-xl font-bold text-cyan-400 dark:text-cyan-400 light:text-[oklch(0.45_0.12_190)] hover:text-cyan-300 dark:hover:text-cyan-300 light:hover:text-[oklch(0.40_0.14_190)] transition-colors">
-            <Image src="/pieces/bN.png" alt="Knight" width={28} height={28} className="inline-block w-auto h-auto" />
+            <Image src={getPieceImagePath(settings.pieceSet, 'b', 'N')} alt="Knight" width={28} height={28} className="inline-block w-7 h-7" unoptimized />
             Chess Avatar
           </Link>
 
@@ -84,7 +88,7 @@ export default function Navigation() {
           <div className="hidden md:flex items-center gap-1">
             {navItems.map((item) => {
               const isActive = pathname === item.href;
-              const pieceSrc = `/pieces/${pieceColor}${item.piece}.png`;
+              const pieceSrc = getPieceImagePath(settings.pieceSet, pieceColor, item.piece);
               return (
                 <Link key={item.href} href={item.href}>
                   <Button
@@ -95,7 +99,7 @@ export default function Navigation() {
                       : "text-slate-300 hover:text-cyan-300 hover:bg-slate-800"
                     }
                   >
-                    <Image src={pieceSrc} alt={item.piece} width={20} height={20} className="inline-block w-auto h-auto" />
+                    <Image src={pieceSrc} alt={item.piece} width={20} height={20} className="inline-block w-5 h-5" unoptimized />
                     <span className="ml-2">{item.label[lang]}</span>
                   </Button>
                 </Link>
@@ -113,6 +117,18 @@ export default function Navigation() {
               </Badge>
             )}
             
+            {/* Board Settings */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowSettings(true)}
+              className="text-slate-400 dark:text-slate-400 light:text-slate-600 hover:text-cyan-300 dark:hover:text-cyan-300 light:hover:text-cyan-600"
+              aria-label="Board settings"
+              title={t.chessboardSettings?.title || "Board settings"}
+            >
+              <Settings className="h-4 w-4" />
+            </Button>
+
             {/* Theme Toggle */}
             <Button
               variant="ghost"
@@ -148,7 +164,7 @@ export default function Navigation() {
         <div className="md:hidden flex items-center gap-1 pb-3 overflow-x-auto">
           {navItems.map((item) => {
             const isActive = pathname === item.href;
-            const pieceSrc = `/pieces/${pieceColor}${item.piece}.png`;
+            const pieceSrc = getPieceImagePath(settings.pieceSet, pieceColor, item.piece);
             return (
               <Link key={item.href} href={item.href}>
                 <Button
@@ -159,7 +175,7 @@ export default function Navigation() {
                     : "text-slate-300 hover:text-cyan-300"
                   }
                 >
-                  <Image src={pieceSrc} alt={item.piece} width={20} height={20} className="inline-block w-auto h-auto" />
+                  <Image src={pieceSrc} alt={item.piece} width={20} height={20} className="inline-block w-5 h-5" unoptimized />
                   <span className="ml-1 text-xs">{item.label[lang]}</span>
                 </Button>
               </Link>
@@ -167,6 +183,11 @@ export default function Navigation() {
           })}
         </div>
       </div>
+
+      <ChessboardSettingsModal
+        open={showSettings}
+        onOpenChange={setShowSettings}
+      />
     </nav>
   );
 }

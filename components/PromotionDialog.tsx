@@ -2,20 +2,20 @@
 
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import Image from "next/image";
+import { useChessboardSettings, getPieceImagePath } from "@/contexts/ChessboardSettingsContext";
 
 interface PromotionDialogProps {
   open: boolean;
   color: 'white' | 'black';
-  pieceSetPath?: string;
   onSelect: (piece: 'q' | 'r' | 'b' | 'n') => void;
 }
 
 export default function PromotionDialog({ 
   open, 
   color, 
-  pieceSetPath = '/pieces',
   onSelect 
 }: PromotionDialogProps) {
+  const { settings } = useChessboardSettings();
   const pieces: ('q' | 'r' | 'b' | 'n')[] = ['q', 'r', 'b', 'n'];
   const colorCode = color === 'white' ? 'w' : 'b';
 
@@ -40,7 +40,7 @@ export default function PromotionDialog({
               aria-label={`Promouvoir en ${piece === 'q' ? 'Dame' : piece === 'r' ? 'Tour' : piece === 'b' ? 'Fou' : 'Cavalier'}`}
             >
               <Image
-                src={`${pieceSetPath}/${colorCode}${piece.toUpperCase()}.png`}
+                src={getPieceImagePath(settings.pieceSet, colorCode, piece.toUpperCase())}
                 alt={piece}
                 fill
                 sizes="64px"
