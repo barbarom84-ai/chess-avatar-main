@@ -117,7 +117,7 @@ Ouvrez [http://localhost:3000](http://localhost:3000) pour commencer !
 ## 🏗️ Architecture
 
 ```
-chess-persona/
+chess-avatar/
 ├── app/
 │   ├── page.tsx              # Page principale (analyse)
 │   ├── play/page.tsx         # Page de jeu interactive
@@ -204,8 +204,8 @@ vercel deploy
 
 ### Docker
 ```bash
-docker build -t chess-persona .
-docker run -p 3000:3000 chess-persona
+docker build -t chess-avatar .
+docker run -p 3000:3000 chess-avatar
 ```
 
 ### Build Statique
@@ -259,9 +259,9 @@ Ce projet est sous licence **MIT**. Voir [LICENSE](./LICENSE) pour plus de déta
 
 ## 📧 Contact & Support
 
-- 🐛 **Issues** : [GitHub Issues](https://github.com/yourusername/chess-persona/issues)
-- 💬 **Discussions** : [GitHub Discussions](https://github.com/yourusername/chess-persona/discussions)
-- 📧 **Email** : support@chess-persona.com
+- 🐛 **Issues** : [GitHub Issues](https://github.com/yourusername/chess-avatar/issues)
+- 💬 **Discussions** : [GitHub Discussions](https://github.com/yourusername/chess-avatar/discussions)
+- 📧 **Email** : support@chess-avatar.com
 
 ## 📊 Stats du Projet
 

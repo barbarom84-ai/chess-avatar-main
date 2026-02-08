@@ -17,7 +17,7 @@ Si vous avez déjà compilé `AvatarEngine.exe` AVANT les dernières corrections
 
 ### 📥 Étape 2 : Téléchargement des Fichiers (Dans l'Ordre)
 
-Depuis le site ChessPersona, téléchargez **DANS CET ORDRE** :
+Depuis le site ChessAvatar, téléchargez **DANS CET ORDRE** :
 
 1. **`AvatarEngine.py`** (version la plus récente avec corrections UCI)
    - ⚠️ **IMPORTANT** : Si vous l'avez déjà téléchargé AVANT le 12/12/2025, RE-téléchargez-le !

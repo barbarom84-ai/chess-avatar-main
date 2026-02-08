@@ -1,5 +1,5 @@
 ╔════════════════════════════════════════════════════════════════╗
-║     GUIDE D'INSTALLATION POUR FRITZ 20 - CHESS PERSONA        ║
+║     GUIDE D'INSTALLATION POUR FRITZ 20 - CHESS AVATAR        ║
 ╚════════════════════════════════════════════════════════════════╝
 
 📦 FICHIERS NÉCESSAIRES
@@ -108,7 +108,7 @@ Le moteur adapte son style selon votre profil :
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Pour toute question ou problème :
-→ Consultez le guide en ligne sur le site ChessPersona
+→ Consultez le guide en ligne sur le site ChessAvatar
 → Vérifiez que vous utilisez les dernières versions
 
 📁 STRUCTURE DES DOSSIERS

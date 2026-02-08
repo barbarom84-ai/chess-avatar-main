@@ -2,7 +2,7 @@
 
 ## 📋 Vue d'ensemble
 
-**AvatarEngine** est un wrapper UCI (Universal Chess Interface) qui permet d'utiliser vos profils ChessPersona dans des logiciels d'échecs comme Fritz 20, ChessBase, Arena, etc.
+**AvatarEngine** est un wrapper UCI (Universal Chess Interface) qui permet d'utiliser vos profils ChessAvatar dans des logiciels d'échecs comme Fritz 20, ChessBase, Arena, etc.
 
 ## 🎯 Prérequis
 
@@ -14,8 +14,8 @@
    - Télécharger : https://stockfishchess.org/download/
    - Prenez la version Windows 64-bit
 
-3. **profile.json** (votre profil ChessPersona)
-   - Généré depuis le site ChessPersona
+3. **profile.json** (votre profil ChessAvatar)
+   - Généré depuis le site ChessAvatar
    - Bouton "JSON" sur la page d'accueil
    - ⚠️ **Important** : Le fichier téléchargé ne s'appelle pas "profile.json" par défaut. Renommez-le en `profile.json` après téléchargement.
 
@@ -25,10 +25,10 @@
 
 1. Créez un dossier `MonAvatar` sur votre bureau
 2. Téléchargez ces fichiers dans ce dossier :
-   - ✅ `AvatarEngine.py` (depuis ChessPersona)
-   - ✅ `compile_avatar_engine.bat` (depuis ChessPersona)
+   - ✅ `AvatarEngine.py` (depuis ChessAvatar)
+   - ✅ `compile_avatar_engine.bat` (depuis ChessAvatar)
    - ✅ `stockfish.exe` (depuis stockfishchess.org)
-   - ✅ `profile.json` (généré par ChessPersona)
+   - ✅ `profile.json` (généré par ChessAvatar)
      - ⚠️ **N'oubliez pas** : Renommez le fichier téléchargé en `profile.json`
 
 ### Étape 2 : Compilation
@@ -69,12 +69,12 @@
 MonAvatar/
 ├── AvatarEngine.exe      (✅ Généré par compilation)
 ├── stockfish.exe          (📥 Téléchargé)
-├── profile.json           (📥 Généré par ChessPersona - à renommer)
+├── profile.json           (📥 Généré par ChessAvatar - à renommer)
 ├── AvatarEngine.py        (📥 Script source)
 └── compile_avatar_engine.bat (📥 Script de compilation)
 ```
 
-⚠️ **Note importante** : Le fichier JSON téléchargé depuis ChessPersona n'a pas le nom "profile.json" par défaut. Assurez-vous de le renommer en `profile.json` avant de continuer.
+⚠️ **Note importante** : Le fichier JSON téléchargé depuis ChessAvatar n'a pas le nom "profile.json" par défaut. Assurez-vous de le renommer en `profile.json` avant de continuer.
 
 ## ⚙️ Configuration
 
@@ -171,9 +171,9 @@ Ajoutez chaque `AvatarEngine.exe` comme moteur séparé dans Fritz.
 
 ## 🤝 Support
 
-- 🌐 Site : https://chess-persona.vercel.app
+- 🌐 Site : https://chess-avatar.vercel.app
 - 📧 GitHub Issues : [Lien du repo]
-- 📖 Documentation complète : https://chess-persona.vercel.app/guide
+- 📖 Documentation complète : https://chess-avatar.vercel.app/guide
 
 ## 📜 Licence
 
@@ -182,4 +182,4 @@ Stockfish est sous licence GPL v3.
 
 ---
 
-**Créé avec ♟️ par ChessPersona**
+**Créé avec ♟️ par ChessAvatar**

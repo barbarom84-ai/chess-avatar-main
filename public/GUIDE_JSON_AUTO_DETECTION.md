@@ -254,7 +254,7 @@ Profile=Bot_FondueMan.profile.json
 
 ### 1. Téléchargement
 
-Sur le site ChessPersona :
+Sur le site ChessAvatar :
 1. Créez votre bot
 2. Cliquez sur "JSON"
 3. Le fichier se télécharge avec un nom comme `Bot_VotreNom.profile.json`

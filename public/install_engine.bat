@@ -27,7 +27,7 @@ echo.
 if not exist "AvatarEngine.py" (
     echo [ERREUR] AvatarEngine.py introuvable !
     echo.
-    echo Telechargez AvatarEngine.py depuis le site ChessPersona
+    echo Telechargez AvatarEngine.py depuis le site ChessAvatar
     pause
     exit /b 1
 )
@@ -173,7 +173,7 @@ if %PROFILE_FOUND%==0 (
     echo Fichiers presents :
     dir /B
     echo.
-    echo Generez votre profil sur le site ChessPersona
+    echo Generez votre profil sur le site ChessAvatar
     echo Le nom du fichier peut etre profile.json ou Bot_VotreNom.profile.json
     pause
     exit /b 1

@@ -1,4 +1,4 @@
-# 🚀 Guide d'Installation Ultra-Simplifié - ChessPersona Avatar Engine
+# 🚀 Guide d'Installation Ultra-Simplifié - ChessAvatar Avatar Engine
 
 ## ✨ NOUVEAU : UN SEUL Script pour TOUT !
 
@@ -19,10 +19,10 @@
 
 Créez un dossier `MonAvatar` et téléchargez :
 
-1. **`AvatarEngine.py`** (depuis ChessPersona)
-2. **`install_engine.bat`** (depuis ChessPersona)
+1. **`AvatarEngine.py`** (depuis ChessAvatar)
+2. **`install_engine.bat`** (depuis ChessAvatar)
 3. **`stockfish-windows-x86-64-avx2.exe`** (depuis stockfishchess.org)
-4. **`profile.json`** (généré sur ChessPersona, à renommer)
+4. **`profile.json`** (généré sur ChessAvatar, à renommer)
 
 **C'est tout ! Pas besoin de compiler manuellement.**
 
@@ -282,7 +282,7 @@ MonAvatar/
 **Cause** : Le fichier téléchargé n'est pas renommé correctement
 
 **Solution** :
-1. Générez votre profil sur ChessPersona
+1. Générez votre profil sur ChessAvatar
 2. Téléchargez le fichier JSON
 3. **Renommez-le exactement** en `profile.json`
 4. Placez-le dans `MonAvatar/`
@@ -358,10 +358,10 @@ uciok
 
 | Fichier | Source | Action |
 |---------|--------|--------|
-| `AvatarEngine.py` | ChessPersona | Télécharger |
-| `install_engine.bat` | ChessPersona | Télécharger |
+| `AvatarEngine.py` | ChessAvatar | Télécharger |
+| `install_engine.bat` | ChessAvatar | Télécharger |
 | `stockfish*.exe` | stockfishchess.org | Télécharger |
-| `profile.json` | ChessPersona | Générer + Renommer |
+| `profile.json` | ChessAvatar | Générer + Renommer |
 
 ---
 
@@ -470,4 +470,4 @@ Avant d'exécuter `install_engine.bat` :
 
 ---
 
-**Questions ? Problèmes ? Consultez la section Dépannage ou le site ChessPersona.**
+**Questions ? Problèmes ? Consultez la section Dépannage ou le site ChessAvatar.**

@@ -9,7 +9,7 @@ Puisque Git n'est pas installé sur votre système, cette méthode est la plus s
 Ouvrez PowerShell dans votre dossier projet :
 
 ```powershell
-cd "c:\Users\marco\Cursor Workplace\chess-persona"
+cd "c:\Users\marco\Cursor Workplace\chess-avatar"
 npm install -g vercel
 ```
 
@@ -47,7 +47,7 @@ vercel
 | Set up and deploy? | `Y` (Oui) |
 | Which scope? | Sélectionnez votre compte |
 | Link to existing project? | `N` (Non) |
-| What's your project's name? | `chess-persona` (ou autre nom) |
+| What's your project's name? | `chess-avatar` (ou autre nom) |
 | In which directory is your code located? | `.` (laisser par défaut, appuyez sur Entrée) |
 | Want to override the settings? | `N` (Non) |
 
@@ -92,12 +92,12 @@ vercel --prod
 3. **Authentication** → **URL Configuration**
 4. Dans **"Site URL"**, ajoutez :
    ```
-   https://chess-persona-xxx.vercel.app
+   https://chess-avatar-xxx.vercel.app
    ```
    (Remplacez par votre vraie URL Vercel)
 5. Dans **"Redirect URLs"**, ajoutez :
    ```
-   https://chess-persona-xxx.vercel.app/*
+   https://chess-avatar-xxx.vercel.app/*
    ```
 6. Cliquez sur **"Save"**
 
@@ -107,7 +107,7 @@ vercel --prod
 
 Votre site est maintenant en ligne ! 🌍
 
-**URL de votre site** : Copiez l'URL affichée par Vercel (du type `https://chess-persona-xxx.vercel.app`)
+**URL de votre site** : Copiez l'URL affichée par Vercel (du type `https://chess-avatar-xxx.vercel.app`)
 
 ---
 
@@ -116,7 +116,7 @@ Votre site est maintenant en ligne ! 🌍
 Chaque fois que vous modifiez votre code :
 
 ```powershell
-cd "c:\Users\marco\Cursor Workplace\chess-persona"
+cd "c:\Users\marco\Cursor Workplace\chess-avatar"
 vercel --prod
 ```
 
@@ -135,7 +135,7 @@ C'est tout ! Vercel redéploie automatiquement.
 ### Puis suivez ces étapes
 
 ```powershell
-cd "c:\Users\marco\Cursor Workplace\chess-persona"
+cd "c:\Users\marco\Cursor Workplace\chess-avatar"
 
 # Initialiser Git
 git init
@@ -144,7 +144,7 @@ git commit -m "Initial commit - Chess Avatar"
 
 # Créer un dépôt sur GitHub (faites-le manuellement sur github.com)
 # Puis :
-git remote add origin https://github.com/VOTRE-USERNAME/chess-persona.git
+git remote add origin https://github.com/VOTRE-USERNAME/chess-avatar.git
 git push -u origin main
 ```
 
@@ -153,7 +153,7 @@ git push -u origin main
 1. Allez sur [vercel.com](https://vercel.com)
 2. Connectez-vous avec **GitHub**
 3. **Add New Project** → **Import Git Repository**
-4. Sélectionnez `chess-persona`
+4. Sélectionnez `chess-avatar`
 5. Ajoutez les variables d'environnement Supabase
 6. **Deploy**
 

@@ -236,5 +236,5 @@ Améliorations prévues :
 
 **Version** : 2.0
 **Date** : Décembre 2024
-**Auteur** : ChessPersona
+**Auteur** : ChessAvatar
 **Licence** : Libre d'utilisation

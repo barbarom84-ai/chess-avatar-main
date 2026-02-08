@@ -4,7 +4,7 @@ REM Script de Creation Automatique de engine.ini
 REM ====================================================================
 REM Lit profile.json et cree engine.ini automatiquement
 REM Nom du moteur : extrait de profile.json (username ou name)
-REM Auteur : Chess Persona (fixe)
+REM Auteur : Chess Avatar (fixe)
 
 echo ========================================
 echo Creation Automatique de engine.ini
@@ -19,7 +19,7 @@ echo.
 :: Verifier profile.json
 if not exist "profile.json" (
     echo [ERREUR] profile.json introuvable !
-    echo Generez votre profil sur le site ChessPersona
+    echo Generez votre profil sur le site ChessAvatar
     pause
     exit /b 1
 )

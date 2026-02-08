@@ -28,7 +28,7 @@ git commit -m "Initial commit - Chess Avatar"
 
 1. Allez sur [github.com](https://github.com)
 2. Cliquez sur **"New repository"**
-3. Nom : `chess-persona` (ou autre)
+3. Nom : `chess-avatar` (ou autre)
 4. **Public** ou **Private** (au choix)
 5. **Ne cochez rien** (pas de README, .gitignore, etc.)
 6. Cliquez sur **"Create repository"**
@@ -39,7 +39,7 @@ Remplacez `VOTRE-USERNAME` par votre nom d'utilisateur GitHub :
 
 ```bash
 git branch -M main
-git remote add origin https://github.com/VOTRE-USERNAME/chess-persona.git
+git remote add origin https://github.com/VOTRE-USERNAME/chess-avatar.git
 git push -u origin main
 ```
 
@@ -54,7 +54,7 @@ git push -u origin main
 
 1. Sur le dashboard Vercel, cliquez sur **"Add New Project"**
 2. Sélectionnez **"Import Git Repository"**
-3. Trouvez votre dépôt `chess-persona`
+3. Trouvez votre dépôt `chess-avatar`
 4. Cliquez sur **"Import"**
 
 ### Étape 6 : Configurer les Variables d'Environnement
@@ -80,7 +80,7 @@ Dans la section **"Environment Variables"** :
 2. Attendez 2-3 minutes
 3. 🎉 **Votre site est en ligne !**
 
-Vous recevrez une URL du type : `https://chess-persona-xxx.vercel.app`
+Vous recevrez une URL du type : `https://chess-avatar-xxx.vercel.app`
 
 ---
 
@@ -105,7 +105,7 @@ Suivez les instructions pour vous connecter (email ou GitHub).
 ### Étape 3 : Déployer
 
 ```bash
-cd "c:\Users\marco\Cursor Workplace\chess-persona"
+cd "c:\Users\marco\Cursor Workplace\chess-avatar"
 vercel
 ```
 
@@ -113,7 +113,7 @@ vercel
 - **Set up and deploy?** → `Y` (Yes)
 - **Which scope?** → Sélectionnez votre compte
 - **Link to existing project?** → `N` (No)
-- **What's your project's name?** → `chess-persona`
+- **What's your project's name?** → `chess-avatar`
 - **In which directory is your code located?** → `.` (laisser par défaut)
 - **Want to override settings?** → `N` (No)
 
@@ -150,11 +150,11 @@ vercel --prod
 3. **Authentication** → **URL Configuration**
 4. Ajoutez votre URL Vercel dans **"Site URL"** :
    ```
-   https://chess-persona-xxx.vercel.app
+   https://chess-avatar-xxx.vercel.app
    ```
 5. Ajoutez aussi dans **"Redirect URLs"** :
    ```
-   https://chess-persona-xxx.vercel.app/*
+   https://chess-avatar-xxx.vercel.app/*
    ```
 
 ### 2. Tester la Connexion
@@ -322,7 +322,7 @@ Avant de publier :
 git init
 git add .
 git commit -m "Initial commit"
-git remote add origin https://github.com/USERNAME/chess-persona.git
+git remote add origin https://github.com/USERNAME/chess-avatar.git
 git push -u origin main
 ```
 Puis importer sur Vercel.
