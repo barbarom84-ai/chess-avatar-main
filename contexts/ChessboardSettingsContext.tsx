@@ -144,18 +144,18 @@ export const PIECE_SETS: PieceSet[] = [
     description: 'Pièces Staunton traditionnelles',
   },
   {
-    id: 'modern',
-    name: 'Moderne',
-    path: '/pieces/modern',
+    id: 'fireice',
+    name: 'Fire & Ice',
+    path: '/pieces/fireice',
     ext: 'svg',
-    description: 'Design plat et épuré',
+    description: 'Pièces feu et glace contrastées',
   },
   {
-    id: 'symbol',
-    name: 'Symboles',
-    path: '/pieces/symbol',
+    id: 'earth-stone',
+    name: 'Earth & Stone',
+    path: '/pieces/earth-stone',
     ext: 'svg',
-    description: 'Symboles d\'échecs élégants',
+    description: 'Design élégant et raffiné',
   },
 ];
 
