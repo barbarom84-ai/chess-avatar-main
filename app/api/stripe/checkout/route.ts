@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import Stripe from 'stripe';
 import { stripe, getStripePriceId } from '@/lib/stripe';
 
 export async function POST(req: NextRequest) {
