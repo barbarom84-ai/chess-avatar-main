@@ -406,7 +406,7 @@ export default function ChessboardSettingsModal({ open, onOpenChange }: Chessboa
                 <div>
                   <h3 className="text-sm font-semibold text-slate-300 mb-4 flex items-center gap-2">
                     <Zap className="h-4 w-4" />
-                    Vitesse d'Animation
+                    {t.chessboardSettings.animationSpeed}
                   </h3>
                   <div className="grid grid-cols-4 gap-2">
                     {[
@@ -439,10 +439,10 @@ export default function ChessboardSettingsModal({ open, onOpenChange }: Chessboa
                   <div className="flex items-center justify-between p-3 bg-slate-900 rounded-lg">
                     <div>
                       <Label htmlFor="sound" className="text-slate-200 font-medium">
-                        Effets sonores
+                        {t.chessboardSettings.soundEffects}
                       </Label>
                       <p className="text-xs text-slate-400 mt-1">
-                        Sons lors des coups, captures, échecs, etc.
+                        {t.chessboardSettings.soundEffectsDesc}
                       </p>
                     </div>
                     <Switch

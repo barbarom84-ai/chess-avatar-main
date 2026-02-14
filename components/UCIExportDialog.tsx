@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useLanguage } from "@/lib/language-context";
 import {
   Dialog,
   DialogContent,
@@ -48,6 +49,7 @@ export default function UCIExportDialog({
   defaultName,
   playingStyle
 }: UCIExportDialogProps) {
+  const { t } = useLanguage();
   
   const [options, setOptions] = useState<UCIOptions>({
     name: defaultName,
@@ -336,7 +338,7 @@ export default function UCIExportDialog({
                 
                 <div className="space-y-2">
                   <div className="flex justify-between">
-                    <Label>Profondeur</Label>
+                    <Label>{t.uciExport.depth}</Label>
                     <span className="text-sm text-cyan-400">{options.depth || 'Illimité'}</span>
                   </div>
                   <input

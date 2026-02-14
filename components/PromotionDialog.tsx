@@ -3,6 +3,7 @@
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import Image from "next/image";
 import { useChessboardSettings, getPieceImagePath } from "@/contexts/ChessboardSettingsContext";
+import { useLanguage } from "@/lib/language-context";
 
 interface PromotionDialogProps {
   open: boolean;
@@ -15,6 +16,7 @@ export default function PromotionDialog({
   color, 
   onSelect 
 }: PromotionDialogProps) {
+  const { t } = useLanguage();
   const { settings } = useChessboardSettings();
   const pieces: ('q' | 'r' | 'b' | 'n')[] = ['q', 'r', 'b', 'n'];
   const colorCode = color === 'white' ? 'w' : 'b';
@@ -26,9 +28,9 @@ export default function PromotionDialog({
         onPointerDownOutside={(e) => e.preventDefault()}
         onInteractOutside={(e) => e.preventDefault()}
       >
-        <DialogTitle className="sr-only">Choisir une pièce de promotion</DialogTitle>
+        <DialogTitle className="sr-only">{t.promotion.choosePromotion}</DialogTitle>
         <DialogDescription className="sr-only">
-          Sélectionnez une pièce pour promouvoir votre pion
+          {t.promotion.selectPiece}
         </DialogDescription>
 
         <div className="grid grid-cols-4 gap-3">
@@ -37,7 +39,7 @@ export default function PromotionDialog({
               key={piece}
               onClick={() => onSelect(piece)}
               className="relative aspect-square hover:bg-cyan-500/20 rounded-lg transition-all hover:scale-110 cursor-pointer border-2 border-transparent hover:border-cyan-500"
-              aria-label={`Promouvoir en ${piece === 'q' ? 'Dame' : piece === 'r' ? 'Tour' : piece === 'b' ? 'Fou' : 'Cavalier'}`}
+              aria-label={`${piece === 'q' ? t.promotion.queen : piece === 'r' ? t.promotion.rook : piece === 'b' ? t.promotion.bishop : t.promotion.knight}`}
             >
               <Image
                 src={getPieceImagePath(settings.pieceSet, colorCode, piece.toUpperCase())}

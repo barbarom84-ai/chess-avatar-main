@@ -294,7 +294,15 @@ export default function UserProfile() {
                   <div className="flex items-center gap-4 text-xs text-slate-500 mb-2">
                     <span>{t.profile.elo}: {profile.config.elo}</span>
                     <span>{t.profile.level}: {profile.config.difficulty}/5</span>
-                    <span>{t.profile.style}: {profile.config.playStyle}</span>
+                    <span>{t.profile.style}: {
+                      ({
+                        'agressif': t.engineConfig.playStyleAggressive,
+                        'solide': t.engineConfig.playStyleSolid,
+                        'équilibré': t.engineConfig.playStyleBalanced,
+                        'positionnel': t.engineConfig.playStylePositional,
+                        'tactique': t.engineConfig.playStyleTactical,
+                      } as Record<string, string>)[profile.config.playStyle] || profile.config.playStyle
+                    }</span>
                   </div>
                   
                   {/* Boutons d'action */}

@@ -13,32 +13,32 @@ export default function StyleRadarChart({ style, className = '' }: StyleRadarCha
   const { t } = useLanguage();
   const data = [
     {
-      attribute: 'Agressivité',
+      attribute: t.styleRadar.aggressiveness,
       value: style.aggression,
       fullMark: 100
     },
     {
-      attribute: 'Tactique',
+      attribute: t.styleRadar.tactics,
       value: style.tactical,
       fullMark: 100
     },
     {
-      attribute: 'Positionnel',
+      attribute: t.styleRadar.positional,
       value: style.positional,
       fullMark: 100
     },
     {
-      attribute: 'Finales',
+      attribute: t.styleRadar.endgames,
       value: style.endgame,
       fullMark: 100
     },
     {
-      attribute: 'Théorie',
+      attribute: t.styleRadar.theory,
       value: style.openingTheory,
       fullMark: 100
     },
     {
-      attribute: 'Gestion Temps',
+      attribute: t.styleRadar.timeManagement,
       value: style.timeManagement,
       fullMark: 100
     }

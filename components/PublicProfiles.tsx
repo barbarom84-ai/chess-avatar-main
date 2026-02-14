@@ -15,8 +15,8 @@ import { useRouter } from "next/navigation";
 import ProfileDetailsModal from "./ProfileDetailsModal";
 
 export default function PublicProfiles() {
-  const router = useRouter();
   const { lang, t } = useLanguage();
+  const router = useRouter();
   const [profiles, setProfiles] = useState<DbProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -280,7 +280,7 @@ export default function PublicProfiles() {
                           ELO {profile.config.elo}
                         </Badge>
                         <Badge variant="outline" className="text-xs">
-                          Niveau {profile.config.difficulty}
+                          {t.engineConfig.depthLevel} {profile.config.difficulty}
                         </Badge>
                       </div>
                     </div>
@@ -291,7 +291,15 @@ export default function PublicProfiles() {
                   <div className="grid grid-cols-3 gap-2 text-xs">
                     <div className="text-center bg-slate-900 p-2 rounded">
                       <div className="text-slate-400">{t.library.style}</div>
-                      <div className="font-semibold text-slate-200 capitalize">{profile.config.playStyle}</div>
+                      <div className="font-semibold text-slate-200 capitalize">{
+                        ({
+                          'agressif': t.engineConfig.playStyleAggressive,
+                          'solide': t.engineConfig.playStyleSolid,
+                          'équilibré': t.engineConfig.playStyleBalanced,
+                          'positionnel': t.engineConfig.playStylePositional,
+                          'tactique': t.engineConfig.playStyleTactical,
+                        } as Record<string, string>)[profile.config.playStyle] || profile.config.playStyle
+                      }</div>
                     </div>
                     <div className="text-center bg-slate-900 p-2 rounded">
                       <div className="text-slate-400">{t.library.aggression}</div>

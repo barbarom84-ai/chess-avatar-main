@@ -12,6 +12,7 @@ import { User, Sliders, Trophy, BookOpen, Save, X, Brain, Lightbulb } from 'luci
 import StyleRadarChart from './StyleRadarChart';
 import AIAnalysisCard from './AIAnalysisCard';
 import SuggestionsPanel from './SuggestionsPanel';
+import { useLanguage } from "@/lib/language-context";
 import {
   getProfileMetadata,
   saveProfileMetadata,
@@ -46,6 +47,7 @@ export default function ProfileEditor({
   profileId,
   profileName
 }: ProfileEditorProps) {
+  const { t, lang } = useLanguage();
   // États
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -177,7 +179,7 @@ export default function ProfileEditor({
   const generateSuggestions = () => {
     // Recommandations d'ouvertures
     const existingOpeningNames = favoriteOpenings.map(o => o.name);
-    const recommendations = recommendOpenings(playingStyle, existingOpeningNames, 5);
+    const recommendations = recommendOpenings(playingStyle, existingOpeningNames, 5, lang);
     setOpeningRecommendations(recommendations);
     
     // Configuration moteur suggérée
@@ -280,19 +282,19 @@ export default function ProfileEditor({
             </TabsTrigger>
             <TabsTrigger value="style" className="data-[state=active]:bg-cyan-600">
               <Sliders className="h-4 w-4 mr-2" />
-              Style
+              {t.profileEditor.playStyle}
             </TabsTrigger>
             <TabsTrigger value="skills" className="data-[state=active]:bg-cyan-600">
               <Trophy className="h-4 w-4 mr-2" />
-              Forces/Faiblesses
+              {t.profileEditor.strengthsWeaknesses}
             </TabsTrigger>
             <TabsTrigger value="openings" className="data-[state=active]:bg-cyan-600">
               <BookOpen className="h-4 w-4 mr-2" />
-              Ouvertures
+              {t.profileEditor.openings}
             </TabsTrigger>
             <TabsTrigger value="ai" className="data-[state=active]:bg-purple-600">
               <Brain className="h-4 w-4 mr-2" />
-              Analyse IA
+              {t.profileEditor.aiAnalysis}
             </TabsTrigger>
             <TabsTrigger value="suggestions" className="data-[state=active]:bg-green-600">
               <Lightbulb className="h-4 w-4 mr-2" />
@@ -304,33 +306,33 @@ export default function ProfileEditor({
             {/* Onglet Informations */}
             <TabsContent value="info" className="space-y-4 px-2">
               <div>
-                <Label htmlFor="biography" className="text-cyan-100">Biographie</Label>
+                <Label htmlFor="biography" className="text-cyan-100">{t.profileEditor.biography}</Label>
                 <textarea
                   id="biography"
                   value={biography}
                   onChange={(e) => setBiography(e.target.value)}
-                  placeholder="Décrivez votre style de jeu, vos préférences..."
+                  placeholder={t.profileEditor.biographyPlaceholder}
                   className="w-full mt-2 p-3 bg-slate-950 border border-slate-700 rounded-lg text-slate-200 min-h-[100px] focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500"
                   maxLength={500}
                 />
-                <p className="text-xs text-slate-500 mt-1">{biography.length}/500 caractères</p>
+                <p className="text-xs text-slate-500 mt-1">{biography.length}/500 chars</p>
               </div>
 
               <div>
-                <Label htmlFor="notes" className="text-cyan-100">Notes Privées</Label>
+                <Label htmlFor="notes" className="text-cyan-100">{t.profileEditor.privateNotes}</Label>
                 <textarea
                   id="notes"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Notes personnelles sur ce profil (visibles uniquement par vous)..."
+                  placeholder={t.profileEditor.privateNotesPlaceholder}
                   className="w-full mt-2 p-3 bg-slate-950 border border-slate-700 rounded-lg text-slate-200 min-h-[80px] focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500"
                   maxLength={300}
                 />
-                <p className="text-xs text-slate-500 mt-1">{notes.length}/300 caractères</p>
+                <p className="text-xs text-slate-500 mt-1">{notes.length}/300 chars</p>
               </div>
 
               <div>
-                <Label className="text-cyan-100 mb-2 block">Tags</Label>
+                <Label className="text-cyan-100 mb-2 block">{t.profileEditor.tags}</Label>
                 <div className="flex flex-wrap gap-2">
                   {AVAILABLE_TAGS.map(tag => (
                     <Badge
@@ -347,7 +349,7 @@ export default function ProfileEditor({
                   ))}
                 </div>
                 <p className="text-xs text-slate-500 mt-2">
-                  {selectedTags.length} tag(s) sélectionné(s)
+                  {selectedTags.length} {t.profileEditor.tagsSelected}
                 </p>
               </div>
             </TabsContent>
@@ -355,19 +357,19 @@ export default function ProfileEditor({
             {/* Onglet Style de Jeu */}
             <TabsContent value="style" className="space-y-6 px-2">
               <div>
-                <h3 className="text-lg font-semibold text-cyan-100 mb-4">Style de Jeu</h3>
+                <h3 className="text-lg font-semibold text-cyan-100 mb-4">{t.profileEditor.playStyle}</h3>
                 <StyleRadarChart style={playingStyle} />
               </div>
 
               <div className="space-y-4">
                 {Object.entries(playingStyle).map(([key, value]) => {
                   const labels: Record<string, string> = {
-                    aggression: 'Agressivité',
-                    tactical: 'Tactique',
-                    positional: 'Positionnel',
-                    endgame: 'Finales',
-                    openingTheory: 'Théorie d\'Ouverture',
-                    timeManagement: 'Gestion du Temps'
+                    aggression: t.profileEditor.aggressiveness,
+                    tactical: t.profileEditor.tactics,
+                    positional: t.profileEditor.positional,
+                    endgame: t.profileEditor.endgames,
+                    openingTheory: t.profileEditor.openingTheory,
+                    timeManagement: t.profileEditor.timeManagement
                   };
 
                   return (
@@ -395,7 +397,7 @@ export default function ProfileEditor({
               </div>
             </TabsContent>
 
-            {/* Onglet Forces/Faiblesses */}
+            {/* Onglet {t.profileEditor.strengthsWeaknesses} */}
             <TabsContent value="skills" className="space-y-6 px-2">
               <div>
                 <Label className="text-cyan-100 mb-2 block flex items-center gap-2">
@@ -418,7 +420,7 @@ export default function ProfileEditor({
                   ))}
                 </div>
                 <p className="text-xs text-slate-500 mt-2">
-                  {strengths.length} force(s) sélectionnée(s)
+                  {strengths.length} {t.profileEditor.tagsSelected}
                 </p>
               </div>
 
@@ -443,7 +445,7 @@ export default function ProfileEditor({
                   ))}
                 </div>
                 <p className="text-xs text-slate-500 mt-2">
-                  {weaknesses.length} faiblesse(s) sélectionnée(s)
+                  {weaknesses.length} {t.profileEditor.weaknessesSelected}
                 </p>
               </div>
             </TabsContent>
@@ -451,10 +453,10 @@ export default function ProfileEditor({
             {/* Onglet Ouvertures */}
             <TabsContent value="openings" className="space-y-4 px-2">
               <div>
-                <Label className="text-cyan-100 mb-2 block">Ajouter une Ouverture</Label>
+                <Label className="text-cyan-100 mb-2 block">{t.profileEditor.addOpening}</Label>
                 <div className="flex gap-2">
                   <Input
-                    placeholder="Nom de l'ouverture"
+                    placeholder={t.profileEditor.openingName}
                     value={newOpeningName}
                     onChange={(e) => setNewOpeningName(e.target.value)}
                     className="flex-1 bg-slate-950 border-slate-700 text-slate-200"
@@ -475,10 +477,10 @@ export default function ProfileEditor({
               </div>
 
               <div className="space-y-2">
-                <Label className="text-cyan-100">Ouvertures Favorites ({favoriteOpenings.length})</Label>
+                <Label className="text-cyan-100">{t.profileEditor.favoriteOpenings} ({favoriteOpenings.length})</Label>
                 {favoriteOpenings.length === 0 ? (
                   <p className="text-slate-500 text-sm py-4 text-center">
-                    Aucune ouverture favorite. Ajoutez-en une ci-dessus !
+                  {t.profileEditor.noFavoriteOpenings}
                   </p>
                 ) : (
                   <div className="space-y-2">
@@ -518,7 +520,7 @@ export default function ProfileEditor({
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <p className="text-sm text-slate-400">
-                    L'analyse IA est générée automatiquement à partir du style de jeu, des forces/faiblesses et des ouvertures.
+                    {t.profileEditor.aiAnalysisDesc}
                   </p>
                   <Button
                     onClick={handleGenerateAI}
@@ -529,12 +531,12 @@ export default function ProfileEditor({
                     {generatingAI ? (
                       <>
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-300 mr-2"></div>
-                        Génération...
+                        {t.profileEditor.generating}
                       </>
                     ) : (
                       <>
                         <Brain className="h-4 w-4 mr-2" />
-                        Générer Analyse
+                        {t.profileEditor.generateAnalysis}
                       </>
                     )}
                   </Button>
@@ -552,7 +554,7 @@ export default function ProfileEditor({
             <TabsContent value="suggestions" className="space-y-4 px-2">
               <div className="mb-4">
                 <p className="text-sm text-slate-400">
-                  Suggestions personnalisées basées sur votre style de jeu et vos préférences.
+                  {t.profileEditor.suggestionsDesc}
                 </p>
               </div>
               
@@ -572,7 +574,7 @@ export default function ProfileEditor({
             onClick={() => onOpenChange(false)}
             className="border-slate-600 text-slate-300 hover:bg-slate-800"
           >
-            Annuler
+            {t.profileEditor.cancel}
           </Button>
           <Button
             onClick={handleSave}
@@ -587,7 +589,7 @@ export default function ProfileEditor({
             ) : (
               <>
                 <Save className="h-4 w-4 mr-2" />
-                Sauvegarder
+                {t.profileEditor.save}
               </>
             )}
           </Button>

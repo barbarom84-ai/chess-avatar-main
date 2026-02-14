@@ -15,8 +15,10 @@ export interface SimilarProfile {
 
 export interface OpeningRecommendation {
   name: string;
+  nameEn?: string;
   eco: string;               // Code ECO
   description: string;
+  descriptionEn?: string;
   suitability: number;       // 0-100
   reasons: string[];         // Pourquoi cette ouverture convient
   difficulty: 'easy' | 'medium' | 'hard';
@@ -39,8 +41,10 @@ export interface ConfigSuggestion {
 
 interface OpeningData {
   name: string;
+  nameEn?: string;
   eco: string;
   description: string;
+  descriptionEn?: string;
   difficulty: 'easy' | 'medium' | 'hard';
   suitableFor: {
     aggression?: { min: number; max: number };
@@ -54,8 +58,10 @@ const OPENINGS_DATABASE: OpeningData[] = [
   // Ouvertures agressives
   {
     name: "Attaque Fried Liver",
+    nameEn: "Fried Liver Attack",
     eco: "C57",
     description: "Attaque ultra-agressive sacrifiant un cavalier pour une attaque dévastatrice",
+    descriptionEn: "Ultra-aggressive attack sacrificing a knight for a devastating attack",
     difficulty: "medium",
     suitableFor: {
       aggression: { min: 75, max: 100 },
@@ -65,8 +71,10 @@ const OPENINGS_DATABASE: OpeningData[] = [
   },
   {
     name: "Gambit du Roi",
+    nameEn: "King's Gambit",
     eco: "C30",
     description: "Sacrifice précoce d'un pion pour ouvrir des lignes et attaquer rapidement",
+    descriptionEn: "Early pawn sacrifice to open lines and attack quickly",
     difficulty: "medium",
     suitableFor: {
       aggression: { min: 80, max: 100 },
@@ -76,8 +84,10 @@ const OPENINGS_DATABASE: OpeningData[] = [
   },
   {
     name: "Défense Sicilienne (Najdorf)",
+    nameEn: "Sicilian Defense (Najdorf)",
     eco: "B90",
     description: "Ouverture complexe et combative, favorite des joueurs agressifs",
+    descriptionEn: "Complex and combative opening, favorite of aggressive players",
     difficulty: "hard",
     suitableFor: {
       aggression: { min: 60, max: 90 },
@@ -90,8 +100,10 @@ const OPENINGS_DATABASE: OpeningData[] = [
   // Ouvertures positionnelles
   {
     name: "Partie Espagnole (Ruy Lopez)",
+    nameEn: "Spanish Game (Ruy Lopez)",
     eco: "C60",
     description: "Ouverture classique riche en plans stratégiques à long terme",
+    descriptionEn: "Classical opening rich in long-term strategic plans",
     difficulty: "medium",
     suitableFor: {
       positional: { min: 70, max: 100 },
@@ -101,8 +113,10 @@ const OPENINGS_DATABASE: OpeningData[] = [
   },
   {
     name: "Partie Italienne",
+    nameEn: "Italian Game",
     eco: "C50",
     description: "Développement harmonieux avec plans positionnels clairs",
+    descriptionEn: "Harmonious development with clear positional plans",
     difficulty: "easy",
     suitableFor: {
       positional: { min: 60, max: 90 },
@@ -112,8 +126,10 @@ const OPENINGS_DATABASE: OpeningData[] = [
   },
   {
     name: "Défense Caro-Kann",
+    nameEn: "Caro-Kann Defense",
     eco: "B10",
     description: "Ouverture solide et fiable privilégiant la structure de pions",
+    descriptionEn: "Solid and reliable opening favoring pawn structure",
     difficulty: "easy",
     suitableFor: {
       positional: { min: 75, max: 100 },
@@ -125,8 +141,10 @@ const OPENINGS_DATABASE: OpeningData[] = [
   // Ouvertures équilibrées
   {
     name: "Partie des Quatre Cavaliers",
+    nameEn: "Four Knights Game",
     eco: "C46",
     description: "Développement symétrique et sain, idéal pour débutants",
+    descriptionEn: "Symmetrical and sound development, ideal for beginners",
     difficulty: "easy",
     suitableFor: {
       positional: { min: 50, max: 80 },
@@ -136,8 +154,10 @@ const OPENINGS_DATABASE: OpeningData[] = [
   },
   {
     name: "Défense Française",
+    nameEn: "French Defense",
     eco: "C00",
     description: "Ouverture solide avec possibilités tactiques et contre-attaque",
+    descriptionEn: "Solid opening with tactical possibilities and counterattack",
     difficulty: "medium",
     suitableFor: {
       positional: { min: 65, max: 90 },
@@ -147,8 +167,10 @@ const OPENINGS_DATABASE: OpeningData[] = [
   },
   {
     name: "Défense Est-Indienne",
+    nameEn: "King's Indian Defense",
     eco: "E60",
     description: "Système flexible permettant contre-jeu dynamique",
+    descriptionEn: "Flexible system allowing dynamic counterplay",
     difficulty: "medium",
     suitableFor: {
       positional: { min: 60, max: 85 },
@@ -161,8 +183,10 @@ const OPENINGS_DATABASE: OpeningData[] = [
   // Ouvertures fermées
   {
     name: "Ouverture Anglaise",
+    nameEn: "English Opening",
     eco: "A10",
     description: "Ouverture hypermoderne avec nombreuses transpositions possibles",
+    descriptionEn: "Hypermodern opening with many possible transpositions",
     difficulty: "medium",
     suitableFor: {
       positional: { min: 70, max: 95 },
@@ -172,8 +196,10 @@ const OPENINGS_DATABASE: OpeningData[] = [
   },
   {
     name: "Défense Slave",
+    nameEn: "Slav Defense",
     eco: "D10",
     description: "Défense solide du gambit dame, très fiable",
+    descriptionEn: "Solid defense of the Queen's Gambit, very reliable",
     difficulty: "easy",
     suitableFor: {
       positional: { min: 70, max: 95 },
@@ -185,8 +211,10 @@ const OPENINGS_DATABASE: OpeningData[] = [
   // Ouvertures tactiques
   {
     name: "Dragon de Sicilienne",
+    nameEn: "Sicilian Dragon",
     eco: "B70",
     description: "Variante explosive de la Sicilienne avec attaques mutuelles",
+    descriptionEn: "Explosive Sicilian variation with mutual attacks",
     difficulty: "hard",
     suitableFor: {
       aggression: { min: 75, max: 95 },
@@ -196,8 +224,10 @@ const OPENINGS_DATABASE: OpeningData[] = [
   },
   {
     name: "Gambit de Budapest",
+    nameEn: "Budapest Gambit",
     eco: "A51",
     description: "Gambit agressif sacrifiant un pion pour initiatives actives",
+    descriptionEn: "Aggressive gambit sacrificing a pawn for active initiative",
     difficulty: "medium",
     suitableFor: {
       aggression: { min: 70, max: 95 },
@@ -233,9 +263,9 @@ export function calculateProfileMatch(
     totalScore += (styleSimilarity / 100) * 40;
     
     if (styleSimilarity >= 80) {
-      reasons.push("Style de jeu très similaire");
+      reasons.push("Very similar playing style");
     } else if (styleSimilarity >= 70) {
-      reasons.push("Style de jeu compatible");
+      reasons.push("Compatible playing style");
     }
   }
   
@@ -248,14 +278,14 @@ export function calculateProfileMatch(
     totalScore += (tagScore / 100) * 20;
     
     if (commonTags.length > 0) {
-      reasons.push(`${commonTags.length} tag(s) en commun`);
+      reasons.push(`${commonTags.length} tag(s) in common`);
     }
   }
   
   // 3. Plateforme (10% du score)
   if (otherProfile.platform === userMetadata.profileId) { // Approximation
     totalScore += 10;
-    reasons.push("Même plateforme");
+    reasons.push("Same platform");
   }
   
   // 4. Forces/Faiblesses complémentaires (15% du score)
@@ -265,7 +295,7 @@ export function calculateProfileMatch(
     );
     if (commonStrengths.length > 0) {
       totalScore += 15;
-      reasons.push("Points forts communs");
+      reasons.push("Common strengths");
     }
   }
   
@@ -324,9 +354,16 @@ export function findSimilarProfiles(
 /**
  * Vérifier si une ouverture correspond au style
  */
-function isOpeningSuitable(opening: OpeningData, style: PlayingStyle): { suitable: boolean; score: number; reasons: string[] } {
+function isOpeningSuitable(opening: OpeningData, style: PlayingStyle, lang: string = 'fr'): { suitable: boolean; score: number; reasons: string[] } {
   let score = 0;
   const reasons: string[] = [];
+  
+  const reasonTexts = {
+    aggressiveStyle: lang === 'en' ? "Matches your aggressive style" : "Correspond à votre style agressif",
+    tacticalSkills: lang === 'en' ? "Suited to your tactical skills" : "Adapté à vos compétences tactiques",
+    positionalPlay: lang === 'en' ? "Fits your positional play" : "Convient à votre jeu positionnel",
+    universalOpening: lang === 'en' ? "Universal opening suited to all styles" : "Ouverture universelle adaptée à tous styles"
+  };
   
   // Vérifier chaque critère
   if (opening.suitableFor.aggression) {
@@ -334,7 +371,7 @@ function isOpeningSuitable(opening: OpeningData, style: PlayingStyle): { suitabl
     if (style.aggression >= min && style.aggression <= max) {
       score += 35;
       if (style.aggression >= 75) {
-        reasons.push("Correspond à votre style agressif");
+        reasons.push(reasonTexts.aggressiveStyle);
       }
     } else if (Math.abs(style.aggression - min) <= 15 || Math.abs(style.aggression - max) <= 15) {
       score += 15;
@@ -346,7 +383,7 @@ function isOpeningSuitable(opening: OpeningData, style: PlayingStyle): { suitabl
     if (style.tactical >= min && style.tactical <= max) {
       score += 35;
       if (style.tactical >= 75) {
-        reasons.push("Adapté à vos compétences tactiques");
+        reasons.push(reasonTexts.tacticalSkills);
       }
     } else if (Math.abs(style.tactical - min) <= 15 || Math.abs(style.tactical - max) <= 15) {
       score += 15;
@@ -358,7 +395,7 @@ function isOpeningSuitable(opening: OpeningData, style: PlayingStyle): { suitabl
     if (style.positional >= min && style.positional <= max) {
       score += 30;
       if (style.positional >= 75) {
-        reasons.push("Convient à votre jeu positionnel");
+        reasons.push(reasonTexts.positionalPlay);
       }
     } else if (Math.abs(style.positional - min) <= 15 || Math.abs(style.positional - max) <= 15) {
       score += 10;
@@ -373,7 +410,7 @@ function isOpeningSuitable(opening: OpeningData, style: PlayingStyle): { suitabl
   return {
     suitable: score >= 50,
     score: Math.min(100, score),
-    reasons: reasons.length > 0 ? reasons : ["Ouverture universelle adaptée à tous styles"]
+    reasons: reasons.length > 0 ? reasons : [reasonTexts.universalOpening]
   };
 }
 
@@ -383,7 +420,8 @@ function isOpeningSuitable(opening: OpeningData, style: PlayingStyle): { suitabl
 export function recommendOpenings(
   style: PlayingStyle,
   existingOpenings: string[] = [],
-  limit: number = 5
+  limit: number = 5,
+  lang: string = 'fr'
 ): OpeningRecommendation[] {
   const recommendations: OpeningRecommendation[] = [];
   
@@ -393,13 +431,15 @@ export function recommendOpenings(
       continue;
     }
     
-    const { suitable, score, reasons } = isOpeningSuitable(opening, style);
+    const { suitable, score, reasons } = isOpeningSuitable(opening, style, lang);
     
     if (suitable) {
       recommendations.push({
-        name: opening.name,
+        name: lang === 'en' && opening.nameEn ? opening.nameEn : opening.name,
+        nameEn: opening.nameEn,
         eco: opening.eco,
-        description: opening.description,
+        description: lang === 'en' && opening.descriptionEn ? opening.descriptionEn : opening.description,
+        descriptionEn: opening.descriptionEn,
         suitability: score,
         reasons,
         difficulty: opening.difficulty,
@@ -467,6 +507,6 @@ export function suggestOptimalConfig(style: PlayingStyle): ConfigSuggestion {
     depth,
     thinkingTime,
     contempt,
-    reason: `Configuration optimisée pour votre style (avg: ${Math.round(avgScore)}/100)`
+    reason: `Optimized configuration for your style (avg: ${Math.round(avgScore)}/100)`
   };
 }

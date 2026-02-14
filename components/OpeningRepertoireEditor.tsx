@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Slider } from "@/components/ui/slider";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { useLanguage } from "@/lib/language-context";
 import { 
   BookOpen, 
   Swords, 
@@ -29,6 +30,9 @@ import {
   REPERTOIRE_PRESETS,
   getOpeningById,
   getOpeningsByColor,
+  getOpeningName,
+  getOpeningDescription,
+  getPresetName,
   type Opening 
 } from "@/lib/openings-library";
 
@@ -43,6 +47,7 @@ export default function OpeningRepertoireEditor({
   blackOpenings,
   onChange
 }: OpeningRepertoireEditorProps) {
+  const { t, lang } = useLanguage();
   const [activeColor, setActiveColor] = useState<'white' | 'black'>('white');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -134,10 +139,10 @@ export default function OpeningRepertoireEditor({
       {/* Titre */}
       <div className="flex items-center gap-2">
         <BookOpen className="h-5 w-5 text-cyan-400" />
-        <h3 className="text-lg font-semibold text-slate-200">Répertoire d'Ouvertures</h3>
+        <h3 className="text-lg font-semibold text-slate-200">{t.openingEditor.title}</h3>
       </div>
       <p className="text-sm text-slate-400">
-        Choisissez les ouvertures que votre bot jouera et ajustez leur fréquence d'utilisation.
+        {t.openingEditor.description}
       </p>
 
       {/* Présets thématiques */}
@@ -145,10 +150,10 @@ export default function OpeningRepertoireEditor({
         <CardHeader className="pb-3">
           <CardTitle className="text-sm flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-cyan-400" />
-            Présets Rapides
+            {t.openingEditor.quickPresets}
           </CardTitle>
           <CardDescription className="text-xs">
-            Appliquez un style prédéfini en un clic
+            {t.openingEditor.quickPresetsDesc}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -161,13 +166,13 @@ export default function OpeningRepertoireEditor({
                 onClick={() => applyPreset(preset.name)}
                 className="border-slate-700 hover:border-cyan-500/50 hover:bg-cyan-500/10 justify-start"
               >
-                {preset.name === 'Assassin' && <Swords className="h-3 w-3 mr-2 text-red-400" />}
-                {preset.name === 'Forteresse' && <Shield className="h-3 w-3 mr-2 text-blue-400" />}
-                {preset.name === 'Hypermoderne' && <TrendingUp className="h-3 w-3 mr-2 text-purple-400" />}
-                {preset.name === 'Old School' && <Crown className="h-3 w-3 mr-2 text-amber-400" />}
-                {preset.name === 'Équilibré' && <Target className="h-3 w-3 mr-2 text-green-400" />}
-                {preset.name === 'Grand Maître' && <Sparkles className="h-3 w-3 mr-2 text-cyan-400" />}
-                <span className="text-xs">{preset.name}</span>
+                {preset.style === 'aggressive' && <Swords className="h-3 w-3 mr-2 text-red-400" />}
+                {preset.style === 'defensive' && <Shield className="h-3 w-3 mr-2 text-blue-400" />}
+                {preset.style === 'hypermodern' && <TrendingUp className="h-3 w-3 mr-2 text-purple-400" />}
+                {preset.style === 'classical' && <Crown className="h-3 w-3 mr-2 text-amber-400" />}
+                {preset.style === 'balanced' && <Target className="h-3 w-3 mr-2 text-green-400" />}
+                {preset.style === 'grandmaster' && <Sparkles className="h-3 w-3 mr-2 text-cyan-400" />}
+                <span className="text-xs">{getPresetName(preset, lang)}</span>
               </Button>
             ))}
           </div>
@@ -178,10 +183,10 @@ export default function OpeningRepertoireEditor({
       <Tabs value={activeColor} onValueChange={(v) => setActiveColor(v as 'white' | 'black')}>
         <TabsList className="grid w-full grid-cols-2 bg-slate-900">
           <TabsTrigger value="white" className="data-[state=active]:bg-slate-800">
-            ⚪ Blancs ({whiteOpenings.length})
+            ⚪ {t.openingEditor.whiteTab} ({whiteOpenings.length})
           </TabsTrigger>
           <TabsTrigger value="black" className="data-[state=active]:bg-slate-800">
-            ⚫ Noirs ({blackOpenings.length})
+            ⚫ {t.openingEditor.blackTab} ({blackOpenings.length})
           </TabsTrigger>
         </TabsList>
 
@@ -191,7 +196,7 @@ export default function OpeningRepertoireEditor({
             <Card className="bg-slate-900/50 border-slate-800">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm">Ouvertures Sélectionnées</CardTitle>
+                  <CardTitle className="text-sm">{t.openingEditor.selectedOpenings}</CardTitle>
                   <Badge variant="outline" className="text-xs border-cyan-500/50 text-cyan-300">
                     Total: {totalWeight}%
                   </Badge>
@@ -214,13 +219,13 @@ export default function OpeningRepertoireEditor({
                                 <div className="flex items-center gap-2 mb-1">
                                   {getCharacterIcon(opening.character)}
                                   <span className="text-sm font-semibold text-slate-200">
-                                    {opening.name}
+                                    {getOpeningName(opening, lang)}
                                   </span>
                                   <Badge variant="outline" className="text-[10px] border-slate-600 text-slate-400">
                                     {opening.eco}
                                   </Badge>
                                 </div>
-                                <p className="text-xs text-slate-400 mb-2">{opening.description}</p>
+                                <p className="text-xs text-slate-400 mb-2">{getOpeningDescription(opening, lang)}</p>
                                 <div className="flex flex-wrap gap-1">
                                   <Badge className={`text-[10px] ${getCharacterColor(opening.character)}`}>
                                     {opening.character}
@@ -249,7 +254,7 @@ export default function OpeningRepertoireEditor({
                             {/* Slider de poids */}
                             <div className="space-y-1">
                               <div className="flex items-center justify-between text-xs">
-                                <Label className="text-slate-400">Fréquence</Label>
+                                <Label className="text-slate-400">{t.openingEditor.frequency}</Label>
                                 <span className="font-semibold text-cyan-400">{percentage}%</span>
                               </div>
                               <Slider
@@ -274,10 +279,10 @@ export default function OpeningRepertoireEditor({
           {/* Ajouter des ouvertures */}
           <Card className="bg-slate-900/50 border-slate-800">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm">Ajouter une Ouverture</CardTitle>
+              <CardTitle className="text-sm">{t.openingEditor.addOpening}</CardTitle>
               <div className="pt-2">
                 <Input
-                  placeholder="Rechercher une ouverture..."
+                  placeholder={t.openingEditor.searchPlaceholder}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="bg-slate-800 border-slate-700 text-sm"
@@ -289,7 +294,7 @@ export default function OpeningRepertoireEditor({
                 <div className="space-y-2">
                   {availableOpenings.length === 0 ? (
                     <div className="text-center py-8 text-slate-500 text-sm">
-                      {searchQuery ? 'Aucune ouverture trouvée' : 'Toutes les ouvertures sont ajoutées'}
+                      {searchQuery ? t.openingEditor.noOpeningsFound : t.openingEditor.allOpeningsAdded}
                     </div>
                   ) : (
                     availableOpenings.map(opening => (
@@ -300,22 +305,22 @@ export default function OpeningRepertoireEditor({
                               <div className="flex items-center gap-2 mb-1">
                                 {getCharacterIcon(opening.character)}
                                 <span className="text-sm font-semibold text-slate-200">
-                                  {opening.name}
+                                  {getOpeningName(opening, lang)}
                                 </span>
                                 <Badge variant="outline" className="text-[10px] border-slate-600 text-slate-400">
                                   {opening.eco}
                                 </Badge>
                               </div>
-                              <p className="text-xs text-slate-400 mb-2">{opening.description}</p>
+                              <p className="text-xs text-slate-400 mb-2">{getOpeningDescription(opening, lang)}</p>
                               <div className="flex flex-wrap gap-1">
                                 <Badge className={`text-[10px] ${getCharacterColor(opening.character)}`}>
                                   {opening.character}
                                 </Badge>
                                 <Badge variant="outline" className="text-[10px] border-slate-600">
-                                  Difficulté: {'⭐'.repeat(opening.difficulty)}
+                                  {t.openingEditor.difficulty}: {'⭐'.repeat(opening.difficulty)}
                                 </Badge>
                                 <Badge variant="outline" className="text-[10px] border-slate-600">
-                                  Popularité: {'❤️'.repeat(opening.popularity)}
+                                  {t.openingEditor.popularity}: {'❤️'.repeat(opening.popularity)}
                                 </Badge>
                               </div>
                             </div>

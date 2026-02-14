@@ -37,7 +37,7 @@ export default function SuggestionsPanel({
   onAddOpening,
   onApplyConfig
 }: SuggestionsPanelProps) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   
   // Icône de difficulté
   const getDifficultyIcon = (difficulty: string) => {
@@ -61,9 +61,9 @@ export default function SuggestionsPanel({
       hard: 'bg-red-600/20 text-red-300 border-red-500/50'
     };
     const labels = {
-      easy: 'Facile',
-      medium: 'Moyen',
-      hard: 'Difficile'
+      easy: t.suggestions.easy,
+      medium: t.suggestions.medium,
+      hard: t.suggestions.hard
     };
     return (
       <Badge className={colors[difficulty as keyof typeof colors]}>
@@ -75,13 +75,13 @@ export default function SuggestionsPanel({
 
   return (
     <div className="space-y-6">
-      {/* Ouvertures Recommandées */}
+      {/* Recommended Openings */}
       {openingRecommendations.length > 0 && (
         <Card className="bg-slate-900/50 border-cyan-500/20 backdrop-blur-sm">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-cyan-100">
               <BookOpen className="h-5 w-5 text-cyan-400" />
-              Ouvertures Recommandées ({openingRecommendations.length})
+              {t.suggestions.recommendedOpenings} ({openingRecommendations.length})
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -93,14 +93,14 @@ export default function SuggestionsPanel({
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-semibold text-cyan-200">{opening.name}</h4>
+                      <h4 className="font-semibold text-cyan-200">{lang === 'en' && opening.nameEn ? opening.nameEn : opening.name}</h4>
                       <Badge variant="outline" className="text-xs">
                         {opening.eco}
                       </Badge>
                       {getDifficultyBadge(opening.difficulty)}
                     </div>
                     <p className="text-sm text-slate-400 mb-2">
-                      {opening.description}
+                      {lang === 'en' && opening.descriptionEn ? opening.descriptionEn : opening.description}
                     </p>
                   </div>
                   {onAddOpening && (
@@ -129,14 +129,14 @@ export default function SuggestionsPanel({
                   <div className="flex items-center gap-1">
                     <TrendingUp className="h-3 w-3 text-green-400" />
                     <span className="text-slate-400">
-                      Adéquation: <span className="text-green-400 font-semibold">{opening.suitability}%</span>
+                      {t.suggestions.suitability}: <span className="text-green-400 font-semibold">{opening.suitability}%</span>
                     </span>
                   </div>
                   {opening.successRate && (
                     <div className="flex items-center gap-1">
                       <Target className="h-3 w-3 text-amber-400" />
                       <span className="text-slate-400">
-                        Succès estimé: <span className="text-amber-400 font-semibold">{opening.successRate}%</span>
+                        {t.suggestions.estimatedSuccess}: <span className="text-amber-400 font-semibold">{opening.successRate}%</span>
                       </span>
                     </div>
                   )}
@@ -145,7 +145,7 @@ export default function SuggestionsPanel({
                 {/* Ressources */}
                 {opening.resources && opening.resources.length > 0 && (
                   <div className="mt-3 pt-3 border-t border-slate-800">
-                    <p className="text-xs text-slate-500 mb-2">Apprendre :</p>
+                    <p className="text-xs text-slate-500 mb-2">{t.suggestions.learn}:</p>
                     <div className="flex flex-wrap gap-2">
                       {opening.resources.map((resource, i) => (
                         <a
@@ -174,7 +174,7 @@ export default function SuggestionsPanel({
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-purple-100">
               <Settings className="h-5 w-5 text-purple-400" />
-              Configuration Moteur Optimale
+              {t.suggestions.optimalEngineConfig}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -184,28 +184,28 @@ export default function SuggestionsPanel({
             
             <div className="grid grid-cols-2 gap-3 mb-4">
               <div className="p-3 bg-slate-950/50 rounded border border-purple-500/20">
-                <p className="text-xs text-slate-500 mb-1">Difficulté</p>
+                <p className="text-xs text-slate-500 mb-1">{t.suggestions.difficulty}</p>
                 <p className="text-xl font-bold text-purple-300">
                   {configSuggestion.difficulty}/5
                 </p>
               </div>
               
               <div className="p-3 bg-slate-950/50 rounded border border-purple-500/20">
-                <p className="text-xs text-slate-500 mb-1">Threads CPU</p>
+                <p className="text-xs text-slate-500 mb-1">{t.suggestions.cpuThreads}</p>
                 <p className="text-xl font-bold text-purple-300">
                   {configSuggestion.threads}
                 </p>
               </div>
               
               <div className="p-3 bg-slate-950/50 rounded border border-purple-500/20">
-                <p className="text-xs text-slate-500 mb-1">Profondeur</p>
+                <p className="text-xs text-slate-500 mb-1">{t.suggestions.depth}</p>
                 <p className="text-xl font-bold text-purple-300">
                   {configSuggestion.depth}
                 </p>
               </div>
               
               <div className="p-3 bg-slate-950/50 rounded border border-purple-500/20">
-                <p className="text-xs text-slate-500 mb-1">Temps (ms)</p>
+                <p className="text-xs text-slate-500 mb-1">{t.suggestions.timeMs}</p>
                 <p className="text-xl font-bold text-purple-300">
                   {configSuggestion.thinkingTime}
                 </p>

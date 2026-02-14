@@ -218,7 +218,7 @@ export default function ForcedLineEditor({ forcedLine = [], onLineChange, title,
                 }}
                 className="text-xs text-cyan-400 hover:text-cyan-300 block"
               >
-                • Blancs - Italienne : e4, Nf3, Bc4
+                • {t.forcedLineEditor.presetWhiteItalian}
               </button>
               <button
                 type="button"
@@ -230,7 +230,7 @@ export default function ForcedLineEditor({ forcedLine = [], onLineChange, title,
                 }}
                 className="text-xs text-cyan-400 hover:text-cyan-300 block"
               >
-                • Noirs - Défense : e5, Nc6, Nf6
+                • {t.forcedLineEditor.presetBlackDefense}
               </button>
               <button
                 type="button"
@@ -242,7 +242,7 @@ export default function ForcedLineEditor({ forcedLine = [], onLineChange, title,
                 }}
                 className="text-xs text-cyan-400 hover:text-cyan-300 block"
               >
-                • Blancs - Indienne : d4, c4, Nc3, Nf3
+                • {t.forcedLineEditor.presetWhiteIndian}
               </button>
             </div>
           </div>
@@ -250,12 +250,12 @@ export default function ForcedLineEditor({ forcedLine = [], onLineChange, title,
 
         {/* Info */}
         <div className="bg-blue-950/30 border border-blue-800/50 p-3 rounded text-sm text-blue-200">
-          <p className="font-semibold mb-1">ℹ️ Comment ça fonctionne :</p>
+          <p className="font-semibold mb-1">ℹ️ {t.forcedLineEditor.howItWorks}</p>
           <ul className="space-y-1 text-xs list-disc list-inside">
-            <li>Le bot jouera <strong>uniquement ces coups</strong> à ses propres tours</li>
-            <li>L'adversaire peut jouer ce qu'il veut, le bot suivra sa séquence</li>
-            <li>Après avoir joué tous les coups forcés, le bot continuera avec Stockfish</li>
-            <li>Exemple : Si vous mettez [e4, Nf3, Bc4], le bot jouera e4 au coup 1, Nf3 au coup 2, Bc4 au coup 3</li>
+            <li>{t.forcedLineEditor.howItWorksLine1}</li>
+            <li>{t.forcedLineEditor.howItWorksLine2}</li>
+            <li>{t.forcedLineEditor.howItWorksLine3}</li>
+            <li>{t.forcedLineEditor.howItWorksLine4}</li>
           </ul>
         </div>
       </CardContent>

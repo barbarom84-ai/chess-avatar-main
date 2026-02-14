@@ -24,7 +24,7 @@ export default function UpgradeModal({ open, onOpenChange, userId, email, reason
 
   const handleCheckout = async () => {
     if (!userId || !email) {
-      setError('Veuillez vous connecter avant de passer à Premium.');
+      setError('${t.upgrade.pleaseLogin}');
       return;
     }
 
@@ -41,14 +41,14 @@ export default function UpgradeModal({ open, onOpenChange, userId, email, reason
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Erreur lors de la création du paiement');
+        throw new Error(data.error || '${t.upgrade.paymentError}');
       }
 
       if (data.url) {
         window.location.href = data.url;
       }
     } catch (err: any) {
-      setError(err.message || 'Erreur inattendue');
+      setError(err.message || '${t.upgrade.unexpectedError}');
     } finally {
       setLoading(false);
     }
@@ -73,7 +73,7 @@ export default function UpgradeModal({ open, onOpenChange, userId, email, reason
                 ChessAvatar Premium
               </DialogTitle>
               <DialogDescription className="text-amber-400/70">
-                Débloquez toutes les fonctionnalités
+                {t.upgrade.unlockAllFeatures}
               </DialogDescription>
             </div>
           </div>
@@ -87,8 +87,8 @@ export default function UpgradeModal({ open, onOpenChange, userId, email, reason
             }`}>
               <Palette className="h-5 w-5 text-amber-400 flex-shrink-0" />
               <div>
-                <p className="text-sm font-semibold text-slate-200">Tous les thèmes d&apos;échiquier</p>
-                <p className="text-xs text-slate-400">8 thèmes couleur au lieu de 1</p>
+                <p className="text-sm font-semibold text-slate-200">{t.upgrade.allBoardThemes}</p>
+                <p className="text-xs text-slate-400">{t.upgrade.themesCount}</p>
               </div>
               <Badge className="ml-auto bg-amber-500/20 text-amber-300 border-amber-500/30">Premium</Badge>
             </div>
@@ -98,7 +98,7 @@ export default function UpgradeModal({ open, onOpenChange, userId, email, reason
             }`}>
               <ImageIcon className="h-5 w-5 text-amber-400 flex-shrink-0" />
               <div>
-                <p className="text-sm font-semibold text-slate-200">Sets de pièces exclusifs</p>
+                <p className="text-sm font-semibold text-slate-200">{t.upgrade.exclusivePieceSets}</p>
                 <p className="text-xs text-slate-400">Fire &amp; Ice, Earth &amp; Stone</p>
               </div>
               <Badge className="ml-auto bg-amber-500/20 text-amber-300 border-amber-500/30">Premium</Badge>
@@ -109,8 +109,8 @@ export default function UpgradeModal({ open, onOpenChange, userId, email, reason
             }`}>
               <Users className="h-5 w-5 text-amber-400 flex-shrink-0" />
               <div>
-                <p className="text-sm font-semibold text-slate-200">Profils illimités</p>
-                <p className="text-xs text-slate-400">Au lieu de 3 profils maximum</p>
+                <p className="text-sm font-semibold text-slate-200">{t.upgrade.unlimitedProfiles}</p>
+                <p className="text-xs text-slate-400">{t.upgrade.profilesLimit}</p>
               </div>
               <Badge className="ml-auto bg-amber-500/20 text-amber-300 border-amber-500/30">Premium</Badge>
             </div>
@@ -120,7 +120,7 @@ export default function UpgradeModal({ open, onOpenChange, userId, email, reason
           <div className="text-center p-4 bg-gradient-to-r from-amber-500/10 via-amber-400/5 to-amber-500/10 rounded-lg border border-amber-500/20">
             <div className="flex items-center justify-center gap-1 mb-2">
               <Sparkles className="h-4 w-4 text-amber-400" />
-              <span className="text-xs text-amber-400 uppercase tracking-wider font-semibold">Paiement unique</span>
+              <span className="text-xs text-amber-400 uppercase tracking-wider font-semibold">{t.upgrade.oneTimePayment}</span>
               <Sparkles className="h-4 w-4 text-amber-400" />
             </div>
             <p className="text-3xl font-bold text-amber-100">
@@ -164,11 +164,11 @@ export default function UpgradeModal({ open, onOpenChange, userId, email, reason
             className="w-full h-12 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-slate-900 font-bold text-lg shadow-lg"
           >
             {loading ? (
-              <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Redirection...</>
+              <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> {t.upgrade.redirecting}</>
             ) : !userId ? (
               'Connectez-vous d\'abord'
             ) : (
-              <><Crown className="mr-2 h-5 w-5" /> Passer à Premium</>
+              <><Crown className="mr-2 h-5 w-5" /> {t.upgrade.upgradeToPremium}</>
             )}
           </Button>
         </div>

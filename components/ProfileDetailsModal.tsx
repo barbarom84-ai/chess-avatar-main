@@ -42,6 +42,22 @@ export default function ProfileDetailsModal({
   onPlay
 }: ProfileDetailsModalProps) {
   const { t } = useLanguage();
+
+  // Translate style names
+  const styleMap: Record<string, string> = {
+    'Agressif': t.performanceCharts.styleAggressive,
+    'Solide': t.performanceCharts.styleSolid,
+    'Équilibré': t.performanceCharts.styleBalanced,
+    'Chaotique': t.performanceCharts.styleChaotic,
+  };
+  const playStyleMap: Record<string, string> = {
+    'agressif': t.engineConfig.playStyleAggressive,
+    'solide': t.engineConfig.playStyleSolid,
+    'équilibré': t.engineConfig.playStyleBalanced,
+    'positionnel': t.engineConfig.playStylePositional,
+    'tactique': t.engineConfig.playStyleTactical,
+  };
+
   const difficultyLabels: Record<number, { label: string; color: string }> = {
     1: { label: t.engineConfig.difficultyBeginner, color: "text-green-400 border-green-400 bg-green-400/10" },
     2: { label: t.engineConfig.difficultyIntermediate, color: "text-blue-400 border-blue-400 bg-blue-400/10" },
@@ -217,7 +233,7 @@ export default function ProfileDetailsModal({
                     <StyleIcon className={`h-6 w-6 ${styleIcon.color}`} />
                   </div>
                   <div>
-                    <p className="font-bold text-lg capitalize text-slate-200">{stats.style}</p>
+                    <p className="font-bold text-lg capitalize text-slate-200">{styleMap[stats.style] || stats.style}</p>
                     <p className="text-sm text-slate-400">{t.profileDetails.mainStyle}</p>
                   </div>
                 </div>
@@ -293,7 +309,7 @@ export default function ProfileDetailsModal({
                           <StyleIcon className={`h-4 w-4 ${styleIcon.color}`} />
                           <p className="text-xs text-slate-400">{t.profileDetails.playStyle}</p>
                         </div>
-                        <p className="font-bold text-slate-200 capitalize">{config.playStyle}</p>
+                        <p className="font-bold text-slate-200 capitalize">{playStyleMap[config.playStyle] || config.playStyle}</p>
                       </div>
 
                       {/* Threads */}

@@ -109,7 +109,7 @@ export default function AIAnalysisCard({ analysis, loading, onRefresh }: AIAnaly
         <div>
           <h3 className="text-sm font-semibold text-purple-300 mb-2 flex items-center gap-2">
             <TrendingUp className="h-4 w-4" />
-            Style de Jeu
+            {t.ui.playingStyle}
           </h3>
           <p className="text-slate-300 leading-relaxed whitespace-pre-line">
             {analysis.styleDescription}
@@ -180,7 +180,7 @@ export default function AIAnalysisCard({ analysis, loading, onRefresh }: AIAnaly
           <div>
             <h3 className="text-sm font-semibold text-purple-300 mb-3 flex items-center gap-2">
               <Users className="h-4 w-4" />
-              Joueurs Similaires
+              {t.aiAnalysisCard.similarPlayers}
             </h3>
             <div className="space-y-3">
               {analysis.famousComparisons.map((comparison, index) => (
@@ -193,7 +193,7 @@ export default function AIAnalysisCard({ analysis, loading, onRefresh }: AIAnaly
                       {comparison.player}
                     </span>
                     <Badge className="bg-purple-600/30 text-purple-300">
-                      {comparison.similarity}% similaire
+                      {comparison.similarity}% {t.aiAnalysisCard.percentSimilar}
                     </Badge>
                   </div>
                   <p className="text-sm text-slate-400">

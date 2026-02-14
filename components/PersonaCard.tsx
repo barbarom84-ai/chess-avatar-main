@@ -101,7 +101,7 @@ export default function PersonaCard({ stats, config, profileId }: PersonaCardPro
     // Vérifier si Supabase est configuré
     const { isSupabaseConfigured } = await import('@/lib/supabase');
     if (!isSupabaseConfigured) {
-      alert('Supabase non configuré. Consultez SUPABASE_SETUP.md pour les instructions.');
+      alert(t.personaCard.supabaseNotConfigured);
       return;
     }
 
@@ -116,16 +116,16 @@ export default function PersonaCard({ stats, config, profileId }: PersonaCardPro
       setSavingCloud(false);
 
       if (result) {
-        alert('✅ Profil sauvegardé dans le cloud avec succès !');
+        alert(t.personaCard.savedSuccess);
       } else {
-        alert('❌ Erreur lors de la sauvegarde. Vérifiez votre connexion et réessayez.');
+        alert(t.personaCard.saveError);
       }
     } catch (error: any) {
       setSavingCloud(false);
       if (error?.message === 'PROFILE_LIMIT_REACHED') {
         setShowUpgradeModal(true);
       } else {
-        alert(`❌ Erreur: ${error?.message || 'Erreur inconnue lors de la sauvegarde'}`);
+        alert(`${t.personaCard.unknownSaveError}: ${error?.message}`);
       }
       console.error('Erreur complète:', error);
     }
@@ -181,9 +181,9 @@ export default function PersonaCard({ stats, config, profileId }: PersonaCardPro
         {/* Barre de Win/Draw/Loss */}
         <div className="space-y-2">
           <div className="flex justify-between text-sm text-slate-400">
-            <span className="text-green-400">Gains {stats.winRate}%</span>
-            <span className="text-slate-400">Nulles {stats.drawRate}%</span>
-            <span className="text-red-400">Pertes {stats.lossRate}%</span>
+            <span className="text-green-400">{t.personaCard.winsPercent} {stats.winRate}%</span>
+            <span className="text-slate-400">{t.personaCard.drawsPercent} {stats.drawRate}%</span>
+            <span className="text-red-400">{t.personaCard.lossesPercent} {stats.lossRate}%</span>
           </div>
           <div className="flex h-3 w-full rounded-full overflow-hidden bg-slate-800">
             <div style={{ width: `${stats.winRate}%` }} className="bg-green-500" />
@@ -204,7 +204,7 @@ export default function PersonaCard({ stats, config, profileId }: PersonaCardPro
             <div className="bg-slate-950 p-3 rounded border border-slate-800">
               <div className="flex items-center gap-2 mb-1">
                 <StyleIcon className={`h-4 w-4 ${styleIcon.color}`} />
-                <p className="text-xs text-slate-400">Style de Jeu</p>
+                <p className="text-xs text-slate-400">{t.personaCard.playStyle}</p>
               </div>
               <p className="font-bold capitalize">{customConfig.playStyle}</p>
             </div>
@@ -213,7 +213,7 @@ export default function PersonaCard({ stats, config, profileId }: PersonaCardPro
             <div className="bg-slate-950 p-3 rounded border border-slate-800">
               <div className="flex items-center gap-2 mb-1">
                 <Swords className="h-4 w-4 text-red-400" />
-                <p className="text-xs text-slate-400">Agressivité</p>
+                <p className="text-xs text-slate-400">{t.personaCard.aggressiveness}</p>
               </div>
               <div className="flex items-center gap-2">
                 <Progress value={customConfig.aggressiveness} className="h-2" />
@@ -225,7 +225,7 @@ export default function PersonaCard({ stats, config, profileId }: PersonaCardPro
             <div className="bg-slate-950 p-3 rounded border border-slate-800">
               <div className="flex items-center gap-2 mb-1">
                 <Cpu className="h-4 w-4 text-cyan-400" />
-                <p className="text-xs text-slate-400">Threads CPU</p>
+                <p className="text-xs text-slate-400">{t.personaCard.cpuThreads}</p>
               </div>
               <p className="font-bold">{customConfig.threads} thread{customConfig.threads > 1 ? 's' : ''}</p>
             </div>
@@ -234,16 +234,16 @@ export default function PersonaCard({ stats, config, profileId }: PersonaCardPro
             <div className="bg-slate-950 p-3 rounded border border-slate-800">
               <div className="flex items-center gap-2 mb-1">
                 <TrendingUp className="h-4 w-4 text-purple-400" />
-                <p className="text-xs text-slate-400">Profondeur</p>
+                <p className="text-xs text-slate-400">{t.personaCard.depth}</p>
               </div>
-              <p className="font-bold">Niveau {customConfig.depth}</p>
+              <p className="font-bold">{t.personaCard.depthLevel} {customConfig.depth}</p>
             </div>
 
             {/* Temps de réflexion */}
             <div className="bg-slate-950 p-3 rounded border border-slate-800">
               <div className="flex items-center gap-2 mb-1">
                 <Clock className="h-4 w-4 text-blue-400" />
-                <p className="text-xs text-slate-400">Réflexion</p>
+                <p className="text-xs text-slate-400">{t.personaCard.thinkingTime}</p>
               </div>
               <p className="font-bold">{customConfig.timeControl}ms</p>
             </div>
@@ -252,7 +252,7 @@ export default function PersonaCard({ stats, config, profileId }: PersonaCardPro
             <div className="bg-slate-950 p-3 rounded border border-slate-800">
               <div className="flex items-center gap-2 mb-1">
                 <Activity className="h-4 w-4 text-green-400" />
-                <p className="text-xs text-slate-400">Moy. Coups</p>
+                <p className="text-xs text-slate-400">{t.personaCard.avgMoves}</p>
               </div>
               <p className="font-bold">{stats.avgMoves}</p>
             </div>
@@ -266,7 +266,7 @@ export default function PersonaCard({ stats, config, profileId }: PersonaCardPro
               <BookOpen className="h-5 w-5 text-amber-400" />
             </div>
             <div className="flex-1">
-              <p className="text-xs text-slate-400 mb-1">Ouverture Favorite</p>
+              <p className="text-xs text-slate-400 mb-1">{t.personaCard.favoriteOpening}</p>
               <p className="font-bold text-amber-300">{customConfig.favoriteOpening}</p>
             </div>
           </div>
@@ -274,7 +274,7 @@ export default function PersonaCard({ stats, config, profileId }: PersonaCardPro
 
         {/* Ouvertures du répertoire */}
         <div>
-          <p className="text-sm text-slate-400 mb-2">Répertoire d'Ouvertures</p>
+          <p className="text-sm text-slate-400 mb-2">{t.personaCard.openingRepertoire}</p>
           <div className="flex flex-wrap gap-2">
             {stats.topOpenings.map((op, i) => (
               <Badge 
@@ -294,7 +294,7 @@ export default function PersonaCard({ stats, config, profileId }: PersonaCardPro
             className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white font-bold shadow-lg border border-blue-800"
           >
             <Play className="mr-2 h-4 w-4" />
-            Jouer Contre ce Moteur
+            {t.personaCard.playAgainst}
           </Button>
 
           <div className="grid grid-cols-3 gap-2">
@@ -326,7 +326,7 @@ export default function PersonaCard({ stats, config, profileId }: PersonaCardPro
                 className="border-2 border-cyan-500 bg-cyan-500/10 text-cyan-300 hover:bg-cyan-500/20 hover:text-cyan-200 hover:border-cyan-400 font-semibold shadow-md"
               >
                 <Save className="mr-2 h-4 w-4" />
-                Sauvegarder
+                {t.personaCard.save}
               </Button>
             )}
 

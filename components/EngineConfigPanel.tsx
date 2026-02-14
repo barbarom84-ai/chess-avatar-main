@@ -256,12 +256,12 @@ export default function EngineConfigPanel({
         {/* Paramètres Détaillés */}
         <div className="grid grid-cols-1 gap-4">
           
-          {/* Agressivité */}
+          {/* Aggressiveness */}
           <div className="bg-slate-950 p-4 rounded-lg border border-slate-800">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <Swords className="h-4 w-4 text-red-400" />
-                <span className="text-sm font-semibold text-slate-300">Agressivité</span>
+                <span className="text-sm font-semibold text-slate-300">{t.engineConfig.aggressiveness}</span>
               </div>
               <span className="text-sm font-bold text-red-400">{config.aggressiveness}%</span>
             </div>
@@ -276,18 +276,18 @@ export default function EngineConfigPanel({
               className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-red-500 disabled:opacity-50"
             />
             <div className="flex justify-between text-xs text-slate-500 mt-1">
-              <span>Défensif</span>
-              <span>Équilibré</span>
-              <span>Agressif</span>
+              <span>{t.engineConfig.defensive}</span>
+              <span>{t.engineConfig.balanced}</span>
+              <span>{t.engineConfig.aggressive}</span>
             </div>
           </div>
 
-          {/* Threads CPU */}
+          {/* CPU Threads */}
           <div className="bg-slate-950 p-4 rounded-lg border border-slate-800">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <Cpu className="h-4 w-4 text-cyan-400" />
-                <span className="text-sm font-semibold text-slate-300">Threads CPU</span>
+                <span className="text-sm font-semibold text-slate-300">{t.engineConfig.cpuThreads}</span>
               </div>
               <span className="text-sm font-bold text-cyan-400">{config.threads}</span>
             </div>
@@ -302,18 +302,18 @@ export default function EngineConfigPanel({
               className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-500 disabled:opacity-50"
             />
             <p className="text-xs text-slate-500 mt-1">
-              Plus de threads = calcul plus rapide (minimum 2, utilise plus de CPU)
+              {t.engineConfig.threadsDesc}
             </p>
           </div>
 
-          {/* Profondeur de Calcul */}
+          {/* Search Depth */}
           <div className="bg-slate-950 p-4 rounded-lg border border-slate-800">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <TrendingUp className="h-4 w-4 text-purple-400" />
-                <span className="text-sm font-semibold text-slate-300">Profondeur de Calcul</span>
+                <span className="text-sm font-semibold text-slate-300">{t.engineConfig.searchDepth}</span>
               </div>
-              <span className="text-sm font-bold text-purple-400">Niveau {config.depth}</span>
+              <span className="text-sm font-bold text-purple-400">{t.engineConfig.depthLevel} {config.depth}</span>
             </div>
             <input
               type="range"
@@ -326,16 +326,16 @@ export default function EngineConfigPanel({
               className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-purple-500 disabled:opacity-50"
             />
             <p className="text-xs text-slate-500 mt-1">
-              Plus profond = meilleur jeu (mais plus lent)
+              {t.engineConfig.depthDesc}
             </p>
           </div>
 
-          {/* Temps de Réflexion */}
+          {/* Thinking Time */}
           <div className="bg-slate-950 p-4 rounded-lg border border-slate-800">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-blue-400" />
-                <span className="text-sm font-semibold text-slate-300">Temps de Réflexion</span>
+                <span className="text-sm font-semibold text-slate-300">{t.engineConfig.thinkTime}</span>
               </div>
               <span className="text-sm font-bold text-blue-400">{config.timeControl}ms</span>
             </div>
@@ -350,9 +350,9 @@ export default function EngineConfigPanel({
               className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500 disabled:opacity-50"
             />
             <div className="flex justify-between text-xs text-slate-500 mt-1">
-              <span>Rapide (100ms)</span>
-              <span>Moyen (2.5s)</span>
-              <span>Lent (5s)</span>
+              <span>{t.engineConfig.fastTime}</span>
+              <span>{t.engineConfig.mediumTime}</span>
+              <span>{t.engineConfig.slowTime}</span>
             </div>
           </div>
 
@@ -363,19 +363,27 @@ export default function EngineConfigPanel({
           <h4 className="text-sm font-semibold text-slate-300 mb-2">{t.engineConfig.configSummary}</h4>
           <div className="grid grid-cols-2 gap-2 text-xs">
             <div>
-              <span className="text-slate-500">Niveau :</span>
+              <span className="text-slate-500">{t.engineConfig.levelSummary} :</span>
               <span className="text-slate-200 ml-2 font-semibold">{config.difficulty}/5</span>
             </div>
             <div>
-              <span className="text-slate-500">ELO Estimé :</span>
+              <span className="text-slate-500">{t.engineConfig.estimatedEloSummary} :</span>
               <span className="text-amber-400 ml-2 font-semibold">{config.elo}</span>
             </div>
             <div>
-              <span className="text-slate-500">Style :</span>
-              <span className="text-slate-200 ml-2 font-semibold capitalize">{config.playStyle}</span>
+              <span className="text-slate-500">{t.engineConfig.styleSummary} :</span>
+              <span className="text-slate-200 ml-2 font-semibold capitalize">{
+                ({
+                  'agressif': t.engineConfig.playStyleAggressive,
+                  'solide': t.engineConfig.playStyleSolid,
+                  'équilibré': t.engineConfig.playStyleBalanced,
+                  'positionnel': t.engineConfig.playStylePositional,
+                  'tactique': t.engineConfig.playStyleTactical,
+                } as Record<string, string>)[config.playStyle] || config.playStyle
+              }</span>
             </div>
             <div>
-              <span className="text-slate-500">Agressivité :</span>
+              <span className="text-slate-500">{t.engineConfig.aggressivenessSummary} :</span>
               <span className="text-red-400 ml-2 font-semibold">{config.aggressiveness}%</span>
             </div>
           </div>
@@ -395,7 +403,7 @@ export default function EngineConfigPanel({
           {/* Tab Ligne Forcée : ouvertures ou personnalisée */}
           <TabsContent value="forced-line" className="mt-6 space-y-4">
             <div>
-              <p className="text-sm font-semibold text-slate-300 mb-2">Source des lignes forcées</p>
+              <p className="text-sm font-semibold text-slate-300 mb-2">{t.engineConfig.forcedLineSource}</p>
               <Tabs
                 value={config.forcedLineSource ?? "custom"}
                 onValueChange={(v) => {
@@ -415,7 +423,7 @@ export default function EngineConfigPanel({
                 <TabsList className="grid w-full grid-cols-2 bg-slate-950 border border-slate-800">
                   <TabsTrigger value="openings" className="data-[state=active]:bg-slate-800">
                     <BookOpen className="h-4 w-4 mr-2" />
-                    Ouvertures du répertoire
+                    {t.engineConfig.forcedLineFromOpenings}
                   </TabsTrigger>
                   <TabsTrigger value="custom" className="data-[state=active]:bg-slate-800">
                     <Target className="h-4 w-4 mr-2" />
@@ -425,7 +433,7 @@ export default function EngineConfigPanel({
                 {(config.forcedLineSource ?? "custom") === "openings" ? (
                   <div className="mt-4 space-y-3">
                     <p className="text-sm text-slate-400">
-                      Les lignes forcées sont synchronisées avec les ouvertures sélectionnées dans l’onglet <strong>Ouvertures</strong> (1re ouverture blanche, 1re noire).
+                      {t.engineConfig.forcedLineSyncDesc}
                     </p>
                     <DerivedForcedLinePreview config={config} />
                   </div>
@@ -436,8 +444,8 @@ export default function EngineConfigPanel({
                       const line = color === "white" ? lines.white : lines.black;
                       const title = color === "white" ? t.engineConfig.forcedLineWhite : t.engineConfig.forcedLineBlack;
                       const desc = color === "white"
-                        ? "Coups que le bot jouera lorsqu’il a les blancs."
-                        : "Coups que le bot jouera lorsqu’il a les noirs.";
+                        ? t.engineConfig.forcedLineWhiteDesc
+                        : t.engineConfig.forcedLineBlackDesc;
                       return (
                         <ForcedLineEditor
                           key={color}

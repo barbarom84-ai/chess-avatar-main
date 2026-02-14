@@ -363,6 +363,11 @@ export const translations = {
       difficultyMaster: "Maître",
       difficultyExpert: "Expert",
       difficultyGrandmaster: "Grand Maître",
+      playStyleAggressive: "Agressif",
+      playStyleSolid: "Solide",
+      playStyleBalanced: "Équilibré",
+      playStylePositional: "Positionnel",
+      playStyleTactical: "Tactique",
       engineConfig: "Configuration Moteur",
       engineConfigAdvanced: "Configuration Avancée du Moteur",
       editProfile: "Éditer le profil",
@@ -393,7 +398,29 @@ export const translations = {
       defaultAvatar: "Avatar par défaut",
       playAgainstProfile: "Jouer contre ce profil",
       viewDetails: "Voir les détails",
-      exportJsonLabel: "Exporter en JSON"
+      exportJsonLabel: "Exporter en JSON",
+      aggressiveness: "Agressivité",
+      defensive: "Défensif",
+      balanced: "Équilibré",
+      aggressive: "Agressif",
+      cpuThreads: "Threads CPU",
+      threadsDesc: "Plus de threads = calcul plus rapide (minimum 2, utilise plus de CPU)",
+      searchDepth: "Profondeur de Calcul",
+      depthLevel: "Niveau",
+      depthDesc: "Plus profond = meilleur jeu (mais plus lent)",
+      thinkTime: "Temps de Réflexion",
+      fastTime: "Rapide (100ms)",
+      mediumTime: "Moyen (2.5s)",
+      slowTime: "Lent (5s)",
+      levelSummary: "Niveau",
+      estimatedEloSummary: "ELO Estimé",
+      styleSummary: "Style",
+      aggressivenessSummary: "Agressivité",
+      forcedLineSource: "Source des lignes forcées",
+      forcedLineFromOpenings: "Ouvertures du répertoire",
+      forcedLineSyncDesc: "Les lignes forcées sont synchronisées avec les ouvertures sélectionnées dans l'onglet Ouvertures (1re ouverture blanche, 1re noire).",
+      forcedLineWhiteDesc: "Coups que le bot jouera lorsqu'il a les blancs.",
+      forcedLineBlackDesc: "Coups que le bot jouera lorsqu'il a les noirs."
     },
 
     // Chessboard settings modal
@@ -413,7 +440,15 @@ export const translations = {
       pieceSets: "Sets de Pièces",
       preview: "Aperçu",
       whitePieces: "Pièces blanches",
-      blackPieces: "Pièces noires"
+      blackPieces: "Pièces noires",
+      animationSpeed: "Vitesse d'Animation",
+      animNone: "Aucune",
+      animFast: "Rapide",
+      animNormal: "Normale",
+      animSlow: "Lente",
+      sound: "Son",
+      soundEffects: "Effets sonores",
+      soundEffectsDesc: "Sons lors des coups, captures, échecs, etc."
     },
 
     // Game viewer / analysis
@@ -466,6 +501,199 @@ export const translations = {
       newImageUrlPlaceholder: "https://example.com/avatar.jpg",
       enterImageUrlHint: "Entrez l'URL d'une image (formats supportés : JPG, PNG, WebP)",
       updateAvatar: "Mettre à Jour l'Avatar"
+    },
+
+    // Performance charts
+    performanceCharts: {
+      title: "Analyse de Performance",
+      styleTab: "Style",
+      resultsTab: "Résultats",
+      openingsTab: "Ouvertures",
+      phasesTab: "Phases",
+      gameProfile: "Profil de Jeu",
+      resultDistribution: "Distribution des Résultats",
+      games: "parties",
+      wins: "Victoires",
+      draws: "Nulles",
+      losses: "Défaites",
+      openingRepertoire: "Répertoire d'Ouvertures",
+      phaseAnalysis: "Analyse par Phase",
+      overallAverage: "Moyenne générale",
+      aggressiveness: "Agressivité",
+      precision: "Précision",
+      defense: "Défense",
+      tactics: "Tactique",
+      positional: "Positionnel",
+      styleAggressive: "Agressif",
+      styleBalanced: "Équilibré",
+      styleSolid: "Solide",
+      styleChaotic: "Chaotique",
+      phaseOpening: "Ouverture",
+      phaseMiddlegame: "Milieu",
+      phaseEndgame: "Finale"
+    },
+
+    // Style radar chart
+    styleRadar: {
+      aggressiveness: "Agressivité",
+      tactics: "Tactique",
+      positional: "Positionnel",
+      endgames: "Finales",
+      theory: "Théorie",
+      timeManagement: "Gestion Temps"
+    },
+
+    // Suggestions panel
+    suggestions: {
+      easy: "Facile",
+      medium: "Moyen",
+      hard: "Difficile",
+      recommendedOpenings: "Ouvertures Recommandées",
+      optimalEngineConfig: "Configuration Moteur Optimale",
+      suitability: "Adéquation",
+      estimatedSuccess: "Succès estimé",
+      learn: "Apprendre",
+      difficulty: "Difficulté",
+      cpuThreads: "Threads CPU",
+      depth: "Profondeur",
+      timeMs: "Temps (ms)"
+    },
+
+    // Profile editor
+    profileEditor: {
+      strengthsWeaknesses: "Forces/Faiblesses",
+      openings: "Ouvertures",
+      aiAnalysis: "Analyse IA",
+      biography: "Biographie",
+      biographyPlaceholder: "Décrivez votre style de jeu, vos préférences...",
+      privateNotes: "Notes Privées",
+      privateNotesPlaceholder: "Notes personnelles sur ce profil (visibles uniquement par vous)...",
+      tags: "Tags",
+      tagsSelected: "tag(s) sélectionné(s)",
+      playStyle: "Style de Jeu",
+      aggressiveness: "Agressivité",
+      tactics: "Tactique",
+      positional: "Positionnel",
+      endgames: "Finales",
+      openingTheory: "Théorie d'Ouverture",
+      timeManagement: "Gestion du Temps",
+      weaknessesSelected: "faiblesse(s) sélectionnée(s)",
+      addOpening: "Ajouter une Ouverture",
+      openingName: "Nom de l'ouverture",
+      add: "Ajouter",
+      favoriteOpenings: "Ouvertures Favorites",
+      noFavoriteOpenings: "Aucune ouverture favorite. Ajoutez-en une ci-dessus !",
+      aiAnalysisDesc: "L'analyse IA est générée automatiquement à partir de vos parties et de votre style de jeu.",
+      generating: "Génération...",
+      generateAnalysis: "Générer Analyse",
+      suggestionsDesc: "Suggestions personnalisées basées sur votre style de jeu et vos préférences.",
+      cancel: "Annuler",
+      saving: "Sauvegarde...",
+      save: "Sauvegarder"
+    },
+
+    // Opening repertoire editor
+    openingEditor: {
+      title: "Répertoire d'Ouvertures",
+      description: "Choisissez les ouvertures que votre bot jouera et ajustez leur fréquence d'utilisation.",
+      quickPresets: "Présets Rapides",
+      quickPresetsDesc: "Appliquez un style prédéfini en un clic",
+      whiteTab: "Blancs",
+      blackTab: "Noirs",
+      selectedOpenings: "Ouvertures Sélectionnées",
+      total: "Total",
+      frequency: "Fréquence",
+      searchPlaceholder: "Rechercher une ouverture...",
+      noOpeningsFound: "Aucune ouverture trouvée",
+      allOpeningsAdded: "Toutes les ouvertures sont ajoutées",
+      difficulty: "Difficulté",
+      popularity: "Popularité",
+      addOpening: "Ajouter une Ouverture"
+    },
+
+    // Upgrade modal
+    upgrade: {
+      pleaseLogin: "Veuillez vous connecter avant de passer à Premium.",
+      paymentError: "Erreur lors de la création du paiement",
+      unexpectedError: "Erreur inattendue",
+      unlockAllFeatures: "Débloquez toutes les fonctionnalités",
+      allBoardThemes: "Tous les thèmes d'échiquier",
+      themesCount: "8 thèmes couleur au lieu de 1",
+      exclusivePieceSets: "Sets de pièces exclusifs",
+      unlimitedProfiles: "Profils illimités",
+      profilesLimit: "Au lieu de 3 profils maximum",
+      oneTimePayment: "Paiement unique",
+      lifetimeAccess: "Accès à vie — pas d'abonnement",
+      redirecting: "Redirection...",
+      loginFirst: "Connectez-vous d'abord",
+      upgradeToPremium: "Passer à Premium"
+    },
+
+    // Promotion dialog
+    promotion: {
+      choosePromotion: "Choisir une pièce de promotion",
+      selectPiece: "Sélectionnez une pièce pour promouvoir votre pion",
+      queen: "Dame",
+      rook: "Tour",
+      bishop: "Fou",
+      knight: "Cavalier"
+    },
+
+    // Persona card
+    personaCard: {
+      playAgainst: "Jouer Contre ce Moteur",
+      supabaseNotConfigured: "Supabase non configuré. Consultez SUPABASE_SETUP.md pour les instructions.",
+      savedSuccess: "Profil sauvegardé dans le cloud avec succès !",
+      saveError: "Erreur lors de la sauvegarde. Vérifiez votre connexion et réessayez.",
+      unknownSaveError: "Erreur inconnue lors de la sauvegarde",
+      playStyle: "Style de Jeu",
+      aggressiveness: "Agressivité",
+      cpuThreads: "Threads CPU",
+      depth: "Profondeur",
+      depthLevel: "Niveau",
+      thinkingTime: "Réflexion",
+      avgMoves: "Moy. Coups",
+      favoriteOpening: "Ouverture Favorite",
+      openingRepertoire: "Répertoire d'Ouvertures",
+      winsPercent: "Gains",
+      drawsPercent: "Nulles",
+      lossesPercent: "Pertes",
+      save: "Sauvegarder",
+      profile: "Profil"
+    },
+
+    // Playable chessboard
+    playableBoard: {
+      player: "Joueur",
+      turn: "Tour",
+      moves: "Coups",
+      rule50: "Règle 50",
+      nearDraw: "Proche nulle !"
+    },
+
+    // Forced line editor extended
+    forcedLineEditor: {
+      presetWhiteItalian: "Blancs - Italienne : e4, Nf3, Bc4",
+      presetBlackDefense: "Noirs - Défense : e5, Nc6, Nf6",
+      presetWhiteIndian: "Blancs - Indienne : d4, c4, Nc3, Nf3",
+      howItWorks: "Comment ça fonctionne :",
+      howItWorksLine1: "Le bot jouera uniquement ces coups dans l'ordre, tant que c'est son tour.",
+      howItWorksLine2: "L'adversaire peut jouer n'importe quoi — le bot suivra sa ligne quoi qu'il arrive.",
+      howItWorksLine3: "Après avoir joué tous les coups forcés, le bot reprend son jeu normal.",
+      howItWorksLine4: "Exemple : Si vous mettez e2e4 d2d4, le bot jouera e4 puis d4 comme premiers coups."
+    },
+
+    // AI analysis card
+    aiAnalysisCard: {
+      similarPlayers: "Joueurs Similaires",
+      percentSimilar: "similaire"
+    },
+
+    // UCI export dialog
+    uciExport: {
+      depth: "Profondeur",
+      unlimited: "Illimité",
+      playStyle: "Style de jeu"
     },
 
     // Other UI
@@ -844,6 +1072,11 @@ export const translations = {
       difficultyMaster: "Master",
       difficultyExpert: "Expert",
       difficultyGrandmaster: "Grandmaster",
+      playStyleAggressive: "Aggressive",
+      playStyleSolid: "Solid",
+      playStyleBalanced: "Balanced",
+      playStylePositional: "Positional",
+      playStyleTactical: "Tactical",
       engineConfig: "Engine Configuration",
       engineConfigAdvanced: "Advanced Engine Configuration",
       editProfile: "Edit profile",
@@ -874,7 +1107,29 @@ export const translations = {
       defaultAvatar: "Default avatar",
       playAgainstProfile: "Play against this profile",
       viewDetails: "View details",
-      exportJsonLabel: "Export as JSON"
+      exportJsonLabel: "Export as JSON",
+      aggressiveness: "Aggressiveness",
+      defensive: "Defensive",
+      balanced: "Balanced",
+      aggressive: "Aggressive",
+      cpuThreads: "CPU Threads",
+      threadsDesc: "More threads = faster calculation (minimum 2, uses more CPU)",
+      searchDepth: "Search Depth",
+      depthLevel: "Level",
+      depthDesc: "Deeper = better play (but slower)",
+      thinkTime: "Thinking Time",
+      fastTime: "Fast (100ms)",
+      mediumTime: "Medium (2.5s)",
+      slowTime: "Slow (5s)",
+      levelSummary: "Level",
+      estimatedEloSummary: "Estimated ELO",
+      styleSummary: "Style",
+      aggressivenessSummary: "Aggressiveness",
+      forcedLineSource: "Forced line source",
+      forcedLineFromOpenings: "From repertoire openings",
+      forcedLineSyncDesc: "Forced lines are synced with the openings selected in the Openings tab (1st white opening, 1st black opening).",
+      forcedLineWhiteDesc: "Moves the bot will play when it has white.",
+      forcedLineBlackDesc: "Moves the bot will play when it has black."
     },
 
     // Chessboard settings modal
@@ -894,7 +1149,15 @@ export const translations = {
       pieceSets: "Piece Sets",
       preview: "Preview",
       whitePieces: "White pieces",
-      blackPieces: "Black pieces"
+      blackPieces: "Black pieces",
+      animationSpeed: "Animation Speed",
+      animNone: "None",
+      animFast: "Fast",
+      animNormal: "Normal",
+      animSlow: "Slow",
+      sound: "Sound",
+      soundEffects: "Sound Effects",
+      soundEffectsDesc: "Sounds for moves, captures, checks, etc."
     },
 
     // Game viewer / analysis
@@ -947,6 +1210,199 @@ export const translations = {
       newImageUrlPlaceholder: "https://example.com/avatar.jpg",
       enterImageUrlHint: "Enter an image URL (supported formats: JPG, PNG, WebP)",
       updateAvatar: "Update Avatar"
+    },
+
+    // Performance charts
+    performanceCharts: {
+      title: "Performance Analysis",
+      styleTab: "Style",
+      resultsTab: "Results",
+      openingsTab: "Openings",
+      phasesTab: "Phases",
+      gameProfile: "Game Profile",
+      resultDistribution: "Result Distribution",
+      games: "games",
+      wins: "Wins",
+      draws: "Draws",
+      losses: "Losses",
+      openingRepertoire: "Opening Repertoire",
+      phaseAnalysis: "Phase Analysis",
+      overallAverage: "Overall average",
+      aggressiveness: "Aggressiveness",
+      precision: "Precision",
+      defense: "Defense",
+      tactics: "Tactics",
+      positional: "Positional",
+      styleAggressive: "Aggressive",
+      styleBalanced: "Balanced",
+      styleSolid: "Solid",
+      styleChaotic: "Chaotic",
+      phaseOpening: "Opening",
+      phaseMiddlegame: "Middlegame",
+      phaseEndgame: "Endgame"
+    },
+
+    // Style radar chart
+    styleRadar: {
+      aggressiveness: "Aggressiveness",
+      tactics: "Tactics",
+      positional: "Positional",
+      endgames: "Endgames",
+      theory: "Theory",
+      timeManagement: "Time Mgmt"
+    },
+
+    // Suggestions panel
+    suggestions: {
+      easy: "Easy",
+      medium: "Medium",
+      hard: "Hard",
+      recommendedOpenings: "Recommended Openings",
+      optimalEngineConfig: "Optimal Engine Config",
+      suitability: "Suitability",
+      estimatedSuccess: "Estimated success",
+      learn: "Learn",
+      difficulty: "Difficulty",
+      cpuThreads: "CPU Threads",
+      depth: "Depth",
+      timeMs: "Time (ms)"
+    },
+
+    // Profile editor
+    profileEditor: {
+      strengthsWeaknesses: "Strengths/Weaknesses",
+      openings: "Openings",
+      aiAnalysis: "AI Analysis",
+      biography: "Biography",
+      biographyPlaceholder: "Describe your playing style, preferences...",
+      privateNotes: "Private Notes",
+      privateNotesPlaceholder: "Personal notes about this profile (visible only to you)...",
+      tags: "Tags",
+      tagsSelected: "tag(s) selected",
+      playStyle: "Play Style",
+      aggressiveness: "Aggressiveness",
+      tactics: "Tactics",
+      positional: "Positional",
+      endgames: "Endgames",
+      openingTheory: "Opening Theory",
+      timeManagement: "Time Management",
+      weaknessesSelected: "weakness(es) selected",
+      addOpening: "Add Opening",
+      openingName: "Opening name",
+      add: "Add",
+      favoriteOpenings: "Favorite Openings",
+      noFavoriteOpenings: "No favorite openings. Add one above!",
+      aiAnalysisDesc: "AI analysis is generated automatically from your games and playing style.",
+      generating: "Generating...",
+      generateAnalysis: "Generate Analysis",
+      suggestionsDesc: "Personalized suggestions based on your playing style and preferences.",
+      cancel: "Cancel",
+      saving: "Saving...",
+      save: "Save"
+    },
+
+    // Opening repertoire editor
+    openingEditor: {
+      title: "Opening Repertoire",
+      description: "Choose the openings your bot will play and adjust their frequency.",
+      quickPresets: "Quick Presets",
+      quickPresetsDesc: "Apply a preset style in one click",
+      whiteTab: "White",
+      blackTab: "Black",
+      selectedOpenings: "Selected Openings",
+      total: "Total",
+      frequency: "Frequency",
+      searchPlaceholder: "Search an opening...",
+      noOpeningsFound: "No opening found",
+      allOpeningsAdded: "All openings have been added",
+      difficulty: "Difficulty",
+      popularity: "Popularity",
+      addOpening: "Add Opening"
+    },
+
+    // Upgrade modal
+    upgrade: {
+      pleaseLogin: "Please sign in before upgrading to Premium.",
+      paymentError: "Error creating payment",
+      unexpectedError: "Unexpected error",
+      unlockAllFeatures: "Unlock all features",
+      allBoardThemes: "All board themes",
+      themesCount: "8 color themes instead of 1",
+      exclusivePieceSets: "Exclusive piece sets",
+      unlimitedProfiles: "Unlimited profiles",
+      profilesLimit: "Instead of max 3 profiles",
+      oneTimePayment: "One-time payment",
+      lifetimeAccess: "Lifetime access — no subscription",
+      redirecting: "Redirecting...",
+      loginFirst: "Sign in first",
+      upgradeToPremium: "Upgrade to Premium"
+    },
+
+    // Promotion dialog
+    promotion: {
+      choosePromotion: "Choose a promotion piece",
+      selectPiece: "Select a piece to promote your pawn",
+      queen: "Queen",
+      rook: "Rook",
+      bishop: "Bishop",
+      knight: "Knight"
+    },
+
+    // Persona card
+    personaCard: {
+      playAgainst: "Play Against this Engine",
+      supabaseNotConfigured: "Supabase not configured. See SUPABASE_SETUP.md for instructions.",
+      savedSuccess: "Profile saved to cloud successfully!",
+      saveError: "Error saving. Check your connection and try again.",
+      unknownSaveError: "Unknown error while saving",
+      playStyle: "Play Style",
+      aggressiveness: "Aggressiveness",
+      cpuThreads: "CPU Threads",
+      depth: "Depth",
+      depthLevel: "Level",
+      thinkingTime: "Thinking time",
+      avgMoves: "Avg. Moves",
+      favoriteOpening: "Favorite Opening",
+      openingRepertoire: "Opening Repertoire",
+      winsPercent: "Wins",
+      drawsPercent: "Draws",
+      lossesPercent: "Losses",
+      save: "Save",
+      profile: "Profile"
+    },
+
+    // Playable chessboard
+    playableBoard: {
+      player: "Player",
+      turn: "Turn",
+      moves: "Moves",
+      rule50: "Rule 50",
+      nearDraw: "Near draw!"
+    },
+
+    // Forced line editor extended
+    forcedLineEditor: {
+      presetWhiteItalian: "White - Italian: e4, Nf3, Bc4",
+      presetBlackDefense: "Black - Defense: e5, Nc6, Nf6",
+      presetWhiteIndian: "White - Indian: d4, c4, Nc3, Nf3",
+      howItWorks: "How it works:",
+      howItWorksLine1: "The bot will only play these moves in order, as long as it's their turn.",
+      howItWorksLine2: "The opponent can play anything — the bot will follow its line regardless.",
+      howItWorksLine3: "After playing all forced moves, the bot resumes its normal play.",
+      howItWorksLine4: "Example: If you set e2e4 d2d4, the bot will play e4 then d4 as its first moves."
+    },
+
+    // AI analysis card
+    aiAnalysisCard: {
+      similarPlayers: "Similar Players",
+      percentSimilar: "similar"
+    },
+
+    // UCI export dialog
+    uciExport: {
+      depth: "Depth",
+      unlimited: "Unlimited",
+      playStyle: "Play style"
     },
 
     // Other UI

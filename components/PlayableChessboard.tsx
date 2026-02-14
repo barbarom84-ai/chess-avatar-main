@@ -494,8 +494,8 @@ export default function PlayableChessboard({
       }
       
       // Déterminer les joueurs
-      const whitePlayer = playerColor === 'white' ? 'Joueur' : (config.name || 'Bot IA');
-      const blackPlayer = playerColor === 'black' ? 'Joueur' : (config.name || 'Bot IA');
+      const whitePlayer = playerColor === 'white' ? t.playableBoard.player : (config.name || 'Bot IA');
+      const blackPlayer = playerColor === 'black' ? t.playableBoard.player : (config.name || 'Bot IA');
       
       // Construire les headers PGN
       const headers = [
@@ -642,8 +642,8 @@ export default function PlayableChessboard({
     }
     
     // Déterminer les joueurs
-    const whitePlayer = playerColor === 'white' ? 'Joueur' : (currentConfig.name || 'Bot IA');
-    const blackPlayer = playerColor === 'black' ? 'Joueur' : (currentConfig.name || 'Bot IA');
+    const whitePlayer = playerColor === 'white' ? t.playableBoard.player : (currentConfig.name || 'Bot IA');
+    const blackPlayer = playerColor === 'black' ? t.playableBoard.player : (currentConfig.name || 'Bot IA');
     
     // Construire les headers PGN
     const headers = [
@@ -887,17 +887,17 @@ export default function PlayableChessboard({
             <Card className="p-3 bg-slate-900/50 border-slate-800">
               <div className="space-y-2 text-xs">
                 <div className="flex justify-between items-center">
-                  <span className="text-slate-400">Tour</span>
+                  <span className="text-slate-400">{t.playableBoard.turn}</span>
                   <Badge variant="outline" className="border-cyan-500/50 text-cyan-300 text-xs">
                     {game.turn() === 'w' ? '⚪' : '⚫'}
                   </Badge>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-slate-400">Coups</span>
+                  <span className="text-slate-400">{t.playableBoard.moves}</span>
                   <span className="text-slate-200 font-semibold">{Math.floor(moveHistory.length / 2)}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-slate-400">Règle 50</span>
+                  <span className="text-slate-400">{t.playableBoard.rule50}</span>
                   <Badge 
                     variant="outline" 
                     className={moveCount50 >= 40 ? "border-orange-500/70 text-orange-300 text-xs" : "border-slate-600 text-slate-400 text-xs"}
@@ -907,7 +907,7 @@ export default function PlayableChessboard({
                 </div>
                 {moveCount50 >= 40 && (
                   <div className="text-xs text-orange-400 bg-orange-500/10 p-2 rounded border border-orange-500/30">
-                    ⚠️ Proche nulle !
+                    ⚠️ {t.playableBoard.nearDraw}
                   </div>
                 )}
               </div>
