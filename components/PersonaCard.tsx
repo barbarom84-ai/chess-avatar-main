@@ -6,7 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Download, Bot, Swords, Shield, Activity, Cpu, Clock, Target, BookOpen, TrendingUp, Zap, Play, Settings, Save, Edit } from "lucide-react";
+import { Download, Bot, Swords, Shield, Activity, Cpu, Clock, Target, BookOpen, TrendingUp, Zap, Play, Settings, Save, Edit, Crown } from "lucide-react";
 import type { PersonaStats, EngineConfig } from "@/lib/analysis";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -16,7 +16,9 @@ import { saveRecentConfig } from "@/lib/storage";
 import { saveProfileToCloud, isAuthenticated } from "@/lib/supabase-storage";
 import { prepareConfigForExport } from "@/lib/forced-line-utils";
 import AuthModal from "./AuthModal";
+import UpgradeModal from "./UpgradeModal";
 import { useLanguage } from "@/lib/language-context";
+import { usePremium } from "@/hooks/usePremium";
 
 interface PersonaCardProps {
   stats: PersonaStats;
@@ -45,9 +47,11 @@ export default function PersonaCard({ stats, config, profileId }: PersonaCardPro
   const [showConfigDialog, setShowConfigDialog] = useState(false);
   const [showProfileEditor, setShowProfileEditor] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [customConfig, setCustomConfig] = useState<EngineConfig>(config);
   const [isAuth, setIsAuth] = useState(false);
   const [savingCloud, setSavingCloud] = useState(false);
+  const { isPremium, userId, email } = usePremium();
   
   // Sauvegarder automatiquement dans les récents
   useEffect(() => {
@@ -118,7 +122,11 @@ export default function PersonaCard({ stats, config, profileId }: PersonaCardPro
       }
     } catch (error: any) {
       setSavingCloud(false);
-      alert(`❌ Erreur: ${error?.message || 'Erreur inconnue lors de la sauvegarde'}`);
+      if (error?.message === 'PROFILE_LIMIT_REACHED') {
+        setShowUpgradeModal(true);
+      } else {
+        alert(`❌ Erreur: ${error?.message || 'Erreur inconnue lors de la sauvegarde'}`);
+      }
       console.error('Erreur complète:', error);
     }
   };
@@ -372,6 +380,15 @@ export default function PersonaCard({ stats, config, profileId }: PersonaCardPro
         profileName={customConfig.name}
       />
     )}
+
+    {/* Premium Upgrade Modal */}
+    <UpgradeModal
+      open={showUpgradeModal}
+      onOpenChange={setShowUpgradeModal}
+      userId={userId}
+      email={email}
+      reason="profiles"
+    />
     </>
   );
 }

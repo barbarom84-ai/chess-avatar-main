@@ -23,6 +23,7 @@ export interface PieceSet {
   path: string; // Chemin du dossier des pièces
   ext: string;  // Extension des fichiers ('png' ou 'svg')
   description?: string; // Description courte pour l'UI
+  premium?: boolean; // Requires premium to use
 }
 
 export interface ChessboardSettings {
@@ -36,10 +37,15 @@ export interface ChessboardSettings {
 }
 
 // Thèmes d'échiquier prédéfinis
-export const BOARD_THEMES: BoardTheme[] = [
+export interface BoardThemeWithPremium extends BoardTheme {
+  premium?: boolean;
+}
+
+export const BOARD_THEMES: BoardThemeWithPremium[] = [
   {
     id: 'neon-cyan',
     name: 'Néon Cyan',
+    premium: true,
     lightSquare: '#e9edcc',
     darkSquare: '#779954',
     selectedSquare: '#bbca2b',
@@ -51,6 +57,7 @@ export const BOARD_THEMES: BoardTheme[] = [
   {
     id: 'blue-ocean',
     name: 'Océan Bleu',
+    premium: false,
     lightSquare: '#b4e1f5',
     darkSquare: '#3a7ca5',
     selectedSquare: '#1ea7e8',
@@ -62,6 +69,7 @@ export const BOARD_THEMES: BoardTheme[] = [
   {
     id: 'purple-haze',
     name: 'Brume Violette',
+    premium: true,
     lightSquare: '#e0c3fc',
     darkSquare: '#8965c4',
     selectedSquare: '#b794f6',
@@ -73,6 +81,7 @@ export const BOARD_THEMES: BoardTheme[] = [
   {
     id: 'emerald-forest',
     name: 'Forêt Émeraude',
+    premium: true,
     lightSquare: '#d5f4e6',
     darkSquare: '#2d6a4f',
     selectedSquare: '#52b788',
@@ -84,6 +93,7 @@ export const BOARD_THEMES: BoardTheme[] = [
   {
     id: 'sunset-orange',
     name: 'Coucher de Soleil',
+    premium: true,
     lightSquare: '#ffd6a5',
     darkSquare: '#d97706',
     selectedSquare: '#fb923c',
@@ -95,6 +105,7 @@ export const BOARD_THEMES: BoardTheme[] = [
   {
     id: 'classic-green',
     name: 'Classique Vert',
+    premium: true,
     lightSquare: '#eeeed2',
     darkSquare: '#769656',
     selectedSquare: '#bbcc44',
@@ -106,6 +117,7 @@ export const BOARD_THEMES: BoardTheme[] = [
   {
     id: 'dark-mode',
     name: 'Mode Sombre',
+    premium: true,
     lightSquare: '#4b5563',
     darkSquare: '#1f2937',
     selectedSquare: '#60a5fa',
@@ -117,6 +129,7 @@ export const BOARD_THEMES: BoardTheme[] = [
   {
     id: 'retro-brown',
     name: 'Rétro Marron',
+    premium: true,
     lightSquare: '#f5deb3',
     darkSquare: '#8b4513',
     selectedSquare: '#cd853f',
@@ -135,6 +148,7 @@ export const PIECE_SETS: PieceSet[] = [
     path: '/pieces',
     ext: 'png',
     description: 'Style néon avec circuits tech',
+    premium: false,
   },
   {
     id: 'classic',
@@ -142,6 +156,7 @@ export const PIECE_SETS: PieceSet[] = [
     path: '/pieces/classic',
     ext: 'svg',
     description: 'Pièces Staunton traditionnelles',
+    premium: false,
   },
   {
     id: 'fireice',
@@ -149,6 +164,7 @@ export const PIECE_SETS: PieceSet[] = [
     path: '/pieces/fireice',
     ext: 'svg',
     description: 'Pièces feu et glace contrastées',
+    premium: true,
   },
   {
     id: 'earth-stone',
@@ -156,6 +172,7 @@ export const PIECE_SETS: PieceSet[] = [
     path: '/pieces/earth-stone',
     ext: 'svg',
     description: 'Design élégant et raffiné',
+    premium: true,
   },
   {
     id: 'cburnett',
@@ -163,6 +180,7 @@ export const PIECE_SETS: PieceSet[] = [
     path: '/pieces/cburnett',
     ext: 'svg',
     description: 'Moderne et clair',
+    premium: false,
   },
   {
     id: 'merida',
@@ -170,6 +188,7 @@ export const PIECE_SETS: PieceSet[] = [
     path: '/pieces/merida',
     ext: 'svg',
     description: 'Classique traditionnel',
+    premium: false,
   },
   {
     id: 'alpha',
@@ -177,6 +196,7 @@ export const PIECE_SETS: PieceSet[] = [
     path: '/pieces/alpha',
     ext: 'svg',
     description: 'Minimaliste',
+    premium: false,
   },
   {
     id: 'pirouetti',
@@ -184,6 +204,7 @@ export const PIECE_SETS: PieceSet[] = [
     path: '/pieces/pirouetti',
     ext: 'svg',
     description: 'Artistique',
+    premium: false,
   },
 ];
 
@@ -193,7 +214,7 @@ export function getPieceImagePath(pieceSet: PieceSet, color: string, type: strin
 }
 
 const defaultSettings: ChessboardSettings = {
-  boardTheme: BOARD_THEMES[0], // Néon Cyan par défaut
+  boardTheme: BOARD_THEMES[1], // Océan Bleu par défaut (gratuit)
   pieceSet: PIECE_SETS[0],
   showCoordinates: true,
   showLegalMoves: true,

@@ -1,0 +1,178 @@
+"use client";
+
+import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Crown, Palette, ImageIcon, Users, Loader2, CreditCard, Sparkles } from "lucide-react";
+import { useLanguage } from "@/lib/language-context";
+
+interface UpgradeModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  userId: string | null;
+  email: string | null;
+  reason?: 'theme' | 'pieces' | 'profiles';
+}
+
+export default function UpgradeModal({ open, onOpenChange, userId, email, reason }: UpgradeModalProps) {
+  const [loading, setLoading] = useState(false);
+  const [selectedCurrency, setSelectedCurrency] = useState<'eur' | 'chf' | 'usd'>('eur');
+  const [error, setError] = useState('');
+  const { t } = useLanguage();
+
+  const handleCheckout = async () => {
+    if (!userId || !email) {
+      setError('Veuillez vous connecter avant de passer à Premium.');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const response = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, email, currency: selectedCurrency }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Erreur lors de la création du paiement');
+      }
+
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (err: any) {
+      setError(err.message || 'Erreur inattendue');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const currencySymbol = {
+    eur: '€',
+    chf: 'CHF',
+    usd: '$',
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg bg-slate-900 border-amber-500/30">
+        <DialogHeader>
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-amber-500/20 rounded-lg">
+              <Crown className="h-6 w-6 text-amber-400" />
+            </div>
+            <div>
+              <DialogTitle className="text-2xl font-bold text-amber-100">
+                ChessAvatar Premium
+              </DialogTitle>
+              <DialogDescription className="text-amber-400/70">
+                Débloquez toutes les fonctionnalités
+              </DialogDescription>
+            </div>
+          </div>
+        </DialogHeader>
+
+        <div className="space-y-6 mt-4">
+          {/* Benefits */}
+          <div className="space-y-3">
+            <div className={`flex items-center gap-3 p-3 rounded-lg border ${
+              reason === 'theme' ? 'bg-amber-500/10 border-amber-500/30' : 'bg-slate-800/50 border-slate-700'
+            }`}>
+              <Palette className="h-5 w-5 text-amber-400 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-semibold text-slate-200">Tous les thèmes d&apos;échiquier</p>
+                <p className="text-xs text-slate-400">8 thèmes couleur au lieu de 1</p>
+              </div>
+              <Badge className="ml-auto bg-amber-500/20 text-amber-300 border-amber-500/30">Premium</Badge>
+            </div>
+
+            <div className={`flex items-center gap-3 p-3 rounded-lg border ${
+              reason === 'pieces' ? 'bg-amber-500/10 border-amber-500/30' : 'bg-slate-800/50 border-slate-700'
+            }`}>
+              <ImageIcon className="h-5 w-5 text-amber-400 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-semibold text-slate-200">Sets de pièces exclusifs</p>
+                <p className="text-xs text-slate-400">Fire &amp; Ice, Earth &amp; Stone</p>
+              </div>
+              <Badge className="ml-auto bg-amber-500/20 text-amber-300 border-amber-500/30">Premium</Badge>
+            </div>
+
+            <div className={`flex items-center gap-3 p-3 rounded-lg border ${
+              reason === 'profiles' ? 'bg-amber-500/10 border-amber-500/30' : 'bg-slate-800/50 border-slate-700'
+            }`}>
+              <Users className="h-5 w-5 text-amber-400 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-semibold text-slate-200">Profils illimités</p>
+                <p className="text-xs text-slate-400">Au lieu de 3 profils maximum</p>
+              </div>
+              <Badge className="ml-auto bg-amber-500/20 text-amber-300 border-amber-500/30">Premium</Badge>
+            </div>
+          </div>
+
+          {/* Price + Currency */}
+          <div className="text-center p-4 bg-gradient-to-r from-amber-500/10 via-amber-400/5 to-amber-500/10 rounded-lg border border-amber-500/20">
+            <div className="flex items-center justify-center gap-1 mb-2">
+              <Sparkles className="h-4 w-4 text-amber-400" />
+              <span className="text-xs text-amber-400 uppercase tracking-wider font-semibold">Paiement unique</span>
+              <Sparkles className="h-4 w-4 text-amber-400" />
+            </div>
+            <p className="text-3xl font-bold text-amber-100">
+              10 {currencySymbol[selectedCurrency]}
+            </p>
+            <p className="text-xs text-slate-400 mt-1">Accès à vie — pas d&apos;abonnement</p>
+
+            <div className="flex justify-center gap-2 mt-3">
+              {(['eur', 'chf', 'usd'] as const).map((cur) => (
+                <button
+                  key={cur}
+                  onClick={() => setSelectedCurrency(cur)}
+                  className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                    selectedCurrency === cur
+                      ? 'bg-amber-500 text-slate-900'
+                      : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                  }`}
+                >
+                  {cur.toUpperCase()}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Payment methods info */}
+          <div className="flex items-center justify-center gap-3 text-xs text-slate-500">
+            <CreditCard className="h-4 w-4" />
+            <span>Visa, Mastercard{selectedCurrency === 'chf' ? ', TWINT' : ''}</span>
+          </div>
+
+          {error && (
+            <Alert variant="destructive" className="bg-red-900/20 border-red-700/50 text-red-200">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
+          {/* CTA */}
+          <Button
+            onClick={handleCheckout}
+            disabled={loading || !userId}
+            className="w-full h-12 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-slate-900 font-bold text-lg shadow-lg"
+          >
+            {loading ? (
+              <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Redirection...</>
+            ) : !userId ? (
+              'Connectez-vous d\'abord'
+            ) : (
+              <><Crown className="mr-2 h-5 w-5" /> Passer à Premium</>
+            )}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}

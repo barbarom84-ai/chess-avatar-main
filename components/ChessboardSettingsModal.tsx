@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { 
   Settings, Palette, Image as ImageIcon, Zap, Volume2, VolumeX,
-  Grid, Eye, RotateCcw, Check
+  Grid, Eye, RotateCcw, Check, Lock, Crown
 } from "lucide-react";
 import { 
   useChessboardSettings, 
@@ -21,6 +21,8 @@ import {
   type PieceSet
 } from "@/contexts/ChessboardSettingsContext";
 import { useLanguage } from "@/lib/language-context";
+import { usePremium } from "@/hooks/usePremium";
+import UpgradeModal from "@/components/UpgradeModal";
 
 interface ChessboardSettingsModalProps {
   open: boolean;
@@ -30,10 +32,27 @@ interface ChessboardSettingsModalProps {
 export default function ChessboardSettingsModal({ open, onOpenChange }: ChessboardSettingsModalProps) {
   const { settings, updateSettings, resetSettings } = useChessboardSettings();
   const [activeTab, setActiveTab] = useState("theme");
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [upgradeReason, setUpgradeReason] = useState<'theme' | 'pieces' | 'profiles'>('theme');
   const { t } = useLanguage();
+  const { isPremium, userId, email } = usePremium();
 
-  const handleThemeSelect = (theme: BoardTheme) => {
+  const handleThemeSelect = (theme: BoardTheme & { premium?: boolean }) => {
+    if (theme.premium && !isPremium) {
+      setUpgradeReason('theme');
+      setUpgradeOpen(true);
+      return;
+    }
     updateSettings({ boardTheme: theme });
+  };
+
+  const handlePieceSetSelect = (pieceSet: PieceSet) => {
+    if (pieceSet.premium && !isPremium) {
+      setUpgradeReason('pieces');
+      setUpgradeOpen(true);
+      return;
+    }
+    updateSettings({ pieceSet });
   };
 
   const handleReset = () => {
@@ -125,6 +144,11 @@ export default function ChessboardSettingsModal({ open, onOpenChange }: Chessboa
                             <Check className="h-3 w-3 text-white" />
                           </div>
                         )}
+                        {theme.premium && !isPremium && (
+                          <div className="absolute top-2 left-2 bg-amber-500/80 rounded-full p-1">
+                            <Lock className="h-3 w-3 text-white" />
+                          </div>
+                        )}
                       </div>
                     </button>
                   ))}
@@ -181,11 +205,13 @@ export default function ChessboardSettingsModal({ open, onOpenChange }: Chessboa
                       {PIECE_SETS.map((pieceSet) => (
                         <button
                           key={pieceSet.id}
-                          onClick={() => updateSettings({ pieceSet })}
+                          onClick={() => handlePieceSetSelect(pieceSet)}
                           className={`relative p-3 rounded-lg border-2 transition-all duration-200 text-left ${
                             settings.pieceSet.id === pieceSet.id
                               ? 'border-cyan-500 bg-cyan-500/10'
-                              : 'border-slate-700 hover:border-cyan-500/50 bg-slate-900'
+                              : pieceSet.premium && !isPremium
+                                ? 'border-amber-500/30 hover:border-amber-500/50 bg-slate-900'
+                                : 'border-slate-700 hover:border-cyan-500/50 bg-slate-900'
                           }`}
                         >
                           {settings.pieceSet.id === pieceSet.id && (
@@ -193,8 +219,18 @@ export default function ChessboardSettingsModal({ open, onOpenChange }: Chessboa
                               <Check className="h-3 w-3 text-white" />
                             </div>
                           )}
+                          {pieceSet.premium && !isPremium && (
+                            <div className="absolute top-2 right-2 bg-amber-500/80 rounded-full p-1">
+                              <Lock className="h-3 w-3 text-white" />
+                            </div>
+                          )}
 
-                          <h4 className="font-semibold text-sm text-slate-200 mb-1">{pieceSet.name}</h4>
+                          <h4 className="font-semibold text-sm text-slate-200 mb-1">
+                            {pieceSet.name}
+                            {pieceSet.premium && !isPremium && (
+                              <Crown className="inline ml-1.5 h-3 w-3 text-amber-400" />
+                            )}
+                          </h4>
                           {pieceSet.description && (
                             <p className="text-[10px] text-slate-400 mb-2">{pieceSet.description}</p>
                           )}
@@ -427,6 +463,16 @@ export default function ChessboardSettingsModal({ open, onOpenChange }: Chessboa
         </Tabs>
 
         <div className="flex justify-end gap-2 mt-6 pt-4 border-t border-slate-800">
+          {!isPremium && (
+            <Button
+              variant="outline"
+              onClick={() => { setUpgradeReason('theme'); setUpgradeOpen(true); }}
+              className="border-amber-500/50 text-amber-300 hover:bg-amber-500/10 mr-auto"
+            >
+              <Crown className="mr-2 h-4 w-4" />
+              Premium
+            </Button>
+          )}
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
@@ -435,6 +481,14 @@ export default function ChessboardSettingsModal({ open, onOpenChange }: Chessboa
             Fermer
           </Button>
         </div>
+
+        <UpgradeModal
+          open={upgradeOpen}
+          onOpenChange={setUpgradeOpen}
+          userId={userId}
+          email={email}
+          reason={upgradeReason}
+        />
       </DialogContent>
     </Dialog>
   );

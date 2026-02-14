@@ -37,6 +37,50 @@ export interface DbGame {
 }
 
 /**
+ * Check if user has reached the free profile limit
+ */
+export async function getUserProfileCount(): Promise<number> {
+  if (!isSupabaseConfigured || !supabase) return 0;
+
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return 0;
+
+    const { count, error } = await supabase
+      .from('profiles')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id);
+
+    if (error) return 0;
+    return count ?? 0;
+  } catch {
+    return 0;
+  }
+}
+
+/**
+ * Check if user has premium status
+ */
+export async function checkPremiumStatus(): Promise<boolean> {
+  if (!isSupabaseConfigured || !supabase) return false;
+
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return false;
+
+    const { data } = await supabase
+      .from('subscriptions')
+      .select('plan, status')
+      .eq('user_id', user.id)
+      .single();
+
+    return data?.plan === 'premium' && data?.status === 'active';
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Sauvegarder un profil dans le cloud
  */
 export async function saveProfileToCloud(
@@ -60,6 +104,15 @@ export async function saveProfileToCloud(
     
     if (!user) {
       throw new Error('Utilisateur non authentifié. Veuillez vous connecter.');
+    }
+
+    // Check profile limit for free users
+    const isPremium = await checkPremiumStatus();
+    if (!isPremium) {
+      const profileCount = await getUserProfileCount();
+      if (profileCount >= 3) {
+        throw new Error('PROFILE_LIMIT_REACHED');
+      }
     }
 
     console.log('✅ Utilisateur authentifié:', user.id);
