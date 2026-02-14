@@ -157,6 +157,34 @@ export const PIECE_SETS: PieceSet[] = [
     ext: 'svg',
     description: 'Design élégant et raffiné',
   },
+  {
+    id: 'cburnett',
+    name: 'CBurnett',
+    path: '/pieces/cburnett',
+    ext: 'svg',
+    description: 'Moderne et clair',
+  },
+  {
+    id: 'merida',
+    name: 'Merida',
+    path: '/pieces/merida',
+    ext: 'svg',
+    description: 'Classique traditionnel',
+  },
+  {
+    id: 'alpha',
+    name: 'Alpha',
+    path: '/pieces/alpha',
+    ext: 'svg',
+    description: 'Minimaliste',
+  },
+  {
+    id: 'pirouetti',
+    name: 'Pirouetti',
+    path: '/pieces/pirouetti',
+    ext: 'svg',
+    description: 'Artistique',
+  },
 ];
 
 // Helper pour construire le chemin d'une image de pièce
