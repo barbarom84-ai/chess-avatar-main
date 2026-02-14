@@ -146,7 +146,14 @@ export const translations = {
       page: "Page",
       of: "sur",
       previous: "Précédent",
-      next: "Suivant"
+      next: "Suivant",
+      selectAll: "Tout sélectionner",
+      deselectAll: "Tout désélectionner",
+      selected: "sélectionnée(s)",
+      deleteSelected: "Supprimer la sélection",
+      downloadSelected: "Télécharger la sélection",
+      confirmDeleteMultiple: "Supprimer les {count} parties sélectionnées ?",
+      cancelSelection: "Annuler"
     },
     
     // Guide Page (UCI creator guide)
@@ -868,7 +875,14 @@ export const translations = {
       page: "Page",
       of: "of",
       previous: "Previous",
-      next: "Next"
+      next: "Next",
+      selectAll: "Select all",
+      deselectAll: "Deselect all",
+      selected: "selected",
+      deleteSelected: "Delete selected",
+      downloadSelected: "Download selected",
+      confirmDeleteMultiple: "Delete {count} selected games?",
+      cancelSelection: "Cancel"
     },
     
     // Guide Page (UCI creator guide)

@@ -8,7 +8,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import {
   Trophy, Target, Calendar, Clock, Download, Trash2, 
-  Search, Filter, TrendingUp, Play, Eye, ChevronLeft, ChevronRight
+  Search, Filter, TrendingUp, Play, Eye, ChevronLeft, ChevronRight,
+  CheckSquare, Square, X
 } from "lucide-react";
 import { getUserGames, getGamesStats, deleteGame, type DbGame } from "@/lib/supabase-storage";
 import { isSupabaseConfigured } from "@/lib/supabase";
@@ -27,6 +28,7 @@ export default function GamesPage() {
   const [filterResult, setFilterResult] = useState<'all' | 'win' | 'loss' | 'draw'>('all');
   const [selectedGame, setSelectedGame] = useState<DbGame | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const gamesPerPage = 10;
 
   useEffect(() => {
@@ -82,6 +84,62 @@ export default function GamesPage() {
       loadGames();
       loadStats();
     }
+  };
+
+  // Multi-select helpers
+  const toggleSelectGame = (gameId: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(gameId)) {
+        next.delete(gameId);
+      } else {
+        next.add(gameId);
+      }
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === currentGames.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(currentGames.map(g => g.id)));
+    }
+  };
+
+  const clearSelection = () => setSelectedIds(new Set());
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    const msg = t.games.confirmDeleteMultiple.replace('{count}', String(selectedIds.size));
+    if (!confirm(msg)) return;
+
+    let success = true;
+    for (const id of selectedIds) {
+      const ok = await deleteGame(id);
+      if (!ok) success = false;
+    }
+    setSelectedIds(new Set());
+    loadGames();
+    loadStats();
+  };
+
+  const handleBulkDownload = () => {
+    if (selectedIds.size === 0) return;
+    const selectedGames = filteredGames.filter(g => selectedIds.has(g.id));
+    
+    // Combine all PGNs into a single file
+    const combinedPGN = selectedGames
+      .map(g => g.pgn)
+      .join('\n\n');
+    
+    const blob = new Blob([combinedPGN], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `chess-avatar_${selectedGames.length}-games_${new Date().toISOString().slice(0, 10)}.pgn`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const downloadPGN = (game: DbGame) => {
@@ -316,9 +374,30 @@ export default function GamesPage() {
         {/* Liste des parties */}
         <Card className="bg-slate-900 border-cyan-500/20">
           <CardHeader>
-            <CardTitle className="text-cyan-100">
-              {t.games.history} ({filteredGames.length})
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-cyan-100">
+                {t.games.history} ({filteredGames.length})
+              </CardTitle>
+              {currentGames.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={toggleSelectAll}
+                  className="text-slate-400 hover:text-cyan-300 hover:bg-cyan-500/10 gap-2"
+                >
+                  {selectedIds.size === currentGames.length && currentGames.length > 0 ? (
+                    <CheckSquare className="h-4 w-4 text-cyan-400" />
+                  ) : (
+                    <Square className="h-4 w-4" />
+                  )}
+                  <span className="text-xs">
+                    {selectedIds.size === currentGames.length && currentGames.length > 0
+                      ? t.games.deselectAll
+                      : t.games.selectAll}
+                  </span>
+                </Button>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -342,10 +421,25 @@ export default function GamesPage() {
                   {currentGames.map((game) => (
                     <div
                       key={game.id}
-                      className="p-4 bg-slate-950 rounded-lg border border-slate-800 hover:border-cyan-500/50 transition-all"
+                      className={`p-4 bg-slate-950 rounded-lg border transition-all ${
+                        selectedIds.has(game.id)
+                          ? 'border-cyan-500 bg-cyan-500/5'
+                          : 'border-slate-800 hover:border-cyan-500/50'
+                      }`}
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4 flex-1">
+                          {/* Checkbox */}
+                          <button
+                            onClick={() => toggleSelectGame(game.id)}
+                            className="flex-shrink-0 text-slate-400 hover:text-cyan-400 transition-colors"
+                          >
+                            {selectedIds.has(game.id) ? (
+                              <CheckSquare className="h-5 w-5 text-cyan-400" />
+                            ) : (
+                              <Square className="h-5 w-5" />
+                            )}
+                          </button>
                           {game.opponent_avatar && (
                             <Image 
                               src={game.opponent_avatar} 
@@ -446,6 +540,51 @@ export default function GamesPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* Floating bulk action bar */}
+        {selectedIds.size > 0 && (
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-4 fade-in duration-200">
+            <div className="flex items-center gap-3 px-5 py-3 bg-slate-900 border border-cyan-500/40 rounded-xl shadow-2xl shadow-cyan-900/30 backdrop-blur-sm">
+              <span className="text-sm text-cyan-300 font-semibold whitespace-nowrap">
+                {selectedIds.size} {t.games.selected}
+              </span>
+              
+              <div className="w-px h-6 bg-slate-700" />
+
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleBulkDownload}
+                className="border-cyan-500/50 text-cyan-300 hover:bg-cyan-500/10 gap-1.5"
+              >
+                <Download className="h-4 w-4" />
+                {t.games.downloadSelected}
+              </Button>
+
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleBulkDelete}
+                className="border-red-500/50 text-red-300 hover:bg-red-500/10 gap-1.5"
+              >
+                <Trash2 className="h-4 w-4" />
+                {t.games.deleteSelected}
+              </Button>
+
+              <div className="w-px h-6 bg-slate-700" />
+
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={clearSelection}
+                className="text-slate-400 hover:text-slate-200 p-1.5"
+                title={t.games.cancelSelection}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
