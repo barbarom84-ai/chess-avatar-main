@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { stripe, getStripePriceId } from '@/lib/stripe';
+import { getStripe, getStripePriceId } from '@/lib/stripe';
 
 export async function POST(req: NextRequest) {
   try {
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
       paymentMethodTypes.push('twint');
     }
 
-    const session = await stripe.checkout.sessions.create({
+    const session = await getStripe().checkout.sessions.create({
       customer_email: email,
       payment_method_types: paymentMethodTypes as Stripe.Checkout.SessionCreateParams.PaymentMethodType[],
       mode: 'payment',

@@ -1,14 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '');
-
-// Use service role key for webhook (bypasses RLS)
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-);
+import { getStripe } from '@/lib/stripe';
 
 export async function POST(req: NextRequest) {
   const body = await req.text();
@@ -20,8 +13,14 @@ export async function POST(req: NextRequest) {
 
   let event: Stripe.Event;
 
+  // Lazy init to avoid build-time errors
+  const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+    process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+  );
+
   try {
-    event = stripe.webhooks.constructEvent(
+    event = getStripe().webhooks.constructEvent(
       body,
       sig,
       process.env.STRIPE_WEBHOOK_SECRET || ''
