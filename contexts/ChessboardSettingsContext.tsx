@@ -8,6 +8,7 @@ const STORAGE_KEY = 'chessboard-settings';
 export interface BoardTheme {
   id: string;
   name: string;
+  nameEn?: string;
   lightSquare: string;
   darkSquare: string;
   selectedSquare: string;
@@ -20,9 +21,11 @@ export interface BoardTheme {
 export interface PieceSet {
   id: string;
   name: string;
+  nameEn?: string;
   path: string; // Chemin du dossier des pièces
   ext: string;  // Extension des fichiers ('png' ou 'svg')
   description?: string; // Description courte pour l'UI
+  descriptionEn?: string;
   premium?: boolean; // Requires premium to use
 }
 
@@ -45,6 +48,7 @@ export const BOARD_THEMES: BoardThemeWithPremium[] = [
   {
     id: 'neon-cyan',
     name: 'Néon Cyan',
+    nameEn: 'Neon Cyan',
     premium: true,
     lightSquare: '#e9edcc',
     darkSquare: '#779954',
@@ -57,6 +61,7 @@ export const BOARD_THEMES: BoardThemeWithPremium[] = [
   {
     id: 'blue-ocean',
     name: 'Océan Bleu',
+    nameEn: 'Ocean Blue',
     premium: false,
     lightSquare: '#b4e1f5',
     darkSquare: '#3a7ca5',
@@ -69,6 +74,7 @@ export const BOARD_THEMES: BoardThemeWithPremium[] = [
   {
     id: 'purple-haze',
     name: 'Brume Violette',
+    nameEn: 'Purple Haze',
     premium: true,
     lightSquare: '#e0c3fc',
     darkSquare: '#8965c4',
@@ -81,6 +87,7 @@ export const BOARD_THEMES: BoardThemeWithPremium[] = [
   {
     id: 'emerald-forest',
     name: 'Forêt Émeraude',
+    nameEn: 'Emerald Forest',
     premium: true,
     lightSquare: '#d5f4e6',
     darkSquare: '#2d6a4f',
@@ -93,6 +100,7 @@ export const BOARD_THEMES: BoardThemeWithPremium[] = [
   {
     id: 'sunset-orange',
     name: 'Coucher de Soleil',
+    nameEn: 'Sunset',
     premium: true,
     lightSquare: '#ffd6a5',
     darkSquare: '#d97706',
@@ -105,6 +113,7 @@ export const BOARD_THEMES: BoardThemeWithPremium[] = [
   {
     id: 'classic-green',
     name: 'Classique Vert',
+    nameEn: 'Classic Green',
     premium: true,
     lightSquare: '#eeeed2',
     darkSquare: '#769656',
@@ -117,6 +126,7 @@ export const BOARD_THEMES: BoardThemeWithPremium[] = [
   {
     id: 'dark-mode',
     name: 'Mode Sombre',
+    nameEn: 'Dark Mode',
     premium: true,
     lightSquare: '#4b5563',
     darkSquare: '#1f2937',
@@ -129,6 +139,7 @@ export const BOARD_THEMES: BoardThemeWithPremium[] = [
   {
     id: 'retro-brown',
     name: 'Rétro Marron',
+    nameEn: 'Retro Brown',
     premium: true,
     lightSquare: '#f5deb3',
     darkSquare: '#8b4513',
@@ -145,65 +156,81 @@ export const PIECE_SETS: PieceSet[] = [
   {
     id: 'neon-cyan',
     name: 'Néon Cyan',
+    nameEn: 'Neon Cyan',
     path: '/pieces',
     ext: 'png',
     description: 'Style néon avec circuits tech',
+    descriptionEn: 'Neon style with tech circuits',
     premium: false,
   },
   {
     id: 'classic',
     name: 'Classique',
+    nameEn: 'Classic',
     path: '/pieces/classic',
     ext: 'svg',
     description: 'Pièces Staunton traditionnelles',
+    descriptionEn: 'Traditional Staunton pieces',
     premium: false,
   },
   {
     id: 'fireice',
     name: 'Fire & Ice',
+    nameEn: 'Fire & Ice',
     path: '/pieces/fireice',
     ext: 'svg',
     description: 'Pièces feu et glace contrastées',
+    descriptionEn: 'Contrasting fire and ice pieces',
     premium: true,
   },
   {
     id: 'earth-stone',
     name: 'Earth & Stone',
+    nameEn: 'Earth & Stone',
     path: '/pieces/earth-stone',
     ext: 'svg',
     description: 'Design élégant et raffiné',
+    descriptionEn: 'Elegant and refined design',
     premium: true,
   },
   {
     id: 'cburnett',
     name: 'CBurnett',
+    nameEn: 'CBurnett',
     path: '/pieces/cburnett',
     ext: 'svg',
     description: 'Moderne et clair',
+    descriptionEn: 'Modern and clean',
     premium: false,
   },
   {
     id: 'merida',
     name: 'Merida',
+    nameEn: 'Merida',
     path: '/pieces/merida',
     ext: 'svg',
     description: 'Classique traditionnel',
+    descriptionEn: 'Traditional classic',
     premium: false,
   },
   {
     id: 'alpha',
     name: 'Alpha',
+    nameEn: 'Alpha',
     path: '/pieces/alpha',
     ext: 'svg',
     description: 'Minimaliste',
+    descriptionEn: 'Minimalist',
     premium: false,
   },
   {
     id: 'pirouetti',
     name: 'Pirouetti',
+    nameEn: 'Pirouetti',
     path: '/pieces/pirouetti',
     ext: 'svg',
     description: 'Artistique',
+    descriptionEn: 'Artistic',
     premium: false,
   },
 ];

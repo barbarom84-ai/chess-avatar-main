@@ -448,7 +448,20 @@ export const translations = {
       animSlow: "Lente",
       sound: "Son",
       soundEffects: "Effets sonores",
-      soundEffectsDesc: "Sons lors des coups, captures, échecs, etc."
+      soundEffectsDesc: "Sons lors des coups, captures, échecs, etc.",
+      display: "Affichage",
+      showCoordinatesDesc: "Affiche les lettres et chiffres sur les bords de l'échiquier",
+      highlightLastMove: "Surligner le dernier coup",
+      highlightLastMoveDesc: "Affiche en surbrillance le dernier coup joué",
+      soundDisabled: "Les effets sonores sont actuellement désactivés",
+      close: "Fermer",
+      themePreview: "Aperçu du Thème",
+      lightSquare: "Case claire",
+      darkSquare: "Case foncée",
+      selectedSquare: "Case sélectionnée",
+      lastMoveLight: "Dernier coup (claire)",
+      lastMoveDark: "Dernier coup (foncée)",
+      legalMove: "Coup légal"
     },
 
     // Game viewer / analysis
@@ -1157,7 +1170,20 @@ export const translations = {
       animSlow: "Slow",
       sound: "Sound",
       soundEffects: "Sound Effects",
-      soundEffectsDesc: "Sounds for moves, captures, checks, etc."
+      soundEffectsDesc: "Sounds for moves, captures, checks, etc.",
+      display: "Display",
+      showCoordinatesDesc: "Shows letters and numbers on the board edges",
+      highlightLastMove: "Highlight last move",
+      highlightLastMoveDesc: "Highlights the last move played",
+      soundDisabled: "Sound effects are currently disabled",
+      close: "Close",
+      themePreview: "Theme Preview",
+      lightSquare: "Light square",
+      darkSquare: "Dark square",
+      selectedSquare: "Selected square",
+      lastMoveLight: "Last move (light)",
+      lastMoveDark: "Last move (dark)",
+      legalMove: "Legal move"
     },
 
     // Game viewer / analysis

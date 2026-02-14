@@ -115,7 +115,7 @@ function PlayContent() {
       <div className="max-w-7xl mx-auto">
         
         {/* Barre de contrôle compacte en haut - Position fixe */}
-        <div className="sticky top-0 z-50 bg-gradient-to-b from-slate-950 dark:from-slate-950 light:from-[oklch(0.94_0.015_80)] to-slate-950/95 dark:to-slate-950/95 light:to-[oklch(0.94_0.015_80)]/95 backdrop-blur-sm border-b theme-border px-2 md:px-4 py-2">
+        <div className="sticky top-0 z-50 bg-gradient-to-b from-slate-950 dark:from-slate-950 light:from-[oklch(0.88_0.010_75)] to-slate-950/95 dark:to-slate-950/95 light:to-[oklch(0.88_0.010_75)]/95 backdrop-blur-sm border-b theme-border px-2 md:px-4 py-2">
           <div className="flex items-center justify-between gap-2">
             {/* Gauche: Info Bot */}
             <div className="flex items-center gap-1.5">

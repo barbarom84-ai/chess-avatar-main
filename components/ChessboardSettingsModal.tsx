@@ -34,7 +34,15 @@ export default function ChessboardSettingsModal({ open, onOpenChange }: Chessboa
   const [activeTab, setActiveTab] = useState("theme");
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [upgradeReason, setUpgradeReason] = useState<'theme' | 'pieces' | 'profiles'>('theme');
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
+
+  // Helpers for localized theme/piece names
+  const themeName = (theme: { name: string; nameEn?: string }) =>
+    lang === 'en' && theme.nameEn ? theme.nameEn : theme.name;
+  const pieceSetName = (ps: { name: string; nameEn?: string }) =>
+    lang === 'en' && ps.nameEn ? ps.nameEn : ps.name;
+  const pieceSetDesc = (ps: { description?: string; descriptionEn?: string }) =>
+    lang === 'en' && ps.descriptionEn ? ps.descriptionEn : ps.description;
   const { isPremium, userId, email } = usePremium();
 
   const handleThemeSelect = (theme: BoardTheme & { premium?: boolean }) => {
@@ -138,7 +146,7 @@ export default function ChessboardSettingsModal({ open, onOpenChange }: Chessboa
                       </div>
                       
                       <div className="text-center">
-                        <p className="text-xs font-semibold text-slate-200">{theme.name}</p>
+                        <p className="text-xs font-semibold text-slate-200">{themeName(theme)}</p>
                         {settings.boardTheme.id === theme.id && (
                           <div className="absolute top-2 right-2 bg-cyan-500 rounded-full p-1">
                             <Check className="h-3 w-3 text-white" />
@@ -156,34 +164,34 @@ export default function ChessboardSettingsModal({ open, onOpenChange }: Chessboa
 
                 {/* Aperçu détaillé du thème sélectionné */}
                 <div className="mt-6 p-4 bg-slate-900 rounded-lg border border-slate-800">
-                  <h4 className="text-xs font-semibold text-slate-400 mb-3">Aperçu du Thème: {settings.boardTheme.name}</h4>
+                  <h4 className="text-xs font-semibold text-slate-400 mb-3">{t.chessboardSettings.themePreview}: {themeName(settings.boardTheme)}</h4>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded border border-slate-700" style={{ backgroundColor: settings.boardTheme.lightSquare }} />
-                        <span className="text-xs text-slate-400">Case claire</span>
+                        <span className="text-xs text-slate-400">{t.chessboardSettings.lightSquare}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded border border-slate-700" style={{ backgroundColor: settings.boardTheme.darkSquare }} />
-                        <span className="text-xs text-slate-400">Case foncée</span>
+                        <span className="text-xs text-slate-400">{t.chessboardSettings.darkSquare}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded border border-slate-700" style={{ backgroundColor: settings.boardTheme.selectedSquare }} />
-                        <span className="text-xs text-slate-400">Case sélectionnée</span>
+                        <span className="text-xs text-slate-400">{t.chessboardSettings.selectedSquare}</span>
                       </div>
                     </div>
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded border border-slate-700" style={{ backgroundColor: settings.boardTheme.lastMoveLight }} />
-                        <span className="text-xs text-slate-400">Dernier coup (claire)</span>
+                        <span className="text-xs text-slate-400">{t.chessboardSettings.lastMoveLight}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded border border-slate-700" style={{ backgroundColor: settings.boardTheme.lastMoveDark }} />
-                        <span className="text-xs text-slate-400">Dernier coup (foncée)</span>
+                        <span className="text-xs text-slate-400">{t.chessboardSettings.lastMoveDark}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded border border-slate-700" style={{ backgroundColor: settings.boardTheme.legalMoveEmpty }} />
-                        <span className="text-xs text-slate-400">Coup légal</span>
+                        <span className="text-xs text-slate-400">{t.chessboardSettings.legalMove}</span>
                       </div>
                     </div>
                   </div>
@@ -196,7 +204,7 @@ export default function ChessboardSettingsModal({ open, onOpenChange }: Chessboa
           <TabsContent value="pieces" className="space-y-4">
             <Card className="bg-slate-950 border-slate-800">
               <CardContent className="pt-6">
-                <h3 className="text-sm font-semibold text-slate-300 mb-4">{t.chessboardSettings.pieceSets || 'Sets de Pièces'}</h3>
+                <h3 className="text-sm font-semibold text-slate-300 mb-4">{t.chessboardSettings.pieceSets}</h3>
                 
                 <div className="flex flex-col md:flex-row gap-6">
                   {/* Liste des sets de pièces */}
@@ -226,13 +234,13 @@ export default function ChessboardSettingsModal({ open, onOpenChange }: Chessboa
                           )}
 
                           <h4 className="font-semibold text-sm text-slate-200 mb-1">
-                            {pieceSet.name}
+                            {pieceSetName(pieceSet)}
                             {pieceSet.premium && !isPremium && (
                               <Crown className="inline ml-1.5 h-3 w-3 text-amber-400" />
                             )}
                           </h4>
                           {pieceSet.description && (
-                            <p className="text-[10px] text-slate-400 mb-2">{pieceSet.description}</p>
+                            <p className="text-[10px] text-slate-400 mb-2">{pieceSetDesc(pieceSet)}</p>
                           )}
                           
                           {/* Aperçu des pièces en mini-grille */}
@@ -256,7 +264,7 @@ export default function ChessboardSettingsModal({ open, onOpenChange }: Chessboa
                   {/* Aperçu sur échiquier */}
                   <div className="md:w-[220px] flex-shrink-0">
                     <h4 className="text-xs font-semibold text-slate-400 mb-2">
-                      {t.chessboardSettings.preview || 'Aperçu'}: {settings.pieceSet.name}
+                      {t.chessboardSettings.preview}: {pieceSetName(settings.pieceSet)}
                     </h4>
                     <div className="rounded-lg overflow-hidden border border-slate-700">
                       {/* Mini échiquier 4x4 avec des pièces */}
@@ -305,7 +313,7 @@ export default function ChessboardSettingsModal({ open, onOpenChange }: Chessboa
                     {/* Toutes les pièces du set sélectionné */}
                     <div className="mt-3 p-3 bg-slate-900 rounded-lg border border-slate-800">
                       <p className="text-[10px] text-slate-500 mb-2 uppercase tracking-wider font-semibold">
-                        {t.chessboardSettings.whitePieces || 'Pièces blanches'}
+                        {t.chessboardSettings.whitePieces}
                       </p>
                       <div className="flex gap-1.5 mb-3">
                         {['wK', 'wQ', 'wR', 'wB', 'wN', 'wP'].map((piece) => (
@@ -320,7 +328,7 @@ export default function ChessboardSettingsModal({ open, onOpenChange }: Chessboa
                         ))}
                       </div>
                       <p className="text-[10px] text-slate-500 mb-2 uppercase tracking-wider font-semibold">
-                        {t.chessboardSettings.blackPieces || 'Pièces noires'}
+                        {t.chessboardSettings.blackPieces}
                       </p>
                       <div className="flex gap-1.5">
                         {['bK', 'bQ', 'bR', 'bB', 'bN', 'bP'].map((piece) => (
@@ -349,7 +357,7 @@ export default function ChessboardSettingsModal({ open, onOpenChange }: Chessboa
                 <div>
                   <h3 className="text-sm font-semibold text-slate-300 mb-4 flex items-center gap-2">
                     <Eye className="h-4 w-4" />
-                    Affichage
+                    {t.chessboardSettings.display}
                   </h3>
                   <div className="space-y-4">
                     <div className="flex items-center justify-between p-3 bg-slate-900 rounded-lg">
@@ -358,7 +366,7 @@ export default function ChessboardSettingsModal({ open, onOpenChange }: Chessboa
                           {t.chessboardSettings.showCoordinates}
                         </Label>
                         <p className="text-xs text-slate-400 mt-1">
-                          Affiche les lettres et chiffres sur les bords de l'échiquier
+                          {t.chessboardSettings.showCoordinatesDesc}
                         </p>
                       </div>
                       <Switch
@@ -387,10 +395,10 @@ export default function ChessboardSettingsModal({ open, onOpenChange }: Chessboa
                     <div className="flex items-center justify-between p-3 bg-slate-900 rounded-lg">
                       <div>
                         <Label htmlFor="last-move" className="text-slate-200 font-medium">
-                          Surligner le dernier coup
+                          {t.chessboardSettings.highlightLastMove}
                         </Label>
                         <p className="text-xs text-slate-400 mt-1">
-                          Affiche en surbrillance le dernier coup joué
+                          {t.chessboardSettings.highlightLastMoveDesc}
                         </p>
                       </div>
                       <Switch
@@ -410,10 +418,10 @@ export default function ChessboardSettingsModal({ open, onOpenChange }: Chessboa
                   </h3>
                   <div className="grid grid-cols-4 gap-2">
                     {[
-                      { value: 'none', label: 'Aucune' },
-                      { value: 'fast', label: 'Rapide' },
-                      { value: 'normal', label: 'Normale' },
-                      { value: 'slow', label: 'Lente' }
+                      { value: 'none', label: t.chessboardSettings.animNone },
+                      { value: 'fast', label: t.chessboardSettings.animFast },
+                      { value: 'normal', label: t.chessboardSettings.animNormal },
+                      { value: 'slow', label: t.chessboardSettings.animSlow }
                     ].map((speed) => (
                       <button
                         key={speed.value}
@@ -434,7 +442,7 @@ export default function ChessboardSettingsModal({ open, onOpenChange }: Chessboa
                 <div>
                   <h3 className="text-sm font-semibold text-slate-300 mb-4 flex items-center gap-2">
                     {settings.soundEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
-                    Son
+                    {t.chessboardSettings.sound}
                   </h3>
                   <div className="flex items-center justify-between p-3 bg-slate-900 rounded-lg">
                     <div>
@@ -453,7 +461,7 @@ export default function ChessboardSettingsModal({ open, onOpenChange }: Chessboa
                   </div>
                   {!settings.soundEnabled && (
                     <div className="mt-2 p-2 bg-orange-900/10 border border-orange-700/50 rounded text-xs text-orange-300">
-                      Les effets sonores sont actuellement désactivés
+                      {t.chessboardSettings.soundDisabled}
                     </div>
                   )}
                 </div>
@@ -478,7 +486,7 @@ export default function ChessboardSettingsModal({ open, onOpenChange }: Chessboa
             onClick={() => onOpenChange(false)}
             className="border-slate-600 text-slate-200 hover:bg-slate-800"
           >
-            Fermer
+            {t.chessboardSettings.close}
           </Button>
         </div>
 

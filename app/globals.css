@@ -170,58 +170,58 @@ nextjs-portal {
 }
 
 .light {
-  /* Arrière-plans - tons beige/crème doux */
-  --background: oklch(0.94 0.015 80);        /* Beige crème chaleureux */
-  --foreground: oklch(0.20 0.02 60);         /* Brun foncé chaud */
+  /* Arrière-plans - gris chaud doux, pas éblouissant */
+  --background: oklch(0.88 0.010 75);        /* Gris chaud doux */
+  --foreground: oklch(0.18 0.02 55);         /* Brun très foncé, haute lisibilité */
   
-  /* Cartes et surfaces */
-  --card: oklch(0.97 0.012 85);              /* Crème très clair */
-  --card-foreground: oklch(0.20 0.02 60);    /* Brun foncé */
+  /* Cartes et surfaces - légèrement plus claires que le fond */
+  --card: oklch(0.92 0.008 80);              /* Crème atténué */
+  --card-foreground: oklch(0.18 0.02 55);    /* Brun très foncé */
   
   /* Popover */
-  --popover: oklch(0.97 0.012 85);
-  --popover-foreground: oklch(0.20 0.02 60);
+  --popover: oklch(0.92 0.008 80);
+  --popover-foreground: oklch(0.18 0.02 55);
   
-  /* Primary - Cyan/teal adouci */
-  --primary: oklch(0.50 0.12 190);           /* Cyan-teal plus doux */
-  --primary-foreground: oklch(0.98 0.01 80); /* Crème clair */
+  /* Primary - Teal foncé, bon contraste sur fond clair */
+  --primary: oklch(0.42 0.10 190);           /* Teal soutenu */
+  --primary-foreground: oklch(0.96 0.01 80); /* Crème clair */
   
-  /* Secondary - Beige moyen */
-  --secondary: oklch(0.88 0.018 75);         /* Beige sable */
-  --secondary-foreground: oklch(0.28 0.05 65); /* Brun moyen */
+  /* Secondary - Gris-beige moyen */
+  --secondary: oklch(0.82 0.012 75);         /* Gris sable */
+  --secondary-foreground: oklch(0.25 0.04 60); /* Brun foncé */
   
-  /* Muted */
-  --muted: oklch(0.90 0.015 78);
-  --muted-foreground: oklch(0.45 0.03 65);
+  /* Muted - gris doux */
+  --muted: oklch(0.84 0.010 78);
+  --muted-foreground: oklch(0.38 0.03 60);   /* Gris-brun bien lisible */
   
-  /* Accent - Cyan doux */
-  --accent: oklch(0.85 0.025 185);
-  --accent-foreground: oklch(0.25 0.08 190);
+  /* Accent - Teal doux */
+  --accent: oklch(0.78 0.025 185);
+  --accent-foreground: oklch(0.22 0.06 190);
   
-  /* Destructive - Rouge adouci */
-  --destructive: oklch(0.55 0.20 25);
+  /* Destructive - Rouge lisible */
+  --destructive: oklch(0.50 0.20 25);
   
-  /* Bordures - Beige subtil */
-  --border: oklch(0.82 0.018 75 / 50%);
-  --input: oklch(0.85 0.015 78 / 60%);
-  --ring: oklch(0.50 0.12 190);              /* Ring cyan doux */
+  /* Bordures - visibles mais discrètes */
+  --border: oklch(0.72 0.015 75 / 60%);
+  --input: oklch(0.76 0.012 78 / 70%);
+  --ring: oklch(0.42 0.10 190);              /* Ring teal soutenu */
   
-  /* Charts - Palette chaude et douce */
-  --chart-1: oklch(0.52 0.12 190);           /* Cyan-teal */
-  --chart-2: oklch(0.48 0.10 200);           /* Bleu doux */
-  --chart-3: oklch(0.50 0.15 280);           /* Violet doux */
-  --chart-4: oklch(0.55 0.10 170);           /* Vert-cyan */
-  --chart-5: oklch(0.60 0.10 195);           /* Cyan clair */
+  /* Charts - Palette aux tons mats lisibles */
+  --chart-1: oklch(0.45 0.12 190);           /* Teal foncé */
+  --chart-2: oklch(0.42 0.10 210);           /* Bleu mat */
+  --chart-3: oklch(0.44 0.14 280);           /* Violet mat */
+  --chart-4: oklch(0.48 0.10 170);           /* Vert-teal */
+  --chart-5: oklch(0.52 0.10 195);           /* Cyan moyen */
   
-  /* Sidebar - Crème avec accents cyan */
-  --sidebar: oklch(0.97 0.012 85);
-  --sidebar-foreground: oklch(0.28 0.04 65);
-  --sidebar-primary: oklch(0.50 0.12 190);
-  --sidebar-primary-foreground: oklch(0.98 0.01 80);
-  --sidebar-accent: oklch(0.90 0.015 78);
-  --sidebar-accent-foreground: oklch(0.28 0.06 185);
-  --sidebar-border: oklch(0.82 0.018 75 / 40%);
-  --sidebar-ring: oklch(0.50 0.12 190);
+  /* Sidebar - Gris chaud doux avec accents teal */
+  --sidebar: oklch(0.90 0.008 80);
+  --sidebar-foreground: oklch(0.25 0.04 60);
+  --sidebar-primary: oklch(0.42 0.10 190);
+  --sidebar-primary-foreground: oklch(0.96 0.01 80);
+  --sidebar-accent: oklch(0.84 0.010 78);
+  --sidebar-accent-foreground: oklch(0.25 0.06 185);
+  --sidebar-border: oklch(0.72 0.015 75 / 50%);
+  --sidebar-ring: oklch(0.42 0.10 190);
 }
 
 .dark {
@@ -339,17 +339,16 @@ nextjs-portal {
   /* Gradient adaptatif */
   .theme-gradient {
     @apply dark:bg-gradient-to-br dark:from-slate-950 dark:via-blue-950 dark:to-slate-900;
-    @apply light:bg-gradient-to-br light:from-[oklch(0.94_0.015_80)] light:via-[oklch(0.92_0.018_75)] light:to-[oklch(0.90_0.020_70)];
+    @apply light:bg-gradient-to-br light:from-[oklch(0.88_0.010_75)] light:via-[oklch(0.86_0.012_72)] light:to-[oklch(0.84_0.014_70)];
   }
 }
 
 /* ========================================
-   AMÉLIORATION DU CONTRASTE
+   AMÉLIORATION DU CONTRASTE (dark mode only)
    ======================================== */
 
-/* Remplacer les textes trop sombres par des couleurs plus lisibles */
-@layer utilities {
-  /* Sur fond sombre, améliorer la lisibilité */
+/* Sur fond sombre uniquement, remonter les gris pour la lisibilité */
+.dark {
   .text-slate-400 {
     color: rgb(203 213 225) !important; /* slate-300 */
   }
