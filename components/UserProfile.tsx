@@ -13,6 +13,7 @@ import { prepareConfigForExport } from "@/lib/forced-line-utils";
 import { useLanguage } from "@/lib/language-context";
 import AuthModal from "./AuthModal";
 import ProfileDetailsModal from "./ProfileDetailsModal";
+import { toast } from "sonner";
 
 export default function UserProfile() {
   const router = useRouter();
@@ -83,7 +84,7 @@ export default function UserProfile() {
     if (res.success) {
       loadProfiles();
     } else {
-      alert(res.error || 'Erreur lors de la mise à jour.');
+      toast.error(res.error || 'Erreur lors de la mise à jour.');
     }
   };
 
@@ -114,7 +115,7 @@ export default function UserProfile() {
       await loadProfiles();
       return true;
     }
-    alert(res.error || 'Erreur lors de la sauvegarde du profil.');
+    toast.error(res.error || 'Erreur lors de la sauvegarde du profil.');
     return false;
   };
 

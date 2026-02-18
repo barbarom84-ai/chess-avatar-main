@@ -67,6 +67,9 @@ export default function AuthModal({ open, onOpenChange, onSuccess }: AuthModalPr
       const { error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          emailRedirectTo: window.location.origin,
+        },
       });
 
       if (error) throw error;

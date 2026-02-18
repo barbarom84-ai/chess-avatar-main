@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 import EngineConfigPanel from "./EngineConfigPanel";
 import ProfileEditor from "./ProfileEditor";
 import { saveRecentConfig } from "@/lib/storage";
+import { toast } from "sonner";
 import { saveProfileToCloud, isAuthenticated } from "@/lib/supabase-storage";
 import { prepareConfigForExport } from "@/lib/forced-line-utils";
 import AuthModal from "./AuthModal";
@@ -101,7 +102,7 @@ export default function PersonaCard({ stats, config, profileId }: PersonaCardPro
     // Vérifier si Supabase est configuré
     const { isSupabaseConfigured } = await import('@/lib/supabase');
     if (!isSupabaseConfigured) {
-      alert(t.personaCard.supabaseNotConfigured);
+      toast.error(t.personaCard.supabaseNotConfigured);
       return;
     }
 
@@ -116,16 +117,16 @@ export default function PersonaCard({ stats, config, profileId }: PersonaCardPro
       setSavingCloud(false);
 
       if (result) {
-        alert(t.personaCard.savedSuccess);
+        toast.success(t.personaCard.savedSuccess);
       } else {
-        alert(t.personaCard.saveError);
+        toast.error(t.personaCard.saveError);
       }
     } catch (error: any) {
       setSavingCloud(false);
       if (error?.message === 'PROFILE_LIMIT_REACHED') {
         setShowUpgradeModal(true);
       } else {
-        alert(`${t.personaCard.unknownSaveError}: ${error?.message}`);
+        toast.error(`${t.personaCard.unknownSaveError}: ${error?.message}`);
       }
       console.error('Erreur complète:', error);
     }
