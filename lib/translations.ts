@@ -646,7 +646,10 @@ export const translations = {
       lifetimeAccess: "Accès à vie — pas d'abonnement",
       redirecting: "Redirection...",
       loginFirst: "Connectez-vous d'abord",
-      upgradeToPremium: "Passer à Premium"
+      upgradeToPremium: "Passer à Premium",
+      priceNotConfigured: "Prix non configuré pour cette devise",
+      notAuthenticated: "Utilisateur non authentifié",
+      checkoutError: "Erreur lors de la création du paiement"
     },
 
     // Promotion dialog
@@ -1375,7 +1378,10 @@ export const translations = {
       lifetimeAccess: "Lifetime access — no subscription",
       redirecting: "Redirecting...",
       loginFirst: "Sign in first",
-      upgradeToPremium: "Upgrade to Premium"
+      upgradeToPremium: "Upgrade to Premium",
+      priceNotConfigured: "Price not configured for this currency",
+      notAuthenticated: "User not authenticated",
+      checkoutError: "Error creating payment"
     },
 
     // Promotion dialog

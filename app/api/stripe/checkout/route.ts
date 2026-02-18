@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
 
     if (!userId || !email) {
       return NextResponse.json(
-        { error: 'Utilisateur non authentifié' },
+        { error: 'NOT_AUTHENTICATED' },
         { status: 401 }
       );
     }
@@ -18,40 +18,26 @@ export async function POST(req: NextRequest) {
 
     if (!priceId) {
       return NextResponse.json(
-        { error: 'Prix non configuré pour cette devise' },
+        { error: 'PRICE_NOT_CONFIGURED' },
         { status: 400 }
       );
     }
 
-    // Payment method types: card (Visa, etc.) + twint (CHF only, Stripe handles availability)
-    const paymentMethodTypes: string[] = ['card'];
-    if (validCurrency === 'chf') {
-      paymentMethodTypes.push('twint');
-    }
-
     const session = await getStripe().checkout.sessions.create({
       customer_email: email,
-      payment_method_types: paymentMethodTypes as Stripe.Checkout.SessionCreateParams.PaymentMethodType[],
+      payment_method_types: ['card'],
       mode: 'payment',
-      line_items: [
-        {
-          price: priceId,
-          quantity: 1,
-        },
-      ],
+      line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${req.nextUrl.origin}/profile?payment=success`,
       cancel_url: `${req.nextUrl.origin}/profile?payment=canceled`,
-      metadata: {
-        userId,
-        currency: validCurrency,
-      },
+      metadata: { userId, currency: validCurrency },
     });
 
     return NextResponse.json({ url: session.url });
   } catch (error: any) {
     console.error('Stripe checkout error:', error);
     return NextResponse.json(
-      { error: error.message || 'Erreur lors de la création du paiement' },
+      { error: 'CHECKOUT_ERROR' },
       { status: 500 }
     );
   }

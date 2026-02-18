@@ -24,12 +24,18 @@ export default function UpgradeModal({ open, onOpenChange, userId, email, reason
 
   const handleCheckout = async () => {
     if (!userId || !email) {
-      setError('${t.upgrade.pleaseLogin}');
+      setError(t.upgrade.pleaseLogin);
       return;
     }
 
     setLoading(true);
     setError('');
+
+    const errorMessages: Record<string, string> = {
+      NOT_AUTHENTICATED: t.upgrade.notAuthenticated,
+      PRICE_NOT_CONFIGURED: t.upgrade.priceNotConfigured,
+      CHECKOUT_ERROR: t.upgrade.checkoutError,
+    };
 
     try {
       const response = await fetch('/api/stripe/checkout', {
@@ -41,14 +47,14 @@ export default function UpgradeModal({ open, onOpenChange, userId, email, reason
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || '${t.upgrade.paymentError}');
+        throw new Error(errorMessages[data.error] || t.upgrade.paymentError);
       }
 
       if (data.url) {
         window.location.href = data.url;
       }
     } catch (err: any) {
-      setError(err.message || '${t.upgrade.unexpectedError}');
+      setError(err.message || t.upgrade.unexpectedError);
     } finally {
       setLoading(false);
     }
@@ -126,7 +132,7 @@ export default function UpgradeModal({ open, onOpenChange, userId, email, reason
             <p className="text-3xl font-bold text-amber-100">
               10 {currencySymbol[selectedCurrency]}
             </p>
-            <p className="text-xs text-slate-400 mt-1">Accès à vie — pas d&apos;abonnement</p>
+            <p className="text-xs text-slate-400 mt-1">{t.upgrade.lifetimeAccess}</p>
 
             <div className="flex justify-center gap-2 mt-3">
               {(['eur', 'chf', 'usd'] as const).map((cur) => (
@@ -148,7 +154,7 @@ export default function UpgradeModal({ open, onOpenChange, userId, email, reason
           {/* Payment methods info */}
           <div className="flex items-center justify-center gap-3 text-xs text-slate-500">
             <CreditCard className="h-4 w-4" />
-            <span>Visa, Mastercard{selectedCurrency === 'chf' ? ', TWINT' : ''}</span>
+            <span>Visa, Mastercard</span>
           </div>
 
           {error && (
@@ -166,7 +172,7 @@ export default function UpgradeModal({ open, onOpenChange, userId, email, reason
             {loading ? (
               <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> {t.upgrade.redirecting}</>
             ) : !userId ? (
-              'Connectez-vous d\'abord'
+              t.upgrade.loginFirst
             ) : (
               <><Crown className="mr-2 h-5 w-5" /> {t.upgrade.upgradeToPremium}</>
             )}
