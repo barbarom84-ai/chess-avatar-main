@@ -219,20 +219,56 @@ export default function HomePage() {
       </div>
 
       {/* FOOTER */}
-      <footer className="bg-slate-950/80 py-8 border-t border-slate-800">
+      <footer className="bg-slate-950/80 py-10 border-t border-slate-800">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="flex flex-wrap justify-center gap-6 text-sm text-slate-500">
-            <Link href="/guide" className="hover:text-cyan-400 transition-colors">
-              {lang === "fr" ? "Guide d'installation" : "Installation Guide"}
-            </Link>
-            <Link href="/games" className="hover:text-cyan-400 transition-colors">
-              {lang === "fr" ? "Mes Parties" : "My Games"}
-            </Link>
-            <Link href="/profile" className="hover:text-cyan-400 transition-colors">
-              {lang === "fr" ? "Mon Profil" : "My Profile"}
-            </Link>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-sm">
+            {/* Navigation */}
+            <div>
+              <h4 className="font-semibold text-slate-300 mb-3">{lang === "fr" ? "Navigation" : "Navigation"}</h4>
+              <div className="flex flex-col gap-2 text-slate-500">
+                <Link href="/analyze" className="hover:text-cyan-400 transition-colors">
+                  {lang === "fr" ? "Analyser" : "Analyze"}
+                </Link>
+                <Link href="/play" className="hover:text-cyan-400 transition-colors">
+                  {lang === "fr" ? "Jouer" : "Play"}
+                </Link>
+                <Link href="/profile" className="hover:text-cyan-400 transition-colors">
+                  {lang === "fr" ? "Mon Profil" : "My Profile"}
+                </Link>
+                <Link href="/guide" className="hover:text-cyan-400 transition-colors">
+                  {lang === "fr" ? "Guide d'installation" : "Installation Guide"}
+                </Link>
+              </div>
+            </div>
+
+            {/* Legal */}
+            <div>
+              <h4 className="font-semibold text-slate-300 mb-3">{lang === "fr" ? "Légal" : "Legal"}</h4>
+              <div className="flex flex-col gap-2 text-slate-500">
+                <Link href="/terms" className="hover:text-cyan-400 transition-colors">
+                  {lang === "fr" ? "Conditions générales" : "Terms of Service"}
+                </Link>
+                <Link href="/privacy" className="hover:text-cyan-400 transition-colors">
+                  {lang === "fr" ? "Politique de confidentialité" : "Privacy Policy"}
+                </Link>
+                <Link href="/refund" className="hover:text-cyan-400 transition-colors">
+                  {lang === "fr" ? "Politique de remboursement" : "Refund Policy"}
+                </Link>
+              </div>
+            </div>
+
+            {/* Contact */}
+            <div>
+              <h4 className="font-semibold text-slate-300 mb-3">Contact</h4>
+              <div className="flex flex-col gap-2 text-slate-500">
+                <Link href="/contact" className="hover:text-cyan-400 transition-colors">
+                  {lang === "fr" ? "Nous contacter" : "Contact Us"}
+                </Link>
+              </div>
+            </div>
           </div>
-          <div className="text-center mt-6 text-slate-600 text-xs">
+
+          <div className="text-center mt-8 pt-6 border-t border-slate-800 text-slate-600 text-xs">
             © 2025 Chess Avatar • {lang === "fr" ? "Créez votre clone IA aux échecs" : "Create your chess AI clone"}
           </div>
         </div>

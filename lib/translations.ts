@@ -729,6 +729,92 @@ export const translations = {
       yourStyle: "Votre Style",
       invalidConfig: "Configuration invalide",
       loadingEngine: "Chargement du moteur d'échecs..."
+    },
+
+    // Contact page
+    contact: {
+      title: "Contact",
+      subtitle: "Une question ? Un problème ? Contactez-nous.",
+      formTitle: "Envoyez-nous un message",
+      nameLabel: "Nom",
+      namePlaceholder: "Votre nom",
+      emailLabel: "Email",
+      emailPlaceholder: "votre@email.com",
+      messageLabel: "Message",
+      messagePlaceholder: "Décrivez votre question ou problème...",
+      sendButton: "Envoyer",
+      sending: "Envoi en cours...",
+      successMessage: "Message envoyé avec succès ! Nous vous répondrons rapidement.",
+      errorMessage: "Erreur lors de l'envoi. Réessayez ou contactez-nous par email.",
+      directEmail: "Ou écrivez-nous directement :"
+    },
+
+    // Legal pages
+    legal: {
+      lastUpdated: "Dernière mise à jour",
+
+      // Terms of Service
+      termsTitle: "Conditions Générales",
+      termsAcceptance: "Acceptation des conditions",
+      termsAcceptanceText: "En utilisant Chess Avatar (chessavatar.net), vous acceptez les présentes conditions générales d'utilisation. Si vous n'acceptez pas ces conditions, veuillez ne pas utiliser le service.",
+      termsService: "Description du service",
+      termsServiceText: "Chess Avatar est une application web qui permet de :",
+      termsServiceItem1: "Analyser votre profil Lichess ou Chess.com",
+      termsServiceItem2: "Générer un moteur d'échecs IA personnalisé basé sur votre style de jeu",
+      termsServiceItem3: "Jouer contre votre clone IA directement en ligne",
+      termsServiceItem4: "Exporter votre configuration pour Fritz, ChessBase et Arena",
+      termsPremium: "Offre Premium",
+      termsPremiumText: "L'offre Premium est un paiement unique donnant un accès à vie aux fonctionnalités avancées (thèmes, sets de pièces exclusifs, profils illimités). Aucun abonnement récurrent ne sera prélevé.",
+      termsAccount: "Compte utilisateur",
+      termsAccountText: "L'inscription est facultative pour les fonctionnalités de base. Un compte est nécessaire pour la sauvegarde cloud et l'accès Premium. Vous êtes responsable de la sécurité de votre compte.",
+      termsIP: "Propriété intellectuelle",
+      termsIPText: "Chess Avatar est un projet open-source. Le moteur Stockfish est sous licence GPL. Les APIs Lichess et Chess.com sont utilisées conformément à leurs conditions d'utilisation respectives.",
+      termsLiability: "Limitation de responsabilité",
+      termsLiabilityText: "Chess Avatar est fourni « tel quel ». Nous ne garantissons pas la disponibilité continue du service ni l'exactitude des analyses. En aucun cas nous ne serons responsables de dommages indirects liés à l'utilisation du service.",
+      termsChanges: "Modifications",
+      termsChangesText: "Nous nous réservons le droit de modifier ces conditions à tout moment. Les utilisateurs seront informés des changements significatifs.",
+      termsContact: "Pour toute question concernant ces conditions, contactez-nous à",
+
+      // Privacy Policy
+      privacyTitle: "Politique de Confidentialité",
+      privacyDataCollected: "Données collectées",
+      privacyDataCollectedText: "Nous collectons les données suivantes uniquement lorsque vous créez un compte :",
+      privacyDataItem1: "Adresse email (pour l'authentification)",
+      privacyDataItem2: "Nom d'utilisateur Lichess/Chess.com (pour l'analyse)",
+      privacyDataItem3: "Données de profil d'échecs (statistiques, ouvertures, style de jeu)",
+      privacyDataItem4: "Informations de paiement (traitées par Stripe, jamais stockées chez nous)",
+      privacyUsage: "Utilisation des données",
+      privacyUsageText: "Vos données sont utilisées exclusivement pour :",
+      privacyUsageItem1: "Fournir le service d'analyse et de création de bot",
+      privacyUsageItem2: "Sauvegarder vos profils et configurations",
+      privacyUsageItem3: "Gérer votre abonnement Premium",
+      privacyStorage: "Stockage des données",
+      privacyStorageText: "Vos données sont stockées de manière sécurisée sur Supabase (PostgreSQL hébergé en Europe) avec chiffrement au repos et en transit. Les politiques de sécurité Row Level Security (RLS) garantissent que chaque utilisateur n'accède qu'à ses propres données.",
+      privacyThirdParty: "Services tiers",
+      privacyThirdPartyText: "Nous utilisons les services tiers suivants :",
+      privacyThirdPartySupabase: "Authentification et base de données",
+      privacyThirdPartyStripe: "Traitement des paiements",
+      privacyThirdPartyVercel: "Hébergement de l'application",
+      privacyRights: "Vos droits",
+      privacyRightsText: "Conformément au RGPD, vous pouvez à tout moment : accéder à vos données, les rectifier, les supprimer, ou demander leur portabilité. Contactez-nous pour exercer ces droits.",
+      privacyCookies: "Cookies",
+      privacyCookiesText: "Chess Avatar utilise uniquement des cookies techniques nécessaires au fonctionnement du service (authentification, préférences de langue et de thème). Aucun cookie de tracking ou publicitaire n'est utilisé.",
+      privacyContact: "Pour toute question relative à vos données personnelles, contactez-nous à",
+
+      // Refund Policy
+      refundTitle: "Politique de Remboursement",
+      refundPolicy: "Notre engagement",
+      refundPolicyText: "Nous proposons une garantie satisfait ou remboursé de 14 jours pour l'offre Premium, conformément au droit européen de rétractation.",
+      refundEligibility: "Conditions d'éligibilité",
+      refundEligibilityText: "Vous pouvez demander un remboursement si :",
+      refundEligibilityItem1: "La demande est faite dans les 14 jours suivant l'achat",
+      refundEligibilityItem2: "Vous rencontrez un problème technique non résolu",
+      refundEligibilityItem3: "Le service ne correspond pas à la description",
+      refundProcess: "Procédure de remboursement",
+      refundProcessText: "Envoyez votre demande par email en indiquant votre adresse email de compte et la raison de la demande. Le remboursement sera effectué sous 7 jours ouvrés via le même moyen de paiement.",
+      refundExceptions: "Exceptions",
+      refundExceptionsText: "Les demandes de remboursement au-delà de 14 jours seront étudiées au cas par cas. En cas d'abus manifeste du service avant la demande de remboursement, nous nous réservons le droit de refuser.",
+      refundContact: "Pour toute demande de remboursement, contactez-nous à"
     }
   },
   en: {
@@ -1461,6 +1547,92 @@ export const translations = {
       yourStyle: "Your Style",
       invalidConfig: "Invalid configuration",
       loadingEngine: "Loading chess engine..."
+    },
+
+    // Contact page
+    contact: {
+      title: "Contact",
+      subtitle: "Have a question? An issue? Get in touch.",
+      formTitle: "Send us a message",
+      nameLabel: "Name",
+      namePlaceholder: "Your name",
+      emailLabel: "Email",
+      emailPlaceholder: "your@email.com",
+      messageLabel: "Message",
+      messagePlaceholder: "Describe your question or issue...",
+      sendButton: "Send",
+      sending: "Sending...",
+      successMessage: "Message sent successfully! We'll get back to you shortly.",
+      errorMessage: "Failed to send. Please try again or email us directly.",
+      directEmail: "Or email us directly:"
+    },
+
+    // Legal pages
+    legal: {
+      lastUpdated: "Last updated",
+
+      // Terms of Service
+      termsTitle: "Terms of Service",
+      termsAcceptance: "Acceptance of terms",
+      termsAcceptanceText: "By using Chess Avatar (chessavatar.net), you agree to these terms of service. If you do not agree, please do not use the service.",
+      termsService: "Service description",
+      termsServiceText: "Chess Avatar is a web application that allows you to:",
+      termsServiceItem1: "Analyze your Lichess or Chess.com profile",
+      termsServiceItem2: "Generate a personalized AI chess engine based on your playing style",
+      termsServiceItem3: "Play against your AI clone directly online",
+      termsServiceItem4: "Export your configuration for Fritz, ChessBase and Arena",
+      termsPremium: "Premium offer",
+      termsPremiumText: "The Premium offer is a one-time payment granting lifetime access to advanced features (themes, exclusive piece sets, unlimited profiles). No recurring subscription will be charged.",
+      termsAccount: "User account",
+      termsAccountText: "Registration is optional for basic features. An account is required for cloud saves and Premium access. You are responsible for the security of your account.",
+      termsIP: "Intellectual property",
+      termsIPText: "Chess Avatar is an open-source project. The Stockfish engine is licensed under GPL. Lichess and Chess.com APIs are used in accordance with their respective terms of service.",
+      termsLiability: "Limitation of liability",
+      termsLiabilityText: "Chess Avatar is provided \"as is\". We do not guarantee continuous availability of the service or the accuracy of analyses. In no event shall we be liable for indirect damages related to the use of the service.",
+      termsChanges: "Changes",
+      termsChangesText: "We reserve the right to modify these terms at any time. Users will be notified of significant changes.",
+      termsContact: "For any questions regarding these terms, contact us at",
+
+      // Privacy Policy
+      privacyTitle: "Privacy Policy",
+      privacyDataCollected: "Data collected",
+      privacyDataCollectedText: "We collect the following data only when you create an account:",
+      privacyDataItem1: "Email address (for authentication)",
+      privacyDataItem2: "Lichess/Chess.com username (for analysis)",
+      privacyDataItem3: "Chess profile data (statistics, openings, play style)",
+      privacyDataItem4: "Payment information (processed by Stripe, never stored by us)",
+      privacyUsage: "Data usage",
+      privacyUsageText: "Your data is used exclusively to:",
+      privacyUsageItem1: "Provide the analysis and bot creation service",
+      privacyUsageItem2: "Save your profiles and configurations",
+      privacyUsageItem3: "Manage your Premium subscription",
+      privacyStorage: "Data storage",
+      privacyStorageText: "Your data is securely stored on Supabase (PostgreSQL hosted in Europe) with encryption at rest and in transit. Row Level Security (RLS) policies ensure each user can only access their own data.",
+      privacyThirdParty: "Third-party services",
+      privacyThirdPartyText: "We use the following third-party services:",
+      privacyThirdPartySupabase: "Authentication and database",
+      privacyThirdPartyStripe: "Payment processing",
+      privacyThirdPartyVercel: "Application hosting",
+      privacyRights: "Your rights",
+      privacyRightsText: "In accordance with GDPR, you may at any time: access your data, rectify it, delete it, or request its portability. Contact us to exercise these rights.",
+      privacyCookies: "Cookies",
+      privacyCookiesText: "Chess Avatar only uses technical cookies necessary for the service to function (authentication, language and theme preferences). No tracking or advertising cookies are used.",
+      privacyContact: "For any questions about your personal data, contact us at",
+
+      // Refund Policy
+      refundTitle: "Refund Policy",
+      refundPolicy: "Our commitment",
+      refundPolicyText: "We offer a 14-day money-back guarantee for the Premium offer, in accordance with EU consumer rights.",
+      refundEligibility: "Eligibility",
+      refundEligibilityText: "You may request a refund if:",
+      refundEligibilityItem1: "The request is made within 14 days of purchase",
+      refundEligibilityItem2: "You experience an unresolved technical issue",
+      refundEligibilityItem3: "The service does not match its description",
+      refundProcess: "Refund process",
+      refundProcessText: "Send your request by email with your account email address and the reason for the request. The refund will be processed within 7 business days via the same payment method.",
+      refundExceptions: "Exceptions",
+      refundExceptionsText: "Refund requests beyond 14 days will be reviewed on a case-by-case basis. In case of clear abuse of the service before the refund request, we reserve the right to decline.",
+      refundContact: "For any refund request, contact us at"
     }
   }
 };
