@@ -6,12 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { User, LogOut, Save, Database, Loader2, Trash2, Eye, EyeOff, Play, Download, Settings } from "lucide-react";
+import { User, Save, Database, Loader2, Trash2, Eye, EyeOff, Play, Download, Settings } from "lucide-react";
 import { supabase, isSupabaseConfigured, type DbProfile } from "@/lib/supabase";
 import { getUserProfiles, deleteProfile, updateProfile } from "@/lib/supabase-storage";
 import { prepareConfigForExport } from "@/lib/forced-line-utils";
 import { useLanguage } from "@/lib/language-context";
-import AuthModal from "./AuthModal";
 import ProfileDetailsModal from "./ProfileDetailsModal";
 import { toast } from "sonner";
 
@@ -21,7 +20,6 @@ export default function UserProfile() {
   const [user, setUser] = useState<any>(null);
   const [profiles, setProfiles] = useState<DbProfile[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showAuthModal, setShowAuthModal] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<DbProfile | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
 
@@ -63,12 +61,6 @@ export default function UserProfile() {
     setProfiles(data);
   };
 
-  const handleSignOut = async () => {
-    if (!supabase) return;
-    await supabase.auth.signOut();
-    setUser(null);
-    setProfiles([]);
-  };
 
   const handleDelete = async (id: string) => {
     if (confirm(t.profile.confirmDelete)) {
@@ -151,57 +143,31 @@ export default function UserProfile() {
 
   if (!user) {
     return (
-      <>
-        <Card className="bg-slate-900 border-slate-800">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Database className="h-5 w-5 text-slate-500" />
-              {t.profile.notConnected}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Alert className="bg-blue-900/10 border-blue-700">
-              <AlertDescription className="text-blue-300 text-sm">
-                {t.profile.signInPrompt}
-              </AlertDescription>
-            </Alert>
-            <Button
-              onClick={() => setShowAuthModal(true)}
-              className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-bold shadow-lg border border-green-700"
-            >
-              <User className="mr-2 h-4 w-4" />
-              {t.profile.signIn}
-            </Button>
-          </CardContent>
-        </Card>
-
-        <AuthModal 
-          open={showAuthModal}
-          onOpenChange={setShowAuthModal}
-          onSuccess={loadProfiles}
-        />
-      </>
+      <Card className="bg-slate-900 border-slate-800">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Database className="h-5 w-5 text-slate-500" />
+            {t.profile.notConnected}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Alert className="bg-blue-900/10 border-blue-700">
+            <AlertDescription className="text-blue-300 text-sm">
+              {t.profile.signInPrompt}
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
     <Card className="bg-slate-900 border-slate-800">
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Save className="h-5 w-5 text-green-400" />
-            {t.profile.myAccount}
-          </CardTitle>
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={handleSignOut}
-            className="border-2 border-slate-600 bg-slate-900 text-slate-100 hover:bg-slate-800 font-semibold"
-          >
-            <LogOut className="mr-2 h-4 w-4" />
-            {t.profile.logout}
-          </Button>
-        </div>
+        <CardTitle className="flex items-center gap-2">
+          <Save className="h-5 w-5 text-green-400" />
+          {t.profile.myAccount}
+        </CardTitle>
       </CardHeader>
 
       <CardContent className="space-y-4">
@@ -212,14 +178,6 @@ export default function UserProfile() {
               <p className="text-sm text-slate-400">{t.profile.email}</p>
               <p className="font-semibold text-slate-200">{user.email}</p>
             </div>
-            <Button
-              onClick={handleSignOut}
-              variant="outline"
-              size="sm"
-              className="border-slate-700 text-slate-400 hover:text-red-400 hover:border-red-400"
-            >
-              <LogOut className="h-4 w-4" />
-            </Button>
           </div>
         </div>
 
@@ -344,12 +302,6 @@ export default function UserProfile() {
           )}
         </div>
       </CardContent>
-
-      <AuthModal 
-        open={showAuthModal}
-        onOpenChange={setShowAuthModal}
-        onSuccess={loadProfiles}
-      />
 
       <ProfileDetailsModal
         open={showDetailsModal}

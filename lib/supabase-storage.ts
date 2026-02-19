@@ -124,13 +124,18 @@ export async function saveProfileToCloud(
     // Déterminer la plateforme depuis les stats ou config
     const detectedPlatform = stats.platform || config.platform || 'lichess';
 
+    const configWithCreator = {
+      ...config,
+      creatorName: user.email?.split('@')[0] || 'unknown',
+    };
+
     const { data, error } = await supabase
       .from('profiles')
       .insert({
         user_id: user.id,
         username: stats.username,
         platform: detectedPlatform,
-        config: config,
+        config: configWithCreator,
         stats: stats,
         is_public: isPublic,
       })

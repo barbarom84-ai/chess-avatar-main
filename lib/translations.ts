@@ -262,6 +262,7 @@ export const translations = {
       aggression: "Aggr.",
       depth: "Depth",
       createdOn: "Créé le",
+      createdBy: "par",
       needsSupabase: "La bibliothèque publique nécessite la configuration de Supabase.",
       checkDocs: "Consultez SUPABASE_SETUP.md pour les instructions."
     },
@@ -494,7 +495,6 @@ export const translations = {
     profileDetails: {
       statsTab: "Statistiques",
       configTab: "Configuration",
-      avatarTab: "Avatar",
       play: "Jouer",
       createdOn: "Créé le",
       overallResults: "Résultats Globaux",
@@ -515,12 +515,7 @@ export const translations = {
       saveChanges: "Enregistrer les Modifications",
       saving: "Enregistrement…",
       cancel: "Annuler",
-      editAvatar: "Modifier l'Avatar",
-      currentAvatar: "Avatar Actuel",
-      newImageUrlLabel: "URL de la Nouvelle Image",
-      newImageUrlPlaceholder: "https://example.com/avatar.jpg",
-      enterImageUrlHint: "Entrez l'URL d'une image (formats supportés : JPG, PNG, WebP)",
-      updateAvatar: "Mettre à Jour l'Avatar"
+      createdBy: "Créé par"
     },
 
     // Performance charts
@@ -1080,6 +1075,7 @@ export const translations = {
       aggression: "Aggr.",
       depth: "Depth",
       createdOn: "Created on",
+      createdBy: "by",
       needsSupabase: "The public library requires Supabase configuration.",
       checkDocs: "Check SUPABASE_SETUP.md for instructions."
     },
@@ -1312,7 +1308,6 @@ export const translations = {
     profileDetails: {
       statsTab: "Statistics",
       configTab: "Configuration",
-      avatarTab: "Avatar",
       play: "Play",
       createdOn: "Created on",
       overallResults: "Overall Results",
@@ -1333,12 +1328,7 @@ export const translations = {
       saveChanges: "Save Changes",
       saving: "Saving…",
       cancel: "Cancel",
-      editAvatar: "Edit Avatar",
-      currentAvatar: "Current Avatar",
-      newImageUrlLabel: "New Image URL",
-      newImageUrlPlaceholder: "https://example.com/avatar.jpg",
-      enterImageUrlHint: "Enter an image URL (supported formats: JPG, PNG, WebP)",
-      updateAvatar: "Update Avatar"
+      createdBy: "Created by"
     },
 
     // Performance charts

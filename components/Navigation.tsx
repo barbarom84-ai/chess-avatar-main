@@ -3,15 +3,16 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Globe, Sun, Moon, Settings } from "lucide-react";
+import { Globe, Sun, Moon, Settings, Crown, LogIn, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { useLanguage } from "@/lib/language-context";
 import { useTheme } from "@/lib/theme-context";
 import { useChessboardSettings, getPieceImagePath } from "@/contexts/ChessboardSettingsContext";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import { usePremium } from "@/hooks/usePremium";
 import ChessboardSettingsModal from "./ChessboardSettingsModal";
+import AuthModal from "./AuthModal";
 
 export default function Navigation() {
   const pathname = usePathname();
@@ -20,22 +21,41 @@ export default function Navigation() {
   const { settings } = useChessboardSettings();
   const [user, setUser] = useState<any>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const { isPremium } = usePremium();
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!isSupabaseConfigured || !supabase) return;
 
-    // Charger l'utilisateur actuel
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user);
     });
 
-    // Écouter les changements d'authentification
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setShowUserMenu(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleSignOut = async () => {
+    if (!supabase) return;
+    await supabase.auth.signOut();
+    setUser(null);
+    setShowUserMenu(false);
+  };
 
   // Définir les pièces selon le thème (dark = pièces blanches, light = pièces noires)
   const pieceColor = theme === 'dark' ? 'w' : 'b';
@@ -107,16 +127,61 @@ export default function Navigation() {
             })}
           </div>
 
-          {/* Theme, Language Selector + Connection Status */}
+          {/* Theme, Language Selector + User Account */}
           <div className="flex items-center gap-2">
-            {/* Connection Status */}
-            {isSupabaseConfigured && user && (
-              <Badge variant="outline" className="text-xs text-green-400 border-green-400/50 bg-green-400/10 hidden md:flex">
-                <span className="w-2 h-2 bg-green-400 rounded-full mr-1.5 animate-pulse"></span>
-                {user.email?.split('@')[0]}
-              </Badge>
+            {/* User Account */}
+            {isSupabaseConfigured && (
+              <div className="relative hidden md:block" ref={userMenuRef}>
+                {user ? (
+                  <>
+                    <button
+                      onClick={() => setShowUserMenu(!showUserMenu)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors cursor-pointer bg-green-400/10 border-green-400/50 text-green-400 hover:bg-green-400/20"
+                    >
+                      <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                      {user.email?.split('@')[0]}
+                      {isPremium && <Crown className="h-3.5 w-3.5 text-amber-400" />}
+                    </button>
+                    {showUserMenu && (
+                      <div className="absolute right-0 mt-2 w-48 bg-slate-900 border border-slate-700 rounded-lg shadow-xl py-1 z-50">
+                        <div className="px-3 py-2 border-b border-slate-700">
+                          <p className="text-xs text-slate-400">{user.email}</p>
+                          {isPremium && (
+                            <span className="inline-flex items-center gap-1 text-xs text-amber-400 mt-1">
+                              <Crown className="h-3 w-3" /> Premium
+                            </span>
+                          )}
+                        </div>
+                        <Link
+                          href="/profile"
+                          onClick={() => setShowUserMenu(false)}
+                          className="flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 transition-colors"
+                        >
+                          <User className="h-4 w-4" />
+                          {lang === "fr" ? "Mon Profil" : "My Profile"}
+                        </Link>
+                        <button
+                          onClick={handleSignOut}
+                          className="flex items-center gap-2 w-full px-3 py-2 text-sm text-red-400 hover:bg-slate-800 transition-colors"
+                        >
+                          <LogOut className="h-4 w-4" />
+                          {lang === "fr" ? "Déconnexion" : "Sign Out"}
+                        </button>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <button
+                    onClick={() => setShowAuthModal(true)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors cursor-pointer bg-slate-800 border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-cyan-300"
+                  >
+                    <LogIn className="h-3.5 w-3.5" />
+                    {lang === "fr" ? "Connexion" : "Sign In"}
+                  </button>
+                )}
+              </div>
             )}
-            
+
             {/* Board Settings */}
             <Button
               variant="ghost"
@@ -187,6 +252,11 @@ export default function Navigation() {
       <ChessboardSettingsModal
         open={showSettings}
         onOpenChange={setShowSettings}
+      />
+
+      <AuthModal
+        open={showAuthModal}
+        onOpenChange={setShowAuthModal}
       />
     </nav>
   );

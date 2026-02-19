@@ -6,11 +6,10 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { 
   Bot, Swords, Shield, Activity, Cpu, Clock, Target, BookOpen, TrendingUp, 
-  Zap, BarChart, Save, Upload, Play, Pencil, Image as ImageIcon
+  Zap, BarChart, Save, Play, Pencil, User
 } from "lucide-react";
 import type { DbProfile } from "@/lib/supabase";
 import type { EngineConfig, PersonaStats } from "@/lib/analysis";
@@ -68,7 +67,6 @@ export default function ProfileDetailsModal({
   const [activeTab, setActiveTab] = useState("stats");
   const [isEditing, setIsEditing] = useState(false);
   const [editedConfig, setEditedConfig] = useState<EngineConfig | null>(null);
-  const [avatarUrl, setAvatarUrl] = useState("");
   const [saving, setSaving] = useState(false);
 
   if (!profile) return null;
@@ -89,18 +87,6 @@ export default function ProfileDetailsModal({
         setIsEditing(false);
         setEditedConfig(null);
       }
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleAvatarUpdate = async () => {
-    if (!onUpdate || !avatarUrl || saving) return;
-    setSaving(true);
-    try {
-      const updatedConfig = { ...config, avatarUrl };
-      const ok = await Promise.resolve(onUpdate(profile.id, { config: updatedConfig }));
-      if (ok === true) setAvatarUrl("");
     } finally {
       setSaving(false);
     }
@@ -157,7 +143,14 @@ export default function ProfileDetailsModal({
                     </Badge>
                   )}
                 </div>
-                <DialogDescription className="mt-2 text-slate-400">
+                <DialogDescription className="mt-2 text-slate-400 flex items-center gap-2">
+                  {config.creatorName && (
+                    <span className="inline-flex items-center gap-1 text-slate-300">
+                      <User className="h-3 w-3" />
+                      {config.creatorName}
+                      <span className="text-slate-600">·</span>
+                    </span>
+                  )}
                   {t.profileDetails.createdOn} {new Date(profile.created_at).toLocaleDateString()} {new Date(profile.created_at).toLocaleTimeString()}
                 </DialogDescription>
               </div>
@@ -174,7 +167,7 @@ export default function ProfileDetailsModal({
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
-          <TabsList className="grid w-full grid-cols-3 bg-slate-800 border border-slate-700">
+          <TabsList className="grid w-full grid-cols-2 bg-slate-800 border border-slate-700">
             <TabsTrigger value="stats">
               <BarChart className="mr-2 h-4 w-4" />
               {t.profileDetails.statsTab}
@@ -182,10 +175,6 @@ export default function ProfileDetailsModal({
             <TabsTrigger value="config">
               <Cpu className="mr-2 h-4 w-4" />
               {t.profileDetails.configTab}
-            </TabsTrigger>
-            <TabsTrigger value="avatar">
-              <ImageIcon className="mr-2 h-4 w-4" />
-              {t.profileDetails.avatarTab}
             </TabsTrigger>
           </TabsList>
 
@@ -399,66 +388,6 @@ export default function ProfileDetailsModal({
             )}
           </TabsContent>
 
-          {/* ONGLET AVATAR */}
-          <TabsContent value="avatar" className="space-y-4">
-            <Card className="bg-slate-950 border-slate-800">
-              <CardContent className="pt-6">
-                <h3 className="text-sm font-semibold text-slate-300 mb-4">{t.profileDetails.editAvatar}</h3>
-                
-                {/* Avatar actuel */}
-                <div className="flex items-center gap-4 mb-6 bg-slate-900 p-4 rounded-lg border border-slate-800">
-                  {config.avatarUrl ? (
-                    <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-green-500 shadow-lg">
-                      <Image 
-                        src={config.avatarUrl} 
-                        alt={profile.username} 
-                        width={96} 
-                        height={96}
-                        className="object-cover"
-                        unoptimized
-                      />
-                    </div>
-                  ) : (
-                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg">
-                      <Bot className="h-12 w-12 text-white" />
-                    </div>
-                  )}
-                  <div>
-                    <p className="text-sm text-slate-400 mb-1">{t.profileDetails.currentAvatar}</p>
-                    <p className="text-xs text-slate-500">
-                      {config.avatarUrl ? t.engineConfig.customAvatarUrl : t.engineConfig.defaultAvatar}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Changer l'avatar */}
-                <div className="space-y-3">
-                  <div>
-                    <label className="text-sm text-slate-400 mb-2 block">{t.profileDetails.newImageUrlLabel}</label>
-                    <Input
-                      type="url"
-                      value={avatarUrl}
-                      onChange={(e) => setAvatarUrl(e.target.value)}
-                      placeholder={t.profileDetails.newImageUrlPlaceholder}
-                      className="bg-slate-900 border-slate-700 text-slate-200"
-                    />
-                    <p className="text-xs text-slate-500 mt-1">
-                      {t.profileDetails.enterImageUrlHint}
-                    </p>
-                  </div>
-
-                  <Button
-                    onClick={handleAvatarUpdate}
-                    disabled={!avatarUrl || saving}
-                    className="w-full bg-green-600 hover:bg-green-500 text-white font-bold"
-                  >
-                    <Upload className="mr-2 h-4 w-4" />
-                    {saving ? t.profileDetails.saving : t.profileDetails.updateAvatar}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
         </Tabs>
       </DialogContent>
     </Dialog>

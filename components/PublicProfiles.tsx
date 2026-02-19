@@ -7,12 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Library, Search, Play, Download, Loader2, Globe, Database, Settings, Filter, ArrowUpDown, Lock, Unlock, Users } from "lucide-react";
-import { getFilteredProfiles, type ProfileFilter, type ProfileSort } from "@/lib/supabase-storage";
-import { isSupabaseConfigured, type DbProfile } from "@/lib/supabase";
+import { Library, Search, Play, Download, Loader2, Globe, Database, Settings, Filter, ArrowUpDown, Lock, Unlock, Users, User } from "lucide-react";
+import { getFilteredProfiles, updateProfile, type ProfileFilter, type ProfileSort } from "@/lib/supabase-storage";
+import { isSupabaseConfigured, supabase, type DbProfile } from "@/lib/supabase";
 import { prepareConfigForExport } from "@/lib/forced-line-utils";
 import { useRouter } from "next/navigation";
 import ProfileDetailsModal from "./ProfileDetailsModal";
+import { toast } from "sonner";
 
 export default function PublicProfiles() {
   const { lang, t } = useLanguage();
@@ -24,10 +25,14 @@ export default function PublicProfiles() {
   const [sort, setSort] = useState<ProfileSort>('date');
   const [selectedProfile, setSelectedProfile] = useState<DbProfile | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isSupabaseConfigured) {
+    if (isSupabaseConfigured && supabase) {
       loadProfiles();
+      supabase.auth.getUser().then(({ data }) => {
+        setCurrentUserId(data.user?.id ?? null);
+      });
     } else {
       setLoading(false);
     }
@@ -72,6 +77,18 @@ export default function PublicProfiles() {
     setSelectedProfile(profile);
     setShowDetailsModal(true);
   };
+
+  const handleUpdateProfile = async (id: string, updates: Partial<DbProfile>): Promise<boolean> => {
+    const res = await updateProfile(id, updates);
+    if (res.success) {
+      await loadProfiles();
+      return true;
+    }
+    toast.error(res.error || 'Error');
+    return false;
+  };
+
+  const isOwner = (profile: DbProfile) => currentUserId === profile.user_id;
 
   return (
     <Card className="bg-slate-900 border-slate-800">
@@ -340,8 +357,15 @@ export default function PublicProfiles() {
                     </Button>
                   </div>
 
-                  {/* Date */}
-                  <div className="text-xs text-slate-600 text-center">
+                  {/* Creator & Date */}
+                  <div className="text-xs text-slate-600 text-center flex items-center justify-center gap-1">
+                    {profile.config.creatorName && (
+                      <>
+                        <User className="h-3 w-3" />
+                        <span className="text-slate-400">{profile.config.creatorName}</span>
+                        <span>·</span>
+                      </>
+                    )}
                     {t.library.createdOn} {new Date(profile.created_at).toLocaleDateString(lang === 'fr' ? 'fr-FR' : 'en-US')}
                   </div>
                 </CardContent>
@@ -355,6 +379,7 @@ export default function PublicProfiles() {
         open={showDetailsModal}
         onOpenChange={setShowDetailsModal}
         profile={selectedProfile}
+        onUpdate={selectedProfile && isOwner(selectedProfile) ? handleUpdateProfile : undefined}
         onPlay={handlePlayAgainst}
       />
     </Card>

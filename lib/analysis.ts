@@ -37,6 +37,7 @@ export interface EngineConfig {
   forcedLineBlack?: string[];  // Coups du bot quand il joue les noirs
   /** @deprecated Préférer forcedLineWhite / forcedLineBlack. Conservé pour rétrocompat. */
   forcedLine?: string[];
+  creatorName?: string;
 }
 
 // On ajoute le paramètre platform à la fonction
