@@ -1,362 +1,243 @@
-# 🚀 Guide de Déploiement - Chess Avatar
+# Deployment Guide — Chess Avatar
 
-## 📋 Préparation
+> Quick reference for building, deploying, and maintaining **chessavatar.net**.
 
-### 1. Vérifier que le Build Fonctionne
+---
+
+## 1. Local Development
 
 ```bash
+# Install dependencies
+npm install
+
+# Start dev server (http://localhost:3000)
+npm run dev
+
+# Type-check + production build
 npm run build
+
+# Run production build locally
+npm start
 ```
 
-Si des erreurs apparaissent, corrigez-les avant de continuer.
+**Always run `npm run build` before pushing.** It catches TypeScript errors that `npm run dev` may silently skip.
 
 ---
 
-## 🌐 Méthode 1 : Déploiement avec Git + Vercel (Recommandé)
+## 2. Environment Variables
 
-Cette méthode permet des **déploiements automatiques** à chaque modification.
+Copy `.env.example` to `.env.local` and fill in real values:
 
-### Étape 1 : Initialiser Git
+| Variable | Where to find it |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase Dashboard → Settings → API → Project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase Dashboard → Settings → API → `anon` public key |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase Dashboard → Settings → API → `service_role` key (secret) |
+| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Stripe Dashboard → Developers → API keys → Publishable key |
+| `STRIPE_SECRET_KEY` | Stripe Dashboard → Developers → API keys → Secret key |
+| `STRIPE_WEBHOOK_SECRET` | Stripe Dashboard → Developers → Webhooks → Signing secret |
+| `STRIPE_PRICE_EUR` | Stripe Dashboard → Products → Price ID (EUR) |
+| `STRIPE_PRICE_CHF` | Stripe Dashboard → Products → Price ID (CHF) |
+| `STRIPE_PRICE_USD` | Stripe Dashboard → Products → Price ID (USD) |
+| `RESEND_API_KEY` | Resend Dashboard → API Keys |
+
+> **Never commit `.env.local`.** It is already in `.gitignore`.
+
+---
+
+## 3. Git Workflow
 
 ```bash
-git init
+# Check status
+git status
+
+# Stage & commit
 git add .
-git commit -m "Initial commit - Chess Avatar"
-```
+git commit -m "describe your change"
 
-### Étape 2 : Créer un Dépôt GitHub
-
-1. Allez sur [github.com](https://github.com)
-2. Cliquez sur **"New repository"**
-3. Nom : `chess-avatar` (ou autre)
-4. **Public** ou **Private** (au choix)
-5. **Ne cochez rien** (pas de README, .gitignore, etc.)
-6. Cliquez sur **"Create repository"**
-
-### Étape 3 : Pousser le Code vers GitHub
-
-Remplacez `VOTRE-USERNAME` par votre nom d'utilisateur GitHub :
-
-```bash
-git branch -M main
-git remote add origin https://github.com/VOTRE-USERNAME/chess-avatar.git
-git push -u origin main
-```
-
-### Étape 4 : Créer un Compte Vercel
-
-1. Allez sur [vercel.com](https://vercel.com)
-2. Cliquez sur **"Sign Up"**
-3. Connectez-vous avec **GitHub**
-4. Autorisez Vercel à accéder à vos dépôts
-
-### Étape 5 : Importer le Projet
-
-1. Sur le dashboard Vercel, cliquez sur **"Add New Project"**
-2. Sélectionnez **"Import Git Repository"**
-3. Trouvez votre dépôt `chess-avatar`
-4. Cliquez sur **"Import"**
-
-### Étape 6 : Configurer les Variables d'Environnement
-
-⚠️ **IMPORTANT : Configurer Supabase**
-
-Dans la section **"Environment Variables"** :
-
-| Name | Value |
-|------|-------|
-| `NEXT_PUBLIC_SUPABASE_URL` | `https://votre-projet.supabase.co` |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `votre-clé-anonyme-supabase` |
-
-**Où trouver ces valeurs ?**
-1. Allez sur [supabase.com](https://supabase.com)
-2. Ouvrez votre projet
-3. **Settings** → **API**
-4. Copiez `Project URL` et `anon` key
-
-### Étape 7 : Déployer
-
-1. Cliquez sur **"Deploy"**
-2. Attendez 2-3 minutes
-3. 🎉 **Votre site est en ligne !**
-
-Vous recevrez une URL du type : `https://chess-avatar-xxx.vercel.app`
-
----
-
-## ⚡ Méthode 2 : Déploiement Rapide avec Vercel CLI (Sans Git)
-
-Si vous ne voulez pas utiliser Git pour l'instant.
-
-### Étape 1 : Installer Vercel CLI
-
-```bash
-npm install -g vercel
-```
-
-### Étape 2 : Se Connecter à Vercel
-
-```bash
-vercel login
-```
-
-Suivez les instructions pour vous connecter (email ou GitHub).
-
-### Étape 3 : Déployer
-
-```bash
-cd "c:\Users\marco\Cursor Workplace\chess-avatar"
-vercel
-```
-
-**Répondez aux questions** :
-- **Set up and deploy?** → `Y` (Yes)
-- **Which scope?** → Sélectionnez votre compte
-- **Link to existing project?** → `N` (No)
-- **What's your project's name?** → `chess-avatar`
-- **In which directory is your code located?** → `.` (laisser par défaut)
-- **Want to override settings?** → `N` (No)
-
-### Étape 4 : Configurer Supabase
-
-Après le premier déploiement :
-
-```bash
-vercel env add NEXT_PUBLIC_SUPABASE_URL
-```
-Entrez : `https://votre-projet.supabase.co`
-
-```bash
-vercel env add NEXT_PUBLIC_SUPABASE_ANON_KEY
-```
-Entrez : `votre-clé-anonyme-supabase`
-
-### Étape 5 : Redéployer avec les Variables
-
-```bash
-vercel --prod
-```
-
-🎉 **Votre site est en ligne !**
-
----
-
-## 🔒 Configurer Supabase pour la Production
-
-### 1. Autoriser le Domaine Vercel
-
-1. Allez sur [supabase.com](https://supabase.com)
-2. Ouvrez votre projet
-3. **Authentication** → **URL Configuration**
-4. Ajoutez votre URL Vercel dans **"Site URL"** :
-   ```
-   https://chess-avatar-xxx.vercel.app
-   ```
-5. Ajoutez aussi dans **"Redirect URLs"** :
-   ```
-   https://chess-avatar-xxx.vercel.app/*
-   ```
-
-### 2. Tester la Connexion
-
-1. Visitez votre site déployé
-2. Essayez de sauvegarder une partie
-3. Vérifiez que les données apparaissent dans Supabase
-
----
-
-## 📝 Fichiers à Vérifier Avant Déploiement
-
-### 1. `.gitignore` (si vous utilisez Git)
-
-Vérifiez que ces fichiers sont ignorés :
-
-```
-# dependencies
-/node_modules
-/.pnp
-.pnp.js
-
-# testing
-/coverage
-
-# next.js
-/.next/
-/out/
-
-# production
-/build
-
-# misc
-.DS_Store
-*.pem
-
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# local env files
-.env*.local
-.env
-
-# vercel
-.vercel
-
-# typescript
-*.tsbuildinfo
-next-env.d.ts
-```
-
-### 2. `.env.local` (Local uniquement)
-
-⚠️ **NE JAMAIS COMMITER CE FICHIER**
-
-Ce fichier reste sur votre machine locale. Les variables d'environnement pour la production sont configurées sur Vercel.
-
----
-
-## 🎨 Domaine Personnalisé (Optionnel)
-
-### Avec Vercel (Gratuit)
-
-1. Sur le dashboard Vercel, sélectionnez votre projet
-2. **Settings** → **Domains**
-3. Ajoutez un domaine personnalisé :
-   - Sous-domaine Vercel gratuit : `mon-bot-echecs.vercel.app`
-   - Votre propre domaine : `monbot.com` (nécessite d'acheter un domaine)
-
----
-
-## 🔄 Mises à Jour Automatiques
-
-### Avec Git + Vercel (Méthode 1)
-
-Chaque fois que vous modifiez votre code :
-
-```bash
-git add .
-git commit -m "Description des modifications"
+# Push to GitHub (triggers Vercel auto-deploy)
 git push
 ```
 
-→ **Vercel déploie automatiquement** en 2-3 minutes ! 🚀
+Vercel is connected to the `main` branch. Every push to `main` triggers a production deployment automatically (usually takes 1–2 minutes).
 
-### Avec Vercel CLI (Méthode 2)
+---
+
+## 4. Vercel — Deployment
+
+### First-time setup
+
+1. Go to [vercel.com](https://vercel.com) → **Add New Project** → Import your GitHub repo.
+2. Add all environment variables under **Settings → Environment Variables** (see Section 2).
+3. Click **Deploy**.
+
+### Environment Variables on Vercel
+
+Add variables at the **Project level**, not Team level:
+
+1. Go to **Vercel Dashboard → your project → Settings → Environment Variables**.
+2. Add each variable with scope: **Production**, **Preview**, **Development** (check all three).
+3. After adding/changing any variable → **redeploy** for it to take effect.
+
+> **Common pitfall:** A variable added at the Team level is not automatically available to the project. Always add at the Project level.
+
+### Redeploying
+
+If you changed env vars or need a manual redeploy without pushing code:
+
+1. Vercel Dashboard → your project → **Deployments** tab.
+2. Click the three-dot menu on the latest deployment → **Redeploy**.
+
+Or via CLI:
 
 ```bash
-vercel --prod
+npx vercel --prod
+```
+
+### Custom Domain
+
+The project uses `chessavatar.net` (purchased via Vercel):
+
+1. Vercel Dashboard → your project → **Settings → Domains**.
+2. DNS is managed automatically when the domain is purchased through Vercel.
+3. Make sure the same domain is set in **Supabase → Authentication → URL Configuration → Site URL**.
+
+### Checking Logs
+
+When something fails in production (API routes, webhooks):
+
+1. Vercel Dashboard → your project → **Logs** tab.
+2. Filter by **Errors** or search for the route path (e.g. `/api/stripe/webhook`).
+3. Alternatively via CLI: `npx vercel logs`
+
+---
+
+## 5. Supabase — Configuration
+
+### URL Configuration (Auth redirects)
+
+1. Supabase Dashboard → **Authentication → URL Configuration**.
+2. **Site URL**: `https://chessavatar.net`
+3. **Redirect URLs**: add `https://chessavatar.net/*`
+
+### Database Migrations
+
+Migration files are in `supabase/migrations/`. To apply a new migration:
+
+1. Go to Supabase Dashboard → **SQL Editor**.
+2. Paste the SQL and run.
+
+### Manually Update a User (e.g. grant Premium)
+
+```sql
+INSERT INTO subscriptions (user_id, plan, status, stripe_session_id)
+VALUES ('user-uuid-here', 'premium', 'active', 'manual_grant')
+ON CONFLICT (user_id)
+DO UPDATE SET plan = 'premium', status = 'active';
 ```
 
 ---
 
-## 📊 Surveillance et Analytics
+## 6. Stripe — Webhooks
 
-### 1. Analytics Vercel (Gratuit)
+The Stripe webhook endpoint is `/api/stripe/webhook`.
 
-1. Dashboard Vercel → Votre projet
-2. **Analytics** → Voir les visites, performance, etc.
+1. Stripe Dashboard → **Developers → Webhooks**.
+2. Endpoint URL: `https://chessavatar.net/api/stripe/webhook`
+3. Events to listen for: `checkout.session.completed`
+4. Copy the **Signing secret** → set as `STRIPE_WEBHOOK_SECRET` on Vercel.
 
-### 2. Web Vitals
-
-Vercel surveille automatiquement :
-- Temps de chargement
-- Interactivité
-- Stabilité visuelle
+> After changing the webhook secret, redeploy on Vercel.
 
 ---
 
-## 🐛 Dépannage
+## 7. Resend — Email (Contact Form)
 
-### Erreur : "Build Failed"
+The contact form sends emails via Resend through `/api/contact`.
 
-**Causes possibles** :
-- Erreurs TypeScript
-- Import manquant
-- Variables d'environnement manquantes
-
-**Solution** :
-1. Testez localement : `npm run build`
-2. Corrigez les erreurs
-3. Redéployez
+1. Resend Dashboard → verify your sending domain (`contact.chessavatar.net`).
+2. DNS records (TXT, MX, DMARC) must be configured on Vercel Domains.
+3. The `RESEND_API_KEY` must be set at the **Project level** on Vercel.
+4. Emails are sent **from** `contact@contact.chessavatar.net` **to** your personal inbox.
 
 ---
 
-### Erreur : "Supabase not working"
+## 8. Pre-deploy Checklist
 
-**Causes possibles** :
-- Variables d'environnement non définies
-- URL Vercel non autorisée dans Supabase
-
-**Solution** :
-1. Vérifiez les variables sur Vercel : **Settings** → **Environment Variables**
-2. Ajoutez l'URL dans Supabase : **Authentication** → **URL Configuration**
-
----
-
-### Erreur : "API Routes not working"
-
-**Solution** :
-Vérifiez que vos routes API sont dans `app/api/` et non `pages/api/` (vous utilisez App Router).
-
----
-
-## 🎯 Checklist de Déploiement
-
-Avant de publier :
-
-- [ ] `npm run build` fonctionne sans erreurs
-- [ ] Variables d'environnement Supabase configurées sur Vercel
-- [ ] URL Vercel ajoutée dans Supabase
-- [ ] Test de sauvegarde de partie fonctionnel
-- [ ] Test de l'analyse de profil Chess.com/Lichess
-- [ ] Test du téléchargement de `AvatarEngine.py`
-- [ ] `.env.local` n'est PAS commité (seulement pour Git)
-
----
-
-## 🚀 Commandes Rapides
-
-### Déploiement Initial (Git)
-```bash
-git init
-git add .
-git commit -m "Initial commit"
-git remote add origin https://github.com/USERNAME/chess-avatar.git
-git push -u origin main
 ```
-Puis importer sur Vercel.
-
-### Déploiement Initial (CLI)
-```bash
-vercel
-vercel env add NEXT_PUBLIC_SUPABASE_URL
-vercel env add NEXT_PUBLIC_SUPABASE_ANON_KEY
-vercel --prod
-```
-
-### Mise à Jour (Git)
-```bash
-git add .
-git commit -m "Update"
-git push
-```
-
-### Mise à Jour (CLI)
-```bash
-vercel --prod
+[ ] npm run build passes with no errors
+[ ] All env vars are set on Vercel (Project level)
+[ ] Site URL + redirect URLs are correct in Supabase
+[ ] Stripe webhook points to production URL
+[ ] Stripe webhook secret matches Vercel env var
+[ ] Resend domain is verified
+[ ] .env.local is NOT committed
 ```
 
 ---
 
-## 🎉 Félicitations !
+## 9. Tips & Tricks
 
-Votre site **Chess Avatar** est maintenant en ligne et accessible au monde entier ! 🌍♟️
+### Build errors after editing
 
-**URL de votre site** : `https://votre-projet.vercel.app`
+Always run `npm run build` locally before pushing. Common causes of build failure:
+- **Missing type property**: if you add a field to a config object, add it to the TypeScript interface too (e.g. `EngineConfig` in `lib/analysis.ts`).
+- **Unused imports**: Next.js strict mode will flag these.
+- **Wrong translation key**: accessing `t.something.key` that doesn't exist in `lib/translations.ts`.
 
-Partagez-le avec vos amis, testez-le, et profitez-en ! 🎮
+### Lockfile warning
+
+If you see *"detected multiple lockfiles"* during build, it means there's a `package-lock.json` in a parent directory. You can ignore it or remove the parent lockfile.
+
+### Testing Stripe locally
+
+Use Stripe CLI to forward webhooks to localhost:
+
+```bash
+stripe listen --forward-to localhost:3000/api/stripe/webhook
+```
+
+This gives you a temporary webhook secret for local testing.
+
+### Checking if a user is Premium
+
+In the browser console (while logged in):
+
+```js
+const { data } = await supabase.from('subscriptions').select('*').eq('user_id', 'USER_ID');
+console.log(data);
+```
+
+Or directly in Supabase Dashboard → **Table Editor → subscriptions**.
+
+### Vercel preview deployments
+
+Every push to a non-main branch creates a **preview deployment** with its own URL. Useful for testing changes before merging to main.
+
+### Image domains
+
+If you use external avatar images, add the domain to `next.config.ts` under `images.remotePatterns`. Otherwise Next.js `<Image>` will reject them (unless `unoptimized` is set).
+
+### Clearing local state
+
+The app uses `localStorage` for some settings. To reset:
+- Open DevTools → Application → Local Storage → Clear.
 
 ---
 
-**Dernière mise à jour** : 2025-12-12
+## 10. Useful Commands
+
+| Command | Description |
+|---|---|
+| `npm run dev` | Start dev server |
+| `npm run build` | Production build + type check |
+| `npm start` | Serve production build locally |
+| `git status` | See changed files |
+| `git add . && git commit -m "msg" && git push` | Push changes (triggers deploy) |
+| `npx vercel --prod` | Manual deploy via CLI |
+| `npx vercel logs` | View production logs |
+| `npx vercel env ls` | List env vars on Vercel |
+
+---
+
+*Last updated: 2026-02-14*
