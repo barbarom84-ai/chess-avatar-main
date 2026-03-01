@@ -33,6 +33,20 @@ export default function SimpleChessboard({
 
   const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
   const ranks = ['8', '7', '6', '5', '4', '3', '2', '1'];
+  const checkedKingColor = game.inCheck() ? game.turn() : null;
+  const checkedKingSquare = checkedKingColor
+    ? (() => {
+        for (let r = 0; r < 8; r++) {
+          for (let f = 0; f < 8; f++) {
+            const piece = board[r][f];
+            if (piece && piece.type === "k" && piece.color === checkedKingColor) {
+              return `${files[f]}${ranks[r]}`;
+            }
+          }
+        }
+        return null;
+      })()
+    : null;
 
   // Inverser l'échiquier si orientation = black
   const displayFiles = orientation === 'black' ? [...files].reverse() : files;
@@ -148,7 +162,10 @@ export default function SimpleChessboard({
   };
 
   return (
-    <div className="w-full max-w-[500px] aspect-square bg-slate-800 p-2 rounded-lg shadow-2xl relative">
+    <div
+      className="w-full aspect-square bg-slate-800 p-1.5 sm:p-2 rounded-lg shadow-2xl relative mx-auto"
+      style={{ maxWidth: "min(96vw, 84vh, 820px)" }}
+    >
       <div className="grid grid-cols-8 gap-0 w-full h-full">
         {displayRanks.map((rank, rankIdx) =>
           displayFiles.map((file, fileIdx) => {
@@ -163,6 +180,7 @@ export default function SimpleChessboard({
             const isHighlighted = showLegalMoves && highlightedSquares.includes(square);
             const isHovered = hoveredSquare === square;
             const isLastMove = highlightLastMove && lastMove && (lastMove.from === square || lastMove.to === square);
+            const isCheckedKingSquare = checkedKingSquare === square;
             
             // Couleur de la case (utilise le thème)
             let bgColor = '';
@@ -195,6 +213,8 @@ export default function SimpleChessboard({
                     className={`w-[80%] h-[80%] relative transition-all duration-200 ${
                       isDragging ? 'scale-110 rotate-6 opacity-70' : 'scale-100 rotate-0'
                     } ${isSelected ? 'scale-110 drop-shadow-2xl' : ''} ${
+                      isCheckedKingSquare ? 'drop-shadow-[0_0_12px_rgba(239,68,68,0.85)]' : ''
+                    } ${
                       onDrop ? 'cursor-pointer hover:scale-105' : ''
                     }`}
                     draggable={!!onDrop}
@@ -205,7 +225,7 @@ export default function SimpleChessboard({
                       src={getPieceImage(piece)}
                       alt={`${piece.color}${piece.type}`}
                       fill
-                      sizes="80px"
+                      sizes="(max-width: 640px) 11vw, (max-width: 1024px) 9vw, 80px"
                       className="object-contain drop-shadow-lg pointer-events-none"
                       unoptimized
                       draggable={false}
@@ -233,6 +253,11 @@ export default function SimpleChessboard({
                 {/* Indicateur de case sélectionnée */}
                 {isSelected && (
                   <div className="absolute inset-0 border-4 border-blue-500 rounded-sm pointer-events-none z-10 animate-pulse" />
+                )}
+
+                {/* Indicateur de roi en échec */}
+                {isCheckedKingSquare && (
+                  <div className="absolute inset-0 border-[3px] border-red-500 rounded-sm pointer-events-none z-20 animate-pulse" />
                 )}
                 
                 {/* Coordonnées */}

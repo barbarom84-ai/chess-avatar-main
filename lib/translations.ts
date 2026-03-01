@@ -28,7 +28,7 @@ export const translations = {
       playerNotFound: "Joueur introuvable",
       lichessPlayerNotFound: "Joueur Lichess introuvable",
       chesscomPlayerNotFound: "Joueur Chess.com introuvable",
-      noGamesFound: "Aucune partie récente trouvée pour ce joueur",
+      noGamesFound: "Aucune partie trouvée pour ce joueur",
       genericError: "Une erreur est survenue"
     },
     
@@ -841,7 +841,7 @@ export const translations = {
       playerNotFound: "Player not found",
       lichessPlayerNotFound: "Lichess player not found",
       chesscomPlayerNotFound: "Chess.com player not found",
-      noGamesFound: "No recent games found for this player",
+      noGamesFound: "No games found for this player",
       genericError: "An error occurred"
     },
     

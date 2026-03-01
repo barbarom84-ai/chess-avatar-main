@@ -112,7 +112,7 @@ function PlayContent() {
 
   return (
     <main className="min-h-screen theme-gradient theme-text-primary">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-[1600px] mx-auto">
         
         {/* Barre de contrôle compacte en haut - Position fixe */}
         <div className="sticky top-0 z-50 bg-gradient-to-b from-slate-950 dark:from-slate-950 light:from-[oklch(0.88_0.010_75)] to-slate-950/95 dark:to-slate-950/95 light:to-[oklch(0.88_0.010_75)]/95 backdrop-blur-sm border-b theme-border px-2 md:px-4 py-2">

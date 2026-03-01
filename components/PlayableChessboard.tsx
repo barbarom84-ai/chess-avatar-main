@@ -878,10 +878,10 @@ export default function PlayableChessboard({
       />
 
       {/* Layout principal: Échiquier CENTRÉ + Historique DROITE */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 lg:gap-4">
         
         {/* COLONNE GAUCHE : Infos (2/12) */}
-        <div className="lg:col-span-2 space-y-3">
+        <div className="order-2 lg:order-1 lg:col-span-2 space-y-3">
           {/* Infos compactes */}
           {!gameOver && (
             <Card className="p-3 bg-slate-900/50 border-slate-800">
@@ -916,9 +916,9 @@ export default function PlayableChessboard({
         </div>
 
         {/* COLONNE CENTRALE : Échiquier (7/12) */}
-        <div className="lg:col-span-7 space-y-3">
+        <div className="order-1 lg:order-2 lg:col-span-7 space-y-3">
           {/* Échiquier - ÉLÉMENT CENTRAL */}
-          <Card className="p-6 bg-slate-900 border-slate-800 shadow-xl relative">
+          <Card className="p-2 sm:p-4 lg:p-6 bg-slate-900 border-slate-800 shadow-xl relative">
             {reviewMode && (
               <div className="absolute top-2 left-2 z-10 bg-purple-600/90 text-white px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-2">
                 <BookOpen className="h-3 w-3" />
@@ -958,8 +958,8 @@ export default function PlayableChessboard({
         </div>
 
         {/* COLONNE DROITE : Historique (3/12) - LE PLUS À DROITE */}
-        <div className="lg:col-span-3">
-          <Card className="p-3 bg-slate-900/50 border-slate-800 sticky top-4">
+        <div className="order-3 lg:col-span-3">
+          <Card className="p-3 bg-slate-900/50 border-slate-800 lg:sticky lg:top-4">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
                 <BookOpen className="h-4 w-4 text-cyan-400" />
@@ -982,7 +982,7 @@ export default function PlayableChessboard({
               <span>•</span>
               <span>Clic sur un coup</span>
             </div>
-            <div className="max-h-[600px] overflow-y-auto pr-1">
+            <div className="max-h-[38vh] sm:max-h-[48vh] lg:max-h-[70vh] overflow-y-auto pr-1">
               {moveHistory.length === 0 ? (
                 <p className="text-xs text-slate-500 text-center py-4">
                   Aucun coup joué
