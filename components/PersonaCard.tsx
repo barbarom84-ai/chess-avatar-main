@@ -276,16 +276,20 @@ export default function PersonaCard({ stats, config, profileId }: PersonaCardPro
         {/* Ouvertures du répertoire */}
         <div>
           <p className="text-sm text-slate-400 mb-2">{t.personaCard.openingRepertoire}</p>
-          <div className="flex flex-wrap gap-2">
-            {stats.topOpenings.map((op, i) => (
-              <Badge 
-                key={i} 
-                className={i === 0 ? "bg-amber-500/20 text-amber-300 border-amber-500/50" : "bg-slate-800 hover:bg-slate-700"}
-              >
-                {op.name} <span className="ml-1 opacity-50">({op.count})</span>
-              </Badge>
-            ))}
-          </div>
+          {stats.topOpenings.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {stats.topOpenings.map((op, i) => (
+                <Badge 
+                  key={i} 
+                  className={i === 0 ? "bg-amber-500/20 text-amber-300 border-amber-500/50" : "bg-slate-800 hover:bg-slate-700"}
+                >
+                  {op.name} <span className="ml-1 opacity-50">({op.count})</span>
+                </Badge>
+              ))}
+            </div>
+          ) : (
+            <div className="text-sm text-slate-500">{t.openingEditor.noOpeningsFound}</div>
+          )}
         </div>
 
         {/* Boutons d'action */}

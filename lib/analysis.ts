@@ -40,6 +40,57 @@ export interface EngineConfig {
   creatorName?: string;
 }
 
+function normalizeOpeningName(raw?: string | null): string | null {
+  if (!raw) return null;
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  if (
+    trimmed.toLowerCase() === "ouverture inconnue" ||
+    trimmed.toLowerCase() === "unknown opening"
+  ) {
+    return null;
+  }
+  return trimmed;
+}
+
+function parsePgnTag(pgn: string, tag: string): string | null {
+  const regex = new RegExp(`\\[${tag}\\s+"([^"]+)"\\]`, "i");
+  const match = pgn.match(regex);
+  return match?.[1]?.trim() || null;
+}
+
+function openingFromEcoUrl(ecoUrl?: string | null): string | null {
+  if (!ecoUrl) return null;
+  // Ex: https://www.chess.com/openings/Italian-Game
+  const slug = ecoUrl.split("/").filter(Boolean).pop();
+  if (!slug) return null;
+  const cleaned = slug
+    .replace(/[-_]/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+  return normalizeOpeningName(cleaned);
+}
+
+function extractOpeningName(game: any): string | null {
+  const direct = normalizeOpeningName(game?.opening?.name);
+  if (direct) return direct;
+
+  const pgn = typeof game?.pgn === "string" ? game.pgn : "";
+  if (!pgn) return null;
+
+  // Chess.com PGN generally provides [Opening "..."] and sometimes [ECOUrl "..."].
+  const pgnOpening = normalizeOpeningName(parsePgnTag(pgn, "Opening"));
+  if (pgnOpening) return pgnOpening;
+
+  const ecoUrl = parsePgnTag(pgn, "ECOUrl");
+  const fromUrl = openingFromEcoUrl(ecoUrl);
+  if (fromUrl) return fromUrl;
+
+  const ecoCode = parsePgnTag(pgn, "ECO");
+  if (ecoCode) return `ECO ${ecoCode}`;
+
+  return null;
+}
+
 // On ajoute le paramètre platform à la fonction
 export function analyzePersona(
   games: any[], 
@@ -75,13 +126,13 @@ export function analyzePersona(
       const history = chess.history({ verbose: true });
       totalMoves += history.length;
 
-      if (history.length > 5) {
-        // Récupération ouverture (Lichess donne l'objet, Chess.com non, donc fallback)
-        const openingName = game.opening?.name || "Ouverture Inconnue";
-        if (openingName !== "Ouverture Inconnue") {
-            openingsMap.set(openingName, (openingsMap.get(openingName) || 0) + 1);
-        }
+      // Récupération ouverture (Lichess + fallback PGN pour Chess.com)
+      const openingName = extractOpeningName(game);
+      if (openingName) {
+        openingsMap.set(openingName, (openingsMap.get(openingName) || 0) + 1);
+      }
 
+      if (history.length > 5) {
         // Construction du livre
         history.slice(0, 12).forEach((move) => {
           if (move.color === (isWhite ? 'w' : 'b')) {

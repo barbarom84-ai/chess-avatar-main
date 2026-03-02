@@ -214,50 +214,58 @@ export default function PerformanceCharts({ stats }: PerformanceChartsProps) {
                 </Badge>
               </div>
 
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={openingsData}>
-                  <XAxis 
-                    dataKey="name" 
-                    tick={{ fill: '#cbd5e1', fontSize: 11 }}
-                    angle={-45}
-                    textAnchor="end"
-                    height={80}
-                  />
-                  <YAxis tick={{ fill: '#64748b' }} />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: '#1e293b', 
-                      border: '1px solid #475569',
-                      borderRadius: '8px',
-                      color: '#e2e8f0'
-                    }}
-                    formatter={(value: any, name: string) => {
-                      if (name === 'parties') return [`${value} ${t.performanceCharts.games}`, 'Count'];
-                      return [value, name];
-                    }}
-                  />
-                  <Bar dataKey="parties" fill="#a855f7" radius={[8, 8, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+              {openingsData.length > 0 ? (
+                <>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={openingsData}>
+                      <XAxis 
+                        dataKey="name" 
+                        tick={{ fill: '#cbd5e1', fontSize: 11 }}
+                        angle={-45}
+                        textAnchor="end"
+                        height={80}
+                      />
+                      <YAxis tick={{ fill: '#64748b' }} />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: '#1e293b', 
+                          border: '1px solid #475569',
+                          borderRadius: '8px',
+                          color: '#e2e8f0'
+                        }}
+                        formatter={(value: any, name: string) => {
+                          if (name === 'parties') return [`${value} ${t.performanceCharts.games}`, 'Count'];
+                          return [value, name];
+                        }}
+                      />
+                      <Bar dataKey="parties" fill="#a855f7" radius={[8, 8, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
 
-              <div className="space-y-2">
-                {openingsData.map((opening, idx) => (
-                  <div key={idx} className="bg-slate-950 p-3 rounded border border-slate-800">
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className={idx === 0 ? "text-amber-400 border-amber-400" : "text-slate-400 border-slate-700"}>
-                          #{idx + 1}
-                        </Badge>
-                        <span className="text-sm text-slate-300">{stats.topOpenings[idx].name}</span>
+                  <div className="space-y-2">
+                    {openingsData.map((opening, idx) => (
+                      <div key={idx} className="bg-slate-950 p-3 rounded border border-slate-800">
+                        <div className="flex justify-between items-center">
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className={idx === 0 ? "text-amber-400 border-amber-400" : "text-slate-400 border-slate-700"}>
+                              #{idx + 1}
+                            </Badge>
+                            <span className="text-sm text-slate-300">{stats.topOpenings[idx].name}</span>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-sm font-bold text-purple-400">{opening.parties} {t.performanceCharts.games}</div>
+                            <div className="text-xs text-slate-500">{opening.percentage}%</div>
+                          </div>
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <div className="text-sm font-bold text-purple-400">{opening.parties} {t.performanceCharts.games}</div>
-                        <div className="text-xs text-slate-500">{opening.percentage}%</div>
-                      </div>
-                    </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                </>
+              ) : (
+                <div className="h-[300px] flex items-center justify-center bg-slate-950 rounded border border-slate-800">
+                  <p className="text-sm text-slate-400">{t.openingEditor.noOpeningsFound}</p>
+                </div>
+              )}
             </div>
           </TabsContent>
 
