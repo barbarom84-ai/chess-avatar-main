@@ -17,7 +17,7 @@ import { useLanguage } from "@/lib/language-context";
 function PlayBoardLoading() {
   const { t } = useLanguage();
   return (
-    <div className="w-full h-[600px] bg-slate-900 rounded-lg animate-pulse flex items-center justify-center text-slate-700">
+    <div className="w-full h-[60dvh] lg:h-[600px] bg-slate-900 rounded-lg animate-pulse flex items-center justify-center text-slate-700">
       {t.ui.loadingEngine}
     </div>
   );
@@ -115,7 +115,7 @@ function PlayContent() {
       <div className="max-w-[1600px] mx-auto">
         
         {/* Barre de contrôle compacte en haut - Position fixe */}
-        <div className="sticky top-0 z-50 bg-gradient-to-b from-slate-950 dark:from-slate-950 light:from-[oklch(0.88_0.010_75)] to-slate-950/95 dark:to-slate-950/95 light:to-[oklch(0.88_0.010_75)]/95 backdrop-blur-sm border-b theme-border px-2 md:px-4 py-2">
+        <div className="lg:sticky lg:top-0 z-50 bg-gradient-to-b from-slate-950 dark:from-slate-950 light:from-[oklch(0.88_0.010_75)] to-slate-950/95 dark:to-slate-950/95 light:to-[oklch(0.88_0.010_75)]/95 backdrop-blur-sm border-b theme-border px-2 md:px-4 py-2">
           <div className="flex items-center justify-between gap-2">
             {/* Gauche: Info Bot */}
             <div className="flex items-center gap-1.5">

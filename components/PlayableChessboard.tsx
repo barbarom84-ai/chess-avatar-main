@@ -982,7 +982,7 @@ export default function PlayableChessboard({
               <span>•</span>
               <span>Clic sur un coup</span>
             </div>
-            <div className="max-h-[38vh] sm:max-h-[48vh] lg:max-h-[70vh] overflow-y-auto pr-1">
+            <div className="max-h-[38dvh] sm:max-h-[48dvh] lg:max-h-[70vh] overflow-y-auto pr-1 pb-[env(safe-area-inset-bottom)]">
               {moveHistory.length === 0 ? (
                 <p className="text-xs text-slate-500 text-center py-4">
                   Aucun coup joué

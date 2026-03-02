@@ -23,7 +23,7 @@ import { useLanguage } from "@/lib/language-context";
 // Import Dynamique de l'échiquier (pour éviter le bug SSR)
 const GameViewer = dynamic(() => import("@/components/GameViewer"), {
   ssr: false,
-  loading: () => <div className="w-full h-[500px] bg-slate-900 rounded-lg animate-pulse flex items-center justify-center text-slate-700">Loading...</div>
+  loading: () => <div className="w-full h-[50dvh] lg:h-[500px] bg-slate-900 rounded-lg animate-pulse flex items-center justify-center text-slate-700">Loading...</div>
 });
 
 export default function AnalyzePage() {
@@ -180,7 +180,7 @@ export default function AnalyzePage() {
             <Separator className="bg-slate-800" />
 
             {/* 2. REPLAY */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[600px]">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[60dvh] lg:h-[600px]">
               
               {/* Liste des parties */}
               <Card className="lg:col-span-4 theme-bg-secondary theme-border flex flex-col h-full overflow-hidden">

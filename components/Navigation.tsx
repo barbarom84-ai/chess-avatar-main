@@ -226,6 +226,47 @@ export default function Navigation() {
         </div>
 
         {/* Mobile Navigation */}
+        <div className="md:hidden flex items-center justify-between gap-2 pb-2">
+          {isSupabaseConfigured && (
+            <div className="flex items-center gap-2">
+              {user ? (
+                <>
+                  <Link href="/profile">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 px-2 text-slate-200 hover:text-cyan-300"
+                    >
+                      <User className="h-3.5 w-3.5 mr-1" />
+                      <span className="text-xs">{lang === "fr" ? "Profil" : "Profile"}</span>
+                      {isPremium && <Crown className="h-3.5 w-3.5 text-amber-400 ml-1" />}
+                    </Button>
+                  </Link>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={handleSignOut}
+                    className="h-8 px-2 text-red-400 hover:text-red-300"
+                  >
+                    <LogOut className="h-3.5 w-3.5 mr-1" />
+                    <span className="text-xs">{lang === "fr" ? "Déconnexion" : "Sign Out"}</span>
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowAuthModal(true)}
+                  className="h-8 px-3 border-slate-600 bg-slate-800 text-slate-200 hover:bg-slate-700"
+                >
+                  <LogIn className="h-3.5 w-3.5 mr-1" />
+                  <span className="text-xs">{lang === "fr" ? "Connexion" : "Sign In"}</span>
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
+
         <div className="md:hidden flex items-center gap-1 pb-3 overflow-x-auto">
           {navItems.map((item) => {
             const isActive = pathname === item.href;
