@@ -29,6 +29,7 @@ export default function GamesPage() {
   const [selectedGame, setSelectedGame] = useState<DbGame | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [compactMobile, setCompactMobile] = useState(true);
   const gamesPerPage = 10;
 
   useEffect(() => {
@@ -378,25 +379,35 @@ export default function GamesPage() {
               <CardTitle className="text-cyan-100">
                 {t.games.history} ({filteredGames.length})
               </CardTitle>
-              {currentGames.length > 0 && (
+              <div className="flex items-center gap-2">
                 <Button
-                  variant="ghost"
+                  variant={compactMobile ? "default" : "outline"}
                   size="sm"
-                  onClick={toggleSelectAll}
-                  className="text-slate-400 hover:text-cyan-300 hover:bg-cyan-500/10 gap-2"
+                  onClick={() => setCompactMobile((v) => !v)}
+                  className={`md:hidden text-xs ${compactMobile ? "bg-cyan-600" : "border-slate-600"}`}
                 >
-                  {selectedIds.size === currentGames.length && currentGames.length > 0 ? (
-                    <CheckSquare className="h-4 w-4 text-cyan-400" />
-                  ) : (
-                    <Square className="h-4 w-4" />
-                  )}
-                  <span className="text-xs">
-                    {selectedIds.size === currentGames.length && currentGames.length > 0
-                      ? t.games.deselectAll
-                      : t.games.selectAll}
-                  </span>
+                  {lang === "fr" ? "Compact" : "Compact"}
                 </Button>
-              )}
+                {currentGames.length > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={toggleSelectAll}
+                    className="text-slate-400 hover:text-cyan-300 hover:bg-cyan-500/10 gap-2"
+                  >
+                    {selectedIds.size === currentGames.length && currentGames.length > 0 ? (
+                      <CheckSquare className="h-4 w-4 text-cyan-400" />
+                    ) : (
+                      <Square className="h-4 w-4" />
+                    )}
+                    <span className="text-xs">
+                      {selectedIds.size === currentGames.length && currentGames.length > 0
+                        ? t.games.deselectAll
+                        : t.games.selectAll}
+                    </span>
+                  </Button>
+                )}
+              </div>
             </div>
           </CardHeader>
           <CardContent>
@@ -421,37 +432,37 @@ export default function GamesPage() {
                   {currentGames.map((game) => (
                     <div
                       key={game.id}
-                      className={`p-4 bg-slate-950 rounded-lg border transition-all ${
+                      className={`${compactMobile ? "p-3" : "p-4"} bg-slate-950 rounded-lg border transition-all ${
                         selectedIds.has(game.id)
                           ? 'border-cyan-500 bg-cyan-500/5'
                           : 'border-slate-800 hover:border-cyan-500/50'
                       }`}
                     >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4 flex-1">
+                      <div className={`flex ${compactMobile ? "flex-col" : "flex-col sm:flex-row"} sm:items-center justify-between gap-3`}>
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
                           {/* Checkbox */}
                           <button
                             onClick={() => toggleSelectGame(game.id)}
                             className="flex-shrink-0 text-slate-400 hover:text-cyan-400 transition-colors"
                           >
                             {selectedIds.has(game.id) ? (
-                              <CheckSquare className="h-5 w-5 text-cyan-400" />
+                              <CheckSquare className={`${compactMobile ? "h-4 w-4" : "h-5 w-5"} text-cyan-400`} />
                             ) : (
-                              <Square className="h-5 w-5" />
+                              <Square className={`${compactMobile ? "h-4 w-4" : "h-5 w-5"}`} />
                             )}
                           </button>
                           {game.opponent_avatar && (
                             <Image 
                               src={game.opponent_avatar} 
                               alt={game.opponent_name}
-                              width={40}
-                              height={40}
+                              width={compactMobile ? 34 : 40}
+                              height={compactMobile ? 34 : 40}
                               className="rounded-full"
                             />
                           )}
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <h3 className="font-semibold text-slate-200">{game.opponent_name}</h3>
+                          <div className="flex-1 min-w-0">
+                            <div className={`flex items-center gap-2 mb-1 ${compactMobile ? "flex-wrap" : ""}`}>
+                              <h3 className={`font-semibold text-slate-200 ${compactMobile ? "text-sm truncate max-w-[140px]" : ""}`}>{game.opponent_name}</h3>
                               {getResultBadge(game.result)}
                               {game.opponent_platform && (
                                 <Badge variant="outline" className="text-xs">
@@ -459,7 +470,7 @@ export default function GamesPage() {
                                 </Badge>
                               )}
                             </div>
-                            <div className="flex items-center gap-4 text-xs text-slate-400">
+                            <div className={`${compactMobile ? "grid grid-cols-2 gap-x-3 gap-y-1" : "flex items-center gap-4"} text-xs text-slate-400`}>
                               <span className="flex items-center gap-1">
                                 <Calendar className="h-3 w-3" />
                                 {formatDate(game.created_at)}
@@ -476,33 +487,33 @@ export default function GamesPage() {
                           </div>
                         </div>
                         
-                        <div className="flex gap-2">
+                        <div className={`flex ${compactMobile ? "w-full justify-end" : ""} gap-1.5 sm:gap-2`}>
                           <Button
-                            size="sm"
+                            size={compactMobile ? "icon" : "sm"}
                             variant="outline"
                             onClick={() => setSelectedGame(game)}
-                            className="border-cyan-500/50 text-cyan-300 hover:bg-cyan-500/10"
+                            className={`border-cyan-500/50 text-cyan-300 hover:bg-cyan-500/10 ${compactMobile ? "h-8 w-8" : ""}`}
                             title={t.games.viewGame}
                           >
-                            <Eye className="h-4 w-4" />
+                            <Eye className={`${compactMobile ? "h-3.5 w-3.5" : "h-4 w-4"}`} />
                           </Button>
                           <Button
-                            size="sm"
+                            size={compactMobile ? "icon" : "sm"}
                             variant="outline"
                             onClick={() => downloadPGN(game)}
-                            className="border-cyan-500/50 text-cyan-300 hover:bg-cyan-500/10"
+                            className={`border-cyan-500/50 text-cyan-300 hover:bg-cyan-500/10 ${compactMobile ? "h-8 w-8" : ""}`}
                             title={t.games.downloadPGN}
                           >
-                            <Download className="h-4 w-4" />
+                            <Download className={`${compactMobile ? "h-3.5 w-3.5" : "h-4 w-4"}`} />
                           </Button>
                           <Button
-                            size="sm"
+                            size={compactMobile ? "icon" : "sm"}
                             variant="outline"
                             onClick={() => handleDelete(game.id)}
-                            className="border-red-500/50 text-red-300 hover:bg-red-500/10"
+                            className={`border-red-500/50 text-red-300 hover:bg-red-500/10 ${compactMobile ? "h-8 w-8" : ""}`}
                             title={t.games.delete}
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className={`${compactMobile ? "h-3.5 w-3.5" : "h-4 w-4"}`} />
                           </Button>
                         </div>
                       </div>
