@@ -2,8 +2,9 @@
 
 import { Chess } from "chess.js";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useChessboardSettings, getPieceImagePath } from "@/contexts/ChessboardSettingsContext";
+import { LICHESS_ARROW_COLORS, getLichessArrowColorFromModifiers } from "@/lib/chess-arrows";
 
 interface SimpleChessboardProps {
   position: string;
@@ -30,6 +31,9 @@ export default function SimpleChessboard({
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
   const [highlightedSquares, setHighlightedSquares] = useState<string[]>([]);
   const [hoveredSquare, setHoveredSquare] = useState<string | null>(null);
+  const [manualArrows, setManualArrows] = useState<Array<{ from: string; to: string; color?: string }>>([]);
+  const [manualCircles, setManualCircles] = useState<Array<{ square: string; color?: string }>>([]);
+  const [arrowStart, setArrowStart] = useState<{ square: string; color: string } | null>(null);
 
   const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
   const ranks = ['8', '7', '6', '5', '4', '3', '2', '1'];
@@ -161,6 +165,62 @@ export default function SimpleChessboard({
     return { x, y };
   };
 
+  const handleRightClickMouseDown = (square: string, e: React.MouseEvent) => {
+    if (e.button !== 2) return;
+    e.preventDefault();
+    setArrowStart({
+      square,
+      color: getLichessArrowColorFromModifiers(e),
+    });
+  };
+
+  const handleRightClickMouseUp = (square: string, e: React.MouseEvent) => {
+    if (e.button !== 2 || !arrowStart) return;
+    e.preventDefault();
+
+    if (arrowStart.square === square) {
+      // Clic droit sans drag = cercle coloré (toggle), style Lichess.
+      setManualCircles((prev) => {
+        const existingIndex = prev.findIndex(
+          (c) => c.square === square && c.color === arrowStart.color
+        );
+        if (existingIndex >= 0) {
+          return prev.filter((_, idx) => idx !== existingIndex);
+        }
+        return [...prev, { square, color: arrowStart.color }];
+      });
+      setArrowStart(null);
+      return;
+    }
+
+    setManualArrows((prev) => {
+      const existingIndex = prev.findIndex(
+        (a) => a.from === arrowStart.square && a.to === square && a.color === arrowStart.color
+      );
+      if (existingIndex >= 0) {
+        return prev.filter((_, idx) => idx !== existingIndex);
+      }
+      return [...prev, { from: arrowStart.square, to: square, color: arrowStart.color }];
+    });
+
+    setArrowStart(null);
+  };
+
+  const renderedArrows = [...arrows, ...manualArrows];
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setManualArrows([]);
+        setManualCircles([]);
+        setArrowStart(null);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   return (
     <div
       className="w-full aspect-square bg-slate-800 p-1.5 sm:p-2 rounded-lg shadow-2xl relative mx-auto"
@@ -205,8 +265,11 @@ export default function SimpleChessboard({
                 onDragOver={handleDragOver}
                 onDrop={(e) => handleDrop(square, e)}
                 onClick={() => handleSquareClick(square, piece)}
+                onMouseDown={(e) => handleRightClickMouseDown(square, e)}
+                onMouseUp={(e) => handleRightClickMouseUp(square, e)}
                 onMouseEnter={() => setHoveredSquare(square)}
                 onMouseLeave={() => setHoveredSquare(null)}
+                onContextMenu={(e) => e.preventDefault()}
               >
                 {piece && (
                   <div 
@@ -259,6 +322,17 @@ export default function SimpleChessboard({
                 {isCheckedKingSquare && (
                   <div className="absolute inset-0 border-[3px] border-red-500 rounded-sm pointer-events-none z-20 animate-pulse" />
                 )}
+
+                {/* Cercles manuels (clic droit sans drag) */}
+                {manualCircles
+                  .filter((circle) => circle.square === square)
+                  .map((circle, idx) => (
+                    <div
+                      key={`circle-${square}-${idx}`}
+                      className="absolute inset-[4%] rounded-full border-[3px] pointer-events-none z-20"
+                      style={{ borderColor: circle.color || LICHESS_ARROW_COLORS.defaultGreen }}
+                    />
+                  ))}
                 
                 {/* Coordonnées */}
                 {fileIdx === 0 && (
@@ -280,44 +354,58 @@ export default function SimpleChessboard({
       </div>
       
       {/* Overlay SVG pour les flèches */}
-      {arrows.length > 0 && (
+      {renderedArrows.length > 0 && (
         <svg 
           className="absolute inset-0 pointer-events-none" 
           viewBox="0 0 100 100"
           style={{ width: '100%', height: '100%' }}
         >
           <defs>
-            <marker
-              id="arrowhead"
-              markerWidth="4"
-              markerHeight="4"
-              refX="2"
-              refY="2"
-              orient="auto"
-            >
-              <polygon
-                points="0 0, 4 2, 0 4"
-                fill="rgba(34, 197, 94, 0.8)"
-              />
-            </marker>
+            {renderedArrows.map((arrow, idx) => {
+              const color = arrow.color || LICHESS_ARROW_COLORS.defaultGreen;
+              return (
+                <marker
+                  key={`marker-${idx}`}
+                  id={`arrowhead-${idx}`}
+                  markerWidth="3.4"
+                  markerHeight="3.4"
+                  refX="2.9"
+                  refY="1.7"
+                  orient="auto"
+                  markerUnits="strokeWidth"
+                >
+                  <polygon points="0 0, 3.4 1.7, 0 3.4" fill={color} />
+                </marker>
+              );
+            })}
           </defs>
-          {arrows.map((arrow, idx) => {
+          {renderedArrows.map((arrow, idx) => {
             const from = squareToCoords(arrow.from);
             const to = squareToCoords(arrow.to);
-            const color = arrow.color || 'rgba(34, 197, 94, 0.8)'; // Vert par défaut
+            const color = arrow.color || LICHESS_ARROW_COLORS.defaultGreen;
             
             return (
-              <line
-                key={idx}
-                x1={`${from.x}%`}
-                y1={`${from.y}%`}
-                x2={`${to.x}%`}
-                y2={`${to.y}%`}
-                stroke={color}
-                strokeWidth="1.5"
-                markerEnd="url(#arrowhead)"
-                strokeLinecap="round"
-              />
+              <g key={idx}>
+                {/* Cercle de départ façon Lichess */}
+                <circle
+                  cx={`${from.x}%`}
+                  cy={`${from.y}%`}
+                  r="2.8"
+                  fill="none"
+                  stroke={color}
+                  strokeWidth="0.6"
+                />
+                <line
+                  x1={`${from.x}%`}
+                  y1={`${from.y}%`}
+                  x2={`${to.x}%`}
+                  y2={`${to.y}%`}
+                  stroke={color}
+                  strokeWidth="1.05"
+                  markerEnd={`url(#arrowhead-${idx})`}
+                  strokeLinecap="round"
+                />
+              </g>
             );
           })}
         </svg>

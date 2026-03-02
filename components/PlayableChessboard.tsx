@@ -16,6 +16,7 @@ import { useStockfish } from "@/hooks/useStockfish";
 import { saveGameToCloud } from "@/lib/supabase-storage";
 import { useLanguage } from "@/lib/language-context";
 import type { EngineConfig } from "@/lib/analysis";
+import { LICHESS_ARROW_COLORS } from "@/lib/chess-arrows";
 
 interface PlayableChessboardProps {
   config: EngineConfig;
@@ -82,7 +83,7 @@ export default function PlayableChessboard({
   const [forcedLineArrows, setForcedLineArrows] = useState<Array<{ from: string; to: string; color: string }>>([]);
   
   const { isReady, isThinking, getBestMove, getBestMoveForFen, resetForcedLine, remainingForcedMoves } = useStockfish();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
 
   const gameRef = useRef(game);
   const moveHistoryRef = useRef(moveHistory);
@@ -100,7 +101,8 @@ export default function PlayableChessboard({
     if (nextMove && nextMove.length >= 4) {
       const from = nextMove.substring(0, 2);
       const to = nextMove.substring(2, 4);
-      setForcedLineArrows([{ from, to, color: 'rgba(34, 197, 94, 0.8)' }]);
+      // Style Lichess-like pour les lignes forcées (vert semi-transparent)
+      setForcedLineArrows([{ from, to, color: LICHESS_ARROW_COLORS.defaultGreen }]);
     } else {
       setForcedLineArrows([]);
     }
@@ -919,6 +921,48 @@ export default function PlayableChessboard({
               </div>
             </Card>
           )}
+
+          {/* Raccourcis des flèches style Lichess */}
+          <Card className="p-3 bg-slate-900/50 border-slate-800">
+            <h4 className="text-xs font-semibold text-slate-300 mb-2">
+              {lang === "fr" ? "Raccourcis flèches" : "Arrow shortcuts"}
+            </h4>
+            <div className="space-y-1.5 text-[11px]">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-slate-400">{lang === "fr" ? "Clic droit" : "Right click"}</span>
+                <span className="inline-flex items-center gap-1 text-slate-200">
+                  <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: LICHESS_ARROW_COLORS.defaultGreen }} />
+                  Green
+                </span>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-slate-400">Alt + {lang === "fr" ? "clic droit" : "right click"}</span>
+                <span className="inline-flex items-center gap-1 text-slate-200">
+                  <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: LICHESS_ARROW_COLORS.altBlue }} />
+                  Blue
+                </span>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-slate-400">Shift/Ctrl + {lang === "fr" ? "clic droit" : "right click"}</span>
+                <span className="inline-flex items-center gap-1 text-slate-200">
+                  <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: LICHESS_ARROW_COLORS.shiftCtrlRed }} />
+                  Red
+                </span>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-slate-400">Alt + Shift/Ctrl + {lang === "fr" ? "clic droit" : "right click"}</span>
+                <span className="inline-flex items-center gap-1 text-slate-200">
+                  <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: LICHESS_ARROW_COLORS.shiftCtrlAltYellow }} />
+                  Yellow
+                </span>
+              </div>
+              <div className="pt-1 text-[10px] text-slate-500">
+                {lang === "fr"
+                  ? "Esc: effacer flèches + cercles"
+                  : "Esc: clear arrows + circles"}
+              </div>
+            </div>
+          </Card>
         </div>
 
         {/* COLONNE CENTRALE : Échiquier (7/12) */}
@@ -936,7 +980,16 @@ export default function PlayableChessboard({
               onDrop={onDrop}
               orientation={boardOrientation}
               lastMove={lastMove}
-              arrows={!reviewMode ? forcedLineArrows : []}
+              arrows={
+                !reviewMode
+                  ? [
+                      ...(lastMove
+                        ? [{ from: lastMove.from, to: lastMove.to, color: LICHESS_ARROW_COLORS.shiftCtrlAltYellow }]
+                        : []),
+                      ...forcedLineArrows,
+                    ]
+                  : []
+              }
             />
           </Card>
 
