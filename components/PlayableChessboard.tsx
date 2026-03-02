@@ -198,6 +198,12 @@ export default function PlayableChessboard({
       makeAIMove();
     }
   }, [isReady, playerColor]);
+
+  // Synchroniser automatiquement l'orientation avec la couleur choisie par le joueur.
+  // Si le joueur choisit noir, les noirs apparaissent en bas.
+  useEffect(() => {
+    setBoardOrientation(playerColor);
+  }, [playerColor]);
   
   // Réinitialiser l'affichage de la ligne forcée quand la config ou la couleur change
   useEffect(() => {
