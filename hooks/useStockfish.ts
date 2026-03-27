@@ -7,6 +7,61 @@ import { getEffectiveForcedLine, normalizeUci } from "@/lib/forced-line-utils";
 
 const DEBUG = typeof window !== "undefined" && (window as unknown as { __CHESS_DEBUG?: boolean }).__CHESS_DEBUG;
 
+/** Skill 0–20 : courbe plus basse pour les niveaux 1–3 (jouabilité débutant / intermédiaire). */
+function skillLevelFromDifficulty(d: number): number {
+  const clamped = Math.min(5, Math.max(1, Math.round(d)));
+  const map: Record<number, number> = { 1: 2, 2: 5, 3: 9, 4: 15, 5: 20 };
+  return map[clamped] ?? 10;
+}
+
+/** Elo UCI Stockfish (1320–3190) à partir du profil. */
+function uciEloFromConfig(elo: number): number {
+  return Math.min(3190, Math.max(1320, Math.round(elo)));
+}
+
+/**
+ * MultiPV pour tirer parfois un coup sous-optimal (2e, 3e ligne…).
+ * 0 = désactivé (niveaux élevés).
+ */
+function multiPvCountForDifficulty(d: number): number {
+  if (d <= 1) return 4;
+  if (d === 2) return 3;
+  if (d === 3) return 2;
+  return 1;
+}
+
+/** Choisit un coup parmi les lignes MultiPV (plus le rang est haut, plus le coup est souvent mauvais). */
+function pickMoveWithSuboptimalNoise(
+  bestFromEngine: string,
+  lineMoves: Map<number, string>,
+  difficulty: number
+): string {
+  const n = lineMoves.size;
+  if (n < 2 || !bestFromEngine) return bestFromEngine;
+
+  const r = Math.random();
+  let pickRank = 1;
+
+  if (difficulty <= 1) {
+    if (r < 0.12) pickRank = 4;
+    else if (r < 0.28) pickRank = 3;
+    else if (r < 0.48) pickRank = 2;
+  } else if (difficulty === 2) {
+    if (r < 0.1) pickRank = 3;
+    else if (r < 0.3) pickRank = 2;
+  } else if (difficulty === 3) {
+    if (r < 0.14) pickRank = 2;
+  }
+
+  if (pickRank === 1) return bestFromEngine;
+
+  for (let rank = pickRank; rank >= 2; rank--) {
+    const alt = lineMoves.get(rank);
+    if (alt && alt !== bestFromEngine) return alt;
+  }
+  return bestFromEngine;
+}
+
 export function useStockfish() {
   const engineRef = useRef<Worker | null>(null);
   const [isReady, setIsReady] = useState(false);
@@ -133,8 +188,28 @@ export function useStockfish() {
     }
 
     const threads = Math.max(2, config.threads);
-    sendCommand(`setoption name Skill Level value ${config.difficulty * 4}`);
+    const skill = skillLevelFromDifficulty(config.difficulty);
+    const multiPv = multiPvCountForDifficulty(config.difficulty);
+    const lineMoves = new Map<number, string>();
+
+    const resetEngineOptions = () => {
+      sendCommand("setoption name MultiPV value 1");
+      sendCommand("setoption name UCI_LimitStrength value false");
+    };
+
+    sendCommand(`setoption name Skill Level value ${skill}`);
     sendCommand(`setoption name Threads value ${threads}`);
+    if (config.difficulty <= 3) {
+      sendCommand("setoption name UCI_LimitStrength value true");
+      sendCommand(`setoption name UCI_Elo value ${uciEloFromConfig(config.elo)}`);
+    } else {
+      sendCommand("setoption name UCI_LimitStrength value false");
+    }
+    if (multiPv > 1) {
+      sendCommand(`setoption name MultiPV value ${multiPv}`);
+    } else {
+      sendCommand("setoption name MultiPV value 1");
+    }
     sendCommand(`position fen ${fen}`);
     sendCommand(`go depth ${config.depth} movetime ${config.timeControl}`);
 
@@ -142,13 +217,28 @@ export function useStockfish() {
       const message = e.data;
       if (typeof message !== "string") return;
 
+      if (multiPv > 1 && message.startsWith("info ") && message.includes(" pv ")) {
+        const mp = message.match(/\bmultipv\s+(\d+)/i);
+        const pvMatch = message.match(/\bpv\s+(\S+)/);
+        if (mp && pvMatch) {
+          const idx = parseInt(mp[1], 10);
+          const first = pvMatch[1];
+          if (first && /^[a-h][1-8][a-h][1-8]/.test(first)) lineMoves.set(idx, first);
+        }
+      }
+
       if (message.includes("score cp")) {
         const match = message.match(/score cp (-?\d+)/);
         if (match) setCurrentEval(parseInt(match[1]) / 100);
       }
 
       if (message.startsWith("bestmove")) {
-        const move = message.split(" ")[1];
+        const raw = message.split(/\s+/)[1];
+        let move = raw && raw !== "(none)" ? raw : "";
+        if (multiPv > 1 && move) {
+          move = pickMoveWithSuboptimalNoise(move, lineMoves, config.difficulty);
+        }
+        resetEngineOptions();
         setIsThinking(false);
         onMove(move);
         engineRef.current?.removeEventListener("message", handleMessage);

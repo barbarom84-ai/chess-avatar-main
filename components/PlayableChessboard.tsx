@@ -39,6 +39,19 @@ interface GameStats {
   eloBlack: number | null;
 }
 
+/** Rejoue l'historique SAN pour conserver l'historique interne (triple répétition, etc.). */
+function chessFromSanHistory(history: string[]): Chess {
+  const c = new Chess();
+  for (const san of history) {
+    const m = c.move(san);
+    if (!m) {
+      console.error('Coup illégal dans l\'historique SAN:', san);
+      break;
+    }
+  }
+  return c;
+}
+
 export default function PlayableChessboard({ 
   config, 
   playerColor,
@@ -242,7 +255,7 @@ export default function PlayableChessboard({
           const from = moveUCI.substring(0, 2);
           const to = moveUCI.substring(2, 4);
           const promotion = moveUCI.length > 4 ? moveUCI[4] : undefined;
-          const board = new Chess(g.fen());
+          const board = chessFromSanHistory(hist);
           const move = board.move({ from, to, promotion });
 
           if (move) {
@@ -299,14 +312,13 @@ export default function PlayableChessboard({
     }
 
     try {
-      // Tenter le coup (pas de promotion)
-      const move = game.move({
+      const board = chessFromSanHistory(moveHistory);
+      const move = board.move({
         from: sourceSquare,
         to: targetSquare
       });
 
       if (move) {
-        const board = new Chess(game.fen());
         const updatedHistory = [...moveHistory, move.san];
         setLastMove({ from: sourceSquare, to: targetSquare });
         setGame(board);
@@ -738,40 +750,28 @@ export default function PlayableChessboard({
     if (!pendingPromotion) return;
 
     try {
-      const move = game.move({
+      const board = chessFromSanHistory(moveHistory);
+      const move = board.move({
         from: pendingPromotion.from,
         to: pendingPromotion.to,
         promotion: piece
       });
 
       if (move) {
+        const updatedHistory = [...moveHistory, move.san];
+        console.log('👤 Joueur joue (promotion):', move.san, '| Total coups:', updatedHistory.length);
         setLastMove({ from: pendingPromotion.from, to: pendingPromotion.to });
-        setGame(new Chess(game.fen()));
-        setMoveHistory(prev => {
-          const updated = [...prev, move.san];
-          console.log('👤 Joueur joue (promotion):', move.san, '| Total coups:', updated.length);
-          return updated;
-        });
-
-        // Vérifier l'état du jeu (mat, pat, etc.)
-        if (game.isCheckmate()) {
-          const message = game.turn() === 'w' ? t.board.checkmateBlack : t.board.checkmateWhite;
-          setGameResult(message);
-          const playerWon = (game.turn() === 'w' && playerColor === 'black') || 
-                            (game.turn() === 'b' && playerColor === 'white');
-          setGameResultType(playerWon ? 'win' : 'loss');
-          setGameOver(true);
-          setShowResultModal(true);
-        } else if (game.isStalemate() || game.isThreefoldRepetition() || 
-                   game.isInsufficientMaterial() || game.isDraw()) {
-          setGameResult(t.board.drawGeneric);
-          setGameResultType('draw');
-          setGameOver(true);
-          setShowResultModal(true);
+        setGame(board);
+        setMoveHistory(updatedHistory);
+        moveHistoryRef.current = updatedHistory;
+        gameRef.current = board;
+        if (move.captured || move.piece === 'p') {
+          setMoveCount50(0);
+        } else {
+          setMoveCount50(prev => prev + 1);
         }
-
-        // L'IA joue après
-        if (!game.isGameOver()) {
+        checkGameState(board, updatedHistory);
+        if (!board.isGameOver()) {
           setTimeout(() => makeAIMove(), 500);
         }
       }

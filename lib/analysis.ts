@@ -212,7 +212,8 @@ export function analyzePersona(
       difficulty,
       aggressiveness: style === "Agressif" ? 100 : style === "Solide" ? 20 : 50,
       threads: difficulty >= 4 ? 4 : 2, // Minimum 2 threads
-      depth: difficulty * 3 + 5, // 8-20
+      depth:
+        difficulty === 1 ? 6 : difficulty === 2 ? 9 : difficulty * 3 + 5, // 6, 9 puis 14–20
       timeControl: Math.max(300, (6 - difficulty) * 150), // 300-750ms (plus rapide)
       favoriteOpening,
       playStyle,

@@ -83,12 +83,18 @@ export default function EngineConfigPanel({
     const eloIncrement = 200;
     const validDifficulty = Math.min(5, Math.max(1, Math.round(difficulty))) as 1 | 2 | 3 | 4 | 5;
     
+    // Profondeur plus basse en 1–2 pour un jeu plus humain ; 3+ inchangé (14, 17, 20).
+    const depth =
+      validDifficulty === 1 ? 6 : validDifficulty === 2 ? 9 : 8 + (validDifficulty - 1) * 3;
+    const timeControl =
+      validDifficulty <= 2 ? 720 - validDifficulty * 120 : 800 - validDifficulty * 100;
+
     return {
       difficulty: validDifficulty,
       elo: baseElo + (validDifficulty * eloIncrement),
       threads: validDifficulty >= 4 ? 4 : 2, // Minimum 2 threads
-      depth: 8 + (validDifficulty - 1) * 3, // 8, 11, 14, 17, 20
-      timeControl: 800 - (validDifficulty * 100), // 700, 600, 500, 400, 300
+      depth,
+      timeControl,
     };
   };
 
