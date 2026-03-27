@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, type ChangeEvent } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,14 +9,29 @@ import { Input } from "@/components/ui/input";
 import {
   Trophy, Target, Calendar, Clock, Download, Trash2, 
   Search, Filter, TrendingUp, Play, Eye, ChevronLeft, ChevronRight,
-  CheckSquare, Square, X
+  CheckSquare, Square, X, Upload, Loader2
 } from "lucide-react";
-import { getUserGames, getGamesStats, deleteGame, type DbGame } from "@/lib/supabase-storage";
+import { getUserGames, getGamesStats, deleteGame, saveGameToCloud, type DbGame } from "@/lib/supabase-storage";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { useLanguage } from "@/lib/language-context";
 import Link from "next/link";
 import Image from "next/image";
 import AdvancedGameViewer from "@/components/AdvancedGameViewer";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
+import {
+  MAX_PGN_FILE_BYTES,
+  listPlayerNamesFromPgn,
+  parsePgnFileForGames,
+} from "@/lib/pgn-import";
 
 export default function GamesPage() {
   const { t, lang } = useLanguage();
@@ -31,6 +46,15 @@ export default function GamesPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [compactMobile, setCompactMobile] = useState(true);
   const gamesPerPage = 10;
+
+  const pgnFileInputRef = useRef<HTMLInputElement>(null);
+  const pgnScanGen = useRef(0);
+  const [pgnImportOpen, setPgnImportOpen] = useState(false);
+  const [pgnPlayerName, setPgnPlayerName] = useState("");
+  const [pgnNameOptions, setPgnNameOptions] = useState<string[]>([]);
+  const [pgnFileScanning, setPgnFileScanning] = useState(false);
+  const [pgnSelectedFile, setPgnSelectedFile] = useState<File | null>(null);
+  const [pgnImporting, setPgnImporting] = useState(false);
 
   useEffect(() => {
     loadGames();
@@ -56,6 +80,98 @@ export default function GamesPage() {
   const loadStats = async () => {
     const data = await getGamesStats();
     setStats(data);
+  };
+
+  const handlePgnFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    setPgnSelectedFile(f ?? null);
+    setPgnPlayerName("");
+    setPgnNameOptions([]);
+    if (!f) {
+      setPgnFileScanning(false);
+      return;
+    }
+    if (f.size > MAX_PGN_FILE_BYTES) {
+      setPgnFileScanning(false);
+      toast.error(t.games.importPgnFileTooLarge);
+      if (pgnFileInputRef.current) pgnFileInputRef.current.value = "";
+      setPgnSelectedFile(null);
+      return;
+    }
+    const gen = ++pgnScanGen.current;
+    setPgnFileScanning(true);
+    void f.text().then(
+      (text) => {
+        if (gen !== pgnScanGen.current) return;
+        const names = listPlayerNamesFromPgn(text);
+        setPgnNameOptions(names);
+        if (names.length === 1) setPgnPlayerName(names[0]);
+        setPgnFileScanning(false);
+      },
+      () => {
+        if (gen !== pgnScanGen.current) return;
+        setPgnNameOptions([]);
+        setPgnFileScanning(false);
+        toast.error(t.games.importPgnGenericError);
+      }
+    );
+  };
+
+  const handlePgnImport = async () => {
+    if (!pgnSelectedFile) {
+      toast.error(t.games.importPgnNoFile);
+      return;
+    }
+    if (pgnFileScanning) return;
+    if (pgnNameOptions.length === 0) {
+      toast.error(t.games.importPgnNoNamesInFile);
+      return;
+    }
+    if (!pgnPlayerName.trim()) {
+      toast.error(t.games.importPgnSelectPlayer);
+      return;
+    }
+    if (pgnSelectedFile.size > MAX_PGN_FILE_BYTES) {
+      toast.error(t.games.importPgnFileTooLarge);
+      return;
+    }
+    setPgnImporting(true);
+    try {
+      const text = await pgnSelectedFile.text();
+      const { games } = parsePgnFileForGames(text, pgnPlayerName);
+      if (games.length === 0) {
+        toast.error(t.games.importPgnNoValidGames);
+        return;
+      }
+      let ok = 0;
+      let fail = 0;
+      for (const payload of games) {
+        try {
+          await saveGameToCloud(payload);
+          ok++;
+        } catch {
+          fail++;
+        }
+      }
+      await loadGames();
+      await loadStats();
+      setPgnImportOpen(false);
+      setPgnSelectedFile(null);
+      setPgnPlayerName("");
+      setPgnNameOptions([]);
+      if (pgnFileInputRef.current) pgnFileInputRef.current.value = "";
+      if (fail === 0) {
+        toast.success(t.games.importPgnSuccess.replace("{count}", String(ok)));
+      } else {
+        toast.message(
+          t.games.importPgnPartial.replace("{ok}", String(ok)).replace("{fail}", String(fail))
+        );
+      }
+    } catch {
+      toast.error(t.games.importPgnGenericError);
+    } finally {
+      setPgnImporting(false);
+    }
   };
 
   const applyFilters = () => {
@@ -369,6 +485,17 @@ export default function GamesPage() {
                 </Button>
               </div>
             </div>
+            <div className="flex flex-col sm:flex-row sm:items-end gap-3 mt-4 pt-4 border-t border-slate-800">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setPgnImportOpen(true)}
+                className="border-cyan-500/50 text-cyan-300 hover:bg-cyan-500/10 gap-2 w-full sm:w-auto"
+              >
+                <Upload className="h-4 w-4" />
+                {t.games.importPgn}
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
@@ -551,6 +678,106 @@ export default function GamesPage() {
             )}
           </CardContent>
         </Card>
+
+        <Dialog
+          open={pgnImportOpen}
+          onOpenChange={(open) => {
+            setPgnImportOpen(open);
+            if (!open) {
+              pgnScanGen.current += 1;
+              setPgnSelectedFile(null);
+              setPgnPlayerName("");
+              setPgnNameOptions([]);
+              setPgnFileScanning(false);
+              if (pgnFileInputRef.current) pgnFileInputRef.current.value = "";
+            }
+          }}
+        >
+          <DialogContent className="border-slate-800 bg-slate-900 text-slate-100 sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>{t.games.importPgnTitle}</DialogTitle>
+              <DialogDescription>{t.games.importPgnHint}</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="space-y-2">
+                <Label className="text-slate-300">{t.games.choosePgnFile}</Label>
+                <input
+                  ref={pgnFileInputRef}
+                  type="file"
+                  accept=".pgn,text/plain"
+                  className="hidden"
+                  onChange={handlePgnFileChange}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => pgnFileInputRef.current?.click()}
+                  className="w-full border-slate-600 text-slate-200"
+                >
+                  {pgnSelectedFile ? pgnSelectedFile.name : t.games.choosePgnFile}
+                </Button>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="pgn-player-select" className="text-slate-300">
+                  {t.games.importPgnPickPlayer}
+                </Label>
+                {pgnFileScanning ? (
+                  <p className="text-sm text-slate-500 flex items-center gap-2 min-h-10">
+                    <Loader2 className="h-4 w-4 animate-spin shrink-0" />
+                    {t.games.importPgnReadingFile}
+                  </p>
+                ) : (
+                  <select
+                    id="pgn-player-select"
+                    value={pgnPlayerName}
+                    onChange={(e) => setPgnPlayerName(e.target.value)}
+                    disabled={!pgnSelectedFile || pgnNameOptions.length === 0}
+                    className="flex h-10 w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/50 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <option value="">{t.games.importPgnPickPlaceholder}</option>
+                    {pgnNameOptions.map((n) => (
+                      <option key={n} value={n}>
+                        {n}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+            </div>
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setPgnImportOpen(false)}
+                disabled={pgnImporting}
+                className="text-slate-400"
+              >
+                {t.games.cancelSelection}
+              </Button>
+              <Button
+                type="button"
+                onClick={() => void handlePgnImport()}
+                disabled={
+                  pgnImporting ||
+                  pgnFileScanning ||
+                  !pgnSelectedFile ||
+                  !pgnPlayerName.trim()
+                }
+                className="bg-cyan-600 hover:bg-cyan-500"
+              >
+                {pgnImporting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    {t.games.importPgnInProgress}
+                  </>
+                ) : (
+                  t.games.importPgnButton
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
 
         {/* Floating bulk action bar */}
         {selectedIds.size > 0 && (

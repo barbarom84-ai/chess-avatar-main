@@ -153,7 +153,24 @@ export const translations = {
       deleteSelected: "Supprimer la sélection",
       downloadSelected: "Télécharger la sélection",
       confirmDeleteMultiple: "Supprimer les {count} parties sélectionnées ?",
-      cancelSelection: "Annuler"
+      cancelSelection: "Annuler",
+      importPgn: "Importer PGN",
+      importPgnTitle: "Importer des parties (PGN)",
+      importPgnHint: "Choisissez un fichier, puis indiquez qui vous êtes dans la liste (détectée automatiquement).",
+      importPgnPickPlayer: "Qui êtes-vous dans ces parties ?",
+      importPgnPickPlaceholder: "Choisir dans la liste…",
+      importPgnReadingFile: "Lecture du fichier…",
+      importPgnNoNamesInFile: "Aucun joueur détecté dans les en-têtes. Vérifiez le format du PGN.",
+      importPgnSelectPlayer: "Veuillez choisir votre nom dans la liste.",
+      choosePgnFile: "Choisir un fichier .pgn",
+      importPgnButton: "Importer",
+      importPgnSuccess: "{count} partie(s) importée(s).",
+      importPgnPartial: "{ok} importée(s), {fail} échec(s).",
+      importPgnFileTooLarge: "Fichier trop volumineux (max 2 Mo).",
+      importPgnNoValidGames: "Aucune partie valide pour ce nom dans le fichier.",
+      importPgnGenericError: "Erreur lors de l'import.",
+      importPgnInProgress: "Import en cours...",
+      importPgnNoFile: "Veuillez choisir un fichier .pgn."
     },
     
     // Guide Page (UCI creator guide)
@@ -966,7 +983,24 @@ export const translations = {
       deleteSelected: "Delete selected",
       downloadSelected: "Download selected",
       confirmDeleteMultiple: "Delete {count} selected games?",
-      cancelSelection: "Cancel"
+      cancelSelection: "Cancel",
+      importPgn: "Import PGN",
+      importPgnTitle: "Import games (PGN)",
+      importPgnHint: "Choose a file, then pick yourself from the list (detected from headers).",
+      importPgnPickPlayer: "Who are you in these games?",
+      importPgnPickPlaceholder: "Choose from list…",
+      importPgnReadingFile: "Reading file…",
+      importPgnNoNamesInFile: "No player names found in headers. Check the PGN format.",
+      importPgnSelectPlayer: "Please choose your name from the list.",
+      choosePgnFile: "Choose .pgn file",
+      importPgnButton: "Import",
+      importPgnSuccess: "{count} game(s) imported.",
+      importPgnPartial: "{ok} imported, {fail} failed.",
+      importPgnFileTooLarge: "File too large (max 2 MB).",
+      importPgnNoValidGames: "No valid games for this name in the file.",
+      importPgnGenericError: "Import failed.",
+      importPgnInProgress: "Importing...",
+      importPgnNoFile: "Please choose a .pgn file."
     },
     
     // Guide Page (UCI creator guide)
