@@ -9,20 +9,30 @@ import { LICHESS_ARROW_COLORS, getLichessArrowColorFromModifiers } from "@/lib/c
 interface SimpleChessboardProps {
   position: string;
   onDrop?: (sourceSquare: string, targetSquare: string) => boolean;
-  orientation?: 'white' | 'black';
+  orientation?: "white" | "black";
   lastMove?: { from: string; to: string } | null;
   arrows?: Array<{ from: string; to: string; color?: string }>;
+  /** Émojis affichés sur des cases (ex. case d’arrivée d’un coup annoté) */
+  squareEmojis?: Record<string, string>;
 }
 
-export default function SimpleChessboard({ 
-  position, 
-  onDrop, 
-  orientation = 'white',
+export default function SimpleChessboard({
+  position,
+  onDrop,
+  orientation = "white",
   lastMove,
-  arrows = []
+  arrows = [],
+  squareEmojis,
 }: SimpleChessboardProps) {
   const { settings } = useChessboardSettings();
-  const { boardTheme, pieceSet, showLegalMoves, highlightLastMove, animationSpeed } = settings;
+  const {
+    boardTheme,
+    pieceSet,
+    showCoordinates,
+    showLegalMoves,
+    highlightLastMove,
+    animationSpeed,
+  } = settings;
   
   const game = new Chess(position === "start" ? undefined : position);
   const board = game.board();
@@ -65,13 +75,20 @@ export default function SimpleChessboard({
   // Durée d'animation en fonction des paramètres
   const getAnimationDuration = () => {
     switch (animationSpeed) {
-      case 'none': return '0ms';
-      case 'fast': return '100ms';
-      case 'normal': return '200ms';
-      case 'slow': return '400ms';
-      default: return '200ms';
+      case "none":
+        return "0ms";
+      case "fast":
+        return "100ms";
+      case "normal":
+        return "200ms";
+      case "slow":
+        return "400ms";
+      default:
+        return "200ms";
     }
   };
+
+  const animDur = getAnimationDuration();
 
   const handleDragStart = (square: string, e: React.DragEvent) => {
     if (!onDrop) return;
@@ -255,9 +272,9 @@ export default function SimpleChessboard({
             return (
               <div
                 key={square}
-                style={{ 
+                style={{
                   backgroundColor: bgColor,
-                  transition: `all ${getAnimationDuration()}`
+                  transition: `background-color ${animDur} ease`,
                 }}
                 className={`relative flex items-center justify-center cursor-pointer ${
                   isDragging ? 'opacity-50 scale-95' : ''
@@ -271,15 +288,24 @@ export default function SimpleChessboard({
                 onMouseLeave={() => setHoveredSquare(null)}
                 onContextMenu={(e) => e.preventDefault()}
               >
+                {squareEmojis?.[square] && (
+                  <span
+                    className="absolute bottom-0.5 right-0.5 z-[25] text-[clamp(10px,2.8vw,18px)] leading-none pointer-events-none select-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)]"
+                    title=""
+                    aria-hidden
+                  >
+                    {squareEmojis[square]}
+                  </span>
+                )}
+
                 {piece && (
-                  <div 
-                    className={`w-[80%] h-[80%] relative transition-all duration-200 ${
-                      isDragging ? 'scale-110 rotate-6 opacity-70' : 'scale-100 rotate-0'
-                    } ${isSelected ? 'scale-110 drop-shadow-2xl' : ''} ${
-                      isCheckedKingSquare ? 'drop-shadow-[0_0_12px_rgba(239,68,68,0.85)]' : ''
-                    } ${
-                      onDrop ? 'cursor-pointer hover:scale-105' : ''
-                    }`}
+                  <div
+                    className={`w-[80%] h-[80%] relative transition-all ${
+                      isDragging ? "scale-110 rotate-6 opacity-70" : "scale-100 rotate-0"
+                    } ${isSelected ? "scale-110 drop-shadow-2xl" : ""} ${
+                      isCheckedKingSquare ? "drop-shadow-[0_0_12px_rgba(239,68,68,0.85)]" : ""
+                    } ${onDrop ? "cursor-pointer hover:scale-105" : ""}`}
+                    style={{ transitionDuration: animDur }}
                     draggable={!!onDrop}
                     onDragStart={(e) => handleDragStart(square, e)}
                     onDragEnd={handleDragEnd}
@@ -298,24 +324,36 @@ export default function SimpleChessboard({
 
                 {/* Indicateur de coup légal - Amélioré */}
                 {isHighlighted && (
-                  <div className={`absolute inset-0 flex items-center justify-center pointer-events-none z-10`}>
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
                     {piece ? (
-                      // Case avec pièce adverse : bordure + coin
                       <>
-                        <div className="w-full h-full border-[3px] border-green-500 rounded-sm opacity-50 animate-pulse" />
-                        <div className="absolute top-0 right-0 w-3 h-3 bg-green-500 rounded-bl-lg" />
-                        <div className="absolute bottom-0 left-0 w-3 h-3 bg-green-500 rounded-tr-lg" />
+                        <div
+                          className="w-full h-full border-[3px] rounded-sm opacity-50 animate-pulse"
+                          style={{ borderColor: boardTheme.legalMoveCapture }}
+                        />
+                        <div
+                          className="absolute top-0 right-0 w-3 h-3 rounded-bl-lg"
+                          style={{ backgroundColor: boardTheme.legalMoveCapture }}
+                        />
+                        <div
+                          className="absolute bottom-0 left-0 w-3 h-3 rounded-tr-lg"
+                          style={{ backgroundColor: boardTheme.legalMoveCapture }}
+                        />
                       </>
                     ) : (
-                      // Case vide : point vert
-                      <div className="w-[30%] h-[30%] bg-green-500 rounded-full opacity-70 hover:opacity-100 transition-opacity" />
+                      <div
+                        className="w-[30%] h-[30%] rounded-full opacity-70 hover:opacity-100 transition-opacity"
+                        style={{ backgroundColor: boardTheme.legalMoveEmpty }}
+                      />
                     )}
                   </div>
                 )}
-                
-                {/* Indicateur de case sélectionnée */}
+
                 {isSelected && (
-                  <div className="absolute inset-0 border-4 border-blue-500 rounded-sm pointer-events-none z-10 animate-pulse" />
+                  <div
+                    className="absolute inset-0 border-4 rounded-sm pointer-events-none z-10 animate-pulse"
+                    style={{ borderColor: boardTheme.selectedSquare }}
+                  />
                 )}
 
                 {/* Indicateur de roi en échec */}
@@ -335,15 +373,23 @@ export default function SimpleChessboard({
                   ))}
                 
                 {/* Coordonnées */}
-                {fileIdx === 0 && (
-                  <span className="absolute top-0.5 left-1 text-[10px] font-semibold opacity-70" 
-                        style={{ color: isLight ? '#779954' : '#e9edcc' }}>
+                {showCoordinates && fileIdx === 0 && (
+                  <span
+                    className="absolute top-0.5 left-1 text-[10px] font-semibold opacity-80"
+                    style={{
+                      color: isLight ? boardTheme.darkSquare : boardTheme.lightSquare,
+                    }}
+                  >
                     {rank}
                   </span>
                 )}
-                {rankIdx === displayRanks.length - 1 && (
-                  <span className="absolute bottom-0.5 right-1 text-[10px] font-semibold opacity-70"
-                        style={{ color: isLight ? '#779954' : '#e9edcc' }}>
+                {showCoordinates && rankIdx === displayRanks.length - 1 && (
+                  <span
+                    className="absolute bottom-0.5 right-1 text-[10px] font-semibold opacity-80"
+                    style={{
+                      color: isLight ? boardTheme.darkSquare : boardTheme.lightSquare,
+                    }}
+                  >
                     {file}
                   </span>
                 )}

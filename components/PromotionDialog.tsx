@@ -7,19 +7,23 @@ import { useLanguage } from "@/lib/language-context";
 
 interface PromotionDialogProps {
   open: boolean;
-  color: 'white' | 'black';
-  onSelect: (piece: 'q' | 'r' | 'b' | 'n') => void;
+  /** Ancien API (couleur joueur) */
+  color?: "white" | "black";
+  /** Trait réel pour les pièces affichées (prioritaire sur color) */
+  pieceColor?: "w" | "b";
+  onSelect: (piece: "q" | "r" | "b" | "n") => void;
 }
 
-export default function PromotionDialog({ 
-  open, 
-  color, 
-  onSelect 
+export default function PromotionDialog({
+  open,
+  color = "white",
+  pieceColor,
+  onSelect,
 }: PromotionDialogProps) {
   const { t } = useLanguage();
   const { settings } = useChessboardSettings();
-  const pieces: ('q' | 'r' | 'b' | 'n')[] = ['q', 'r', 'b', 'n'];
-  const colorCode = color === 'white' ? 'w' : 'b';
+  const pieces: ("q" | "r" | "b" | "n")[] = ["q", "r", "b", "n"];
+  const colorCode = pieceColor ?? (color === "white" ? "w" : "b");
 
   return (
     <Dialog open={open} onOpenChange={() => {}}>

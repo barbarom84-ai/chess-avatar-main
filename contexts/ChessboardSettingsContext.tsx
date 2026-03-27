@@ -1,6 +1,12 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useState,
+  useLayoutEffect,
+  ReactNode,
+} from "react";
 
 const STORAGE_KEY = 'chessboard-settings';
 
@@ -269,17 +275,21 @@ const ChessboardSettingsContext = createContext<ChessboardSettingsContextType | 
 
 export function ChessboardSettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<ChessboardSettings>(defaultSettings);
-  const hasLoadedRef = useRef(false);
 
-  // Charger les paramètres depuis le localStorage au montage (client uniquement)
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
+  // useLayoutEffect : charge le localStorage avant le premier paint client, évite d'écraser
+  // un changement utilisateur et garantit que persist dans updateSettings est cohérent.
+  useLayoutEffect(() => {
+    if (typeof window === "undefined") return;
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        const savedTheme = BOARD_THEMES.find(t => t.id === parsed.boardTheme?.id) || BOARD_THEMES[0];
-        const savedPieceSet = PIECE_SETS.find(p => p.id === parsed.pieceSet?.id) || PIECE_SETS[0];
+        const savedTheme =
+          BOARD_THEMES.find((t) => t.id === parsed.boardTheme?.id) ??
+          defaultSettings.boardTheme;
+        const savedPieceSet =
+          PIECE_SETS.find((p) => p.id === parsed.pieceSet?.id) ??
+          defaultSettings.pieceSet;
         setSettings({
           ...defaultSettings,
           ...parsed,
@@ -288,22 +298,21 @@ export function ChessboardSettingsProvider({ children }: { children: ReactNode }
         });
       }
     } catch (error) {
-      console.error('Erreur lors du chargement des paramètres échiquier:', error);
+      console.error("Erreur lors du chargement des paramètres échiquier:", error);
     }
-    hasLoadedRef.current = true;
   }, []);
 
   const updateSettings = (newSettings: Partial<ChessboardSettings>) => {
-    setSettings(prev => {
+    setSettings((prev) => {
       const next = { ...prev, ...newSettings };
-      if (hasLoadedRef.current) persistToStorage(next);
+      if (typeof window !== "undefined") persistToStorage(next);
       return next;
     });
   };
 
   const resetSettings = () => {
     setSettings(defaultSettings);
-    if (hasLoadedRef.current) persistToStorage(defaultSettings);
+    if (typeof window !== "undefined") persistToStorage(defaultSettings);
   };
 
   return (

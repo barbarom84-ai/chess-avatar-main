@@ -249,9 +249,18 @@ export const translations = {
       finished: "Terminée",
       configShort: "Config",
       whiteSide: "Blancs",
-      blackSide: "Noirs"
+      blackSide: "Noirs",
+      reviewVariants: "Variantes",
+      reviewSaveVariant: "Sauver la ligne",
+      reviewSubLine: "Sous-ligne (empiler)",
+      reviewPopSubLine: "Remonter un niveau",
+      reviewUndoMove: "Annuler le coup d’analyse",
+      reviewExplorationHint:
+        "En analyse : jouez sur l’échiquier, flèches/cercles au clic droit. Sous-lignes = empiler puis nouveaux coups.",
+      reviewNotePlaceholder: "Note sur le coup sélectionné…",
+      reviewPickEmoji: "Émoji sur la case d’arrivée",
     },
-    
+
     // Library / Profiles
     library: {
       title: "Bibliothèque de Profils",
@@ -1079,9 +1088,18 @@ export const translations = {
       finished: "Finished",
       configShort: "Config",
       whiteSide: "White",
-      blackSide: "Black"
+      blackSide: "Black",
+      reviewVariants: "Variations",
+      reviewSaveVariant: "Save line",
+      reviewSubLine: "Sub-line (stack)",
+      reviewPopSubLine: "Go up one level",
+      reviewUndoMove: "Undo analysis move",
+      reviewExplorationHint:
+        "In analysis: play on the board; right-click for arrows/circles. Sub-lines = stack then new moves.",
+      reviewNotePlaceholder: "Note for selected move…",
+      reviewPickEmoji: "Emoji on arrival square",
     },
-    
+
     // Library / Profiles
     library: {
       title: "Profile Library",

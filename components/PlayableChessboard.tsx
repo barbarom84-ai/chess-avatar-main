@@ -1,12 +1,22 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { Chess } from "chess.js";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { RotateCcw, Flag, Settings, RotateCw, BookOpen, AlertCircle } from "lucide-react";
+import {
+  RotateCcw,
+  Flag,
+  Settings,
+  RotateCw,
+  BookOpen,
+  AlertCircle,
+  GitBranch,
+  Undo2,
+  Smile,
+} from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import SimpleChessboard from "./SimpleChessboard";
 import EngineConfigPanel from "./EngineConfigPanel";
@@ -17,12 +27,27 @@ import { saveGameToCloud } from "@/lib/supabase-storage";
 import { useLanguage } from "@/lib/language-context";
 import type { EngineConfig } from "@/lib/analysis";
 import { LICHESS_ARROW_COLORS } from "@/lib/chess-arrows";
+import { useChessboardSettings } from "@/contexts/ChessboardSettingsContext";
+import { playChessMoveSound } from "@/lib/chess-sound";
+import {
+  chessWithExplorationStack,
+  mainlineMoveTargetSquare,
+} from "@/lib/review-chess";
+import { Input } from "@/components/ui/input";
+
+const REVIEW_EMOJI_CHOICES = ["💡", "🔥", "❓", "!!", "!?", "⭐", "👍", "📌"];
 
 interface PlayableChessboardProps {
   config: EngineConfig;
   playerColor: 'white' | 'black';
   onConfigChange?: (config: EngineConfig) => void;
   onColorChange?: () => void;
+}
+
+export interface ReviewVariant {
+  id: string;
+  label: string;
+  moves: string[];
 }
 
 interface GameStats {
@@ -72,8 +97,21 @@ export default function PlayableChessboard({
   
   // Navigation dans l'historique
   const [reviewMode, setReviewMode] = useState(false);
-  const [currentMoveIndex, setCurrentMoveIndex] = useState(-1); // -1 = position actuelle
-  const [reviewGame, setReviewGame] = useState<Chess | null>(null);
+  const [currentMoveIndex, setCurrentMoveIndex] = useState(-1); // -1 = position initiale
+  const [reviewExplorationMoves, setReviewExplorationMoves] = useState<string[]>([]);
+  const [reviewExplorationSegments, setReviewExplorationSegments] = useState<string[][]>([]);
+  const [reviewVariantsByAnchor, setReviewVariantsByAnchor] = useState<
+    Record<number, ReviewVariant[]>
+  >({});
+  const [moveAnnotations, setMoveAnnotations] = useState<
+    Record<number, { emoji?: string; note?: string }>
+  >({});
+  const [annotatingMoveIndex, setAnnotatingMoveIndex] = useState<number | null>(null);
+  const [showReviewPromotion, setShowReviewPromotion] = useState(false);
+  const [reviewPromotionPending, setReviewPromotionPending] = useState<{
+    from: string;
+    to: string;
+  } | null>(null);
   
   // Promotion
   const [showPromotionDialog, setShowPromotionDialog] = useState(false);
@@ -97,6 +135,48 @@ export default function PlayableChessboard({
   
   const { isReady, isThinking, getBestMove, getBestMoveForFen, resetForcedLine, remainingForcedMoves } = useStockfish();
   const { t, lang } = useLanguage();
+  const { settings: boardUiSettings } = useChessboardSettings();
+
+  const playMoveSoundIfEnabled = () => {
+    if (boardUiSettings.soundEnabled) playChessMoveSound();
+  };
+
+  const reviewPositionChess = useMemo(() => {
+    if (!reviewMode) return null;
+    return chessWithExplorationStack(
+      moveHistory,
+      currentMoveIndex,
+      reviewExplorationSegments,
+      reviewExplorationMoves
+    );
+  }, [
+    reviewMode,
+    moveHistory,
+    currentMoveIndex,
+    reviewExplorationSegments,
+    reviewExplorationMoves,
+  ]);
+
+  const boardLastMoveForDisplay = useMemo(() => {
+    if (!reviewMode) return lastMove;
+    if (!reviewPositionChess) return lastMove;
+    const h = reviewPositionChess.history({ verbose: true });
+    const lm = h[h.length - 1];
+    return lm ? { from: lm.from, to: lm.to } : null;
+  }, [reviewMode, lastMove, reviewPositionChess]);
+
+  const reviewSquareEmojis = useMemo(() => {
+    if (!reviewMode) return undefined;
+    const out: Record<string, string> = {};
+    for (let i = 0; i <= currentMoveIndex && i < moveHistory.length; i++) {
+      const ann = moveAnnotations[i];
+      if (ann?.emoji) {
+        const sq = mainlineMoveTargetSquare(moveHistory, i);
+        if (sq) out[sq] = ann.emoji;
+      }
+    }
+    return Object.keys(out).length ? out : undefined;
+  }, [reviewMode, currentMoveIndex, moveHistory, moveAnnotations]);
 
   const gameRef = useRef(game);
   const moveHistoryRef = useRef(moveHistory);
@@ -143,26 +223,15 @@ export default function PlayableChessboard({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [currentMoveIndex, moveHistory.length, reviewMode]);
 
-  // Naviguer vers un coup spécifique
   const navigateToMove = (moveIndex: number) => {
-    if (moveHistory.length === 0) return;
-    
-    // Créer un nouveau jeu pour la review
-    const tempGame = new Chess();
-    
-    // Rejouer jusqu'au coup demandé
-    for (let i = 0; i <= moveIndex && i < moveHistory.length; i++) {
-      try {
-        tempGame.move(moveHistory[i]);
-      } catch (e) {
-        console.error('Erreur lors de la navigation:', e);
-        return;
-      }
-    }
-    
+    if (moveHistory.length === 0 && moveIndex >= 0) return;
+
     setReviewMode(true);
     setCurrentMoveIndex(moveIndex);
-    setReviewGame(tempGame);
+    setReviewExplorationMoves([]);
+    setReviewExplorationSegments([]);
+    setShowReviewPromotion(false);
+    setReviewPromotionPending(null);
   };
 
   // Coup précédent
@@ -173,10 +242,9 @@ export default function PlayableChessboard({
     } else if (reviewMode && currentMoveIndex > 0) {
       navigateToMove(currentMoveIndex - 1);
     } else if (reviewMode && currentMoveIndex === 0) {
-      // Retour à la position initiale
-      const tempGame = new Chess();
-      setReviewGame(tempGame);
       setCurrentMoveIndex(-1);
+      setReviewExplorationMoves([]);
+      setReviewExplorationSegments([]);
     }
   };
 
@@ -190,12 +258,15 @@ export default function PlayableChessboard({
     }
   };
 
-  // Sortir du mode review
-  const exitReviewMode = () => {
+  const exitReviewMode = useCallback(() => {
     setReviewMode(false);
     setCurrentMoveIndex(-1);
-    setReviewGame(null);
-  };
+    setReviewExplorationMoves([]);
+    setReviewExplorationSegments([]);
+    setShowReviewPromotion(false);
+    setReviewPromotionPending(null);
+    setAnnotatingMoveIndex(null);
+  }, []);
 
   // Cliquer sur un coup dans l'historique
   const handleMoveClick = (moveIndex: number) => {
@@ -270,6 +341,7 @@ export default function PlayableChessboard({
             } else {
               setMoveCount50(prev => prev + 1);
             }
+            playMoveSoundIfEnabled();
             checkGameState(board, updatedHistory);
           }
         } catch (error) {
@@ -282,9 +354,41 @@ export default function PlayableChessboard({
 
   // Gestion du coup du joueur
   const onDrop = (sourceSquare: string, targetSquare: string) => {
-    // Ne pas permettre de jouer en mode review
     if (reviewMode) {
-      exitReviewMode();
+      const fen = chessWithExplorationStack(
+        moveHistory,
+        currentMoveIndex,
+        reviewExplorationSegments,
+        reviewExplorationMoves
+      ).fen();
+      const board = new Chess(fen);
+      const piece = board.get(sourceSquare as never);
+      const isPromotion =
+        piece &&
+        piece.type === "p" &&
+        ((piece.color === "w" && targetSquare[1] === "8") ||
+          (piece.color === "b" && targetSquare[1] === "1"));
+
+      if (isPromotion) {
+        setReviewPromotionPending({ from: sourceSquare, to: targetSquare });
+        setShowReviewPromotion(true);
+        return false;
+      }
+
+      try {
+        const move = board.move({
+          from: sourceSquare,
+          to: targetSquare,
+        });
+        if (move) {
+          setReviewExplorationMoves((prev) => [...prev, move.san]);
+          setLastMove({ from: sourceSquare, to: targetSquare });
+          playMoveSoundIfEnabled();
+          return true;
+        }
+      } catch {
+        return false;
+      }
       return false;
     }
     
@@ -330,6 +434,7 @@ export default function PlayableChessboard({
         } else {
           setMoveCount50(prev => prev + 1);
         }
+        playMoveSoundIfEnabled();
         checkGameState(board, updatedHistory);
         setTimeout(() => {
           if (!board.isGameOver()) makeAIMove();
@@ -625,7 +730,9 @@ export default function PlayableChessboard({
       eloWhite: null,
       eloBlack: null,
     });
-    exitReviewMode(); // Sortir du mode review
+    exitReviewMode();
+    setReviewVariantsByAnchor({});
+    setMoveAnnotations({});
     resetForcedLine();
 
     // Si l'IA joue les blancs, elle commence
@@ -745,8 +852,37 @@ export default function PlayableChessboard({
     }
   };
 
-  // Gérer la promotion
-  const handlePromotionSelect = (piece: 'q' | 'r' | 'b' | 'n') => {
+  const handlePromotionSelect = (piece: "q" | "r" | "b" | "n") => {
+    if (reviewPromotionPending) {
+      try {
+        const fen = chessWithExplorationStack(
+          moveHistory,
+          currentMoveIndex,
+          reviewExplorationSegments,
+          reviewExplorationMoves
+        ).fen();
+        const board = new Chess(fen);
+        const move = board.move({
+          from: reviewPromotionPending.from,
+          to: reviewPromotionPending.to,
+          promotion: piece,
+        });
+        if (move) {
+          setReviewExplorationMoves((prev) => [...prev, move.san]);
+          setLastMove({
+            from: reviewPromotionPending.from,
+            to: reviewPromotionPending.to,
+          });
+          playMoveSoundIfEnabled();
+        }
+      } catch (error) {
+        console.error("Erreur promotion (analyse):", error);
+      }
+      setShowReviewPromotion(false);
+      setReviewPromotionPending(null);
+      return;
+    }
+
     if (!pendingPromotion) return;
 
     try {
@@ -754,34 +890,69 @@ export default function PlayableChessboard({
       const move = board.move({
         from: pendingPromotion.from,
         to: pendingPromotion.to,
-        promotion: piece
+        promotion: piece,
       });
 
       if (move) {
         const updatedHistory = [...moveHistory, move.san];
-        console.log('👤 Joueur joue (promotion):', move.san, '| Total coups:', updatedHistory.length);
         setLastMove({ from: pendingPromotion.from, to: pendingPromotion.to });
         setGame(board);
         setMoveHistory(updatedHistory);
         moveHistoryRef.current = updatedHistory;
         gameRef.current = board;
-        if (move.captured || move.piece === 'p') {
+        if (move.captured || move.piece === "p") {
           setMoveCount50(0);
         } else {
-          setMoveCount50(prev => prev + 1);
+          setMoveCount50((prev) => prev + 1);
         }
+        playMoveSoundIfEnabled();
         checkGameState(board, updatedHistory);
         if (!board.isGameOver()) {
           setTimeout(() => makeAIMove(), 500);
         }
       }
     } catch (error) {
-      console.error('Erreur lors de la promotion:', error);
+      console.error("Erreur lors de la promotion:", error);
     }
 
-    // Fermer le dialogue et réinitialiser
     setShowPromotionDialog(false);
     setPendingPromotion(null);
+  };
+
+  const deepenReviewSubLine = () => {
+    if (reviewExplorationMoves.length === 0) return;
+    setReviewExplorationSegments((prev) => [...prev, [...reviewExplorationMoves]]);
+    setReviewExplorationMoves([]);
+  };
+
+  const liftReviewSubLine = () => {
+    setReviewExplorationSegments((prev) => {
+      if (prev.length === 0) return prev;
+      const lastSeg = prev[prev.length - 1];
+      setReviewExplorationMoves(lastSeg);
+      return prev.slice(0, -1);
+    });
+  };
+
+  const saveReviewVariant = () => {
+    const flat = [...reviewExplorationSegments.flat(), ...reviewExplorationMoves];
+    if (flat.length === 0) return;
+    const anchor = currentMoveIndex;
+    const id =
+      typeof crypto !== "undefined" && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `v-${Date.now()}`;
+    const n = (reviewVariantsByAnchor[anchor]?.length ?? 0) + 1;
+    const v: ReviewVariant = { id, label: `V${n}`, moves: flat };
+    setReviewVariantsByAnchor((prev) => ({
+      ...prev,
+      [anchor]: [...(prev[anchor] ?? []), v],
+    }));
+  };
+
+  const loadReviewVariant = (variant: ReviewVariant) => {
+    setReviewExplorationSegments([]);
+    setReviewExplorationMoves([...variant.moves]);
   };
 
   return (
@@ -975,16 +1146,27 @@ export default function PlayableChessboard({
                 Mode Review - Coup {currentMoveIndex + 1}/{moveHistory.length}
               </div>
             )}
-            <SimpleChessboard 
-              position={reviewMode && reviewGame ? reviewGame.fen() : game.fen()}
+            <SimpleChessboard
+              position={
+                reviewMode && reviewPositionChess
+                  ? reviewPositionChess.fen()
+                  : game.fen()
+              }
               onDrop={onDrop}
               orientation={boardOrientation}
-              lastMove={lastMove}
+              lastMove={boardLastMoveForDisplay}
+              squareEmojis={reviewSquareEmojis}
               arrows={
                 !reviewMode
                   ? [
                       ...(lastMove
-                        ? [{ from: lastMove.from, to: lastMove.to, color: LICHESS_ARROW_COLORS.shiftCtrlAltYellow }]
+                        ? [
+                            {
+                              from: lastMove.from,
+                              to: lastMove.to,
+                              color: LICHESS_ARROW_COLORS.shiftCtrlAltYellow,
+                            },
+                          ]
                         : []),
                       ...forcedLineArrows,
                     ]
@@ -1036,11 +1218,156 @@ export default function PlayableChessboard({
                 </Button>
               )}
             </div>
-            <div className="text-[10px] text-slate-500 mb-2 flex items-center gap-1">
-              <span>⌨️ ← → pour naviguer</span>
+            <div className="text-[10px] text-slate-500 mb-2 flex flex-wrap items-center gap-1">
+              <span>⌨️ ← →</span>
               <span>•</span>
-              <span>Clic sur un coup</span>
+              <span>{lang === "fr" ? "Clic coup" : "Move click"}</span>
+              <span>•</span>
+              <span>{lang === "fr" ? "Clic droit flèches" : "Right-click arrows"}</span>
             </div>
+            {reviewMode && (
+              <div className="mb-3 space-y-2 rounded-md border border-purple-500/30 bg-purple-950/20 p-2">
+                <p className="text-[10px] text-purple-200/90 leading-snug">
+                  {t.play.reviewExplorationHint}
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-[10px] border-purple-500/40 text-purple-200"
+                    onClick={saveReviewVariant}
+                  >
+                    <GitBranch className="h-3 w-3 mr-1" />
+                    {t.play.reviewSaveVariant}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-[10px] border-purple-500/40 text-purple-200"
+                    onClick={deepenReviewSubLine}
+                  >
+                    {t.play.reviewSubLine}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-[10px] border-purple-500/40 text-purple-200"
+                    onClick={liftReviewSubLine}
+                    disabled={reviewExplorationSegments.length === 0}
+                  >
+                    {t.play.reviewPopSubLine}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-[10px] border-purple-500/40 text-purple-200"
+                    onClick={() => setReviewExplorationMoves((m) => m.slice(0, -1))}
+                    disabled={reviewExplorationMoves.length === 0}
+                  >
+                    <Undo2 className="h-3 w-3 mr-1" />
+                    {t.play.reviewUndoMove}
+                  </Button>
+                </div>
+                {(reviewVariantsByAnchor[currentMoveIndex]?.length ?? 0) > 0 && (
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] font-semibold text-purple-300">
+                      {t.play.reviewVariants}
+                    </span>
+                    <div className="flex flex-wrap gap-1">
+                      {reviewVariantsByAnchor[currentMoveIndex]!.map((v) => (
+                        <Button
+                          key={v.id}
+                          type="button"
+                          size="sm"
+                          variant="secondary"
+                          className="h-6 px-2 text-[10px] bg-slate-800 text-slate-200"
+                          onClick={() => loadReviewVariant(v)}
+                        >
+                          {v.label}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {annotatingMoveIndex !== null && (
+                  <div className="rounded border border-slate-600 bg-slate-900/80 p-2 space-y-2">
+                    <div className="text-[10px] text-slate-400">
+                      {t.play.reviewPickEmoji}{" "}
+                      <span className="text-slate-200 font-mono">
+                        #{annotatingMoveIndex + 1}
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-0.5">
+                      {REVIEW_EMOJI_CHOICES.map((em) => (
+                        <button
+                          key={em}
+                          type="button"
+                          className="rounded px-1.5 py-0.5 text-base hover:bg-slate-700"
+                          onClick={() => {
+                            setMoveAnnotations((prev) => ({
+                              ...prev,
+                              [annotatingMoveIndex]: {
+                                ...prev[annotatingMoveIndex],
+                                emoji: em,
+                              },
+                            }));
+                            setAnnotatingMoveIndex(null);
+                          }}
+                        >
+                          {em}
+                        </button>
+                      ))}
+                      <button
+                        type="button"
+                        className="ml-1 text-[10px] text-slate-500 underline"
+                        onClick={() => {
+                          setMoveAnnotations((prev) => {
+                            const next = { ...prev };
+                            const cur = next[annotatingMoveIndex];
+                            if (cur) {
+                              const { emoji: _, ...rest } = cur;
+                              if (Object.keys(rest).length === 0) delete next[annotatingMoveIndex];
+                              else next[annotatingMoveIndex] = rest as { emoji?: string; note?: string };
+                            }
+                            return next;
+                          });
+                          setAnnotatingMoveIndex(null);
+                        }}
+                      >
+                        {lang === "fr" ? "Effacer émoji" : "Clear emoji"}
+                      </button>
+                    </div>
+                    <Input
+                      placeholder={t.play.reviewNotePlaceholder}
+                      value={moveAnnotations[annotatingMoveIndex]?.note ?? ""}
+                      onChange={(e) =>
+                        setMoveAnnotations((prev) => ({
+                          ...prev,
+                          [annotatingMoveIndex]: {
+                            ...prev[annotatingMoveIndex],
+                            note: e.target.value,
+                          },
+                        }))
+                      }
+                      className="h-8 text-xs bg-slate-950 border-slate-600"
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      className="h-6 text-[10px] text-slate-400"
+                      onClick={() => setAnnotatingMoveIndex(null)}
+                    >
+                      OK
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
             <div className="max-h-[38dvh] sm:max-h-[48dvh] lg:max-h-[70vh] overflow-y-auto pr-1 pb-[env(safe-area-inset-bottom)]">
               {moveHistory.length === 0 ? (
                 <p className="text-xs text-slate-500 text-center py-4">
@@ -1057,30 +1384,70 @@ export default function PlayableChessboard({
                         className="flex items-center gap-1 p-1.5 rounded hover:bg-slate-800/50 transition-colors"
                       >
                         <span className="text-xs text-slate-600 font-semibold w-5">{idx + 1}.</span>
-                        <div className="flex-1 flex gap-1 font-mono text-xs">
-                          <button
-                            onClick={() => handleMoveClick(whiteIndex)}
-                            className={`px-1.5 py-0.5 rounded flex-1 text-center transition-all cursor-pointer ${
-                              reviewMode && currentMoveIndex === whiteIndex
-                                ? 'bg-purple-600 text-white ring-2 ring-purple-400'
-                                : 'text-slate-200 bg-slate-800 hover:bg-slate-700'
-                            }`}
-                            title={`Aller au coup ${whiteIndex + 1}`}
-                          >
-                            {moveHistory[whiteIndex] || ''}
-                          </button>
-                          {moveHistory[blackIndex] && (
+                        <div className="flex-1 flex gap-1 font-mono text-xs items-center">
+                          <div className="flex flex-1 items-center gap-0.5 min-w-0">
                             <button
-                              onClick={() => handleMoveClick(blackIndex)}
-                              className={`px-1.5 py-0.5 rounded flex-1 text-center transition-all cursor-pointer ${
-                                reviewMode && currentMoveIndex === blackIndex
-                                  ? 'bg-purple-600 text-white ring-2 ring-purple-400'
-                                  : 'text-slate-300 bg-slate-800/50 hover:bg-slate-700'
+                              type="button"
+                              onClick={() => handleMoveClick(whiteIndex)}
+                              className={`px-1.5 py-0.5 rounded flex-1 text-center transition-all cursor-pointer min-w-0 truncate ${
+                                reviewMode && currentMoveIndex === whiteIndex
+                                  ? "bg-purple-600 text-white ring-2 ring-purple-400"
+                                  : "text-slate-200 bg-slate-800 hover:bg-slate-700"
                               }`}
-                              title={`Aller au coup ${blackIndex + 1}`}
+                              title={`Aller au coup ${whiteIndex + 1}`}
                             >
-                              {moveHistory[blackIndex]}
+                              {moveHistory[whiteIndex] || ""}{" "}
+                              {moveAnnotations[whiteIndex]?.emoji
+                                ? moveAnnotations[whiteIndex].emoji
+                                : ""}
                             </button>
+                            {reviewMode && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  setAnnotatingMoveIndex(whiteIndex);
+                                }}
+                                className="shrink-0 p-0.5 rounded text-slate-500 hover:text-amber-300 hover:bg-slate-700"
+                                title={t.play.reviewPickEmoji}
+                              >
+                                <Smile className="h-3.5 w-3.5" />
+                              </button>
+                            )}
+                          </div>
+                          {moveHistory[blackIndex] && (
+                            <div className="flex flex-1 items-center gap-0.5 min-w-0">
+                              <button
+                                type="button"
+                                onClick={() => handleMoveClick(blackIndex)}
+                                className={`px-1.5 py-0.5 rounded flex-1 text-center transition-all cursor-pointer min-w-0 truncate ${
+                                  reviewMode && currentMoveIndex === blackIndex
+                                    ? "bg-purple-600 text-white ring-2 ring-purple-400"
+                                    : "text-slate-300 bg-slate-800/50 hover:bg-slate-700"
+                                }`}
+                                title={`Aller au coup ${blackIndex + 1}`}
+                              >
+                                {moveHistory[blackIndex]}{" "}
+                                {moveAnnotations[blackIndex]?.emoji
+                                  ? moveAnnotations[blackIndex].emoji
+                                  : ""}
+                              </button>
+                              {reviewMode && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setAnnotatingMoveIndex(blackIndex);
+                                  }}
+                                  className="shrink-0 p-0.5 rounded text-slate-500 hover:text-amber-300 hover:bg-slate-700"
+                                  title={t.play.reviewPickEmoji}
+                                >
+                                  <Smile className="h-3.5 w-3.5" />
+                                </button>
+                              )}
+                            </div>
                           )}
                         </div>
                       </div>
@@ -1095,8 +1462,15 @@ export default function PlayableChessboard({
 
       {/* Dialogue de promotion */}
       <PromotionDialog
-        open={showPromotionDialog}
+        open={showPromotionDialog || showReviewPromotion}
         color={playerColor}
+        pieceColor={
+          showReviewPromotion && reviewPositionChess
+            ? reviewPositionChess.turn() === "w"
+              ? "w"
+              : "b"
+            : undefined
+        }
         onSelect={handlePromotionSelect}
       />
     </div>
