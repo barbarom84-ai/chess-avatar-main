@@ -39,9 +39,13 @@ const REVIEW_EMOJI_CHOICES = ["💡", "🔥", "❓", "!!", "!?", "⭐", "👍", 
 
 interface PlayableChessboardProps {
   config: EngineConfig;
-  playerColor: 'white' | 'black';
+  playerColor: "white" | "black";
   onConfigChange?: (config: EngineConfig) => void;
   onColorChange?: () => void;
+  /** Partie enregistrée (page Mes parties) : review + variantes, sans moteur. */
+  archivePgn?: string | null;
+  /** Libellé affiché à la place du nom du bot (ex. adversaire). */
+  archiveViewLabel?: string;
 }
 
 export interface ReviewVariant {
@@ -77,12 +81,15 @@ function chessFromSanHistory(history: string[]): Chess {
   return c;
 }
 
-export default function PlayableChessboard({ 
-  config, 
+export default function PlayableChessboard({
+  config,
   playerColor,
   onConfigChange,
-  onColorChange 
+  onColorChange,
+  archivePgn,
+  archiveViewLabel,
 }: PlayableChessboardProps) {
+  const isArchiveMode = Boolean(archivePgn?.trim());
   const [game, setGame] = useState(new Chess());
   const [gameOver, setGameOver] = useState(false);
   const [gameResult, setGameResult] = useState<string>("");
@@ -132,7 +139,8 @@ export default function PlayableChessboard({
   });
   const [startTime, setStartTime] = useState<Date>(new Date());
   const [forcedLineArrows, setForcedLineArrows] = useState<Array<{ from: string; to: string; color: string }>>([]);
-  
+  const [archiveLoadError, setArchiveLoadError] = useState(false);
+
   const { isReady, isThinking, getBestMove, getBestMoveForFen, resetForcedLine, remainingForcedMoves } = useStockfish();
   const { t, lang } = useLanguage();
   const { settings: boardUiSettings } = useChessboardSettings();
@@ -182,11 +190,46 @@ export default function PlayableChessboard({
   const moveHistoryRef = useRef(moveHistory);
   gameRef.current = game;
   moveHistoryRef.current = moveHistory;
-  
+
+  useEffect(() => {
+    if (!archivePgn?.trim()) {
+      setArchiveLoadError(false);
+      return;
+    }
+    setArchiveLoadError(false);
+    try {
+      const c = new Chess();
+      c.loadPgn(archivePgn);
+      const hist = c.history();
+      setMoveHistory(hist);
+      moveHistoryRef.current = hist;
+      setGame(c);
+      gameRef.current = c;
+      setGameOver(true);
+      setGameResult("");
+      setShowResultModal(false);
+      setReviewMode(true);
+      setCurrentMoveIndex(-1);
+      setReviewExplorationMoves([]);
+      setReviewExplorationSegments([]);
+      setReviewVariantsByAnchor({});
+      setMoveAnnotations({});
+      setAnnotatingMoveIndex(null);
+      setLastMove(null);
+      setMoveCount50(0);
+      setShowReviewPromotion(false);
+      setReviewPromotionPending(null);
+      setForcedLineArrows([]);
+    } catch (e) {
+      console.error("Archive PGN:", e);
+      setArchiveLoadError(true);
+    }
+  }, [archivePgn]);
+
   // Flèches pour le prochain coup forcé du bot — uniquement quand c'est au tour du bot
   const isBotTurn = (game.turn() === 'w' && playerColor === 'black') || (game.turn() === 'b' && playerColor === 'white');
   useEffect(() => {
-    if (gameOver || !isBotTurn || !remainingForcedMoves?.length) {
+    if (isArchiveMode || gameOver || !isBotTurn || !remainingForcedMoves?.length) {
       setForcedLineArrows([]);
       return;
     }
@@ -199,7 +242,7 @@ export default function PlayableChessboard({
     } else {
       setForcedLineArrows([]);
     }
-  }, [remainingForcedMoves, gameOver, isBotTurn]);
+  }, [isArchiveMode, remainingForcedMoves, gameOver, isBotTurn]);
   
   // Navigation clavier
   useEffect(() => {
@@ -253,12 +296,29 @@ export default function PlayableChessboard({
     if (reviewMode && currentMoveIndex < moveHistory.length - 1) {
       navigateToMove(currentMoveIndex + 1);
     } else if (reviewMode && currentMoveIndex === moveHistory.length - 1) {
-      // Revenir à la position actuelle
-      exitReviewMode();
+      if (isArchiveMode) {
+        setReviewExplorationMoves([]);
+        setReviewExplorationSegments([]);
+        setShowReviewPromotion(false);
+        setReviewPromotionPending(null);
+      } else {
+        exitReviewMode();
+      }
     }
   };
 
   const exitReviewMode = useCallback(() => {
+    if (isArchiveMode) {
+      const len = moveHistoryRef.current.length;
+      setCurrentMoveIndex(len > 0 ? len - 1 : -1);
+      setReviewExplorationMoves([]);
+      setReviewExplorationSegments([]);
+      setShowReviewPromotion(false);
+      setReviewPromotionPending(null);
+      setAnnotatingMoveIndex(null);
+      setReviewMode(true);
+      return;
+    }
     setReviewMode(false);
     setCurrentMoveIndex(-1);
     setReviewExplorationMoves([]);
@@ -266,7 +326,7 @@ export default function PlayableChessboard({
     setShowReviewPromotion(false);
     setReviewPromotionPending(null);
     setAnnotatingMoveIndex(null);
-  }, []);
+  }, [isArchiveMode]);
 
   // Cliquer sur un coup dans l'historique
   const handleMoveClick = (moveIndex: number) => {
@@ -280,10 +340,10 @@ export default function PlayableChessboard({
 
   // Si l'IA joue les blancs, elle commence
   useEffect(() => {
-    if (isReady && playerColor === 'black' && game.turn() === 'w' && !gameOver) {
-      makeAIMove();
-    }
-  }, [isReady, playerColor]);
+    if (isArchiveMode || !isReady || playerColor !== "black" || gameOver) return;
+    if (gameRef.current.turn() !== "w") return;
+    makeAIMove();
+  }, [isArchiveMode, isReady, playerColor, gameOver]);
 
   // Synchroniser automatiquement l'orientation avec la couleur choisie par le joueur.
   // Si le joueur choisit noir, les noirs apparaissent en bas.
@@ -314,7 +374,7 @@ export default function PlayableChessboard({
   };
 
   const makeAIMove = () => {
-    if (gameOver || !isReady) return;
+    if (isArchiveMode || gameOver || !isReady) return;
     const g = gameRef.current;
     const hist = moveHistoryRef.current;
 
@@ -955,6 +1015,15 @@ export default function PlayableChessboard({
     setReviewExplorationMoves([...variant.moves]);
   };
 
+  if (isArchiveMode && archiveLoadError) {
+    return (
+      <Alert variant="destructive" className="bg-red-950/40 border-red-700/50 text-red-100">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>{t.games.pgnLoadError}</AlertDescription>
+      </Alert>
+    );
+  }
+
   return (
     <div className="space-y-4">
       {/* Header compact avec actions */}
@@ -965,9 +1034,19 @@ export default function PlayableChessboard({
             {playerColor === 'white' ? `⚪ ${t.play.whiteSide}` : `⚫ ${t.play.blackSide}`}
           </Badge>
           <div className="text-sm">
-            <span className="font-semibold text-slate-200">{currentConfig.name}</span>
+            <span className="font-semibold text-slate-200">
+              {isArchiveMode && archiveViewLabel?.trim()
+                ? archiveViewLabel.trim()
+                : currentConfig.name}
+            </span>
             <span className="text-xs text-slate-500 ml-2">
-              {isThinking ? `🤔 ${t.play.thinking}` : gameOver ? `🏁 ${t.play.finished}` : `⚡ ${t.play.ready}`}
+              {isArchiveMode
+                ? t.games.archiveReviewStatus
+                : isThinking
+                  ? `🤔 ${t.play.thinking}`
+                  : gameOver
+                    ? `🏁 ${t.play.finished}`
+                    : `⚡ ${t.play.ready}`}
             </span>
           </div>
           
@@ -991,25 +1070,29 @@ export default function PlayableChessboard({
             <RotateCw className="h-4 w-4" />
           </Button>
 
-          <Button
-            onClick={() => setShowConfigDialog(true)}
-            variant="outline"
-            size="sm"
-            className="border-cyan-500/50 bg-cyan-500/10 text-cyan-300 hover:bg-cyan-500/20"
-          >
-            <Settings className="h-4 w-4 mr-1" />
-            <span className="hidden sm:inline">{t.play.configShort}</span>
-          </Button>
+          {!isArchiveMode && (
+            <Button
+              onClick={() => setShowConfigDialog(true)}
+              variant="outline"
+              size="sm"
+              className="border-cyan-500/50 bg-cyan-500/10 text-cyan-300 hover:bg-cyan-500/20"
+            >
+              <Settings className="h-4 w-4 mr-1" />
+              <span className="hidden sm:inline">{t.play.configShort}</span>
+            </Button>
+          )}
 
-          <Button
-            onClick={resetGame}
-            variant="outline"
-            size="sm"
-            className="border-amber-500/50 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20"
-          >
-            <RotateCcw className="h-4 w-4 mr-1" />
-            <span className="hidden sm:inline">{t.play.newGame}</span>
-          </Button>
+          {!isArchiveMode && (
+            <Button
+              onClick={resetGame}
+              variant="outline"
+              size="sm"
+              className="border-amber-500/50 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20"
+            >
+              <RotateCcw className="h-4 w-4 mr-1" />
+              <span className="hidden sm:inline">{t.play.newGame}</span>
+            </Button>
+          )}
 
           {!gameOver && (
             <Button
@@ -1025,8 +1108,8 @@ export default function PlayableChessboard({
         </div>
       </div>
 
-      {/* Modal de configuration - COMPACT */}
-      <Dialog open={showConfigDialog} onOpenChange={setShowConfigDialog}>
+      {/* Modal de configuration - COMPACT (masqué en consultation archive) */}
+      <Dialog open={!isArchiveMode && showConfigDialog} onOpenChange={setShowConfigDialog}>
         <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto bg-slate-900 border-cyan-500/30">
           <DialogHeader>
             <DialogTitle className="text-lg">{t.board.configuration}</DialogTitle>

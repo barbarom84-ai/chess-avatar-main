@@ -140,6 +140,9 @@ export const translations = {
       delete: "Supprimer",
       confirmDelete: "Supprimer cette partie ?",
       backToList: "Retour à la liste",
+      pgnLoadError:
+        "Impossible de lire ce PGN. Vérifiez le fichier ou réimportez la partie.",
+      archiveReviewStatus: "Consultation · variantes sur l’échiquier",
       gameAgainst: "Partie contre",
       history: "Historique des Parties",
       supabaseNotConfigured: "Supabase non configuré. Les parties ne peuvent pas être sauvegardées.",
@@ -979,6 +982,9 @@ export const translations = {
       delete: "Delete",
       confirmDelete: "Delete this game?",
       backToList: "Back to list",
+      pgnLoadError:
+        "Could not read this PGN. Check the file or re-import the game.",
+      archiveReviewStatus: "Review · try moves on the board",
       gameAgainst: "Game against",
       history: "Game History",
       supabaseNotConfigured: "Supabase not configured. Games cannot be saved.",

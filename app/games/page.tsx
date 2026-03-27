@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef, type ChangeEvent } from "react";
+import dynamic from "next/dynamic";
+import type { EngineConfig } from "@/lib/analysis";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,7 +18,6 @@ import { isSupabaseConfigured } from "@/lib/supabase";
 import { useLanguage } from "@/lib/language-context";
 import Link from "next/link";
 import Image from "next/image";
-import AdvancedGameViewer from "@/components/AdvancedGameViewer";
 import {
   Dialog,
   DialogContent,
@@ -32,6 +33,34 @@ import {
   listPlayerNamesFromPgn,
   parsePgnFileForGames,
 } from "@/lib/pgn-import";
+
+/** Config factice : la page archive n’utilise pas le moteur, seulement le mode review. */
+const GAMES_ARCHIVE_ENGINE_STUB: EngineConfig = {
+  name: "—",
+  elo: 1500,
+  difficulty: 1,
+  aggressiveness: 50,
+  threads: 2,
+  depth: 8,
+  timeControl: 1000,
+  favoriteOpening: "",
+  playStyle: "équilibré",
+  openings: {},
+};
+
+function GamesChessboardLoading() {
+  const { t } = useLanguage();
+  return (
+    <div className="w-full min-h-[420px] rounded-lg bg-slate-950 border border-slate-800 flex items-center justify-center text-slate-500 text-sm">
+      {t.loadingChessboard}
+    </div>
+  );
+}
+
+const PlayableChessboard = dynamic(() => import("@/components/PlayableChessboard"), {
+  ssr: false,
+  loading: GamesChessboardLoading,
+});
 
 export default function GamesPage() {
   const { t, lang } = useLanguage();
@@ -368,9 +397,12 @@ export default function GamesPage() {
               </div>
             </CardHeader>
             <CardContent>
-              <AdvancedGameViewer 
-                pgn={selectedGame.pgn} 
-                playerColor={selectedGame.player_color as 'white' | 'black'}
+              <PlayableChessboard
+                key={selectedGame.id}
+                config={GAMES_ARCHIVE_ENGINE_STUB}
+                playerColor={selectedGame.player_color as "white" | "black"}
+                archivePgn={selectedGame.pgn}
+                archiveViewLabel={selectedGame.opponent_name}
               />
             </CardContent>
           </Card>
