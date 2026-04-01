@@ -4,7 +4,11 @@ import { Chess } from "chess.js";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useChessboardSettings, getPieceImagePath } from "@/contexts/ChessboardSettingsContext";
-import { LICHESS_ARROW_COLORS, getLichessArrowColorFromModifiers } from "@/lib/chess-arrows";
+import {
+  LICHESS_ARROW_COLORS,
+  getLichessArrowColorFromModifiers,
+  applyArrowOpacityPercent,
+} from "@/lib/chess-arrows";
 
 interface SimpleChessboardProps {
   position: string;
@@ -31,6 +35,7 @@ export default function SimpleChessboard({
     showCoordinates,
     showLegalMoves,
     highlightLastMove,
+    lastMoveArrowOpacityPercent,
     animationSpeed,
   } = settings;
   
@@ -223,7 +228,18 @@ export default function SimpleChessboard({
     setArrowStart(null);
   };
 
-  const renderedArrows = [...arrows, ...manualArrows];
+  const propArrowsProcessed = arrows.map((a) => {
+    const base = a.color || LICHESS_ARROW_COLORS.defaultGreen;
+    const isLastMoveArrow =
+      !!lastMove && a.from === lastMove.from && a.to === lastMove.to;
+    return {
+      ...a,
+      color: isLastMoveArrow
+        ? applyArrowOpacityPercent(base, lastMoveArrowOpacityPercent)
+        : base,
+    };
+  });
+  const renderedArrows = [...propArrowsProcessed, ...manualArrows];
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

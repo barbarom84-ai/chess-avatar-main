@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
 import { 
   Settings, Palette, Image as ImageIcon, Zap, Volume2, VolumeX,
   Grid, Eye, RotateCcw, Check, Lock, Crown
@@ -406,6 +407,38 @@ export default function ChessboardSettingsModal({ open, onOpenChange }: Chessboa
                         checked={settings.highlightLastMove}
                         onCheckedChange={(checked) => updateSettings({ highlightLastMove: checked })}
                       />
+                    </div>
+
+                    <div className="p-3 bg-slate-900 rounded-lg space-y-3">
+                      <div>
+                        <Label htmlFor="last-move-arrow-opacity" className="text-slate-200 font-medium">
+                          {t.chessboardSettings.lastMoveArrowOpacity}
+                        </Label>
+                        <p className="text-xs text-slate-400 mt-1">
+                          {t.chessboardSettings.lastMoveArrowOpacityDesc}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <Slider
+                          id="last-move-arrow-opacity"
+                          min={10}
+                          max={100}
+                          step={1}
+                          value={[settings.lastMoveArrowOpacityPercent]}
+                          onValueChange={(v) => {
+                            const n = v[0];
+                            if (typeof n === "number") {
+                              updateSettings({
+                                lastMoveArrowOpacityPercent: Math.min(100, Math.max(10, n)),
+                              });
+                            }
+                          }}
+                          className="flex-1"
+                        />
+                        <span className="text-sm tabular-nums text-cyan-300 w-12 text-right shrink-0">
+                          {settings.lastMoveArrowOpacityPercent}%
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>

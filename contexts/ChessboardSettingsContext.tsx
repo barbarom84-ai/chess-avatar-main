@@ -41,6 +41,8 @@ export interface ChessboardSettings {
   showCoordinates: boolean;
   showLegalMoves: boolean;
   highlightLastMove: boolean;
+  /** Opacité de la flèche « dernier coup » (10–100 %). */
+  lastMoveArrowOpacityPercent: number;
   animationSpeed: 'none' | 'fast' | 'normal' | 'slow';
   soundEnabled: boolean;
 }
@@ -252,6 +254,7 @@ const defaultSettings: ChessboardSettings = {
   showCoordinates: true,
   showLegalMoves: true,
   highlightLastMove: true,
+  lastMoveArrowOpacityPercent: 45,
   animationSpeed: 'normal',
   soundEnabled: false,
 };
@@ -290,11 +293,17 @@ export function ChessboardSettingsProvider({ children }: { children: ReactNode }
         const savedPieceSet =
           PIECE_SETS.find((p) => p.id === parsed.pieceSet?.id) ??
           defaultSettings.pieceSet;
+        const rawOp = parsed.lastMoveArrowOpacityPercent;
+        const clampedOp =
+          typeof rawOp === "number" && !Number.isNaN(rawOp)
+            ? Math.min(100, Math.max(10, Math.round(rawOp)))
+            : defaultSettings.lastMoveArrowOpacityPercent;
         setSettings({
           ...defaultSettings,
           ...parsed,
           boardTheme: savedTheme,
           pieceSet: savedPieceSet,
+          lastMoveArrowOpacityPercent: clampedOp,
         });
       }
     } catch (error) {

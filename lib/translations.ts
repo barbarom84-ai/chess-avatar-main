@@ -510,6 +510,9 @@ export const translations = {
       showCoordinatesDesc: "Affiche les lettres et chiffres sur les bords de l'échiquier",
       highlightLastMove: "Surligner le dernier coup",
       highlightLastMoveDesc: "Affiche en surbrillance le dernier coup joué",
+      lastMoveArrowOpacity: "Opacité de la flèche (dernier coup)",
+      lastMoveArrowOpacityDesc:
+        "Transparence de la flèche du dernier coup sur l’échiquier (minimum 10 %). Les flèches au clic droit ne sont pas modifiées.",
       soundDisabled: "Les effets sonores sont actuellement désactivés",
       close: "Fermer",
       themePreview: "Aperçu du Thème",
@@ -1375,6 +1378,9 @@ export const translations = {
       showCoordinatesDesc: "Shows letters and numbers on the board edges",
       highlightLastMove: "Highlight last move",
       highlightLastMoveDesc: "Highlights the last move played",
+      lastMoveArrowOpacity: "Last-move arrow opacity",
+      lastMoveArrowOpacityDesc:
+        "Transparency of the last-move arrow on the board (minimum 10%). Right-drawn arrows are unchanged.",
       soundDisabled: "Sound effects are currently disabled",
       close: "Close",
       themePreview: "Theme Preview",
