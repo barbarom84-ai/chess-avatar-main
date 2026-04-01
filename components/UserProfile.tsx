@@ -104,7 +104,19 @@ export default function UserProfile() {
   const handleUpdateProfile = async (id: string, updates: Partial<DbProfile>): Promise<boolean> => {
     const res = await updateProfile(id, updates);
     if (res.success) {
+      setSelectedProfile((prev) => {
+        if (!prev || prev.id !== id) return prev;
+        return {
+          ...prev,
+          ...updates,
+          config: updates.config !== undefined ? updates.config : prev.config,
+          stats: updates.stats !== undefined ? updates.stats : prev.stats,
+          is_public: updates.is_public !== undefined ? updates.is_public : prev.is_public,
+          updated_at: new Date().toISOString(),
+        };
+      });
       await loadProfiles();
+      toast.success(t.profile.profileUpdated);
       return true;
     }
     toast.error(res.error || 'Erreur lors de la sauvegarde du profil.');

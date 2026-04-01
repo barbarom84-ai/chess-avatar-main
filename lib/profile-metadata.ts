@@ -9,6 +9,35 @@ import type {
 // Fonctions pour ProfileMetadata
 // ========================================
 
+function mapMetadataRow(data: Record<string, unknown>): ProfileMetadata {
+  return {
+    id: data.id as string,
+    profileId: data.profile_id as string,
+    userId: data.user_id as string,
+    biography: data.biography as string | undefined,
+    notes: data.notes as string | undefined,
+    tags: (data.tags as string[]) || [],
+    playingStyle: {
+      aggression: (data.style_aggression as number) || 50,
+      tactical: (data.style_tactical as number) || 50,
+      positional: (data.style_positional as number) || 50,
+      endgame: (data.style_endgame as number) || 50,
+      openingTheory: (data.style_opening_theory as number) || 50,
+      timeManagement: (data.style_time_management as number) || 50
+    },
+    strengths: (data.strengths as string[]) || [],
+    weaknesses: (data.weaknesses as string[]) || [],
+    gamesPlayed: (data.games_played as number) || 0,
+    lastPlayedAt: data.last_played_at as string | undefined,
+    aiSummary: data.ai_summary as string | undefined,
+    aiStyleDescription: data.ai_style_description as string | undefined,
+    aiConfidence: data.ai_confidence as number | undefined,
+    aiUpdatedAt: data.ai_updated_at as string | undefined,
+    createdAt: data.created_at as string,
+    updatedAt: data.updated_at as string
+  };
+}
+
 /**
  * Récupérer les métadonnées d'un profil
  */
@@ -30,33 +59,7 @@ export async function getProfileMetadata(profileId: string): Promise<ProfileMeta
       throw error;
     }
 
-    // Transformer snake_case en camelCase
-    return {
-      id: data.id,
-      profileId: data.profile_id,
-      userId: data.user_id,
-      biography: data.biography,
-      notes: data.notes,
-      tags: data.tags || [],
-      playingStyle: {
-        aggression: data.style_aggression || 50,
-        tactical: data.style_tactical || 50,
-        positional: data.style_positional || 50,
-        endgame: data.style_endgame || 50,
-        openingTheory: data.style_opening_theory || 50,
-        timeManagement: data.style_time_management || 50
-      },
-      strengths: data.strengths || [],
-      weaknesses: data.weaknesses || [],
-      gamesPlayed: data.games_played || 0,
-      lastPlayedAt: data.last_played_at,
-      aiSummary: data.ai_summary,
-      aiStyleDescription: data.ai_style_description,
-      aiConfidence: data.ai_confidence,
-      aiUpdatedAt: data.ai_updated_at,
-      createdAt: data.created_at,
-      updatedAt: data.updated_at
-    };
+    return mapMetadataRow(data as Record<string, unknown>);
   } catch (error) {
     console.error('Erreur lors de la récupération des métadonnées:', error);
     return null;
@@ -110,10 +113,7 @@ export async function saveProfileMetadata(
     if (metadata.aiConfidence !== undefined) dbData.ai_confidence = metadata.aiConfidence;
     if (metadata.aiUpdatedAt !== undefined) dbData.ai_updated_at = metadata.aiUpdatedAt;
 
-    let result;
-    
     if (existing) {
-      // Mise à jour
       const { data, error } = await supabase
         .from('profile_metadata')
         .update(dbData)
@@ -122,21 +122,17 @@ export async function saveProfileMetadata(
         .single();
 
       if (error) throw error;
-      result = data;
-    } else {
-      // Insertion
-      const { data, error } = await supabase
-        .from('profile_metadata')
-        .insert(dbData)
-        .select()
-        .single();
-
-      if (error) throw error;
-      result = data;
+      return mapMetadataRow(data as Record<string, unknown>);
     }
 
-    // Retourner au format camelCase
-    return getProfileMetadata(profileId);
+    const { data, error } = await supabase
+      .from('profile_metadata')
+      .insert(dbData)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return mapMetadataRow(data as Record<string, unknown>);
   } catch (error) {
     console.error('Erreur lors de la sauvegarde des métadonnées:', error);
     return null;

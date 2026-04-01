@@ -43,8 +43,9 @@ class AvatarEngine:
         self.name = self.config.get('name', self.profile.get('name', 'Avatar Engine'))
         self.author = self.config.get('author', self.profile.get('username', 'Chess Avatar'))
         
-        # Ligne forcée : forcedLineWhite + forcedLineBlack (intercalés) ou legacy forcedLine
-        self.forced_line = self._build_forced_line()
+        # Ligne forcée par couleur (comme le web) + intercalée pour logs / compat
+        self.forced_white, self.forced_black = self._load_forced_lines_by_color()
+        self.forced_line = self._interleave_forced(self.forced_white, self.forced_black)
         
         # Répertoire d'ouvertures
         self.opening_repertoire = self.profile.get('openingRepertoire', {})
@@ -59,7 +60,7 @@ class AvatarEngine:
         
         # 🆕 Pour la ligne forcée : next ply = len(current_position) ; abandon si l'adversaire dévie
         self.bot_color = None  # 'white' ou 'black'
-        self.forced_line_active = True  # False si l'adversaire a joué autre chose que la ligne
+        self.forced_line_active = True  # False si le bot a dévié de sa ligne (pas le joueur humain)
     
     def _normalize_uci(self, uci):
         """Normalise un coup UCI (minuscules) pour comparaisons."""
@@ -68,24 +69,82 @@ class AvatarEngine:
         s = uci.strip().lower()
         return s[:4] + (s[4] if len(s) > 4 else '')
     
-    def _build_forced_line(self):
-        """Construit la séquence UCI alternée à partir de forcedLineWhite/Black ou forcedLine (legacy).
-        Normalise en minuscules pour robustesse (GUI peut envoyer e2e4 ou E2E4)."""
+    def _load_forced_lines_by_color(self):
+        """Coups blancs / noirs séparés (forcedLineWhite/Black ou legacy forcedLine entrelacé)."""
         white = self.profile.get('forcedLineWhite') or []
         black = self.profile.get('forcedLineBlack') or []
-        if white or black:
-            out = []
-            n = max(len(white), len(black))
-            for i in range(n):
-                if i < len(white):
-                    out.append(self._normalize_uci(white[i]))
-                if i < len(black):
-                    out.append(self._normalize_uci(black[i]))
-            return out
+        w = [self._normalize_uci(m) for m in white if m]
+        b = [self._normalize_uci(m) for m in black if m]
+        if w or b:
+            return w, b
         legacy = self.profile.get('forcedLine') or []
-        if isinstance(legacy, list):
-            return [self._normalize_uci(m) for m in legacy]
-        return []
+        if not isinstance(legacy, list) or not legacy:
+            return [], []
+        w2, b2 = [], []
+        for i, m in enumerate(legacy):
+            u = self._normalize_uci(m)
+            if u:
+                (w2 if i % 2 == 0 else b2).append(u)
+        return w2, b2
+
+    def _interleave_forced(self, white, black):
+        """Même ordre que le front (lib/forced-line-utils interleaveForcedLines)."""
+        out = []
+        n = max(len(white), len(black))
+        for i in range(n):
+            if i < len(white):
+                out.append(white[i])
+            if i < len(black):
+                out.append(black[i])
+        return out
+
+    def _expected_forced_at_ply(self, ply):
+        """ply 0 = trait blanc, comme UCI startpos (e2e4 = ply 0)."""
+        idx = ply // 2
+        if ply % 2 == 0:
+            raw = self.forced_white[idx] if idx < len(self.forced_white) else None
+        else:
+            raw = self.forced_black[idx] if idx < len(self.forced_black) else None
+        return raw
+
+    def _forced_prefix_matches_bot_only(self, history_uci):
+        """Ne compare que les coups du moteur : le joueur peut jouer 1.e4 même si le répertoire blanc est Réti."""
+        if self.bot_color is None:
+            return True
+        bot_plays_white = self.bot_color == 'white'
+        for i, mv in enumerate(history_uci):
+            move_is_bot = (i % 2 == 0) if bot_plays_white else (i % 2 == 1)
+            if not move_is_bot:
+                continue
+            exp = self._expected_forced_at_ply(i)
+            if exp is None:
+                continue
+            if self._normalize_uci(mv) != exp:
+                return False
+        return True
+
+    def _next_forced_move_for_bot(self, next_ply):
+        """Coup forcé au trait `next_ply` si c'est le tour du bot."""
+        if self.bot_color is None:
+            return None
+        bot_plays_white = self.bot_color == 'white'
+        white_to_move = (next_ply % 2 == 0)
+        if bot_plays_white != white_to_move:
+            return None
+        return self._expected_forced_at_ply(next_ply)
+
+    def _sync_forced_line_state(self, context):
+        """Abandon si le bot a dévié ; ignore les coups de l'adversaire vs répertoire."""
+        if not (self.forced_white or self.forced_black):
+            return
+        if self.bot_color is None:
+            return
+        if not self._forced_prefix_matches_bot_only(self.current_position):
+            self.forced_line_active = False
+            print(
+                f"info string Forced line abandoned ({context}): engine move deviated from line",
+                file=sys.stderr,
+            )
         
     def find_stockfish(self):
         """Find any stockfish*.exe in the current directory"""
@@ -353,13 +412,8 @@ class AvatarEngine:
         move_count = len(self.current_position)
         self.is_white_turn = (move_count % 2 == 0)
         
-        # Abandonner la ligne forcée si l'adversaire a dévié (comparaison UCI normalisée)
-        if self.forced_line and move_count <= len(self.forced_line):
-            expected_prefix = [self._normalize_uci(m) for m in self.forced_line[:move_count]]
-            actual = [self._normalize_uci(m) for m in self.current_position]
-            if actual != expected_prefix:
-                self.forced_line_active = False
-                print("info string Forced line abandoned: opponent deviated from line", file=sys.stderr)
+        # Abandon seulement si le moteur a dévié (couleur connue après le 1er go)
+        self._sync_forced_line_state('position')
         
         # Sortir de la phase d'ouverture si trop de coups
         if move_count >= self.max_opening_moves:
@@ -378,14 +432,20 @@ class AvatarEngine:
         if self.bot_color is None:
             self.bot_color = 'white' if self.is_white_turn else 'black'
             print(f"info string Bot playing as {self.bot_color}", file=sys.stderr)
-        
-        # PRIORITÉ 1 (ABSOLUE): Ligne forcée — jouée à tout prix si pas de déviation
-        if self.forced_line_active and self.forced_line and len(self.current_position) < len(self.forced_line):
-            next_index = len(self.current_position)
-            forced_move = self.forced_line[next_index]
-            print(f"info string Playing forced move {next_index + 1}/{len(self.forced_line)}: {forced_move}", file=sys.stderr)
-            print(f"bestmove {forced_move}", flush=True)
-            return
+
+        self._sync_forced_line_state('go')
+
+        # PRIORITÉ 1 (ABSOLUE): ligne forcée par couleur — le joueur n’a pas à suivre le répertoire adverse
+        if self.forced_line_active and (self.forced_white or self.forced_black):
+            next_ply = len(self.current_position)
+            forced_move = self._next_forced_move_for_bot(next_ply)
+            if forced_move:
+                print(
+                    f"info string Playing forced move ply {next_ply}: {forced_move}",
+                    file=sys.stderr,
+                )
+                print(f"bestmove {forced_move}", flush=True)
+                return
         
         # PRIORITÉ 2: Répertoire d'ouvertures
         if self.opening_phase and (self.white_openings or self.black_openings):
@@ -427,10 +487,18 @@ class AvatarEngine:
         print(f"info string Name: {self.name}", flush=True)
         print(f"info string Author: {self.author}", flush=True)
         
-        # 🆕 Afficher info sur la ligne forcée
-        if self.forced_line:
-            print(f"info string Forced line: {len(self.forced_line)} moves configured", flush=True)
-            print(f"info string Forced moves: {' '.join(self.forced_line[:5])}{'...' if len(self.forced_line) > 5 else ''}", flush=True)
+        # 🆕 Afficher info sur la ligne forcée (par couleur + aperçu entrelacé)
+        if self.forced_white or self.forced_black:
+            print(
+                f"info string Forced line: W={len(self.forced_white)} B={len(self.forced_black)} moves",
+                flush=True,
+            )
+            preview = self.forced_line[:6]
+            if preview:
+                print(
+                    f"info string Forced (interleaved preview): {' '.join(preview)}{'...' if len(self.forced_line) > 6 else ''}",
+                    flush=True,
+                )
         
         # 🆕 Afficher info sur les ouvertures
         if self.white_openings:

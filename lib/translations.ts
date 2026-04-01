@@ -96,7 +96,8 @@ export const translations = {
       createdOn: "Créé le",
       databaseNotConfigured: "Base de données Non Configurée",
       databaseWarning: "La sauvegarde nécessite la configuration de Supabase. Consultez SUPABASE_SETUP.md pour les instructions.",
-      signInPrompt: "Connectez-vous pour sauvegarder vos profils et y accéder depuis n'importe quel appareil"
+      signInPrompt: "Connectez-vous pour sauvegarder vos profils et y accéder depuis n'importe quel appareil",
+      profileUpdated: "Profil mis à jour"
     },
     
     // Games Page
@@ -659,7 +660,9 @@ export const translations = {
       suggestionsDesc: "Suggestions personnalisées basées sur votre style de jeu et vos préférences.",
       cancel: "Annuler",
       saving: "Sauvegarde...",
-      save: "Sauvegarder"
+      save: "Sauvegarder",
+      saveSuccess: "Métadonnées enregistrées",
+      saveFailed: "Échec de la sauvegarde. Vérifiez la connexion ou réessayez."
     },
 
     // Opening repertoire editor
@@ -964,7 +967,8 @@ export const translations = {
       createdOn: "Created on",
       databaseNotConfigured: "Database Not Configured",
       databaseWarning: "Saving requires Supabase configuration. See SUPABASE_SETUP.md for instructions.",
-      signInPrompt: "Sign in to save your profiles and access them from any device"
+      signInPrompt: "Sign in to save your profiles and access them from any device",
+      profileUpdated: "Profile updated"
     },
     
     // Games Page
@@ -1527,7 +1531,9 @@ export const translations = {
       suggestionsDesc: "Personalized suggestions based on your playing style and preferences.",
       cancel: "Cancel",
       saving: "Saving...",
-      save: "Save"
+      save: "Save",
+      saveSuccess: "Metadata saved",
+      saveFailed: "Save failed. Check your connection and try again."
     },
 
     // Opening repertoire editor

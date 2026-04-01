@@ -33,6 +33,7 @@ import {
   type FavoriteOpening,
   type PlayingStyle
 } from '@/types/chess';
+import { toast } from 'sonner';
 
 interface ProfileEditorProps {
   open: boolean;
@@ -146,7 +147,7 @@ export default function ProfileEditor({
         };
       }
       
-      await saveProfileMetadata(profileId, {
+      const saved = await saveProfileMetadata(profileId, {
         biography,
         notes,
         tags: selectedTags,
@@ -155,10 +156,16 @@ export default function ProfileEditor({
         weaknesses,
         ...aiData
       } as Partial<ProfileMetadata>);
-      
-      onOpenChange(false);
+
+      if (saved) {
+        toast.success(t.profileEditor.saveSuccess);
+        onOpenChange(false);
+      } else {
+        toast.error(t.profileEditor.saveFailed);
+      }
     } catch (error) {
       console.error('Erreur lors de la sauvegarde:', error);
+      toast.error(t.profileEditor.saveFailed);
     } finally {
       setSaving(false);
     }

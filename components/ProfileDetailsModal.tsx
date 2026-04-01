@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
@@ -68,6 +68,15 @@ export default function ProfileDetailsModal({
   const [isEditing, setIsEditing] = useState(false);
   const [editedConfig, setEditedConfig] = useState<EngineConfig | null>(null);
   const [saving, setSaving] = useState(false);
+
+  const profileIdForEffect = profile?.id;
+
+  useEffect(() => {
+    if (!open || !profileIdForEffect) return;
+    setActiveTab("stats");
+    setIsEditing(false);
+    setEditedConfig(null);
+  }, [open, profileIdForEffect]);
 
   if (!profile) return null;
 

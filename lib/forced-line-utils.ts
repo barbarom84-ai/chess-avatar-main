@@ -23,20 +23,20 @@ export function deriveForcedLinesFromOpenings(
   const firstWhite = [...whiteOpenings].sort(byWeight)[0]?.id;
   const firstBlack = [...blackOpenings].sort(byWeight)[0]?.id;
 
+  /* Chaque répertoire ne remplit que son côté : pas de repli des coups noirs d’une ouverture blanche
+   * quand seules les blanches sont choisies (et inversement). */
   if (firstWhite) {
     const op = getOpeningById(firstWhite);
     if (op?.uciMoves?.length) {
-      const { white: w, black: b } = splitUciSequence(op.uciMoves);
+      const { white: w } = splitUciSequence(op.uciMoves);
       white.push(...w);
-      if (!firstBlack) black.push(...b);
     }
   }
   if (firstBlack) {
     const op = getOpeningById(firstBlack);
     if (op?.uciMoves?.length) {
-      const { white: w, black: b } = splitUciSequence(op.uciMoves);
+      const { black: b } = splitUciSequence(op.uciMoves);
       black.push(...b);
-      if (!firstWhite) white.push(...w);
     }
   }
 
@@ -64,28 +64,36 @@ type ConfigWithLegacy = EngineConfig & {
   forcedOpenings?: { white?: string | string[]; black?: string | string[] };
 };
 
-export function getEffectiveForcedLine(config: EngineConfig): string[] {
+/**
+ * Coups blancs / noirs effectifs (sans intercaler). Pour le jeu : le joueur humain
+ * n’est pas obligé de suivre la ligne blanche du répertoire pour que le bot joue les noirs.
+ */
+export function getEffectiveForcedLinesByColor(config: EngineConfig): { white: string[]; black: string[] } {
   const rep = config.openingRepertoire;
   const hasRepertoire =
     (rep?.whiteOpenings?.length ?? 0) > 0 || (rep?.blackOpenings?.length ?? 0) > 0;
   const src = config.forcedLineSource ?? "custom";
-  let white = config.forcedLineWhite ?? [];
-  let black = config.forcedLineBlack ?? [];
+  let white = (config.forcedLineWhite ?? []).map(normalizeUci).filter(Boolean);
+  let black = (config.forcedLineBlack ?? []).map(normalizeUci).filter(Boolean);
 
   if (rep && (src === "openings" || (hasRepertoire && white.length === 0 && black.length === 0))) {
     const derived = deriveForcedLinesFromOpenings(
       rep.whiteOpenings ?? [],
       rep.blackOpenings ?? []
     );
-    white = derived.white;
-    black = derived.black;
+    white = derived.white.map(normalizeUci).filter(Boolean);
+    black = derived.black.map(normalizeUci).filter(Boolean);
   }
 
-  let seq = interleaveForcedLines(white, black);
-  if (seq.length > 0) return seq;
+  if (white.length > 0 || black.length > 0) {
+    return { white, black };
+  }
 
   const legacy = config.forcedLine;
-  if (Array.isArray(legacy) && legacy.length > 0) return legacy.map(normalizeUci);
+  if (Array.isArray(legacy) && legacy.length > 0) {
+    const { white: w, black: b } = splitUciSequence(legacy.map(normalizeUci));
+    return { white: w.filter(Boolean), black: b.filter(Boolean) };
+  }
 
   const fo = (config as ConfigWithLegacy).forcedOpenings;
   if (fo) {
@@ -96,18 +104,79 @@ export function getEffectiveForcedLine(config: EngineConfig): string[] {
         whiteId ? [{ id: whiteId, weight: 100 }] : [],
         blackId ? [{ id: blackId, weight: 100 }] : []
       );
-      seq = interleaveForcedLines(derived.white, derived.black);
-      if (seq.length > 0) return seq;
+      return {
+        white: derived.white.map(normalizeUci).filter(Boolean),
+        black: derived.black.map(normalizeUci).filter(Boolean),
+      };
     }
   }
 
-  return [];
+  return { white: [], black: [] };
+}
+
+export function getEffectiveForcedLine(config: EngineConfig): string[] {
+  const { white, black } = getEffectiveForcedLinesByColor(config);
+  const seq = interleaveForcedLines(white, black);
+  return seq.length > 0 ? seq : [];
+}
+
+/** Demi-coup i (0 = trait aux blancs) : coup prévu dans la ligne si défini. */
+export function expectedForcedUciAtPly(white: string[], black: string[], ply: number): string | undefined {
+  const idx = ply >>> 1;
+  const raw = ply % 2 === 0 ? white[idx] : black[idx];
+  return raw ? normalizeUci(raw) : undefined;
+}
+
+/** Ne contrôle que les coups du bot (les vôtres peuvent être 1.e4 même si le répertoire blanc est Réti). */
+export function forcedLinePrefixMatchesBotMovesOnly(
+  white: string[],
+  black: string[],
+  historyUci: string[],
+  botPlaysWhite: boolean
+): boolean {
+  for (let i = 0; i < historyUci.length; i++) {
+    const moveIsByBot = botPlaysWhite ? i % 2 === 0 : i % 2 === 1;
+    if (!moveIsByBot) continue;
+
+    const expected = expectedForcedUciAtPly(white, black, i);
+    if (expected === undefined) continue;
+    if (normalizeUci(historyUci[i]) !== expected) return false;
+  }
+  return true;
+}
+
+export function nextForcedMoveForBot(
+  white: string[],
+  black: string[],
+  nextPly: number,
+  botPlaysWhite: boolean
+): string | undefined {
+  const whiteToMove = nextPly % 2 === 0;
+  if (botPlaysWhite !== whiteToMove) return undefined;
+  return expectedForcedUciAtPly(white, black, nextPly);
+}
+
+export function remainingForcedMovesForBot(
+  white: string[],
+  black: string[],
+  fromPly: number,
+  botPlaysWhite: boolean
+): string[] {
+  const out: string[] = [];
+  const limit = Math.max(white.length, black.length) * 2 + 4;
+  for (let i = fromPly; i < limit; i++) {
+    const whiteToMove = i % 2 === 0;
+    if (botPlaysWhite !== whiteToMove) continue;
+    const mv = expectedForcedUciAtPly(white, black, i);
+    if (!mv) break;
+    out.push(mv);
+  }
+  return out;
 }
 
 export function prepareConfigForExport(config: EngineConfig): EngineConfig {
-  const forcedLine = getEffectiveForcedLine(config);
-  if (forcedLine.length === 0) return config;
-  const { white, black } = splitUciSequence(forcedLine);
+  const { white, black } = getEffectiveForcedLinesByColor(config);
+  if (white.length === 0 && black.length === 0) return config;
   return { ...config, forcedLineWhite: white, forcedLineBlack: black };
 }
 

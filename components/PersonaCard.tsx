@@ -46,6 +46,7 @@ export default function PersonaCard({ stats, config, profileId }: PersonaCardPro
     5: { label: t.engineConfig.difficultyGrandmaster, color: "text-red-400 border-red-400 bg-red-400/10" },
   };
   const [showConfigDialog, setShowConfigDialog] = useState(false);
+  const [configPanelNonce, setConfigPanelNonce] = useState(0);
   const [showProfileEditor, setShowProfileEditor] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
@@ -53,6 +54,10 @@ export default function PersonaCard({ stats, config, profileId }: PersonaCardPro
   const [isAuth, setIsAuth] = useState(false);
   const [savingCloud, setSavingCloud] = useState(false);
   const { isPremium, userId, email } = usePremium();
+
+  useEffect(() => {
+    setCustomConfig(config);
+  }, [config]);
   
   // Sauvegarder automatiquement dans les récents
   useEffect(() => {
@@ -304,7 +309,10 @@ export default function PersonaCard({ stats, config, profileId }: PersonaCardPro
 
           <div className="grid grid-cols-3 gap-2">
             <Button 
-              onClick={() => setShowConfigDialog(true)} 
+              onClick={() => {
+                setConfigPanelNonce((n) => n + 1);
+                setShowConfigDialog(true);
+              }} 
               variant="outline"
               className="border-2 border-purple-500 bg-purple-500/10 text-purple-300 hover:bg-purple-500/20 hover:text-purple-200 hover:border-purple-400 font-semibold shadow-md"
             >
@@ -359,7 +367,8 @@ export default function PersonaCard({ stats, config, profileId }: PersonaCardPro
           </DialogDescription>
         </DialogHeader>
         <EngineConfigPanel 
-          initialConfig={config}
+          key={configPanelNonce}
+          initialConfig={customConfig}
           onConfigChange={setCustomConfig}
           onSave={handleConfigSave}
         />

@@ -3,7 +3,13 @@
 import { useEffect, useRef, useState } from "react";
 import { Chess } from "chess.js";
 import type { EngineConfig } from "@/lib/analysis";
-import { getEffectiveForcedLine, normalizeUci } from "@/lib/forced-line-utils";
+import {
+  forcedLinePrefixMatchesBotMovesOnly,
+  getEffectiveForcedLinesByColor,
+  nextForcedMoveForBot,
+  normalizeUci,
+  remainingForcedMovesForBot,
+} from "@/lib/forced-line-utils";
 
 const DEBUG = typeof window !== "undefined" && (window as unknown as { __CHESS_DEBUG?: boolean }).__CHESS_DEBUG;
 
@@ -120,30 +126,29 @@ export function useStockfish() {
     const moveHistoryUci = options?.moveHistoryUci ?? [];
     const playerColor = options?.playerColor ?? "white";
     const nextPly = moveHistoryUci.length;
-    const forcedLine = getEffectiveForcedLine(config);
-    if (DEBUG && forcedLine.length > 0) {
-      console.log(" forced:", forcedLine.join(" "), "nextPly:", nextPly);
+    const { white: fw, black: fb } = getEffectiveForcedLinesByColor(config);
+    const hasForced = fw.length > 0 || fb.length > 0;
+    if (DEBUG && hasForced) {
+      console.log(" forced W:", fw.join(" "), "B:", fb.join(" "), "nextPly:", nextPly);
     }
 
     setIsThinking(true);
     setCurrentEval(null);
 
-    if (forcedLine.length > 0 && moveHistoryUci.length <= forcedLine.length) {
-      const norm = (u: string) => normalizeUci(u);
+    const maxForcedPlies = Math.max(fw.length, fb.length) * 2 + 4;
+    if (hasForced && nextPly <= maxForcedPlies) {
+      const botPlaysWhite = playerColor === "black";
       const prefixMatches =
         nextPly === 0 ||
-        forcedLine
-          .slice(0, nextPly)
-          .every((m, i) => norm(m) === norm(moveHistoryUci[i]));
+        forcedLinePrefixMatchesBotMovesOnly(fw, fb, moveHistoryUci, botPlaysWhite);
 
       if (!prefixMatches) {
         setRemainingForcedMoves([]);
       } else {
-        const botPlaysWhite = playerColor === "black";
         const botTurn = (nextPly % 2 === 0) === botPlaysWhite;
+        const forcedMove = nextForcedMoveForBot(fw, fb, nextPly, botPlaysWhite);
 
-        if (botTurn && nextPly < forcedLine.length) {
-          const forcedMove = forcedLine[nextPly];
+        if (botTurn && forcedMove) {
           const from = forcedMove.substring(0, 2);
           const to = forcedMove.substring(2, 4);
           const promotion = forcedMove.length > 4 ? forcedMove[4] : undefined;
@@ -162,11 +167,9 @@ export function useStockfish() {
             }
             const moveObj = promotion ? { from, to, promotion } : { from, to };
             if (testGame.move(moveObj)) {
-              const remaining: string[] = [];
-              for (let i = nextPly + 1; i < forcedLine.length; i++) {
-                if ((i % 2 === 0) === botPlaysWhite) remaining.push(forcedLine[i]);
-              }
-              setRemainingForcedMoves(remaining);
+              setRemainingForcedMoves(
+                remainingForcedMovesForBot(fw, fb, nextPly + 1, botPlaysWhite)
+              );
               setIsThinking(false);
               setTimeout(() => onMove(forcedMove), 80);
               return;
@@ -176,11 +179,9 @@ export function useStockfish() {
           }
           setRemainingForcedMoves([]);
         } else if (!botTurn) {
-          const remaining: string[] = [];
-          for (let i = nextPly; i < forcedLine.length; i++) {
-            if ((i % 2 === 0) === botPlaysWhite) remaining.push(forcedLine[i]);
-          }
-          setRemainingForcedMoves(remaining);
+          setRemainingForcedMoves(
+            remainingForcedMovesForBot(fw, fb, nextPly, botPlaysWhite)
+          );
         } else {
           setRemainingForcedMoves([]);
         }
