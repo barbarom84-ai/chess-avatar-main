@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Globe, Sun, Moon, Settings, Crown, LogIn, LogOut, User } from "lucide-react";
+import { Globe, Sun, Moon, Palette, Crown, LogIn, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/lib/language-context";
 import { useTheme } from "@/lib/theme-context";
@@ -182,16 +182,19 @@ export default function Navigation() {
               </div>
             )}
 
-            {/* Board Settings */}
+            {/* Échiquier (thème, pièces, sons) — distinct du profil bot sur /play */}
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setShowSettings(true)}
-              className="text-slate-400 dark:text-slate-400 light:text-slate-600 hover:text-cyan-300 dark:hover:text-cyan-300 light:hover:text-cyan-600"
-              aria-label="Board settings"
-              title={t.chessboardSettings?.title || "Board settings"}
+              className="text-slate-400 dark:text-slate-400 light:text-slate-600 hover:text-cyan-300 dark:hover:text-cyan-300 light:hover:text-cyan-600 gap-1"
+              aria-label={t.chessboardSettings.toolbarTooltip}
+              title={t.chessboardSettings.toolbarTooltip}
             >
-              <Settings className="h-4 w-4" />
+              <Palette className="h-4 w-4 shrink-0" />
+              <span className="hidden lg:inline text-xs whitespace-nowrap">
+                {t.chessboardSettings.toolbarLabelShort}
+              </span>
             </Button>
 
             {/* Theme Toggle */}

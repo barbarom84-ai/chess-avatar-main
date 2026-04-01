@@ -251,6 +251,22 @@ export const translations = {
       ready: "Prêt",
       finished: "Terminée",
       configShort: "Config",
+      playAsWhite: "Jouer les blancs",
+      playAsBlack: "Jouer les noirs",
+      colorChoiceHint: "Votre couleur sur l’échiquier",
+      avatarConfigButton: "Profil du bot",
+      avatarConfigButtonCompact: "Profil",
+      avatarConfigButtonShort: "Bot",
+      avatarConfigToolbarTooltip:
+        "Profil de l’adversaire : niveau, style, ouvertures et lignes forcées",
+      avatarConfigDialogTitle: "Profil de l’adversaire (avatar)",
+      avatarConfigDialogDescription:
+        "Réglez la force, le style de jeu, les ouvertures et les lignes forcées de ce bot.",
+      flipBoardTooltip: "Retourner l’échiquier (vue uniquement)",
+      newGameTooltip: "Recommencer une partie contre ce bot",
+      resignTooltip: "Abandonner la partie en cours",
+      playPageToolbarHint:
+        "Palette (en haut) : thème et sons. Profil du bot : bouton sous l’échiquier.",
       whiteSide: "Blancs",
       blackSide: "Noirs",
       reviewVariants: "Variantes",
@@ -388,6 +404,7 @@ export const translations = {
       forcedLineLabel: "Ligne forcée",
       forcedLineMoves: "coups",
       flipBoard: "Retourner l'échiquier",
+      flipBoardShort: "Tourner",
       configuration: "Configuration",
       checkmateBlack: "Les noirs gagnent par échec et mat ! 🏆",
       checkmateWhite: "Les blancs gagnent par échec et mat ! 🏆",
@@ -501,7 +518,10 @@ export const translations = {
       selectedSquare: "Case sélectionnée",
       lastMoveLight: "Dernier coup (claire)",
       lastMoveDark: "Dernier coup (foncée)",
-      legalMove: "Coup légal"
+      legalMove: "Coup légal",
+      toolbarTooltip:
+        "Échiquier : thème, pièces, sons — paramètres généraux (toutes les pages)",
+      toolbarLabelShort: "Échiquier",
     },
 
     // Game viewer / analysis
@@ -1096,6 +1116,22 @@ export const translations = {
       ready: "Ready",
       finished: "Finished",
       configShort: "Config",
+      playAsWhite: "Play as White",
+      playAsBlack: "Play as Black",
+      colorChoiceHint: "Your color on the board",
+      avatarConfigButton: "Bot profile",
+      avatarConfigButtonCompact: "Profile",
+      avatarConfigButtonShort: "Bot",
+      avatarConfigToolbarTooltip:
+        "Opponent profile: strength, style, openings, and forced lines",
+      avatarConfigDialogTitle: "Opponent profile (avatar)",
+      avatarConfigDialogDescription:
+        "Adjust this bot’s playing strength, style, openings, and forced lines.",
+      flipBoardTooltip: "Flip the board (display only)",
+      newGameTooltip: "Start a new game against this bot",
+      resignTooltip: "Resign the current game",
+      playPageToolbarHint:
+        "Palette (top): theme and sounds. Bot profile: button below the board.",
       whiteSide: "White",
       blackSide: "Black",
       reviewVariants: "Variations",
@@ -1233,6 +1269,7 @@ export const translations = {
       forcedLineLabel: "Forced line",
       forcedLineMoves: "moves",
       flipBoard: "Flip board",
+      flipBoardShort: "Flip",
       configuration: "Configuration",
       checkmateBlack: "Black wins by checkmate! 🏆",
       checkmateWhite: "White wins by checkmate! 🏆",
@@ -1346,7 +1383,10 @@ export const translations = {
       selectedSquare: "Selected square",
       lastMoveLight: "Last move (light)",
       lastMoveDark: "Last move (dark)",
-      legalMove: "Legal move"
+      legalMove: "Legal move",
+      toolbarTooltip:
+        "Board: theme, pieces, sounds — general settings (all pages)",
+      toolbarLabelShort: "Board",
     },
 
     // Game viewer / analysis

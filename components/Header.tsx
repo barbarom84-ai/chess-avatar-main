@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Sparkles, Settings, History } from "lucide-react";
+import { Sparkles, Palette, History } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import ChessboardSettingsModal from "./ChessboardSettingsModal";
@@ -70,10 +70,14 @@ export default function Header() {
                 onClick={() => setShowSettings(true)}
                 variant="outline"
                 size="sm"
-                className="border-cyan-500/50 text-cyan-300 hover:bg-cyan-500/10"
-                title={t.header.boardSettingsTitle}
+                className="border-cyan-500/50 text-cyan-300 hover:bg-cyan-500/10 gap-1"
+                title={t.chessboardSettings.toolbarTooltip}
+                aria-label={t.chessboardSettings.toolbarTooltip}
               >
-                <Settings className="h-4 w-4" />
+                <Palette className="h-4 w-4 shrink-0" />
+                <span className="hidden lg:inline text-xs whitespace-nowrap">
+                  {t.chessboardSettings.toolbarLabelShort}
+                </span>
               </Button>
             </nav>
           </div>

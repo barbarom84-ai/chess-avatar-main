@@ -9,7 +9,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   RotateCcw,
   Flag,
-  Settings,
+  Bot,
   RotateCw,
   BookOpen,
   AlertCircle,
@@ -1061,13 +1061,17 @@ export default function PlayableChessboard({
         {/* Droite: Actions compactes */}
         <div className="flex items-center gap-2">
           <Button
-            onClick={() => setBoardOrientation(prev => prev === 'white' ? 'black' : 'white')}
+            onClick={() => setBoardOrientation((prev) => (prev === "white" ? "black" : "white"))}
             variant="outline"
             size="sm"
-            className="border-purple-500/50 bg-purple-500/10 text-purple-300 hover:bg-purple-500/20"
-            title={t.board.flipBoard}
+            className="border-purple-500/50 bg-purple-500/10 text-purple-300 hover:bg-purple-500/20 gap-1"
+            title={t.play.flipBoardTooltip}
+            aria-label={t.play.flipBoardTooltip}
           >
-            <RotateCw className="h-4 w-4" />
+            <RotateCw className="h-4 w-4 shrink-0" />
+            <span className="hidden md:inline text-xs whitespace-nowrap">
+              {t.board.flipBoardShort}
+            </span>
           </Button>
 
           {!isArchiveMode && (
@@ -1075,10 +1079,14 @@ export default function PlayableChessboard({
               onClick={() => setShowConfigDialog(true)}
               variant="outline"
               size="sm"
-              className="border-cyan-500/50 bg-cyan-500/10 text-cyan-300 hover:bg-cyan-500/20"
+              className="border-cyan-500/50 bg-cyan-500/10 text-cyan-300 hover:bg-cyan-500/20 gap-1"
+              title={t.play.avatarConfigToolbarTooltip}
+              aria-label={t.play.avatarConfigToolbarTooltip}
             >
-              <Settings className="h-4 w-4 mr-1" />
-              <span className="hidden sm:inline">{t.play.configShort}</span>
+              <Bot className="h-4 w-4 shrink-0" />
+              <span className="hidden sm:inline text-xs whitespace-nowrap">
+                {t.play.avatarConfigButtonCompact}
+              </span>
             </Button>
           )}
 
@@ -1087,10 +1095,12 @@ export default function PlayableChessboard({
               onClick={resetGame}
               variant="outline"
               size="sm"
-              className="border-amber-500/50 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20"
+              className="border-amber-500/50 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 gap-1"
+              title={t.play.newGameTooltip}
+              aria-label={t.play.newGameTooltip}
             >
-              <RotateCcw className="h-4 w-4 mr-1" />
-              <span className="hidden sm:inline">{t.play.newGame}</span>
+              <RotateCcw className="h-4 w-4 shrink-0" />
+              <span className="hidden sm:inline text-xs">{t.play.newGame}</span>
             </Button>
           )}
 
@@ -1099,10 +1109,12 @@ export default function PlayableChessboard({
               onClick={resign}
               variant="outline"
               size="sm"
-              className="border-red-500/50 bg-red-500/10 text-red-300 hover:bg-red-500/20"
+              className="border-red-500/50 bg-red-500/10 text-red-300 hover:bg-red-500/20 gap-1"
+              title={t.play.resignTooltip}
+              aria-label={t.play.resignTooltip}
             >
-              <Flag className="h-4 w-4 mr-1" />
-              <span className="hidden sm:inline">{t.play.resign}</span>
+              <Flag className="h-4 w-4 shrink-0" />
+              <span className="hidden sm:inline text-xs">{t.play.resign}</span>
             </Button>
           )}
         </div>
@@ -1112,9 +1124,9 @@ export default function PlayableChessboard({
       <Dialog open={!isArchiveMode && showConfigDialog} onOpenChange={setShowConfigDialog}>
         <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto bg-slate-900 border-cyan-500/30">
           <DialogHeader>
-            <DialogTitle className="text-lg">{t.board.configuration}</DialogTitle>
-            <DialogDescription className="sr-only">
-              {t.engineConfig.configDialogDescription}
+            <DialogTitle className="text-lg">{t.play.avatarConfigDialogTitle}</DialogTitle>
+            <DialogDescription className="text-sm text-slate-400">
+              {t.play.avatarConfigDialogDescription}
             </DialogDescription>
           </DialogHeader>
           <EngineConfigPanel 

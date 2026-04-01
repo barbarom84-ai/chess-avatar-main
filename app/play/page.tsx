@@ -1,16 +1,13 @@
 "use client";
 
 import { useEffect, useState, Suspense } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
-import { Bot, AlertCircle, Settings } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Bot, AlertCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import type { EngineConfig } from "@/lib/analysis";
-import EngineConfigPanel from "@/components/EngineConfigPanel";
 import PublicProfiles from "@/components/PublicProfiles";
 import { useLanguage } from "@/lib/language-context";
 
@@ -30,13 +27,10 @@ const PlayableChessboard = dynamic(() => import("@/components/PlayableChessboard
 
 function PlayContent() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const { t } = useLanguage();
   const [config, setConfig] = useState<EngineConfig | null>(null);
-  const [originalConfig, setOriginalConfig] = useState<EngineConfig | null>(null);
   const [playerColor, setPlayerColor] = useState<'white' | 'black'>('white');
   const [error, setError] = useState("");
-  const [showConfigDialog, setShowConfigDialog] = useState(false);
   const [showBotSelection, setShowBotSelection] = useState(false);
 
   useEffect(() => {
@@ -46,7 +40,6 @@ function PlayContent() {
       try {
         const decodedConfig = JSON.parse(decodeURIComponent(configParam));
         setConfig(decodedConfig);
-        setOriginalConfig(decodedConfig);
         setShowBotSelection(false);
       } catch (err) {
         setError(t.ui.invalidConfig);
@@ -56,10 +49,6 @@ function PlayContent() {
       setShowBotSelection(true);
     }
   }, [searchParams, t.ui.invalidConfig]);
-
-  const handleConfigSave = () => {
-    setShowConfigDialog(false);
-  };
 
   const handleColorChange = () => {
     setPlayerColor(prev => prev === 'white' ? 'black' : 'white');
@@ -115,52 +104,61 @@ function PlayContent() {
       <div className="max-w-[1600px] mx-auto">
         
         {/* Barre de contrôle compacte en haut - Position fixe */}
-        <div className="lg:sticky lg:top-0 z-50 bg-gradient-to-b from-slate-950 dark:from-slate-950 light:from-[oklch(0.88_0.010_75)] to-slate-950/95 dark:to-slate-950/95 light:to-[oklch(0.88_0.010_75)]/95 backdrop-blur-sm border-b theme-border px-2 md:px-4 py-2">
+        <div className="lg:sticky lg:top-0 z-50 bg-gradient-to-b from-slate-950 dark:from-slate-950 light:from-[oklch(0.88_0.010_75)] to-slate-950/95 dark:to-slate-950/95 light:to-[oklch(0.88_0.010_75)]/95 backdrop-blur-sm border-b theme-border px-2 md:px-4 py-2 space-y-1.5">
           <div className="flex items-center justify-between gap-2">
             {/* Gauche: Info Bot */}
-            <div className="flex items-center gap-1.5">
-              <Bot className="h-4 w-4 text-cyan-400" />
-              <span className="text-sm font-semibold text-cyan-100">{config.name}</span>
-              <Badge variant="outline" className="text-[10px] h-4 px-1.5 border-cyan-400/50 hidden sm:inline-flex">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <Bot className="h-4 w-4 text-cyan-400 shrink-0" />
+              <span className="text-sm font-semibold text-cyan-100 truncate">{config.name}</span>
+              <Badge variant="outline" className="text-[10px] h-4 px-1.5 border-cyan-400/50 hidden sm:inline-flex shrink-0">
                 Niv {config.difficulty}
               </Badge>
             </div>
 
-            {/* Centre: Sélection couleur inline */}
-            <div className="flex items-center gap-1">
+            {/* Centre: Sélection couleur */}
+            <div
+              className="flex items-center gap-1 shrink-0"
+              role="group"
+              aria-label={t.play.colorChoiceHint}
+            >
               <button
-                onClick={() => setPlayerColor('white')}
-                className={`px-2 py-1 rounded text-xs transition-all ${
-                  playerColor === 'white' 
-                    ? 'bg-cyan-500/20 text-cyan-100 border border-cyan-500' 
-                    : 'bg-slate-800/50 text-slate-400 border border-slate-700 hover:border-cyan-500/50'
+                type="button"
+                onClick={() => setPlayerColor("white")}
+                className={`flex items-center gap-1 px-2 py-1 rounded text-xs transition-all border ${
+                  playerColor === "white"
+                    ? "bg-cyan-500/20 text-cyan-100 border-cyan-500"
+                    : "bg-slate-800/50 text-slate-400 border-slate-700 hover:border-cyan-500/50"
                 }`}
+                title={t.play.playAsWhite}
+                aria-pressed={playerColor === "white"}
+                aria-label={t.play.playAsWhite}
               >
-                ⚪
+                <span aria-hidden>⚪</span>
+                <span className="hidden sm:inline">{t.play.whiteSide}</span>
               </button>
               <button
-                onClick={() => setPlayerColor('black')}
-                className={`px-2 py-1 rounded text-xs transition-all ${
-                  playerColor === 'black' 
-                    ? 'bg-cyan-500/20 text-cyan-100 border border-cyan-500' 
-                    : 'bg-slate-800/50 text-slate-400 border border-slate-700 hover:border-cyan-500/50'
+                type="button"
+                onClick={() => setPlayerColor("black")}
+                className={`flex items-center gap-1 px-2 py-1 rounded text-xs transition-all border ${
+                  playerColor === "black"
+                    ? "bg-cyan-500/20 text-cyan-100 border-cyan-500"
+                    : "bg-slate-800/50 text-slate-400 border-slate-700 hover:border-cyan-500/50"
                 }`}
+                title={t.play.playAsBlack}
+                aria-pressed={playerColor === "black"}
+                aria-label={t.play.playAsBlack}
               >
-                ⚫
+                <span aria-hidden>⚫</span>
+                <span className="hidden sm:inline">{t.play.blackSide}</span>
               </button>
             </div>
-
-            {/* Droite: Config */}
-            <Button 
-              size="sm"
-              variant="ghost" 
-              onClick={() => setShowConfigDialog(true)}
-              className="text-cyan-300 hover:bg-cyan-500/10 h-7 px-2"
-              title={t.board.configuration}
-            >
-              <Settings className="h-3 w-3" />
-            </Button>
           </div>
+          <p className="text-[10px] text-slate-500 dark:text-slate-500 light:text-slate-600 px-0.5 leading-tight hidden sm:block">
+            <span className="text-cyan-600/80 dark:text-cyan-500/70 mr-1" aria-hidden>
+              ℹ️
+            </span>
+            {t.play.playPageToolbarHint}
+          </p>
         </div>
 
         {/* Zone de jeu - Échiquier commence immédiatement après la barre */}
@@ -172,25 +170,6 @@ function PlayContent() {
             onColorChange={handleColorChange}
           />
         </div>
-
-        {/* Dialog de Configuration */}
-        <Dialog open={showConfigDialog} onOpenChange={setShowConfigDialog}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto theme-bg-secondary theme-border">
-            <DialogHeader>
-              <DialogTitle className="theme-text-primary">{t.engineConfig.engineConfigAdvanced}</DialogTitle>
-              <DialogDescription className="theme-text-secondary">
-                {t.engineConfig.advancedConfigDescription}
-              </DialogDescription>
-            </DialogHeader>
-            {originalConfig && (
-              <EngineConfigPanel 
-                initialConfig={originalConfig}
-                onConfigChange={setConfig}
-                onSave={handleConfigSave}
-              />
-            )}
-          </DialogContent>
-        </Dialog>
 
       </div>
     </main>
