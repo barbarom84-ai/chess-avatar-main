@@ -1221,14 +1221,28 @@ export default function PlayableChessboard({
 
         {/* COLONNE CENTRALE : Échiquier (7/12) */}
         <div className="order-1 lg:order-2 lg:col-span-7 space-y-3">
+          {reviewMode && (
+            <div
+              role="status"
+              className="flex w-full min-w-0 flex-col gap-1 rounded-lg border border-purple-500/35 bg-purple-950/35 px-2.5 py-2 text-purple-100 shadow-sm sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-3 sm:gap-y-1 sm:px-3 sm:py-2"
+            >
+              <span className="flex min-w-0 items-center gap-1.5 text-xs font-semibold sm:text-sm">
+                <BookOpen className="h-3.5 w-3.5 shrink-0 text-purple-300" aria-hidden />
+                <span className="truncate">{t.play.reviewModeBanner}</span>
+              </span>
+              <span className="text-[11px] font-medium tabular-nums text-purple-200/95 sm:text-xs">
+                {moveHistory.length === 0
+                  ? "—"
+                  : currentMoveIndex < 0
+                    ? t.play.reviewMoveAtStart
+                    : t.play.reviewMoveAt
+                        .replace("{n}", String(currentMoveIndex + 1))
+                        .replace("{total}", String(moveHistory.length))}
+              </span>
+            </div>
+          )}
           {/* Échiquier - ÉLÉMENT CENTRAL */}
-          <Card className="p-2 sm:p-4 lg:p-6 bg-slate-900 border-slate-800 shadow-xl relative">
-            {reviewMode && (
-              <div className="absolute top-2 left-2 z-10 bg-purple-600/90 text-white px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-2">
-                <BookOpen className="h-3 w-3" />
-                Mode Review - Coup {currentMoveIndex + 1}/{moveHistory.length}
-              </div>
-            )}
+          <Card className="p-2 sm:p-4 lg:p-6 bg-slate-900 border-slate-800 shadow-xl">
             <SimpleChessboard
               position={
                 reviewMode && reviewPositionChess

@@ -262,6 +262,9 @@ export const translations = {
         "En analyse : jouez sur l’échiquier, flèches/cercles au clic droit. Sous-lignes = empiler puis nouveaux coups.",
       reviewNotePlaceholder: "Note sur le coup sélectionné…",
       reviewPickEmoji: "Émoji sur la case d’arrivée",
+      reviewModeBanner: "Mode review",
+      reviewMoveAtStart: "Position initiale",
+      reviewMoveAt: "Coup {n} / {total}",
     },
 
     // Library / Profiles
@@ -1104,6 +1107,9 @@ export const translations = {
         "In analysis: play on the board; right-click for arrows/circles. Sub-lines = stack then new moves.",
       reviewNotePlaceholder: "Note for selected move…",
       reviewPickEmoji: "Emoji on arrival square",
+      reviewModeBanner: "Review mode",
+      reviewMoveAtStart: "Starting position",
+      reviewMoveAt: "Move {n} / {total}",
     },
 
     // Library / Profiles
