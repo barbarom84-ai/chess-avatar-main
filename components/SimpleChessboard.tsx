@@ -2,7 +2,7 @@
 
 import { Chess } from "chess.js";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useChessboardSettings, getPieceImagePath } from "@/contexts/ChessboardSettingsContext";
 import {
   LICHESS_ARROW_COLORS,
@@ -45,10 +45,16 @@ export default function SimpleChessboard({
   const [draggedSquare, setDraggedSquare] = useState<string | null>(null);
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
   const [highlightedSquares, setHighlightedSquares] = useState<string[]>([]);
-  const [hoveredSquare, setHoveredSquare] = useState<string | null>(null);
   const [manualArrows, setManualArrows] = useState<Array<{ from: string; to: string; color?: string }>>([]);
   const [manualCircles, setManualCircles] = useState<Array<{ square: string; color?: string }>>([]);
   const [arrowStart, setArrowStart] = useState<{ square: string; color: string } | null>(null);
+  const [dragClientPos, setDragClientPos] = useState<{ x: number; y: number } | null>(null);
+  const [dragPiece, setDragPiece] = useState<{ type: string; color: string } | null>(null);
+
+  const dragMovedRef = useRef(false);
+  const suppressNextClickRef = useRef(false);
+  const activeDragSquareRef = useRef<string | null>(null);
+  const dragStartClientRef = useRef<{ x: number; y: number } | null>(null);
 
   const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
   const ranks = ['8', '7', '6', '5', '4', '3', '2', '1'];
@@ -94,46 +100,103 @@ export default function SimpleChessboard({
   };
 
   const animDur = getAnimationDuration();
+  const isBoardDragging = draggedSquare !== null;
 
-  const handleDragStart = (square: string, e: React.DragEvent) => {
-    if (!onDrop) return;
-    
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', square);
+  const resetPointerDrag = () => {
+    activeDragSquareRef.current = null;
+    setDraggedSquare(null);
+    setDragClientPos(null);
+    setDragPiece(null);
+    setHighlightedSquares([]);
+    dragMovedRef.current = false;
+    dragStartClientRef.current = null;
+  };
+
+  const beginPiecePointerDrag = (
+    square: string,
+    piece: { type: string; color: string },
+    e: React.PointerEvent
+  ) => {
+    if (!onDrop || e.button !== 0) return;
+    if (piece.color !== game.turn()) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    dragMovedRef.current = false;
+    dragStartClientRef.current = { x: e.clientX, y: e.clientY };
+    activeDragSquareRef.current = square;
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     setDraggedSquare(square);
+    setDragPiece({ type: piece.type, color: piece.color });
+    setDragClientPos({ x: e.clientX, y: e.clientY });
 
-    // Afficher les coups légaux si l'option est activée
     if (showLegalMoves) {
       const moves = game.moves({ square: square as any, verbose: true });
-      const targets = moves.map(m => m.to);
-      setHighlightedSquares(targets);
+      setHighlightedSquares(moves.map((m) => m.to));
     }
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
+  const suppressSyntheticClickAfterPointer = () => {
+    suppressNextClickRef.current = true;
+    requestAnimationFrame(() => {
+      suppressNextClickRef.current = false;
+    });
   };
 
-  const handleDrop = (targetSquare: string, e: React.DragEvent) => {
-    e.preventDefault();
-    
-    if (!onDrop || !draggedSquare) return;
-
-    const success = onDrop(draggedSquare, targetSquare);
-    
-    setDraggedSquare(null);
-    setHighlightedSquares([]);
+  const movePiecePointerDrag = (square: string, e: React.PointerEvent) => {
+    if (activeDragSquareRef.current !== square) return;
+    setDragClientPos({ x: e.clientX, y: e.clientY });
+    const origin = dragStartClientRef.current;
+    if (origin) {
+      const dx = e.clientX - origin.x;
+      const dy = e.clientY - origin.y;
+      if (dx * dx + dy * dy > 36) {
+        dragMovedRef.current = true;
+      }
+    }
   };
 
-  const handleDragEnd = () => {
-    setDraggedSquare(null);
-    setHighlightedSquares([]);
+  const endPiecePointerDrag = (square: string, e: React.PointerEvent) => {
+    if (!onDrop || activeDragSquareRef.current !== square) return;
+
+    try {
+      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+    } catch {
+      /* already released */
+    }
+
+    const fromSquare = square;
+    const moved = dragMovedRef.current;
+    const el = document.elementFromPoint(e.clientX, e.clientY);
+    const cell = el?.closest("[data-chess-square]");
+    const toSquare = cell?.getAttribute("data-chess-square") ?? null;
+
+    resetPointerDrag();
+
+    if (!moved && toSquare === fromSquare) {
+      const p = game.get(fromSquare as never);
+      handleSquareClick(fromSquare, p);
+      suppressSyntheticClickAfterPointer();
+      return;
+    }
+
+    suppressSyntheticClickAfterPointer();
+
+    if (toSquare && toSquare !== fromSquare) {
+      onDrop(fromSquare, toSquare);
+    }
+  };
+
+  const handlePieceLostPointerCapture = (square: string) => {
+    if (activeDragSquareRef.current !== square) return;
+    resetPointerDrag();
+    suppressSyntheticClickAfterPointer();
   };
 
   // Mode click-to-move
   const handleSquareClick = (square: string, piece: any) => {
     if (!onDrop) return;
+    if (suppressNextClickRef.current) return;
 
     // Si une case est déjà sélectionnée
     if (selectedSquare) {
@@ -247,6 +310,13 @@ export default function SimpleChessboard({
         setManualArrows([]);
         setManualCircles([]);
         setArrowStart(null);
+        activeDragSquareRef.current = null;
+        setDraggedSquare(null);
+        setDragClientPos(null);
+        setDragPiece(null);
+        setHighlightedSquares([]);
+        dragMovedRef.current = false;
+        dragStartClientRef.current = null;
       }
     };
 
@@ -256,7 +326,9 @@ export default function SimpleChessboard({
 
   return (
     <div
-      className="w-full aspect-square bg-slate-800 p-1.5 sm:p-2 rounded-lg shadow-2xl relative mx-auto"
+      className={`w-full aspect-square bg-slate-800 p-1.5 sm:p-2 rounded-lg shadow-2xl relative mx-auto ${
+        onDrop ? "touch-none" : ""
+      } ${isBoardDragging ? "cursor-grabbing select-none" : ""}`}
       style={{ maxWidth: "min(96vw, 84vh, 820px)" }}
     >
       <div className="grid grid-cols-8 gap-0 w-full h-full">
@@ -271,7 +343,6 @@ export default function SimpleChessboard({
             const isDragging = draggedSquare === square;
             const isSelected = selectedSquare === square;
             const isHighlighted = showLegalMoves && highlightedSquares.includes(square);
-            const isHovered = hoveredSquare === square;
             const isLastMove = highlightLastMove && lastMove && (lastMove.from === square || lastMove.to === square);
             const isCheckedKingSquare = checkedKingSquare === square;
             
@@ -288,20 +359,19 @@ export default function SimpleChessboard({
             return (
               <div
                 key={square}
+                data-chess-square={square}
                 style={{
                   backgroundColor: bgColor,
-                  transition: `background-color ${animDur} ease`,
+                  transition: isBoardDragging
+                    ? "none"
+                    : `background-color ${animDur} ease`,
                 }}
                 className={`relative flex items-center justify-center cursor-pointer ${
-                  isDragging ? 'opacity-50 scale-95' : ''
+                  isDragging ? "opacity-50 scale-95" : ""
                 }`}
-                onDragOver={handleDragOver}
-                onDrop={(e) => handleDrop(square, e)}
                 onClick={() => handleSquareClick(square, piece)}
                 onMouseDown={(e) => handleRightClickMouseDown(square, e)}
                 onMouseUp={(e) => handleRightClickMouseUp(square, e)}
-                onMouseEnter={() => setHoveredSquare(square)}
-                onMouseLeave={() => setHoveredSquare(null)}
                 onContextMenu={(e) => e.preventDefault()}
               >
                 {squareEmojis?.[square] && (
@@ -316,22 +386,40 @@ export default function SimpleChessboard({
 
                 {piece && (
                   <div
-                    className={`w-[80%] h-[80%] relative transition-all ${
-                      isDragging ? "scale-110 rotate-6 opacity-70" : "scale-100 rotate-0"
-                    } ${isSelected ? "scale-110 drop-shadow-2xl" : ""} ${
-                      isCheckedKingSquare ? "drop-shadow-[0_0_12px_rgba(239,68,68,0.85)]" : ""
-                    } ${onDrop ? "cursor-pointer hover:scale-105" : ""}`}
-                    style={{ transitionDuration: animDur }}
-                    draggable={!!onDrop}
-                    onDragStart={(e) => handleDragStart(square, e)}
-                    onDragEnd={handleDragEnd}
+                    className={`w-[80%] h-[80%] relative ${
+                      isBoardDragging
+                        ? ""
+                        : "transition-transform transition-opacity"
+                    } ${
+                      isDragging && onDrop ? "" : "scale-100 rotate-0"
+                    } ${isSelected ? `scale-110${isBoardDragging ? "" : " drop-shadow-2xl"}` : ""} ${
+                      isCheckedKingSquare && !isBoardDragging
+                        ? "drop-shadow-[0_0_12px_rgba(239,68,68,0.85)]"
+                        : ""
+                    } ${
+                      onDrop && !isBoardDragging
+                        ? "cursor-grab hover:scale-105 active:cursor-grabbing"
+                        : onDrop
+                          ? "cursor-grab active:cursor-grabbing"
+                          : ""
+                    }`}
+                    style={
+                      isBoardDragging ? undefined : { transitionDuration: animDur }
+                    }
+                    draggable={false}
+                    onPointerDown={(e) => beginPiecePointerDrag(square, piece, e)}
+                    onPointerMove={(e) => movePiecePointerDrag(square, e)}
+                    onPointerUp={(e) => endPiecePointerDrag(square, e)}
+                    onLostPointerCapture={() => handlePieceLostPointerCapture(square)}
                   >
                     <Image
                       src={getPieceImage(piece)}
                       alt={`${piece.color}${piece.type}`}
                       fill
                       sizes="(max-width: 640px) 11vw, (max-width: 1024px) 9vw, 80px"
-                      className="object-contain drop-shadow-lg pointer-events-none"
+                      className={`object-contain pointer-events-none ${
+                        isDragging && onDrop ? "opacity-0" : ""
+                      } ${isBoardDragging ? "" : "drop-shadow-lg"}`}
                       unoptimized
                       draggable={false}
                     />
@@ -414,6 +502,30 @@ export default function SimpleChessboard({
           })
         )}
       </div>
+
+      {dragPiece && dragClientPos && (
+        <div
+          aria-hidden
+          className="pointer-events-none fixed z-[200] h-[min(14vw,104px)] w-[min(14vw,104px)]"
+          style={{
+            left: dragClientPos.x,
+            top: dragClientPos.y,
+            transform: "translate(-50%, -50%)",
+          }}
+        >
+          <div className="relative h-full w-full">
+            <Image
+              src={getPieceImage(dragPiece)}
+              alt=""
+              fill
+              sizes="104px"
+              className="object-contain drop-shadow-lg"
+              unoptimized
+              draggable={false}
+            />
+          </div>
+        </div>
+      )}
       
       {/* Overlay SVG pour les flèches */}
       {renderedArrows.length > 0 && (
