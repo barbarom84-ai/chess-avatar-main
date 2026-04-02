@@ -184,7 +184,7 @@ export default function AnalyzePage() {
               
               {/* Liste des parties */}
               <Card className="lg:col-span-4 theme-bg-secondary theme-border flex flex-col h-full overflow-hidden">
-                <CardHeader className="pb-2 bg-slate-950/50 dark:bg-slate-950/50 light:bg-slate-200/50">
+                <CardHeader className="pb-2 bg-slate-950/50">
                   <CardTitle className="text-xs uppercase tracking-wider theme-text-secondary font-bold">
                     {t.historyTitle}
                   </CardTitle>

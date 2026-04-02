@@ -922,7 +922,7 @@ export const translations = {
       privacyRights: "Vos droits",
       privacyRightsText: "Conformément au RGPD, vous pouvez à tout moment : accéder à vos données, les rectifier, les supprimer, ou demander leur portabilité. Contactez-nous pour exercer ces droits.",
       privacyCookies: "Cookies",
-      privacyCookiesText: "Chess Avatar utilise uniquement des cookies techniques nécessaires au fonctionnement du service (authentification, préférences de langue et de thème). Aucun cookie de tracking ou publicitaire n'est utilisé.",
+      privacyCookiesText: "Chess Avatar utilise uniquement des cookies techniques nécessaires au fonctionnement du service (authentification, préférences de langue). Aucun cookie de tracking ou publicitaire n'est utilisé.",
       privacyContact: "Pour toute question relative à vos données personnelles, contactez-nous à",
 
       // Refund Policy
@@ -1863,7 +1863,7 @@ export const translations = {
       privacyRights: "Your rights",
       privacyRightsText: "In accordance with GDPR, you may at any time: access your data, rectify it, delete it, or request its portability. Contact us to exercise these rights.",
       privacyCookies: "Cookies",
-      privacyCookiesText: "Chess Avatar only uses technical cookies necessary for the service to function (authentication, language and theme preferences). No tracking or advertising cookies are used.",
+      privacyCookiesText: "Chess Avatar only uses technical cookies necessary for the service to function (authentication, language preferences). No tracking or advertising cookies are used.",
       privacyContact: "For any questions about your personal data, contact us at",
 
       // Refund Policy

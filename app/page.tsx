@@ -62,8 +62,8 @@ export default function HomePage() {
       <div className="relative overflow-hidden">
         {/* Background Effects */}
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute w-96 h-96 -top-48 -left-48 bg-cyan-500/10 dark:bg-cyan-500/10 light:bg-cyan-600/5 rounded-full blur-3xl"></div>
-          <div className="absolute w-96 h-96 -bottom-48 -right-48 bg-purple-500/10 dark:bg-purple-500/10 light:bg-purple-600/5 rounded-full blur-3xl"></div>
+          <div className="absolute w-96 h-96 -top-48 -left-48 bg-cyan-500/10 rounded-full blur-3xl"></div>
+          <div className="absolute w-96 h-96 -bottom-48 -right-48 bg-purple-500/10 rounded-full blur-3xl"></div>
         </div>
 
         <div className="relative max-w-7xl mx-auto px-4 py-16 md:py-24">

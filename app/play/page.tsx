@@ -75,7 +75,7 @@ function PlayContent() {
       <main className="min-h-screen theme-gradient theme-text-primary p-4 md:p-8">
         <div className="max-w-6xl mx-auto space-y-6">
           <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-cyan-400 dark:text-cyan-400 light:text-[oklch(0.45_0.12_190)] mb-2">
+            <h1 className="text-4xl font-bold text-cyan-400 mb-2">
               ♟️ {t.play.selectOpponent}
             </h1>
             <p className="theme-text-secondary">
@@ -93,7 +93,7 @@ function PlayContent() {
       <main className="min-h-screen theme-gradient theme-text-primary flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-cyan-500 mx-auto mb-4"></div>
-          <p className="text-cyan-400/70 dark:text-cyan-400/70 light:text-[oklch(0.45_0.12_190)]/70">Chargement de la configuration...</p>
+          <p className="text-cyan-400/70">Chargement de la configuration...</p>
         </div>
       </main>
     );
@@ -104,7 +104,7 @@ function PlayContent() {
       <div className="max-w-[1600px] mx-auto">
         
         {/* Barre de contrôle compacte en haut - Position fixe */}
-        <div className="lg:sticky lg:top-0 z-50 bg-gradient-to-b from-slate-950 dark:from-slate-950 light:from-[oklch(0.88_0.010_75)] to-slate-950/95 dark:to-slate-950/95 light:to-[oklch(0.88_0.010_75)]/95 backdrop-blur-sm border-b theme-border px-2 md:px-4 py-2 space-y-1.5">
+        <div className="lg:sticky lg:top-0 z-50 bg-gradient-to-b from-slate-950 to-slate-950/95 backdrop-blur-sm border-b theme-border px-2 md:px-4 py-2 space-y-1.5">
           <div className="flex items-center justify-between gap-2">
             {/* Gauche: Info Bot */}
             <div className="flex items-center gap-1.5 min-w-0">
@@ -153,8 +153,8 @@ function PlayContent() {
               </button>
             </div>
           </div>
-          <p className="text-[10px] text-slate-500 dark:text-slate-500 light:text-slate-600 px-0.5 leading-tight hidden sm:block">
-            <span className="text-cyan-600/80 dark:text-cyan-500/70 mr-1" aria-hidden>
+          <p className="text-[10px] text-slate-500 px-0.5 leading-tight hidden sm:block">
+            <span className="text-cyan-500/70 mr-1" aria-hidden>
               ℹ️
             </span>
             {t.play.playPageToolbarHint}
@@ -182,7 +182,7 @@ export default function PlayPage() {
       <main className="min-h-screen theme-gradient theme-text-primary flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-cyan-500 mx-auto mb-4"></div>
-          <p className="text-cyan-400/70 dark:text-cyan-400/70 light:text-[oklch(0.45_0.12_190)]/70">Chargement...</p>
+          <p className="text-cyan-400/70">Chargement...</p>
         </div>
       </main>
     }>

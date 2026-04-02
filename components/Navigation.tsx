@@ -3,10 +3,9 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Globe, Sun, Moon, Palette, Crown, LogIn, LogOut, User } from "lucide-react";
+import { Globe, Palette, Crown, LogIn, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/lib/language-context";
-import { useTheme } from "@/lib/theme-context";
 import { useChessboardSettings, getPieceImagePath } from "@/contexts/ChessboardSettingsContext";
 import { useEffect, useState, useRef } from "react";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
@@ -17,7 +16,6 @@ import AuthModal from "./AuthModal";
 export default function Navigation() {
   const pathname = usePathname();
   const { lang, setLang, t } = useLanguage();
-  const { theme, toggleTheme } = useTheme();
   const { settings } = useChessboardSettings();
   const [user, setUser] = useState<any>(null);
   const [showSettings, setShowSettings] = useState(false);
@@ -57,8 +55,7 @@ export default function Navigation() {
     setShowUserMenu(false);
   };
 
-  // Définir les pièces selon le thème (dark = pièces blanches, light = pièces noires)
-  const pieceColor = theme === 'dark' ? 'w' : 'b';
+  const pieceColor = 'w';
   
   const navItems = [
     {
@@ -99,12 +96,12 @@ export default function Navigation() {
   ];
 
   return (
-    <nav className="bg-slate-950/80 dark:bg-slate-950/80 light:bg-[oklch(0.97_0.012_85)]/95 backdrop-blur-sm border-b border-slate-800 dark:border-slate-800 light:border-[oklch(0.82_0.018_75)] sticky top-0 z-50">
+    <nav className="bg-slate-950/80 backdrop-blur-sm border-b border-slate-800 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 text-xl font-bold text-cyan-400 dark:text-cyan-400 light:text-[oklch(0.45_0.12_190)] hover:text-cyan-300 dark:hover:text-cyan-300 light:hover:text-[oklch(0.40_0.14_190)] transition-colors">
+          <Link href="/" className="flex items-center gap-2 text-xl font-bold text-cyan-400 hover:text-cyan-300 transition-colors">
             <Image src={getPieceImagePath(settings.pieceSet, 'b', 'N')} alt="Knight" width={28} height={28} className="inline-block w-7 h-7" unoptimized />
             Chess Avatar
           </Link>
@@ -133,7 +130,7 @@ export default function Navigation() {
             })}
           </div>
 
-          {/* Theme, Language Selector + User Account */}
+          {/* Language selector + user account */}
           <div className="flex items-center gap-2">
             {/* User Account */}
             {isSupabaseConfigured && (
@@ -193,7 +190,7 @@ export default function Navigation() {
               variant="ghost"
               size="sm"
               onClick={() => setShowSettings(true)}
-              className="text-slate-400 dark:text-slate-400 light:text-slate-600 hover:text-cyan-300 dark:hover:text-cyan-300 light:hover:text-cyan-600 gap-1"
+              className="text-slate-400 hover:text-cyan-300 gap-1"
               aria-label={t.chessboardSettings.toolbarTooltip}
               title={t.chessboardSettings.toolbarTooltip}
             >
@@ -203,23 +200,12 @@ export default function Navigation() {
               </span>
             </Button>
 
-            {/* Theme Toggle */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={toggleTheme}
-              className="text-slate-400 dark:text-slate-400 light:text-slate-600 hover:text-cyan-300 dark:hover:text-cyan-300 light:hover:text-cyan-600"
-              aria-label="Toggle theme"
-            >
-              {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-            </Button>
-            
             {/* Language Buttons */}
             <Button
               variant={lang === "fr" ? "default" : "ghost"}
               size="sm"
               onClick={() => setLang("fr")}
-              className={lang === "fr" ? "bg-cyan-600 text-white" : "text-slate-400 dark:text-slate-400 light:text-slate-600 hover:text-cyan-300 dark:hover:text-cyan-300 light:hover:text-cyan-600"}
+              className={lang === "fr" ? "bg-cyan-600 text-white" : "text-slate-400 hover:text-cyan-300"}
             >
               <Globe className="mr-1 h-3 w-3" /> FR
             </Button>
@@ -227,7 +213,7 @@ export default function Navigation() {
               variant={lang === "en" ? "default" : "ghost"}
               size="sm"
               onClick={() => setLang("en")}
-              className={lang === "en" ? "bg-cyan-600 text-white" : "text-slate-400 dark:text-slate-400 light:text-slate-600 hover:text-cyan-300 dark:hover:text-cyan-300 light:hover:text-cyan-600"}
+              className={lang === "en" ? "bg-cyan-600 text-white" : "text-slate-400 hover:text-cyan-300"}
             >
               <Globe className="mr-1 h-3 w-3" /> EN
             </Button>

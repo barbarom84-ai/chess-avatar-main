@@ -53,20 +53,20 @@ export default function GuidePage() {
                 ))}
               </ol>
               
-              <div className="bg-yellow-900/20 dark:bg-yellow-900/20 light:bg-yellow-100/50 border border-yellow-700 dark:border-yellow-700 light:border-yellow-400 p-3 rounded mt-4">
-                <p className="text-yellow-300 dark:text-yellow-300 light:text-yellow-800 text-sm">
+              <div className="bg-yellow-900/20 border border-yellow-700 p-3 rounded mt-4">
+                <p className="text-yellow-300 text-sm">
                   <strong>⚠️ {t.guide.step1.warning}</strong>
                 </p>
-                <p className="text-yellow-200 dark:text-yellow-200 light:text-yellow-700 text-sm mt-2">
+                <p className="text-yellow-200 text-sm mt-2">
                   {t.guide.step1.warningText}
                 </p>
-                <p className="text-yellow-200 dark:text-yellow-200 light:text-yellow-700 text-sm mt-2">
+                <p className="text-yellow-200 text-sm mt-2">
                   💡 {t.guide.step1.tip}
                 </p>
               </div>
               
-              <div className="bg-green-900/20 dark:bg-green-900/20 light:bg-green-100/50 border border-green-700 dark:border-green-700 light:border-green-400 p-3 rounded mt-4">
-                <p className="text-green-300 dark:text-green-300 light:text-green-800 text-sm font-semibold">
+              <div className="bg-green-900/20 border border-green-700 p-3 rounded mt-4">
+                <p className="text-green-300 text-sm font-semibold">
                   ✨ {lang === 'fr' ? 'Le script détecte automatiquement votre fichier JSON, gardez son nom d\'origine !' : 'The script automatically detects your JSON file, keep its original name!'}
                 </p>
               </div>
@@ -82,7 +82,7 @@ export default function GuidePage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 theme-text-secondary">
-              <p className="text-xl font-semibold text-green-400 dark:text-green-400 light:text-green-600">{t.guide.step3.description}</p>
+              <p className="text-xl font-semibold text-green-400">{t.guide.step3.description}</p>
             </CardContent>
           </Card>
 
@@ -95,8 +95,8 @@ export default function GuidePage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 theme-text-secondary">
-              <div className="border border-cyan-500/30 dark:border-cyan-500/30 light:border-cyan-400/50 rounded p-4">
-                <p className="font-semibold text-cyan-300 dark:text-cyan-300 light:text-cyan-600 mb-3">{t.guide.step4.fritzTitle}</p>
+              <div className="border border-cyan-500/30 rounded p-4">
+                <p className="font-semibold text-cyan-300 mb-3">{t.guide.step4.fritzTitle}</p>
                 <ol className="list-decimal list-inside space-y-2 ml-4">
                   {t.guide.step4.fritzSteps.map((step: string, idx: number) => (
                     <li key={idx}>{step}</li>
@@ -104,8 +104,8 @@ export default function GuidePage() {
                 </ol>
               </div>
 
-              <div className="border border-blue-500/30 dark:border-blue-500/30 light:border-blue-400/50 rounded p-4">
-                <p className="font-semibold text-blue-300 dark:text-blue-300 light:text-blue-600 mb-3">{t.guide.step4.arenaTitle}</p>
+              <div className="border border-blue-500/30 rounded p-4">
+                <p className="font-semibold text-blue-300 mb-3">{t.guide.step4.arenaTitle}</p>
                 <ol className="list-decimal list-inside space-y-2 ml-4">
                   {t.guide.step4.arenaSteps.map((step: string, idx: number) => (
                     <li key={idx}>{step}</li>
@@ -125,22 +125,22 @@ export default function GuidePage() {
             </CardHeader>
             <CardContent className="space-y-3 theme-text-secondary">
               <div className="theme-bg-primary p-3 rounded">
-                <p className="font-semibold text-cyan-400 dark:text-cyan-400 light:text-cyan-600">{t.guide.problems.pipBlocked}</p>
+                <p className="font-semibold text-cyan-400">{t.guide.problems.pipBlocked}</p>
                 <p className="text-sm">{t.guide.problems.pipBlockedSolution}</p>
               </div>
 
               <div className="theme-bg-primary p-3 rounded">
-                <p className="font-semibold text-yellow-400 dark:text-yellow-400 light:text-yellow-600">{t.guide.problems.windowsBlocking}</p>
+                <p className="font-semibold text-yellow-400">{t.guide.problems.windowsBlocking}</p>
                 <p className="text-sm">{t.guide.problems.windowsBlockingSolution}</p>
               </div>
 
               <div className="theme-bg-primary p-3 rounded">
-                <p className="font-semibold text-red-400 dark:text-red-400 light:text-red-600">{t.guide.problems.pythonNotFound}</p>
+                <p className="font-semibold text-red-400">{t.guide.problems.pythonNotFound}</p>
                 <p className="text-sm">{t.guide.problems.pythonNotFoundSolution}</p>
               </div>
 
               <div className="theme-bg-primary p-3 rounded">
-                <p className="font-semibold text-red-400 dark:text-red-400 light:text-red-600">{t.guide.problems.engineNotWorking}</p>
+                <p className="font-semibold text-red-400">{t.guide.problems.engineNotWorking}</p>
                 <p className="text-sm">{t.guide.problems.engineNotWorkingSolution}</p>
               </div>
             </CardContent>

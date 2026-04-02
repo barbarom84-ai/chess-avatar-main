@@ -5,7 +5,6 @@ import "./globals.css";
 import Navigation from "@/components/Navigation";
 import { ChessboardSettingsProvider } from "@/contexts/ChessboardSettingsContext";
 import { LanguageProvider } from "@/lib/language-context";
-import { ThemeProvider } from "@/lib/theme-context";
 import { Toaster } from "sonner";
 
 const geistSans = Geist({
@@ -40,34 +39,32 @@ export default function RootLayout({
   const BUILD_ID = "2025-01-28-v2";
 
   return (
-    <html lang="en" suppressHydrationWarning data-build={BUILD_ID}>
+    <html lang="en" className="dark" suppressHydrationWarning data-build={BUILD_ID}>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ThemeProvider>
-          <LanguageProvider>
-            <ChessboardSettingsProvider>
-              <Navigation />
-              {children}
-              <Toaster
-                theme="dark"
-                position="bottom-right"
-                toastOptions={{
-                  style: {
-                    background: '#0F2341',
-                    border: '1px solid rgba(0, 255, 255, 0.2)',
-                    color: '#E2E8F0',
-                    fontFamily: 'var(--font-geist-sans)',
-                  },
-                  classNames: {
-                    success: 'toast-success',
-                    error: 'toast-error',
-                  },
-                }}
-              />
-            </ChessboardSettingsProvider>
-          </LanguageProvider>
-        </ThemeProvider>
+        <LanguageProvider>
+          <ChessboardSettingsProvider>
+            <Navigation />
+            {children}
+            <Toaster
+              theme="dark"
+              position="bottom-right"
+              toastOptions={{
+                style: {
+                  background: '#0F2341',
+                  border: '1px solid rgba(0, 255, 255, 0.2)',
+                  color: '#E2E8F0',
+                  fontFamily: 'var(--font-geist-sans)',
+                },
+                classNames: {
+                  success: 'toast-success',
+                  error: 'toast-error',
+                },
+              }}
+            />
+          </ChessboardSettingsProvider>
+        </LanguageProvider>
       </body>
     </html>
   );
