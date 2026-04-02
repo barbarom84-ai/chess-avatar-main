@@ -12,6 +12,8 @@ import { getLesson, lessonWithOpening, pickLocalized } from "@/lib/opening-lesso
 import OpeningLevelBadge from "@/components/learn/OpeningLevelBadge";
 import LessonChessboard from "@/components/learn/LessonChessboard";
 import HistoricGameSection from "@/components/learn/HistoricGameSection";
+import OpeningVariantSection from "@/components/learn/OpeningVariantSection";
+import MoveChallengeCard from "@/components/learn/MoveChallengeCard";
 
 export default function OpeningLessonPage() {
   const params = useParams();
@@ -35,6 +37,19 @@ export default function OpeningLessonPage() {
   const modelComments = lesson?.modelLine.map((m) => m.comment);
   const modelUci = lesson?.modelLine.map((m) => m.uci) ?? [];
 
+  const boardOrientation = opening?.color === "black" ? "black" : "white";
+
+  const ch = t.learn.challenge;
+  const challengeLabels = {
+    hint: ch?.hint ?? "Hint",
+    nextHint: ch?.nextHint ?? "Next hint",
+    correct: ch?.correct ?? "Correct",
+    wrong: ch?.wrong ?? "Try again.",
+    reveal: ch?.reveal ?? "Show solution",
+    tryAgain: ch?.tryAgain ?? "Reset",
+    positionLabel: ch?.positionLabel ?? "Position before the move to find",
+  };
+
   if (!lesson || !opening) {
     return (
       <main className="min-h-screen theme-gradient theme-text-primary p-8 flex flex-col items-center justify-center gap-4">
@@ -45,6 +60,11 @@ export default function OpeningLessonPage() {
       </main>
     );
   }
+
+  const variantCount = lesson.variants?.length ?? 0;
+  const flatChallenges = lesson.historicalGames.flatMap((g) =>
+    (g.challenges ?? []).map((c) => ({ game: g, challenge: c })),
+  );
 
   return (
     <main className="min-h-screen theme-gradient theme-text-primary p-4 md:p-8">
@@ -85,6 +105,12 @@ export default function OpeningLessonPage() {
             <TabsTrigger value="ideas">{t.learn.detail.tabs.ideas}</TabsTrigger>
             <TabsTrigger value="traps">{t.learn.detail.tabs.traps}</TabsTrigger>
             <TabsTrigger value="model">{t.learn.detail.tabs.modelLine}</TabsTrigger>
+            {variantCount > 0 && (
+              <TabsTrigger value="variants">{t.learn.detail.tabs.variants}</TabsTrigger>
+            )}
+            {flatChallenges.length > 0 && (
+              <TabsTrigger value="challenges">{t.learn.detail.tabs.challenges}</TabsTrigger>
+            )}
             <TabsTrigger value="history">{t.learn.detail.tabs.history}</TabsTrigger>
           </TabsList>
 
@@ -175,11 +201,45 @@ export default function OpeningLessonPage() {
                   commentaryLabels={commentaryLabels}
                   moveIndex={modelMoveIndex}
                   onMoveIndexChange={setModelMoveIndex}
-                  orientation={opening.color === "black" ? "black" : "white"}
+                  orientation={boardOrientation}
                 />
               </CardContent>
             </Card>
           </TabsContent>
+
+          {variantCount > 0 && (
+            <TabsContent value="variants" className="mt-4 space-y-6">
+              <h2 className="text-xl font-semibold text-cyan-200">{t.learn.detail.variantsTitle}</h2>
+              {lesson.variants!.map((v) => (
+                <OpeningVariantSection
+                  key={v.id}
+                  variant={v}
+                  lang={lang}
+                  commentaryLabels={commentaryLabels}
+                  orientation={boardOrientation}
+                />
+              ))}
+            </TabsContent>
+          )}
+
+          {flatChallenges.length > 0 && (
+            <TabsContent value="challenges" className="mt-4 space-y-6">
+              <p className="text-slate-400 text-sm">{t.learn.detail.challengesTitle}</p>
+              {flatChallenges.map(({ game, challenge }) => (
+                <div key={`${game.id}-${challenge.id}`} className="space-y-2">
+                  <p className="text-xs font-mono text-amber-500/90">
+                    {pickLocalized(game.event, lang)} · {game.white} – {game.black}
+                  </p>
+                  <MoveChallengeCard
+                    challenge={challenge}
+                    uciMoves={game.uciMoves}
+                    lang={lang}
+                    labels={challengeLabels}
+                  />
+                </div>
+              ))}
+            </TabsContent>
+          )}
 
           <TabsContent value="history" className="mt-4 space-y-6">
             {lesson.historicalGames.length === 0 ? (
@@ -194,6 +254,8 @@ export default function OpeningLessonPage() {
                     lang={lang}
                     commentaryLabels={commentaryLabels}
                     metaTemplate={t.learn.detail.historyMeta}
+                    challengeLabels={challengeLabels}
+                    challengesHeading={t.learn.detail.challengesInGame}
                   />
                 ))}
               </>

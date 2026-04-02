@@ -7,6 +7,17 @@ export interface ModelMoveComment {
   comment: LocalizedString;
 }
 
+/** Coup à deviner : position après uciMoves[0..afterMoveCount-1], le coup joué dans la partie est uciMoves[afterMoveCount]. */
+export interface MoveChallenge {
+  id: string;
+  afterMoveCount: number;
+  prompt: LocalizedString;
+  correctUci: string;
+  wrongChoices: string[];
+  hints: LocalizedString[];
+  insight: LocalizedString;
+}
+
 export interface HistoricalGame {
   id: string;
   white: string;
@@ -16,6 +27,16 @@ export interface HistoricalGame {
   event: LocalizedString;
   uciMoves: string[];
   annotations: { afterMoveIndex: number; text: LocalizedString }[];
+  /** Contexte ou anecdote sur le cadre de la partie. */
+  anecdote?: LocalizedString;
+  challenges?: MoveChallenge[];
+}
+
+export interface OpeningVariant {
+  id: string;
+  title: LocalizedString;
+  description?: LocalizedString;
+  line: ModelMoveComment[];
 }
 
 export interface OpeningLesson {
@@ -28,6 +49,8 @@ export interface OpeningLesson {
   traps: LocalizedString[];
   whatToRemember: LocalizedString[];
   modelLine: ModelMoveComment[];
+  /** Branches nommées (Giuoco Piano, Evans, etc.). */
+  variants?: OpeningVariant[];
   historicalGames: HistoricalGame[];
 }
 
@@ -96,6 +119,44 @@ export const OPENING_LESSONS: OpeningLesson[] = [
       { uci: "c2c3", comment: { fr: "Prépare d4 avec solidité.", en: "Prepares d4 on solid footing." } },
       { uci: "g8f6", comment: { fr: "Développement et attaque sur e4.", en: "Development and pressure on e4." } },
     ],
+    variants: [
+      {
+        id: "giuoco-piano",
+        title: { fr: "Giuoco Piano (calme)", en: "Giuoco Piano (quiet)" },
+        description: {
+          fr: "…Fc5 puis c3 et d3 : jeu positionnel, souvent roc court des deux côtés.",
+          en: "…Bc5 then c3 and d3: positional play, often both sides castle short.",
+        },
+        line: [
+          { uci: "e2e4", comment: { fr: "1.e4", en: "1.e4" } },
+          { uci: "e7e5", comment: { fr: "1…e5", en: "1…e5" } },
+          { uci: "g1f3", comment: { fr: "2.Cf3", en: "2.Nf3" } },
+          { uci: "b8c6", comment: { fr: "2…Cc6", en: "2…Nc6" } },
+          { uci: "f1c4", comment: { fr: "3.Fc4", en: "3.Bc4" } },
+          { uci: "f8c5", comment: { fr: "3…Fc5 Giuoco Piano.", en: "3…Bc5 Giuoco Piano." } },
+          { uci: "c2c3", comment: { fr: "4.c3 : prépare d4 sans affaiblir d3.", en: "4.c3: prepares d4 without weakening d3." } },
+          { uci: "g8f6", comment: { fr: "4…Cf6", en: "4…Nf6" } },
+          { uci: "d2d3", comment: { fr: "5.d3 : ligne tranquille, idées d’a3–b4 ou Fg5.", en: "5.d3: quiet line, ideas of a3–b4 or Bg5." } },
+        ],
+      },
+      {
+        id: "evans-branch",
+        title: { fr: "Branche Gambit Evans (aperçu)", en: "Evans Gambit branch (preview)" },
+        description: {
+          fr: "Après 4.c3 les blancs peuvent jouer 5.b4 — sacrifice de pion pour initiative (fiche dédiée : Gambit Evans).",
+          en: "After 4.c3 White may play 5.b4 — pawn sacrifice for initiative (see Evans Gambit lesson).",
+        },
+        line: [
+          { uci: "e2e4", comment: { fr: "1.e4", en: "1.e4" } },
+          { uci: "e7e5", comment: { fr: "1…e5", en: "1…e5" } },
+          { uci: "g1f3", comment: { fr: "2.Cf3", en: "2.Nf3" } },
+          { uci: "b8c6", comment: { fr: "2…Cc6", en: "2…Nc6" } },
+          { uci: "f1c4", comment: { fr: "3.Fc4", en: "3.Bc4" } },
+          { uci: "f8c5", comment: { fr: "3…Fc5", en: "3…Bc5" } },
+          { uci: "b2b4", comment: { fr: "4.b4 ! Gambit Evans (transposition si …Fxb4).", en: "4.b4 Evans Gambit (transposes if …Bxb4)." } },
+        ],
+      },
+    ],
     historicalGames: [
       {
         id: "opera-1858",
@@ -107,31 +168,136 @@ export const OPENING_LESSONS: OpeningLesson[] = [
           fr: "Partie d’opéra (Paris)",
           en: "Opera Game (Paris)",
         },
+        anecdote: {
+          fr: "On raconte que la consultation noire jouait depuis une loge du théâtre pendant une représentation — d’où le nom. Morphy illustre développement rapide et combinaison finale spectaculaire.",
+          en: "Legend says Black’s team played from a theatre box during a performance — hence the name. Morphy shows rapid development and a spectacular mating combination.",
+        },
         uciMoves: [
-          "e2e4", "e7e5", "g1f3", "d7d6", "d2d4", "c8g4", "d4e5", "g4f3",
-          "d1f3", "d6e5", "f1c4", "g8f6", "f3b3", "d8e7", "b1c3", "c7c6",
-          "c1g5", "b7b5",
+          "e2e4",
+          "e7e5",
+          "g1f3",
+          "d7d6",
+          "d2d4",
+          "c8g4",
+          "d4e5",
+          "g4f3",
+          "d1f3",
+          "d6e5",
+          "f1c4",
+          "g8f6",
+          "f3b3",
+          "d8e7",
+          "b1c3",
+          "c7c6",
+          "c1g5",
+          "b7b5",
+          "c3b5",
+          "c6b5",
+          "c4b5",
+          "b8d7",
+          "e1c1",
+          "a8d8",
+          "d1d7",
+          "d8d7",
+          "h1d1",
+          "e7e6",
+          "b5d7",
+          "f6d7",
+          "b3b8",
+          "d7b8",
+          "d1d8",
         ],
         annotations: [
           {
             afterMoveIndex: 3,
             text: {
-              fr: "Les noirs affaiblissent la grande diagonale avec …d6 plutôt que …Cc6.",
-              en: "Black weakens the long diagonal with …d6 instead of …Nc6.",
+              fr: "Philidor …d6 : solide mais la case d4 reste faible ; …Fg4 se révèle fragile.",
+              en: "Philidor …d6: solid but d4 remains weak; …Bg4 proves loose.",
             },
           },
           {
             afterMoveIndex: 7,
             text: {
-              fr: "Les blancs récupèrent un pion avec la dame en f3 — développement supérieur.",
-              en: "White regains a pawn with Qf3 — superior development.",
+              fr: "Les blancs récupèrent un pion avec la dame en f3 — avance au développement.",
+              en: "White regains a pawn with Qf3 — ahead in development.",
             },
           },
           {
             afterMoveIndex: 15,
             text: {
-              fr: "Fc4 et Fg5 : pièces actives avant le mat final célèbre.",
-              en: "Bc4 and Bg5: active pieces before the famous mate.",
+              fr: "Fc4 et Fg5 : pièces actives ; …b5 cherche de la tactique mais affaiblit la structure.",
+              en: "Bc4 and Bg5: active pieces; …b5 seeks tactics but weakens the structure.",
+            },
+          },
+          {
+            afterMoveIndex: 25,
+            text: {
+              fr: "Tdxd7 : les tours et le fou créent une attaque de batterie sur la colonne d.",
+              en: "Rxd7: rooks and bishop build a battery on the d-file.",
+            },
+          },
+          {
+            afterMoveIndex: 27,
+            text: {
+              fr: "…Fe6 : dernier espoir d’échanger dames ; Morphy préfère le coup d’éclat.",
+              en: "…Qe6: last hope to trade queens; Morphy prefers the brilliancy.",
+            },
+          },
+          {
+            afterMoveIndex: 30,
+            text: {
+              fr: "Dxb8+ ! sacrifice de dame pour le mat à la tour — le « mat de l’opéra ».",
+              en: "Qxb8+! queen sacrifice for rook mate — the “Opera mate”.",
+            },
+          },
+        ],
+        challenges: [
+          {
+            id: "opera-nxb5",
+            afterMoveCount: 17,
+            correctUci: "c3b5",
+            prompt: {
+              fr: "Les noirs viennent de pousser …b5. Quel coup joua Morphy au lieu de reculer le fou ?",
+              en: "Black just pushed …b5. What did Morphy play instead of retreating the bishop?",
+            },
+            wrongChoices: ["c4b5", "g5f6", "c4d3"],
+            hints: [
+              {
+                fr: "Le fou en c4 est attaqué, mais une pièce peut prendre en b5 avec fourchette sur c7 et e8.",
+                en: "The c4 bishop is attacked, but a piece can take on b5 with a fork motif.",
+              },
+              {
+                fr: "C’est un sacrifice de cavalier pour ouvrir lignes vers le roi noir.",
+                en: "It’s a knight sacrifice to open lines toward the black king.",
+              },
+            ],
+            insight: {
+              fr: "10.Cxb5 ! : les blancs acceptent de perdre un cavalier pour garder l’initiative et viser le roi.",
+              en: "10.Nxb5!: White sacrifices the knight to keep the initiative and target the king.",
+            },
+          },
+          {
+            id: "opera-qb8",
+            afterMoveCount: 30,
+            correctUci: "b3b8",
+            prompt: {
+              fr: "Après Fxd7+ Cxd7, comment Morphy termine la partie en beauté ?",
+              en: "After Bxd7+ Nxd7, how did Morphy finish in style?",
+            },
+            wrongChoices: ["b3e6", "b3b5", "d1d5"],
+            hints: [
+              {
+                fr: "Pense « sacrifice de la dame » pour dévier une pièce noire et livrer mat à la tour.",
+                en: "Think “queen sacrifice” to deflect a black piece and mate with the rook.",
+              },
+              {
+                fr: "La case b8 est la clé : la dame se laisse prendre par le cavalier.",
+                en: "b8 is the key square: the queen allows herself to be taken by the knight.",
+              },
+            ],
+            insight: {
+              fr: "16.Dxb8+ ! Cxb8 17.Td8# : le roi est maté par la tour seule après la déviation du cavalier.",
+              en: "16.Qxb8+! Nxb8 17.Rd8#: mate by the rook alone after the knight is deflected.",
             },
           },
         ],
@@ -274,7 +440,89 @@ export const OPENING_LESSONS: OpeningLesson[] = [
       { uci: "d2d4", comment: { fr: "Les blancs attaquent le centre.", en: "White strikes at the center." } },
       { uci: "c5d4", comment: { fr: "Prise en passant structurel.", en: "Structural capture." } },
     ],
-    historicalGames: [],
+    variants: [
+      {
+        id: "najdorf-slice",
+        title: { fr: "Aperçu Najdorf (…a6)", en: "Najdorf preview (…a6)" },
+        description: {
+          fr: "Après 2…d6 3.d4 cxd4 4.Cxd4 les noirs jouent …a6 pour contrôler b5.",
+          en: "After 2…d6 3.d4 cxd4 4.Nxd4 Black plays …a6 to control b5.",
+        },
+        line: [
+          { uci: "e2e4", comment: { fr: "1.e4", en: "1.e4" } },
+          { uci: "c7c5", comment: { fr: "1…c5", en: "1…c5" } },
+          { uci: "g1f3", comment: { fr: "2.Cf3", en: "2.Nf3" } },
+          { uci: "d7d6", comment: { fr: "2…d6", en: "2…d6" } },
+          { uci: "d2d4", comment: { fr: "3.d4", en: "3.d4" } },
+          { uci: "c5d4", comment: { fr: "3…cxd4", en: "3…cxd4" } },
+          { uci: "f3d4", comment: { fr: "4.Cxd4", en: "4.Nxd4" } },
+          { uci: "g8f6", comment: { fr: "4…Cf6", en: "4…Nf6" } },
+          { uci: "b1c3", comment: { fr: "5.Cc3", en: "5.Nc3" } },
+          { uci: "a7a6", comment: { fr: "5…a6 Najdorf.", en: "5…a6 Najdorf." } },
+        ],
+      },
+    ],
+    historicalGames: [
+      {
+        id: "fischer-petrosian-1971",
+        white: "Bobby Fischer",
+        black: "Tigran Petrosian",
+        result: "1-0",
+        date: "1971",
+        event: {
+          fr: "Candidats (extrait thématique sicilienne)",
+          en: "Candidates (Sicilian thematic excerpt)",
+        },
+        anecdote: {
+          fr: "Lors du match des Candidats, Fischer affichait une préparation redoutable en Sicilienne ; la série de victoires a marqué l’histoire du championnat du monde.",
+          en: "In the Candidates, Fischer’s Sicilian prep was fearsome; the run of wins became world-championship lore.",
+        },
+        uciMoves: [
+          "e2e4",
+          "c7c5",
+          "g1f3",
+          "d7d6",
+          "d2d4",
+          "c5d4",
+          "f3d4",
+          "g8f6",
+          "b1c3",
+          "a7a6",
+          "f2f4",
+        ],
+        annotations: [
+          {
+            afterMoveIndex: 9,
+            text: {
+              fr: "…a6 Najdorf : les noirs gardent la tension ; les blancs poussent f4 pour l’attaque.",
+              en: "…a6 Najdorf: Black keeps tension; White pushes f4 for attack.",
+            },
+          },
+        ],
+        challenges: [
+          {
+            id: "sic-f4",
+            afterMoveCount: 10,
+            correctUci: "f2f4",
+            prompt: {
+              fr: "Dans ce type de Najdorf, quel coup typique des blancs lance l’assaut sur l’aile roi ?",
+              en: "In this Najdorf type, which typical White move starts the kingside attack?",
+            },
+            wrongChoices: ["f1c4", "d4b5", "e4e5"],
+            hints: [
+              {
+                fr: "C’est une avance de pion sur l’aile roi, souvent liée à f5 ou g4 plus tard.",
+                en: "It’s a kingside pawn advance, often related to f5 or g4 later.",
+              },
+            ],
+            insight: {
+              fr: "f4 : les blancs gagnent de l’espace et préparent des pièces vers g2 ou e3 selon les variantes.",
+              en: "f4: White gains space and prepares pieces toward g2 or e3 depending on lines.",
+            },
+          },
+        ],
+      },
+    ],
   },
   {
     openingId: "french-defense",
@@ -613,6 +861,374 @@ export const OPENING_LESSONS: OpeningLesson[] = [
             text: {
               fr: "…Cf6 : développement naturel ; la partie bascule souvent sur le jeu de cases et de plans.",
               en: "…Nf6: natural development; the game shifts to squares and plans.",
+            },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    openingId: "nimzo-indian-defense",
+    hook: {
+      fr: "3.Fb4+ : hypermoderne — les noirs pincent le cavalier tout en contrôlant e4.",
+      en: "3.Bb4+: hypermodern — Black pins the knight while controlling e4.",
+    },
+    recommendedFor: {
+      fr: "Intermédiaire (~1400+) : structures de pions riches (c4–d5 ou a3).",
+      en: "Intermediate (~1400+): rich pawn structures (c4–d5 or a3 lines).",
+    },
+    overview: {
+      fr: "Après 1.d4 Cf6 2.c4 e6 3.Cc3 Fb4, les noirs évitent …d5 immédiat et visent souvent le bloc est-indien ou la variante Rubinstein.",
+      en: "After 1.d4 Nf6 2.c4 e6 3.Nc3 Bb4, Black avoids immediate …d5 and often heads for KID-style or Rubinstein setups.",
+    },
+    mainIdeas: [
+      {
+        fr: "Le fou en b4 force les blancs à choisir : a3, e3, ou accepter la structure.",
+        en: "The Bb4 bishop forces White to choose: a3, e3, or accept the structure.",
+      },
+    ],
+    typicalPlans: [
+      {
+        fr: "Noirs : …b6/Fb7, …O-O, parfois …d5 ou …c5 selon la variante.",
+        en: "Black: …b6/Bb7, …O-O, sometimes …d5 or …c5 by line.",
+      },
+    ],
+    traps: [
+      {
+        fr: "Attention au double pion c après Fxc3+ si tu ne connais pas les plans de compensation.",
+        en: "Watch the doubled c-pawns after Bxc3+ if you don’t know compensating plans.",
+      },
+    ],
+    whatToRemember: [
+      {
+        fr: "Nimzo = équilibre entre contrôle et structure ; étudie une ligne entière (Rubinstein, Saemisch…).",
+        en: "Nimzo = balance of control and structure; study one full line.",
+      },
+    ],
+    modelLine: [
+      { uci: "d2d4", comment: { fr: "1.d4", en: "1.d4" } },
+      { uci: "g8f6", comment: { fr: "1…Cf6", en: "1…Nf6" } },
+      { uci: "c2c4", comment: { fr: "2.c4", en: "2.c4" } },
+      { uci: "e7e6", comment: { fr: "2…e6", en: "2…e6" } },
+      { uci: "b1c3", comment: { fr: "3.Cc3", en: "3.Nc3" } },
+      { uci: "f8b4", comment: { fr: "3…Fb4+ Nimzo-indienne.", en: "3…Bb4+ Nimzo-Indian." } },
+    ],
+    variants: [
+      {
+        id: "rubinstein",
+        title: { fr: "Rubinstein (Fxc3+)", en: "Rubinstein (Bxc3+)" },
+        description: {
+          fr: "Les noirs doublent les pions c pour la paire de fous et le centre.",
+          en: "Black doubles c-pawns for the bishop pair and central play.",
+        },
+        line: [
+          { uci: "d2d4", comment: { fr: "1.d4", en: "1.d4" } },
+          { uci: "g8f6", comment: { fr: "1…Cf6", en: "1…Nf6" } },
+          { uci: "c2c4", comment: { fr: "2.c4", en: "2.c4" } },
+          { uci: "e7e6", comment: { fr: "2…e6", en: "2…e6" } },
+          { uci: "b1c3", comment: { fr: "3.Cc3", en: "3.Nc3" } },
+          { uci: "f8b4", comment: { fr: "3…Fb4+", en: "3…Bb4+" } },
+          { uci: "e2e3", comment: { fr: "4.e3 solide.", en: "4.e3 solid." } },
+          { uci: "b4c3", comment: { fr: "4…Fxc3+", en: "4…Bxc3+" } },
+        ],
+      },
+    ],
+    historicalGames: [
+      {
+        id: "nimzo-demo",
+        white: "Illustration",
+        black: "Structure typique",
+        result: "*",
+        date: "—",
+        event: { fr: "Mini-ligne pédagogique", en: "Teaching mini-line" },
+        uciMoves: ["d2d4", "g8f6", "c2c4", "e7e6", "b1c3", "f8b4", "c1d2"],
+        annotations: [
+          {
+            afterMoveIndex: 5,
+            text: {
+              fr: "Fd2 : développement simple ; les blancs gardent le fou paire.",
+              en: "Bd2: simple development; White keeps bishop pair options.",
+            },
+          },
+        ],
+        challenges: [
+          {
+            id: "nimzo-bd2",
+            afterMoveCount: 6,
+            correctUci: "c1d2",
+            prompt: {
+              fr: "Après …Fb4+, quel développement naturel du fou blanc évite le double pion tout de suite ?",
+              en: "After …Bb4+, which natural bishop development avoids doubled pawns for now?",
+            },
+            wrongChoices: ["a2a3", "d1a4", "g2g3"],
+            hints: [
+              {
+                fr: "Le fou va sur une case où il ne bloque pas le centre et garde la solidité.",
+                en: "The bishop goes to a square that doesn’t block the center.",
+              },
+            ],
+            insight: {
+              fr: "Fd2 : ligne classique ; a3 est plus agressif mais affaiblit b3.",
+              en: "Bd2: classical line; a3 is sharper but weakens b3.",
+            },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    openingId: "grunfeld-defense",
+    hook: {
+      fr: "…d5 dynamique contre d4/c4 : les noirs acceptent un centre blanc large pour contre-attaquer.",
+      en: "Dynamic …d5 vs d4/c4: Black accepts a wide white center to counterattack.",
+    },
+    recommendedFor: {
+      fr: "Avancé (~1700+) : tactique et finales complexes.",
+      en: "Advanced (~1700+): tactics and complex endings.",
+    },
+    overview: {
+      fr: "Après 1.d4 Cf6 2.c4 g6 3.Cc3 d5, les noirs visent …F7 et pression sur d4. Kasparov et nombreux GMI l’ont popularisée.",
+      en: "After 1.d4 Nf6 2.c4 g6 3.Nc3 d5, Black aims for …Bg7 and pressure on d4. Kasparov and many GMs championed it.",
+    },
+    mainIdeas: [
+      {
+        fr: "Sacrifices de pion ou contre-jeu sur la colonne c selon les variantes.",
+        en: "Pawn sacrifices or counterplay on the c-file depending on lines.",
+      },
+    ],
+    typicalPlans: [
+      {
+        fr: "Noirs : Fg7, roc, …c5 ou …c6 ; blancs : e4, jeu de flanc dame.",
+        en: "Black: Bg7, castle, …c5 or …c6; White: e4, queenside play.",
+      },
+    ],
+    traps: [
+      {
+        fr: "Ne pas oublier que le centre blanc peut devenir écrasant si les noirs restent passifs.",
+        en: "Remember White’s center can become crushing if Black stays passive.",
+      },
+    ],
+    whatToRemember: [
+      {
+        fr: "Grünfeld = contre-attaque : connais au moins une ligne anti-e4 du centre (échange, 7.Fe3…).",
+        en: "Grünfeld = counterattack: know one anti-center line (exchange, 7.Be3…).",
+      },
+    ],
+    modelLine: [
+      { uci: "d2d4", comment: { fr: "1.d4", en: "1.d4" } },
+      { uci: "g8f6", comment: { fr: "1…Cf6", en: "1…Nf6" } },
+      { uci: "c2c4", comment: { fr: "2.c4", en: "2.c4" } },
+      { uci: "g7g6", comment: { fr: "2…g6", en: "2…g6" } },
+      { uci: "b1c3", comment: { fr: "3.Cc3", en: "3.Nc3" } },
+      { uci: "d7d5", comment: { fr: "3…d5 Grünfeld.", en: "3…d5 Grünfeld." } },
+    ],
+    variants: [
+      {
+        id: "exchange-grunfeld",
+        title: { fr: "Variante des échanges (cxd5)", en: "Exchange variation (cxd5)" },
+        description: {
+          fr: "Structure avec pions isolés ou tension IQP selon les suites.",
+          en: "Structures with isolani or IQP tension depending on follow-up.",
+        },
+        line: [
+          { uci: "d2d4", comment: { fr: "1.d4", en: "1.d4" } },
+          { uci: "g8f6", comment: { fr: "1…Cf6", en: "1…Nf6" } },
+          { uci: "c2c4", comment: { fr: "2.c4", en: "2.c4" } },
+          { uci: "g7g6", comment: { fr: "2…g6", en: "2…g6" } },
+          { uci: "b1c3", comment: { fr: "3.Cc3", en: "3.Nc3" } },
+          { uci: "d7d5", comment: { fr: "3…d5", en: "3…d5" } },
+          { uci: "c4d5", comment: { fr: "4.cxd5", en: "4.cxd5" } },
+          { uci: "f6d5", comment: { fr: "4…Cxd5", en: "4…Nxd5" } },
+        ],
+      },
+    ],
+    historicalGames: [],
+  },
+  {
+    openingId: "english-opening",
+    hook: {
+      fr: "1.c4 : contrôle du centre par le flanc — transpositions vers des milliers de plans.",
+      en: "1.c4: flank central control — transpositions to countless plans.",
+    },
+    recommendedFor: {
+      fr: "Intermédiaire (~1300+) : il faut aimer les structures fermées et les idées de fianchetto.",
+      en: "Intermediate (~1300+): enjoy closed structures and fianchetto ideas.",
+    },
+    overview: {
+      fr: "L’anglaise peut mener à réti, catalane, sicilienne inversée, ou hedgehog. Flexibilité maximale pour le joueur de blancs.",
+      en: "The English can lead to Réti, Catalan, reversed Sicilian, or hedgehog. Maximum flexibility for White.",
+    },
+    mainIdeas: [
+      {
+        fr: "Retarder e4 ou le jouer selon la réponse noire ; souvent g3, Fg2.",
+        en: "Delay e4 or play it depending on Black; often g3, Bg2.",
+      },
+    ],
+    typicalPlans: [
+      {
+        fr: "Blancs : e3/d4, ou a3–b4 ; noirs : e5, e6, ou …c5.",
+        en: "White: e3/d4, or a3–b4; Black: e5, e6, or …c5.",
+      },
+    ],
+    traps: [
+      {
+        fr: "Ne pas se perdre en transpositions : nomme la structure cible après 5–6 coups.",
+        en: "Don’t get lost in transpositions: name your target structure after 5–6 moves.",
+      },
+    ],
+    whatToRemember: [
+      {
+        fr: "Anglaise = boîte à outils : étudie un système (symétrique, quatre cavaliers…).",
+        en: "English = toolbox: study one system (symmetrical, four knights…).",
+      },
+    ],
+    modelLine: [
+      { uci: "c2c4", comment: { fr: "1.c4", en: "1.c4" } },
+      { uci: "e7e5", comment: { fr: "1…e5 symétrique possible.", en: "1…e5 symmetrical possible." } },
+      { uci: "g1f3", comment: { fr: "2.Cf3", en: "2.Nf3" } },
+      { uci: "b8c6", comment: { fr: "2…Cc6", en: "2…Nc6" } },
+    ],
+    variants: [
+      {
+        id: "symmetrical",
+        title: { fr: "Anglaise symétrique (…c5)", en: "Symmetrical English (…c5)" },
+        description: {
+          fr: "Les noirs copient avec …c5 pour une lutte stratégique équilibrée.",
+          en: "Black mirrors with …c5 for a balanced strategic fight.",
+        },
+        line: [
+          { uci: "c2c4", comment: { fr: "1.c4", en: "1.c4" } },
+          { uci: "c7c5", comment: { fr: "1…c5", en: "1…c5" } },
+          { uci: "g1f3", comment: { fr: "2.Cf3", en: "2.Nf3" } },
+          { uci: "g8f6", comment: { fr: "2…Cf6", en: "2…Nf6" } },
+        ],
+      },
+    ],
+    historicalGames: [],
+  },
+  {
+    openingId: "evans-gambit",
+    hook: {
+      fr: "4.b4 ! : un pion offert pour lignes ouvertes et initiative — romantique mais encore dangereux.",
+      en: "4.b4!: a pawn for open lines and initiative — romantic but still dangerous.",
+    },
+    recommendedFor: {
+      fr: "Joueur de club (~1200–2000) qui aime la tactique.",
+      en: "Club players (~1200–2000) who like tactics.",
+    },
+    overview: {
+      fr: "Après 1.e4 e5 2.Cf3 Cc6 3.Fc4 Fc5, 4.b4 vise à dévier le fou noir et accélérer l’attaque. Accepté ou refusé, les positions restent vives.",
+      en: "After 1.e4 e5 2.Nf3 Nc6 3.Bc4 Bc5, 4.b4 aims to divert Black’s bishop and speed up the attack.",
+    },
+    mainIdeas: [
+      {
+        fr: "Développement rapide, colonnes ouvertes, parfois sacrifice de pièce sur e5 ou f7.",
+        en: "Fast development, open files, sometimes piece sacrifices on e5 or f7.",
+      },
+    ],
+    typicalPlans: [
+      {
+        fr: "Blancs : c3, d4, ou Dd5 selon réponse ; noirs : …Fxb4, …d5 contre-jeu.",
+        en: "White: c3, d4, or Qd5 by reply; Black: …Bxb4, …d5 counterplay.",
+      },
+    ],
+    traps: [
+      {
+        fr: "Si tu acceptes le gambit, connais au moins une ligne jusqu’au milieu de partie.",
+        en: "If you accept the gambit, know one line into the middlegame.",
+      },
+    ],
+    whatToRemember: [
+      {
+        fr: "Evans = rythme : une erreur noire peut coûter vite.",
+        en: "Evans = tempo: one Black inaccuracy can cost fast.",
+      },
+    ],
+    modelLine: [
+      { uci: "e2e4", comment: { fr: "1.e4", en: "1.e4" } },
+      { uci: "e7e5", comment: { fr: "1…e5", en: "1…e5" } },
+      { uci: "g1f3", comment: { fr: "2.Cf3", en: "2.Nf3" } },
+      { uci: "b8c6", comment: { fr: "2…Cc6", en: "2…Nc6" } },
+      { uci: "f1c4", comment: { fr: "3.Fc4", en: "3.Bc4" } },
+      { uci: "f8c5", comment: { fr: "3…Fc5", en: "3…Bc5" } },
+      { uci: "b2b4", comment: { fr: "4.b4 Gambit Evans.", en: "4.b4 Evans Gambit." } },
+    ],
+    variants: [
+      {
+        id: "evans-decline",
+        title: { fr: "Refus (…Fa5)", en: "Decline (…Ba5)" },
+        description: {
+          fr: "Les noirs ne prennent pas en b4 et gardent le fou actif.",
+          en: "Black does not capture on b4 and keeps the bishop active.",
+        },
+        line: [
+          { uci: "e2e4", comment: { fr: "1.e4", en: "1.e4" } },
+          { uci: "e7e5", comment: { fr: "1…e5", en: "1…e5" } },
+          { uci: "g1f3", comment: { fr: "2.Cf3", en: "2.Nf3" } },
+          { uci: "b8c6", comment: { fr: "2…Cc6", en: "2…Nc6" } },
+          { uci: "f1c4", comment: { fr: "3.Fc4", en: "3.Bc4" } },
+          { uci: "f8c5", comment: { fr: "3…Fc5", en: "3…Bc5" } },
+          { uci: "b2b4", comment: { fr: "4.b4", en: "4.b4" } },
+          { uci: "c5a5", comment: { fr: "4…Fa5", en: "4…Ba5" } },
+        ],
+      },
+    ],
+    historicalGames: [
+      {
+        id: "evans-walker-1850",
+        white: "Captain Evans",
+        black: "William Walker",
+        result: "1-0",
+        date: "1850",
+        event: {
+          fr: "Partie historique (extrait)",
+          en: "Historic game (excerpt)",
+        },
+        anecdote: {
+          fr: "Le capitaine Evans popularisa ce gambit à bord des navires ; le coup 4.b4 porte son nom.",
+          en: "Captain Evans popularized this gambit at sea; 4.b4 bears his name.",
+        },
+        uciMoves: [
+          "e2e4",
+          "e7e5",
+          "g1f3",
+          "b8c6",
+          "f1c4",
+          "f8c5",
+          "b2b4",
+          "c5b4",
+          "c2c3",
+          "b4a5",
+          "d2d4",
+        ],
+        annotations: [
+          {
+            afterMoveIndex: 7,
+            text: {
+              fr: "…Fxb4 : les noirs acceptent ; les blancs récupèrent le centre avec c3 et d4.",
+              en: "…Bxb4: Black accepts; White regains the center with c3 and d4.",
+            },
+          },
+        ],
+        challenges: [
+          {
+            id: "evans-d4",
+            afterMoveCount: 10,
+            correctUci: "d2d4",
+            prompt: {
+              fr: "Après …Fa5, quel coup central typique ouvre le jeu pour les blancs ?",
+              en: "After …Ba5, which central move opens the game for White?",
+            },
+            wrongChoices: ["d2d3", "e4e5", "f1d3"],
+            hints: [
+              {
+                fr: "Les blancs veulent ouvrir le centre avec prise sur e5 ou pression sur e5.",
+                en: "White wants to open the center with play against e5.",
+              },
+            ],
+            insight: {
+              fr: "d4 : frappe au centre ; la partie devient tactique avec la colonne d ouverte.",
+              en: "d4: strikes the center; the game turns tactical with the d-file.",
             },
           },
         ],

@@ -13,12 +13,16 @@ function uciToMove(game: Chess, uci: string): boolean {
   const from = s.slice(0, 2);
   const to = s.slice(2, 4);
   const promotion = s.length > 4 ? s[4] : undefined;
-  const move = game.move({
-    from,
-    to,
-    promotion: promotion as "q" | "r" | "b" | "n" | undefined,
-  });
-  return !!move;
+  try {
+    const move = game.move({
+      from,
+      to,
+      promotion: promotion as "q" | "r" | "b" | "n" | undefined,
+    });
+    return !!move;
+  } catch {
+    return false;
+  }
 }
 
 export interface LessonChessboardProps {
