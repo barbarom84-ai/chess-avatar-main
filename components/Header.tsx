@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Sparkles, Palette, History } from "lucide-react";
+import { Sparkles, Palette, History, BookMarked } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import ChessboardSettingsModal from "./ChessboardSettingsModal";
@@ -59,6 +59,13 @@ export default function Header() {
               >
                 <History className="h-3 w-3" />
                 {t.header.games}
+              </Link>
+              <Link
+                href="/learn"
+                className="text-sm text-cyan-100/80 hover:text-cyan-400 transition-colors duration-200 hover:drop-shadow-[0_0_5px_rgba(0,255,255,0.5)] flex items-center gap-1"
+              >
+                <BookMarked className="h-3 w-3" />
+                {t.header.learn}
               </Link>
               <Link 
                 href="/guide" 

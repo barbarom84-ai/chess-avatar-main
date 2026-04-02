@@ -232,6 +232,60 @@ export const translations = {
       }
     },
 
+    learn: {
+      title: "Apprentissage des ouvertures",
+      subtitle:
+        "Plans, niveaux recommandés, pièges à connaître et parties historiques commentées — pour progresser au-delà de la simple mémorisation.",
+      headerNav: "Apprentissage",
+      hubIntro:
+        "Chaque fiche relie l’ouverture à des idées de milieu de partie. Utilisez les filtres pour trouver une ligne adaptée à votre niveau.",
+      filters: {
+        allColors: "Toutes couleurs",
+        white: "Blancs",
+        black: "Noirs",
+        both: "Les deux",
+        allLevels: "Tous niveaux",
+        searchPlaceholder: "Rechercher (nom, ECO, tag)…",
+        character: "Style",
+        allCharacters: "Tous les styles",
+        clearFilters: "Réinitialiser les filtres",
+        noResults: "Aucune fiche ne correspond aux filtres.",
+        openLesson: "Ouvrir la leçon",
+        lessonsCount: "fiches",
+      },
+      difficultyLabels: ["Débutant", "Facile", "Intermédiaire", "Avancé", "Expert"],
+      detail: {
+        backToHub: "Toutes les leçons",
+        tabs: {
+          overview: "Vue d’ensemble",
+          ideas: "Plans & idées",
+          traps: "Pièges",
+          modelLine: "Ligne modèle",
+          history: "Histoire",
+        },
+        recommendedFor: "Niveau recommandé",
+        mainIdeas: "Idées principales",
+        typicalPlans: "Plans typiques",
+        traps: "Pièges & erreurs fréquentes",
+        remember: "À retenir",
+        modelLineTitle: "Ligne modèle commentée",
+        modelLineHint: "Avancez coup par coup pour lire le commentaire du dernier coup joué.",
+        historyTitle: "Parties historiques",
+        historyEmpty: "Aucune partie historique détaillée pour cette ouverture pour l’instant.",
+        historyMeta: "{white} vs {black} — {event} ({date}) · {result}",
+        useInRepertoire: "Créer / configurer un bot",
+        useInRepertoireHint:
+          "Sur la page d’accueil, ajoutez cette ouverture au répertoire de votre avatar après analyse.",
+        notFound: "Cette leçon n’existe pas ou n’est pas encore publiée.",
+      },
+      commentary: {
+        move: "Coup",
+        of: "sur",
+        noComment: "Position initiale — avancez d’un coup pour voir les explications.",
+      },
+      eco: "ECO",
+    },
+
     // Play Page
     play: {
       title: "Jouer en Ligne",
@@ -369,6 +423,7 @@ export const translations = {
       createBot: "Créer Bot",
       profiles: "Profils",
       games: "Parties",
+      learn: "Apprentissage",
       guide: "Guide",
       boardSettingsTitle: "Paramètres de l'échiquier"
     },
@@ -1103,6 +1158,59 @@ export const translations = {
       }
     },
 
+    learn: {
+      title: "Opening lessons",
+      subtitle:
+        "Recommended levels, plans, traps to know, and annotated historic games — go beyond rote memorization.",
+      headerNav: "Learn",
+      hubIntro:
+        "Each lesson connects the opening to middlegame ideas. Use filters to find a line suited to your level.",
+      filters: {
+        allColors: "All colors",
+        white: "White",
+        black: "Black",
+        both: "Both",
+        allLevels: "All levels",
+        searchPlaceholder: "Search (name, ECO, tag)…",
+        character: "Style",
+        allCharacters: "All styles",
+        clearFilters: "Clear filters",
+        noResults: "No lessons match your filters.",
+        openLesson: "Open lesson",
+        lessonsCount: "lessons",
+      },
+      difficultyLabels: ["Beginner", "Easy", "Intermediate", "Advanced", "Expert"],
+      detail: {
+        backToHub: "All lessons",
+        tabs: {
+          overview: "Overview",
+          ideas: "Plans & ideas",
+          traps: "Traps",
+          modelLine: "Model line",
+          history: "History",
+        },
+        recommendedFor: "Recommended level",
+        mainIdeas: "Main ideas",
+        typicalPlans: "Typical plans",
+        traps: "Traps & common mistakes",
+        remember: "Takeaways",
+        modelLineTitle: "Annotated model line",
+        modelLineHint: "Step through moves to read commentary for the last move played.",
+        historyTitle: "Historic games",
+        historyEmpty: "No detailed historic game for this opening yet.",
+        historyMeta: "{white} vs {black} — {event} ({date}) · {result}",
+        useInRepertoire: "Build / configure a bot",
+        useInRepertoireHint: "On the homepage, add this opening to your avatar’s repertoire after analysis.",
+        notFound: "This lesson does not exist or is not published yet.",
+      },
+      commentary: {
+        move: "Move",
+        of: "of",
+        noComment: "Starting position — step forward to see explanations.",
+      },
+      eco: "ECO",
+    },
+
     // Play Page
     play: {
       title: "Play Online",
@@ -1240,6 +1348,7 @@ export const translations = {
       createBot: "Create Bot",
       profiles: "Profiles",
       games: "Games",
+      learn: "Learn",
       guide: "Guide",
       boardSettingsTitle: "Board settings"
     },

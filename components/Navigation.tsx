@@ -77,6 +77,11 @@ export default function Navigation() {
       label: { fr: "Jouer", en: "Play" }
     },
     {
+      href: "/learn",
+      piece: "Q",
+      label: { fr: "Apprentissage", en: "Learn" }
+    },
+    {
       href: "/profile",
       piece: "B", // Fou
       label: { fr: "Profil", en: "Profile" }
@@ -107,8 +112,9 @@ export default function Navigation() {
           {/* Navigation Links */}
           <div className="hidden md:flex items-center gap-1">
             {navItems.map((item) => {
-              const isActive = pathname === item.href;
+              const isActive = pathname === item.href || (item.href === "/learn" && pathname.startsWith("/learn"));
               const pieceSrc = getPieceImagePath(settings.pieceSet, pieceColor, item.piece);
+              const label = item.href === "/learn" ? t.header.learn : item.label[lang];
               return (
                 <Link key={item.href} href={item.href}>
                   <Button
@@ -120,7 +126,7 @@ export default function Navigation() {
                     }
                   >
                     <Image src={pieceSrc} alt={item.piece} width={20} height={20} className="inline-block w-5 h-5" unoptimized />
-                    <span className="ml-2">{item.label[lang]}</span>
+                    <span className="ml-2">{label}</span>
                   </Button>
                 </Link>
               );
@@ -272,8 +278,9 @@ export default function Navigation() {
 
         <div className="md:hidden flex items-center gap-1 pb-3 overflow-x-auto">
           {navItems.map((item) => {
-            const isActive = pathname === item.href;
+            const isActive = pathname === item.href || (item.href === "/learn" && pathname.startsWith("/learn"));
             const pieceSrc = getPieceImagePath(settings.pieceSet, pieceColor, item.piece);
+            const label = item.href === "/learn" ? t.header.learn : item.label[lang];
             return (
               <Link key={item.href} href={item.href}>
                 <Button
@@ -285,7 +292,7 @@ export default function Navigation() {
                   }
                 >
                   <Image src={pieceSrc} alt={item.piece} width={20} height={20} className="inline-block w-5 h-5" unoptimized />
-                  <span className="ml-1 text-xs">{item.label[lang]}</span>
+                  <span className="ml-1 text-xs">{label}</span>
                 </Button>
               </Link>
             );
