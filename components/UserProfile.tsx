@@ -10,6 +10,7 @@ import { User, Save, Database, Loader2, Trash2, Eye, EyeOff, Play, Download, Set
 import { supabase, isSupabaseConfigured, type DbProfile } from "@/lib/supabase";
 import { getUserProfiles, deleteProfile, updateProfile } from "@/lib/supabase-storage";
 import { prepareConfigForExport } from "@/lib/forced-line-utils";
+import { OPENINGS_DATABASE } from "@/lib/openings-library";
 import { useLanguage } from "@/lib/language-context";
 import ProfileDetailsModal from "./ProfileDetailsModal";
 import { toast } from "sonner";
@@ -86,7 +87,9 @@ export default function UserProfile() {
   };
 
   const handleDownload = (profile: DbProfile) => {
-    const exportConfig = prepareConfigForExport(profile.config);
+    const exportConfig = prepareConfigForExport(profile.config, {
+      openingsDatabase: OPENINGS_DATABASE,
+    });
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportConfig, null, 2));
     const downloadAnchorNode = document.createElement('a');
     downloadAnchorNode.setAttribute("href", dataStr);

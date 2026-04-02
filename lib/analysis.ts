@@ -1,5 +1,16 @@
 import { Chess } from "chess.js";
 
+/** Export UCI / Fritz (AvatarEngine.py) — réponses noires après séquence de coups blancs. */
+export interface FritzBlackChoice {
+  uci: string;
+  weight: number;
+}
+
+export interface FritzBlackOpeningFallbackEntry {
+  whiteUci: string[];
+  choices: FritzBlackChoice[];
+}
+
 export interface PersonaStats {
   username: string;
   avatarUrl?: string;
@@ -37,6 +48,11 @@ export interface EngineConfig {
   forcedLineBlack?: string[];  // Coups du bot quand il joue les noirs
   /** @deprecated Préférer forcedLineWhite / forcedLineBlack. Conservé pour rétrocompat. */
   forcedLine?: string[];
+  /**
+   * Export UCI / Fritz : réponses noires indexées uniquement sur les coups blancs joués.
+   * Rempli par prepareConfigForExport ; consommé par AvatarEngine.py.
+   */
+  fritzBlackOpeningFallback?: FritzBlackOpeningFallbackEntry[];
   creatorName?: string;
 }
 

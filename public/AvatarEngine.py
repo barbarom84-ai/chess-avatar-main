@@ -6,6 +6,7 @@ Wraps Stockfish with persona-based configuration, custom name/author, and openin
 Features:
 - Loads profile.json and engine.ini for configuration
 - Plays from opening repertoire for first 10-15 moves
+- Optional fritzBlackOpeningFallback: black replies keyed only on White's UCI moves (from exported profile)
 - Transitions to Stockfish engine after opening phase
 - Custom UCI name and author display
 
@@ -51,6 +52,7 @@ class AvatarEngine:
         self.opening_repertoire = self.profile.get('openingRepertoire', {})
         self.white_openings = self.opening_repertoire.get('whiteOpenings', [])
         self.black_openings = self.opening_repertoire.get('blackOpenings', [])
+        self.fritz_black_fallback = self.profile.get('fritzBlackOpeningFallback') or []
         
         # 🆕 État du jeu
         self.current_position = []  # Liste des coups UCI joués
@@ -287,6 +289,41 @@ class AvatarEngine:
         
         return compatible_openings[0]['move']
     
+    def _pick_fritz_black_fallback_move(self):
+        """Réponses noires indexées uniquement sur la séquence de coups blancs (export Chess Avatar)."""
+        if not self.fritz_black_fallback or not self.opening_phase:
+            return None
+        if self.bot_color != 'black':
+            return None
+        n = len(self.current_position)
+        if n % 2 == 0:
+            return None
+        white_played = [self._normalize_uci(self.current_position[i]) for i in range(0, n, 2)]
+        for entry in self.fritz_black_fallback:
+            wprefix = entry.get('whiteUci') or []
+            norm_p = [self._normalize_uci(m) for m in wprefix]
+            if norm_p != white_played:
+                continue
+            choices = entry.get('choices') or []
+            if not choices:
+                return None
+            total_weight = sum(max(1, c.get('weight', 50)) for c in choices)
+            r = random.uniform(0, total_weight)
+            s = 0
+            for c in choices:
+                s += max(1, c.get('weight', 50))
+                if r <= s:
+                    u = self._normalize_uci(c.get('uci', ''))
+                    if u:
+                        print(
+                            f"info string Fritz black fallback (white {' '.join(white_played)}): {u}",
+                            file=sys.stderr,
+                        )
+                    return u or None
+            u = self._normalize_uci(choices[-1].get('uci', ''))
+            return u or None
+        return None
+    
     def matches_opening(self, opening_moves):
         """Vérifie si les coups joués correspondent au début d'une ouverture"""
         if len(self.current_position) > len(opening_moves):
@@ -447,7 +484,14 @@ class AvatarEngine:
                 print(f"bestmove {forced_move}", flush=True)
                 return
         
-        # PRIORITÉ 2: Répertoire d'ouvertures
+        # PRIORITÉ 2a: Table noire « Fritz » (coups blancs humains seuls comme clé)
+        if self.opening_phase:
+            fb_move = self._pick_fritz_black_fallback_move()
+            if fb_move:
+                print(f"bestmove {fb_move}", flush=True)
+                return
+        
+        # PRIORITÉ 2b: Répertoire d'ouvertures classique
         if self.opening_phase and (self.white_openings or self.black_openings):
             try:
                 opening_move = self.select_opening_move(self.is_white_turn)
@@ -505,6 +549,11 @@ class AvatarEngine:
             print(f"info string White openings: {len(self.white_openings)} loaded", flush=True)
         if self.black_openings:
             print(f"info string Black openings: {len(self.black_openings)} loaded", flush=True)
+        if self.fritz_black_fallback:
+            print(
+                f"info string Fritz black fallback: {len(self.fritz_black_fallback)} entries",
+                flush=True,
+            )
         
         for line in sys.stdin:
             line = line.strip()

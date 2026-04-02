@@ -11,6 +11,7 @@ import { Library, Search, Play, Download, Loader2, Globe, Database, Settings, Fi
 import { getFilteredProfiles, updateProfile, type ProfileFilter, type ProfileSort } from "@/lib/supabase-storage";
 import { isSupabaseConfigured, supabase, type DbProfile } from "@/lib/supabase";
 import { prepareConfigForExport } from "@/lib/forced-line-utils";
+import { OPENINGS_DATABASE } from "@/lib/openings-library";
 import { useRouter } from "next/navigation";
 import ProfileDetailsModal from "./ProfileDetailsModal";
 import { toast } from "sonner";
@@ -63,7 +64,9 @@ export default function PublicProfiles() {
   };
 
   const handleDownload = (profile: DbProfile) => {
-    const exportConfig = prepareConfigForExport(profile.config);
+    const exportConfig = prepareConfigForExport(profile.config, {
+      openingsDatabase: OPENINGS_DATABASE,
+    });
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportConfig, null, 2));
     const downloadAnchorNode = document.createElement('a');
     downloadAnchorNode.setAttribute("href", dataStr);

@@ -75,8 +75,10 @@ export default function PersonaCard({ stats, config, profileId }: PersonaCardPro
   };
   
   const handleDownload = () => {
-    const { OPENINGS_DATABASE } = require('@/lib/openings-library');
-    const exportConfig = prepareConfigForExport(customConfig);
+    const { OPENINGS_DATABASE } = require("@/lib/openings-library");
+    const exportConfig = prepareConfigForExport(customConfig, {
+      openingsDatabase: OPENINGS_DATABASE,
+    });
     const exportData = {
       ...exportConfig,
       openingsDatabase: OPENINGS_DATABASE,

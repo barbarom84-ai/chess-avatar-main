@@ -1,5 +1,6 @@
 import { getOpeningById } from "@/lib/openings-library";
 import type { EngineConfig } from "@/lib/analysis";
+import { buildFritzBlackOpeningFallback } from "@/lib/fritz-opening-fallback";
 
 export type ForcedLineSource = "openings" | "custom";
 
@@ -174,10 +175,20 @@ export function remainingForcedMovesForBot(
   return out;
 }
 
-export function prepareConfigForExport(config: EngineConfig): EngineConfig {
+export function prepareConfigForExport(
+  config: EngineConfig,
+  options?: { openingsDatabase?: { id: string; uciMoves?: string[] }[] }
+): EngineConfig {
   const { white, black } = getEffectiveForcedLinesByColor(config);
-  if (white.length === 0 && black.length === 0) return config;
-  return { ...config, forcedLineWhite: white, forcedLineBlack: black };
+  let next: EngineConfig = { ...config };
+  if (white.length > 0 || black.length > 0) {
+    next = { ...next, forcedLineWhite: white, forcedLineBlack: black };
+  }
+  const fritz = buildFritzBlackOpeningFallback(next, options?.openingsDatabase);
+  if (fritz.length > 0) {
+    next = { ...next, fritzBlackOpeningFallback: fritz };
+  }
+  return next;
 }
 
 export function getEditableForcedLines(config: EngineConfig): { white: string[]; black: string[] } {
