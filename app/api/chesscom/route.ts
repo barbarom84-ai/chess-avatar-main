@@ -1,5 +1,13 @@
 import { NextResponse } from "next/server";
 
+interface ChessComArchiveGame {
+  uuid?: string;
+  end_time?: number;
+  pgn?: string;
+  white?: { username?: string; result?: string };
+  black?: { username?: string; result?: string };
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const username = searchParams.get("username");
@@ -26,7 +34,7 @@ export async function GET(request: Request) {
 
     // Parcourt les archives de la plus récente à la plus ancienne (max 12 mois)
     const recentArchiveUrls = archiveUrls.slice(-12).reverse();
-    const collectedGames: any[] = [];
+    const collectedGames: ChessComArchiveGame[] = [];
 
     for (const archiveUrl of recentArchiveUrls) {
       try {
@@ -51,7 +59,7 @@ export async function GET(request: Request) {
 
     // 3. Normaliser les données pour qu'elles ressemblent à celles de Lichess
     // Notre frontend attend : { pgn: string, winner: string, players: ... }
-    const normalizedGames = collectedGames.slice(0, 15).map((g: any, idx: number) => {
+    const normalizedGames = collectedGames.slice(0, 15).map((g, idx: number) => {
         const whiteUsername = g?.white?.username || "White";
         const blackUsername = g?.black?.username || "Black";
 
@@ -81,7 +89,7 @@ export async function GET(request: Request) {
         avatarUrl: profile.avatar || "https://www.chess.com/bundles/web/images/user-image.svg" 
     });
 
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Chess.com API error", errorKey: "genericError" }, { status: 500 });
   }
 }

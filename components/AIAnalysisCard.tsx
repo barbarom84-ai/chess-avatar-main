@@ -141,7 +141,7 @@ export default function AIAnalysisCard({ analysis, loading, onRefresh }: AIAnaly
           <div>
             <h3 className="text-sm font-semibold text-amber-300 mb-2 flex items-center gap-2">
               <Target className="h-4 w-4" />
-              Axes d'Amélioration
+              Axes d&apos;Amélioration
             </h3>
             <div className="flex flex-wrap gap-2">
               {analysis.improvementAreas.map((area, index) => (

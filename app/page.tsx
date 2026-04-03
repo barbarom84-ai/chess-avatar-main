@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useLanguage } from "@/lib/language-context";
 
 export default function HomePage() {
-  const { lang, setLang, t } = useLanguage();
+  const { lang, t } = useLanguage();
 
   const features = [
     {

@@ -3,13 +3,9 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { 
   Trophy, 
-  Target, 
   Swords, 
-  Clock, 
   RotateCcw, 
   Settings, 
   Home, 
@@ -57,12 +53,10 @@ export default function GameResultModal({
   result,
   resultMessage,
   stats,
-  playerColor,
-  configName,
   onRematch,
   onSwitchColor,
   onConfigure,
-  onDownloadPGN
+  onDownloadPGN,
 }: GameResultModalProps) {
   const router = useRouter();
   const { t } = useLanguage();
@@ -96,14 +90,6 @@ export default function GameResultModal({
 
   const config = resultConfig[result];
   const ResultIcon = config.icon;
-
-  const getPerformanceRating = () => {
-    if (result === 'win') return t.gameResult.performanceExcellent;
-    if (result === 'draw' && stats.averageEval && Math.abs(stats.averageEval) < 0.5) return t.gameResult.performanceGood;
-    if (result === 'draw') return t.gameResult.performanceFair;
-    if (stats.worstEval && stats.worstEval < -3) return t.gameResult.performanceToImprove;
-    return t.gameResult.performanceFair;
-  };
 
   return (
     <Dialog open={open} onOpenChange={(newOpen) => {

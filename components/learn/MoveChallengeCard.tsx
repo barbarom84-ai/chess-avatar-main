@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import SimpleChessboard from "@/components/SimpleChessboard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -37,10 +37,9 @@ export default function MoveChallengeCard({
     }
   }, [uciMoves, challenge.afterMoveCount]);
 
-  const [choices, setChoices] = useState<string[]>([]);
-  useEffect(() => {
+  const choices = useMemo(() => {
     const all = [challenge.correctUci, ...challenge.wrongChoices];
-    setChoices(shuffleInPlace(all));
+    return shuffleInPlace([...all]);
   }, [challenge.correctUci, challenge.wrongChoices]);
 
   const [picked, setPicked] = useState<string | null>(null);

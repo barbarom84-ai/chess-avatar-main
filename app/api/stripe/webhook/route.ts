@@ -25,8 +25,9 @@ export async function POST(req: NextRequest) {
       sig,
       process.env.STRIPE_WEBHOOK_SECRET || ''
     );
-  } catch (err: any) {
-    console.error('Webhook signature verification failed:', err.message);
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("Webhook signature verification failed:", msg);
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
   }
 

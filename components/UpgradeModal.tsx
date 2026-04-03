@@ -53,8 +53,10 @@ export default function UpgradeModal({ open, onOpenChange, userId, email, reason
       if (data.url) {
         window.location.href = data.url;
       }
-    } catch (err: any) {
-      setError(err.message || t.upgrade.unexpectedError);
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error ? err.message : t.upgrade.unexpectedError
+      );
     } finally {
       setLoading(false);
     }

@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import type { EngineConfig, PersonaStats } from '@/lib/analysis';
 
 // Configuration Supabase
 // Ces valeurs doivent être dans les variables d'environnement
@@ -19,8 +20,8 @@ export interface DbProfile {
   user_id: string;
   username: string;
   platform: 'lichess' | 'chesscom';
-  config: any; // EngineConfig
-  stats: any; // PersonaStats
+  config: EngineConfig;
+  stats: PersonaStats;
   is_public: boolean;
   avatar_url?: string | null;
   created_at: string;

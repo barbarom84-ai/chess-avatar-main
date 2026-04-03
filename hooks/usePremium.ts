@@ -11,16 +11,15 @@ interface PremiumState {
 }
 
 export function usePremium(): PremiumState {
-  const [state, setState] = useState<PremiumState>({
+  const [state, setState] = useState<PremiumState>(() => ({
     isPremium: false,
-    loading: true,
+    loading: Boolean(isSupabaseConfigured && supabase),
     userId: null,
     email: null,
-  });
+  }));
 
   useEffect(() => {
     if (!isSupabaseConfigured || !supabase) {
-      setState(prev => ({ ...prev, loading: false }));
       return;
     }
 

@@ -46,8 +46,10 @@ export default function AuthModal({ open, onOpenChange, onSuccess }: AuthModalPr
         onOpenChange(false);
         onSuccess?.();
       }, 1000);
-    } catch (err: any) {
-      setError(err.message || 'Erreur lors de la connexion');
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error ? err.message : "Erreur lors de la connexion"
+      );
     } finally {
       setLoading(false);
     }
@@ -79,8 +81,10 @@ export default function AuthModal({ open, onOpenChange, onSuccess }: AuthModalPr
         setMode('signin');
         setSuccess('');
       }, 2000);
-    } catch (err: any) {
-      setError(err.message || 'Erreur lors de l\'inscription');
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error ? err.message : "Erreur lors de l'inscription"
+      );
     } finally {
       setLoading(false);
     }

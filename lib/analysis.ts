@@ -86,7 +86,19 @@ function openingFromEcoUrl(ecoUrl?: string | null): string | null {
   return normalizeOpeningName(cleaned);
 }
 
-function extractOpeningName(game: any): string | null {
+export interface PersonaGameInput {
+  id?: string;
+  createdAt?: number;
+  opening?: { name?: string };
+  pgn?: string;
+  winner?: string | null;
+  players?: {
+    white?: { user?: { name?: string }; username?: string };
+    black?: { user?: { name?: string }; username?: string };
+  };
+}
+
+function extractOpeningName(game: PersonaGameInput): string | null {
   const direct = normalizeOpeningName(game?.opening?.name);
   if (direct) return direct;
 
@@ -109,10 +121,10 @@ function extractOpeningName(game: any): string | null {
 
 // On ajoute le paramètre platform à la fonction
 export function analyzePersona(
-  games: any[], 
-  username: string, 
+  games: PersonaGameInput[],
+  username: string,
   avatarUrl?: string,
-  platform?: 'lichess' | 'chesscom'
+  platform?: "lichess" | "chesscom"
 ): { stats: PersonaStats; config: EngineConfig } {
   let wins = 0;
   let draws = 0;
@@ -125,6 +137,9 @@ export function analyzePersona(
   const validGames = games.filter(g => g && typeof g.pgn === 'string');
 
   validGames.forEach((game) => {
+    const pgnText = game.pgn;
+    if (!pgnText) return;
+
     // Gestion des noms un peu différente selon Lichess/Chess.com
     // On essaie de trouver le joueur qui correspond au username
     const whiteName = game.players?.white?.user?.name || game.players?.white?.username || "Anonymous";
@@ -138,7 +153,7 @@ export function analyzePersona(
 
     try {
       const chess = new Chess();
-      chess.loadPgn(game.pgn);
+      chess.loadPgn(pgnText);
       const history = chess.history({ verbose: true });
       totalMoves += history.length;
 
@@ -156,7 +171,7 @@ export function analyzePersona(
           }
         });
       }
-    } catch (e) {
+    } catch {
       // Ignorer les parties corrompues
     }
   });

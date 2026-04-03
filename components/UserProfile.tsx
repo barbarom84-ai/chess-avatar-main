@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { User, Save, Database, Loader2, Trash2, Eye, EyeOff, Play, Download, Settings } from "lucide-react";
+import { Save, Database, Loader2, Trash2, Eye, EyeOff, Play, Download, Settings } from "lucide-react";
+import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { supabase, isSupabaseConfigured, type DbProfile } from "@/lib/supabase";
 import { getUserProfiles, deleteProfile, updateProfile } from "@/lib/supabase-storage";
 import { prepareConfigForExport } from "@/lib/forced-line-utils";
@@ -18,49 +19,51 @@ import { toast } from "sonner";
 export default function UserProfile() {
   const router = useRouter();
   const { t, lang } = useLanguage();
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<SupabaseUser | null>(null);
   const [profiles, setProfiles] = useState<DbProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedProfile, setSelectedProfile] = useState<DbProfile | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
 
-  // Charger l'utilisateur et ses profils
+  const loadProfiles = useCallback(async () => {
+    const data = await getUserProfiles();
+    setProfiles(data);
+  }, []);
+
+  const loadUser = useCallback(async () => {
+    if (!supabase) {
+      setLoading(false);
+      return;
+    }
+    const {
+      data: { user: nextUser },
+    } = await supabase.auth.getUser();
+    setUser(nextUser);
+    setLoading(false);
+  }, []);
+
   useEffect(() => {
     if (!isSupabaseConfigured || !supabase) {
       setLoading(false);
       return;
     }
 
-    loadUser();
-    loadProfiles();
+    void loadUser();
+    void loadProfiles();
 
-    // Écouter les changements d'authentification
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       if (session?.user) {
-        loadProfiles();
+        void loadProfiles();
       } else {
         setProfiles([]);
       }
     });
 
     return () => subscription.unsubscribe();
-  }, []);
-
-  const loadUser = async () => {
-    if (!supabase) {
-      setLoading(false);
-      return;
-    }
-    const { data: { user } } = await supabase.auth.getUser();
-    setUser(user);
-    setLoading(false);
-  };
-
-  const loadProfiles = async () => {
-    const data = await getUserProfiles();
-    setProfiles(data);
-  };
+  }, [loadUser, loadProfiles]);
 
 
   const handleDelete = async (id: string) => {

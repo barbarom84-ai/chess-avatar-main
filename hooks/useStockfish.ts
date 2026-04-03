@@ -7,7 +7,6 @@ import {
   forcedLinePrefixMatchesBotMovesOnly,
   getEffectiveForcedLinesByColor,
   nextForcedMoveForBot,
-  normalizeUci,
   remainingForcedMovesForBot,
 } from "@/lib/forced-line-utils";
 
@@ -346,7 +345,6 @@ export function useStockfish() {
       }
 
       let lastEval: number | null = null;
-      let depthReached = 0;
 
       const handleMessage = (e: MessageEvent) => {
         const message = e.data;
@@ -355,10 +353,6 @@ export function useStockfish() {
         if (message.includes("score cp")) {
           const match = message.match(/score cp (-?\d+)/);
           if (match) lastEval = parseInt(match[1]) / 100;
-        }
-        if (message.includes("depth")) {
-          const match = message.match(/depth (\d+)/);
-          if (match) depthReached = parseInt(match[1]);
         }
         if (message.startsWith("bestmove")) {
           engineRef.current?.removeEventListener("message", handleMessage);

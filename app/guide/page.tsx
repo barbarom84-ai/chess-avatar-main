@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Download, FileJson, BookOpen } from "lucide-react";
+import { Download, BookOpen } from "lucide-react";
 import { useLanguage } from "@/lib/language-context";
 
 export default function GuidePage() {

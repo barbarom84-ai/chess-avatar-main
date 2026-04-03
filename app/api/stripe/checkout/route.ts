@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import Stripe from 'stripe';
 import { getStripe, getStripePriceId } from '@/lib/stripe';
 
 export async function POST(req: NextRequest) {
@@ -34,8 +33,8 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ url: session.url });
-  } catch (error: any) {
-    console.error('Stripe checkout error:', error);
+  } catch (error: unknown) {
+    console.error("Stripe checkout error:", error);
     return NextResponse.json(
       { error: 'CHECKOUT_ERROR' },
       { status: 500 }

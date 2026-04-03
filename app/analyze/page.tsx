@@ -17,7 +17,12 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 // Imports Logique
 import PersonaCard from "@/components/PersonaCard";
 import PerformanceCharts from "@/components/PerformanceCharts";
-import { analyzePersona, type PersonaStats, type EngineConfig } from "@/lib/analysis";
+import {
+  analyzePersona,
+  type PersonaStats,
+  type EngineConfig,
+  type PersonaGameInput,
+} from "@/lib/analysis";
 import { useLanguage } from "@/lib/language-context";
 
 // Import Dynamique de l'échiquier (pour éviter le bug SSR)
@@ -27,7 +32,7 @@ const GameViewer = dynamic(() => import("@/components/GameViewer"), {
 });
 
 export default function AnalyzePage() {
-  const { lang, t } = useLanguage();
+  const { t } = useLanguage();
   
   // --- ÉTATS ---
   const [platform, setPlatform] = useState<"lichess" | "chesscom">("lichess");
@@ -36,8 +41,10 @@ export default function AnalyzePage() {
   const [error, setError] = useState("");
   
   // Données
-  const [games, setGames] = useState<any[]>([]);
-  const [selectedGame, setSelectedGame] = useState<any>(null);
+  const [games, setGames] = useState<PersonaGameInput[]>([]);
+  const [selectedGame, setSelectedGame] = useState<PersonaGameInput | null>(
+    null
+  );
   const [personaStats, setPersonaStats] = useState<PersonaStats | null>(null);
   const [engineConfig, setEngineConfig] = useState<EngineConfig | null>(null);
 
@@ -94,8 +101,10 @@ export default function AnalyzePage() {
       setPersonaStats(analysis.stats);
       setEngineConfig(analysis.config);
 
-    } catch (err: any) {
-      setError(err.message || t.errors.genericError);
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : t.errors.genericError;
+      setError(message || t.errors.genericError);
     } finally {
       setLoading(false);
     }
@@ -192,9 +201,16 @@ export default function AnalyzePage() {
                 <ScrollArea className="flex-1 px-4 pb-4">
                   <div className="space-y-2 mt-2">
                     {games.map((game, idx) => {
-                      const whiteName = game.players.white.user.name || game.players.white.username;
-                      const blackName = game.players.black.user.name || game.players.black.username;
-                      const isWhite = whiteName.toLowerCase() === username.toLowerCase();
+                      const whiteName =
+                        game.players?.white?.user?.name ||
+                        game.players?.white?.username ||
+                        "?";
+                      const blackName =
+                        game.players?.black?.user?.name ||
+                        game.players?.black?.username ||
+                        "?";
+                      const isWhite =
+                        whiteName.toLowerCase() === username.toLowerCase();
                       
                       const resultClass = 
                         (game.winner === (isWhite ? 'white' : 'black')) ? "border-green-500/40 bg-green-500/5" :
@@ -234,7 +250,7 @@ export default function AnalyzePage() {
               {/* Échiquier */}
               <div className="lg:col-span-8 h-full">
                 {selectedGame ? (
-                  <GameViewer pgn={selectedGame.pgn} />
+                  <GameViewer pgn={selectedGame.pgn ?? ""} />
                 ) : (
                   <div className="h-full flex items-center justify-center bg-slate-900 rounded-xl border border-slate-800 text-slate-500">
                     {t.selectGame}

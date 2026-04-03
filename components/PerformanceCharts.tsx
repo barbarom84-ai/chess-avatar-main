@@ -6,7 +6,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { 
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
-  PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, Legend,
+  PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip,
   ResponsiveContainer
 } from "recharts";
 import { TrendingUp, PieChart as PieChartIcon, Target, Activity } from "lucide-react";
@@ -46,7 +46,6 @@ export default function PerformanceCharts({ stats }: PerformanceChartsProps) {
     ];
   };
 
-              {t.performanceCharts.resultsTab}
   const resultsData = [
     { name: t.performanceCharts.wins, value: stats.winRate, color: '#22c55e' },
     { name: t.performanceCharts.draws, value: stats.drawRate, color: '#94a3b8' },
@@ -144,7 +143,6 @@ export default function PerformanceCharts({ stats }: PerformanceChartsProps) {
             </div>
           </TabsContent>
 
-                <h3 className="text-sm font-semibold text-slate-300">{t.performanceCharts.resultDistribution}</h3>
           <TabsContent value="results" className="mt-6">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
@@ -233,8 +231,9 @@ export default function PerformanceCharts({ stats }: PerformanceChartsProps) {
                           borderRadius: '8px',
                           color: '#e2e8f0'
                         }}
-                        formatter={(value: any, name: string) => {
-                          if (name === 'parties') return [`${value} ${t.performanceCharts.games}`, 'Count'];
+                        formatter={(value: number | string, name: string) => {
+                          if (name === "parties")
+                            return [`${value} ${t.performanceCharts.games}`, "Count"];
                           return [value, name];
                         }}
                       />
@@ -290,7 +289,10 @@ export default function PerformanceCharts({ stats }: PerformanceChartsProps) {
                       borderRadius: '8px',
                       color: '#e2e8f0'
                     }}
-                    formatter={(value: any) => [`${value}%`, 'Performance']}
+                    formatter={(value: number | string) => [
+                      `${value}%`,
+                      "Performance",
+                    ]}
                   />
                   <Bar dataKey="performance" fill="#fb923c" radius={[0, 8, 8, 0]} />
                 </BarChart>

@@ -49,7 +49,7 @@ export async function GET(request: Request) {
       .map((line) => {
         try {
           return JSON.parse(line);
-        } catch (e) {
+        } catch {
           return null;
         }
       })

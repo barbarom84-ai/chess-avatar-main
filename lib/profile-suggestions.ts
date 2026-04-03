@@ -1,4 +1,4 @@
-import type { PlayingStyle, ProfileMetadata, EnhancedProfile } from '@/types/chess';
+import type { PlayingStyle, ProfileMetadata } from '@/types/chess';
 import type { DbProfile } from './supabase-storage';
 
 // ========================================
@@ -337,13 +337,8 @@ function calculateStyleSimilarity(style1: PlayingStyle, style2: PlayingStyle): n
 /**
  * Trouver les profils similaires
  */
-export function findSimilarProfiles(
-  userMetadata: ProfileMetadata,
-  allProfiles: DbProfile[],
-  limit: number = 5
-): SimilarProfile[] {
-  // Pour l'instant, retourne un tableau vide car on n'a pas accès aux métadonnées des autres profils
-  // Cette fonctionnalité nécessiterait une API backend pour query les profils
+/** Stub : nécessiterait une API backend pour comparer les métadonnées des profils. */
+export function findSimilarProfiles(): SimilarProfile[] {
   return [];
 }
 

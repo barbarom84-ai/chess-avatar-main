@@ -50,7 +50,6 @@ export default function ProfileEditor({
 }: ProfileEditorProps) {
   const { t, lang } = useLanguage();
   // États
-  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   
   // Informations générales
@@ -88,7 +87,6 @@ export default function ProfileEditor({
   }, [open, profileId]);
 
   const loadMetadata = async () => {
-    setLoading(true);
     try {
       const metadata = await getProfileMetadata(profileId);
       if (metadata) {
@@ -115,8 +113,6 @@ export default function ProfileEditor({
       }
     } catch (error) {
       console.error('Erreur lors du chargement des métadonnées:', error);
-    } finally {
-      setLoading(false);
     }
   };
 

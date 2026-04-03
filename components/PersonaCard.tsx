@@ -6,7 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Download, Bot, Swords, Shield, Activity, Cpu, Clock, Target, BookOpen, TrendingUp, Zap, Play, Settings, Save, Edit, Crown } from "lucide-react";
+import { Download, Bot, Swords, Shield, Activity, Cpu, Clock, Target, BookOpen, TrendingUp, Zap, Play, Settings, Save, Edit } from "lucide-react";
 import type { PersonaStats, EngineConfig } from "@/lib/analysis";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -16,6 +16,7 @@ import { saveRecentConfig } from "@/lib/storage";
 import { toast } from "sonner";
 import { saveProfileToCloud, isAuthenticated } from "@/lib/supabase-storage";
 import { prepareConfigForExport } from "@/lib/forced-line-utils";
+import { OPENINGS_DATABASE } from "@/lib/openings-library";
 import AuthModal from "./AuthModal";
 import UpgradeModal from "./UpgradeModal";
 import { useLanguage } from "@/lib/language-context";
@@ -53,7 +54,7 @@ export default function PersonaCard({ stats, config, profileId }: PersonaCardPro
   const [customConfig, setCustomConfig] = useState<EngineConfig>(config);
   const [isAuth, setIsAuth] = useState(false);
   const [savingCloud, setSavingCloud] = useState(false);
-  const { isPremium, userId, email } = usePremium();
+  const { userId, email } = usePremium();
 
   useEffect(() => {
     setCustomConfig(config);
@@ -75,7 +76,6 @@ export default function PersonaCard({ stats, config, profileId }: PersonaCardPro
   };
   
   const handleDownload = () => {
-    const { OPENINGS_DATABASE } = require("@/lib/openings-library");
     const exportConfig = prepareConfigForExport(customConfig, {
       openingsDatabase: OPENINGS_DATABASE,
     });
@@ -128,14 +128,15 @@ export default function PersonaCard({ stats, config, profileId }: PersonaCardPro
       } else {
         toast.error(t.personaCard.saveError);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       setSavingCloud(false);
-      if (error?.message === 'PROFILE_LIMIT_REACHED') {
+      const msg = error instanceof Error ? error.message : String(error);
+      if (msg === "PROFILE_LIMIT_REACHED") {
         setShowUpgradeModal(true);
       } else {
-        toast.error(`${t.personaCard.unknownSaveError}: ${error?.message}`);
+        toast.error(`${t.personaCard.unknownSaveError}: ${msg}`);
       }
-      console.error('Erreur complète:', error);
+      console.error("Erreur complète:", error);
     }
   };
 

@@ -6,17 +6,15 @@ import type { EngineConfig } from "@/lib/analysis";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import {
-  Trophy, Target, Calendar, Clock, Download, Trash2, 
-  Search, Filter, TrendingUp, Play, Eye, ChevronLeft, ChevronRight,
+  Trophy, Target, Calendar, Clock, Download, Trash2,
+  Search, TrendingUp, Eye, ChevronLeft, ChevronRight,
   CheckSquare, Square, X, Upload, Loader2
 } from "lucide-react";
 import { getUserGames, getGamesStats, deleteGame, saveGameToCloud, type DbGame } from "@/lib/supabase-storage";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { useLanguage } from "@/lib/language-context";
-import Link from "next/link";
 import Image from "next/image";
 import {
   Dialog,
@@ -260,10 +258,8 @@ export default function GamesPage() {
     const msg = t.games.confirmDeleteMultiple.replace('{count}', String(selectedIds.size));
     if (!confirm(msg)) return;
 
-    let success = true;
     for (const id of selectedIds) {
-      const ok = await deleteGame(id);
-      if (!ok) success = false;
+      await deleteGame(id);
     }
     setSelectedIds(new Set());
     loadGames();

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Chess } from "chess.js";
 import { ChevronLeft, ChevronRight, Play, RotateCcw, Pause, RotateCw, ChevronsRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -47,30 +47,56 @@ export default function AdvancedGameViewer({ pgn, playerColor = 'white' }: Advan
     }
   }, [pgn]);
 
+  const handleNext = useCallback(() => {
+    if (currentIndex < gamePositions.length - 1) {
+      setCurrentIndex(currentIndex + 1);
+      setIsPlaying(false);
+    }
+  }, [currentIndex, gamePositions.length]);
+
+  const handlePrev = useCallback(() => {
+    if (currentIndex > 0) {
+      setCurrentIndex(currentIndex - 1);
+      setIsPlaying(false);
+    }
+  }, [currentIndex]);
+
+  const handleReset = useCallback(() => {
+    setCurrentIndex(0);
+    setIsPlaying(false);
+  }, []);
+
   // Navigation clavier
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowLeft') {
+      if (e.key === "ArrowLeft") {
         e.preventDefault();
         handlePrev();
-      } else if (e.key === 'ArrowRight') {
+      } else if (e.key === "ArrowRight") {
         e.preventDefault();
         handleNext();
-      } else if (e.key === 'Home') {
+      } else if (e.key === "Home") {
         e.preventDefault();
         handleReset();
-      } else if (e.key === 'End') {
+      } else if (e.key === "End") {
         e.preventDefault();
         setCurrentIndex(gamePositions.length - 1);
-      } else if (e.key === ' ') {
+      } else if (e.key === " ") {
         e.preventDefault();
         setIsPlaying(!isPlaying);
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentIndex, gamePositions.length, isPlaying]);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [
+    currentIndex,
+    gamePositions.length,
+    isPlaying,
+    handleNext,
+    handlePrev,
+    handleReset,
+  ]);
 
   // Auto-Play
   useEffect(() => {
@@ -84,25 +110,6 @@ export default function AdvancedGameViewer({ pgn, playerColor = 'white' }: Advan
     }
     return () => clearInterval(interval);
   }, [isPlaying, currentIndex, gamePositions.length]);
-
-  const handleNext = () => {
-    if (currentIndex < gamePositions.length - 1) {
-      setCurrentIndex(currentIndex + 1);
-      setIsPlaying(false);
-    }
-  };
-
-  const handlePrev = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1);
-      setIsPlaying(false);
-    }
-  };
-
-  const handleReset = () => {
-    setCurrentIndex(0);
-    setIsPlaying(false);
-  };
 
   const currentFen = gamePositions.length > 0 ? gamePositions[currentIndex] : "start";
 

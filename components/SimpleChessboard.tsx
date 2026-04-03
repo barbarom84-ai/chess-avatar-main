@@ -1,6 +1,6 @@
 "use client";
 
-import { Chess } from "chess.js";
+import { Chess, type Square, type Piece } from "chess.js";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { useChessboardSettings, getPieceImagePath } from "@/contexts/ChessboardSettingsContext";
@@ -131,7 +131,7 @@ export default function SimpleChessboard({
     setDragClientPos({ x: e.clientX, y: e.clientY });
 
     if (showLegalMoves) {
-      const moves = game.moves({ square: square as any, verbose: true });
+      const moves = game.moves({ square: square as Square, verbose: true });
       setHighlightedSquares(moves.map((m) => m.to));
     }
   };
@@ -174,7 +174,7 @@ export default function SimpleChessboard({
     resetPointerDrag();
 
     if (!moved && toSquare === fromSquare) {
-      const p = game.get(fromSquare as never);
+      const p = game.get(fromSquare as Square);
       handleSquareClick(fromSquare, p);
       suppressSyntheticClickAfterPointer();
       return;
@@ -194,7 +194,10 @@ export default function SimpleChessboard({
   };
 
   // Mode click-to-move
-  const handleSquareClick = (square: string, piece: any) => {
+  const handleSquareClick = (
+    square: string,
+    piece: Piece | null | undefined
+  ) => {
     if (!onDrop) return;
     if (suppressNextClickRef.current) return;
 
@@ -209,7 +212,7 @@ export default function SimpleChessboard({
 
       // Si on clique sur une case valide, on fait le coup
       if (highlightedSquares.includes(square)) {
-        const success = onDrop(selectedSquare, square);
+        onDrop(selectedSquare, square);
         setSelectedSquare(null);
         setHighlightedSquares([]);
         return;
@@ -218,7 +221,7 @@ export default function SimpleChessboard({
       // Sinon, si on clique sur une autre pièce, on la sélectionne
       if (piece && piece.color === game.turn()) {
         setSelectedSquare(square);
-        const moves = game.moves({ square: square as any, verbose: true });
+        const moves = game.moves({ square: square as Square, verbose: true });
         const targets = moves.map(m => m.to);
         setHighlightedSquares(targets);
         return;
@@ -231,7 +234,7 @@ export default function SimpleChessboard({
       // Première sélection : si c'est une pièce du joueur actuel
       if (piece && piece.color === game.turn()) {
         setSelectedSquare(square);
-        const moves = game.moves({ square: square as any, verbose: true });
+        const moves = game.moves({ square: square as Square, verbose: true });
         const targets = moves.map(m => m.to);
         setHighlightedSquares(targets);
       }

@@ -9,7 +9,6 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Slider } from "@/components/ui/slider";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
 import { useLanguage } from "@/lib/language-context";
 import { 
   BookOpen, 
@@ -25,8 +24,7 @@ import {
   Plus,
   Sparkles
 } from "lucide-react";
-import { 
-  OPENINGS_DATABASE, 
+import {
   REPERTOIRE_PRESETS,
   getOpeningById,
   getOpeningsByColor,

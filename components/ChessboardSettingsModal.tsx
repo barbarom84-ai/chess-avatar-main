@@ -19,7 +19,8 @@ import {
   PIECE_SETS,
   getPieceImagePath,
   type BoardTheme,
-  type PieceSet
+  type PieceSet,
+  type ChessboardSettings,
 } from "@/contexts/ChessboardSettingsContext";
 import { useLanguage } from "@/lib/language-context";
 import { usePremium } from "@/hooks/usePremium";
@@ -458,7 +459,12 @@ export default function ChessboardSettingsModal({ open, onOpenChange }: Chessboa
                     ].map((speed) => (
                       <button
                         key={speed.value}
-                        onClick={() => updateSettings({ animationSpeed: speed.value as any })}
+                        onClick={() =>
+                          updateSettings({
+                            animationSpeed:
+                              speed.value as ChessboardSettings["animationSpeed"],
+                          })
+                        }
                         className={`p-3 rounded-lg border-2 transition-all duration-200 ${
                           settings.animationSpeed === speed.value
                             ? 'border-cyan-500 bg-cyan-500/10 text-cyan-300'

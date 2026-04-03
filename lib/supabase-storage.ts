@@ -4,7 +4,7 @@
 
 import { supabase, isSupabaseConfigured, type DbProfile } from './supabase';
 import type { EngineConfig, PersonaStats } from './analysis';
-import { getSavedConfigs, type SavedConfig } from './storage';
+import { getSavedConfigs } from './storage';
 
 // Ré-exporter DbProfile pour faciliter les imports
 export type { DbProfile } from './supabase';
@@ -33,7 +33,7 @@ export interface DbGame {
   avg_eval?: number;
   created_at: string;
   updated_at: string;
-  bot_config?: any;
+  bot_config?: EngineConfig;
 }
 
 /**
@@ -159,11 +159,12 @@ export async function saveProfileToCloud(
 
     console.log('✅ Profil sauvegardé avec succès:', data.id);
     return data;
-  } catch (error: any) {
-    console.error('❌ Exception capturée:', error);
-    console.error('❌ Message:', error?.message);
-    console.error('❌ Stack:', error?.stack);
-    console.error('❌ Erreur complète:', JSON.stringify(error, null, 2));
+  } catch (error: unknown) {
+    console.error("❌ Exception capturée:", error);
+    if (error instanceof Error) {
+      console.error("❌ Message:", error.message);
+      console.error("❌ Stack:", error.stack);
+    }
     throw error;
   }
 }
@@ -248,9 +249,10 @@ export async function updateProfile(
     }
 
     return { success: true };
-  } catch (e: any) {
-    console.error('Exception updateProfile:', e);
-    return { success: false, error: e?.message || 'Erreur inconnue.' };
+  } catch (e: unknown) {
+    console.error("Exception updateProfile:", e);
+    const msg = e instanceof Error ? e.message : "Erreur inconnue.";
+    return { success: false, error: msg };
   }
 }
 
@@ -498,7 +500,7 @@ export async function saveGameToCloud(gameData: {
   bestEval?: number;
   worstEval?: number;
   avgEval?: number;
-  botConfig?: any;
+  botConfig?: EngineConfig;
 }): Promise<DbGame | null> {
   if (!isSupabaseConfigured || !supabase) {
     console.warn('Supabase non configuré');

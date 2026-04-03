@@ -446,7 +446,9 @@ export default function UCIExportDialog({
                   <div className="flex items-center justify-between">
                     <div>
                       <Label>Mode Analyse UCI</Label>
-                      <p className="text-xs text-slate-500">Optimisé pour l'analyse</p>
+                      <p className="text-xs text-slate-500">
+                        Optimisé pour l&apos;analyse
+                      </p>
                     </div>
                     <Switch
                       checked={options.uciAnalyseMode || false}

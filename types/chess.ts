@@ -1,3 +1,5 @@
+import type { PersonaStats, EngineConfig } from "@/lib/analysis";
+
 // Interface pour une partie d'échecs
 export interface Game {
   id: string;
@@ -97,8 +99,8 @@ export interface EnhancedProfile {
   id: string;
   username: string;
   platform: 'lichess' | 'chesscom';
-  stats: any;  // PersonaStats
-  config: any; // EngineConfig
+  stats: PersonaStats;
+  config: EngineConfig;
   
   // Métadonnées enrichies
   metadata?: ProfileMetadata;

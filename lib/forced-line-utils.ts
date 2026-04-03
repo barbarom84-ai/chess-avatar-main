@@ -192,8 +192,8 @@ export function prepareConfigForExport(
 }
 
 export function getEditableForcedLines(config: EngineConfig): { white: string[]; black: string[] } {
-  let white = config.forcedLineWhite ?? [];
-  let black = config.forcedLineBlack ?? [];
+  const white = config.forcedLineWhite ?? [];
+  const black = config.forcedLineBlack ?? [];
   if (white.length > 0 || black.length > 0) return { white, black };
   const legacy = config.forcedLine;
   if (Array.isArray(legacy) && legacy.length > 0) return splitUciSequence(legacy);

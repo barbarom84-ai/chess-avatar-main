@@ -1,7 +1,7 @@
 "use client";
 
 import { useLanguage } from "@/lib/language-context";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,24 +27,34 @@ export default function PublicProfiles() {
   const [selectedProfile, setSelectedProfile] = useState<DbProfile | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const searchQueryRef = useRef(searchQuery);
+
+  useEffect(() => {
+    searchQueryRef.current = searchQuery;
+  }, [searchQuery]);
+
+  const loadProfiles = useCallback(async () => {
+    setLoading(true);
+    const data = await getFilteredProfiles(
+      filter,
+      sort,
+      50,
+      searchQueryRef.current
+    );
+    setProfiles(data);
+    setLoading(false);
+  }, [filter, sort]);
 
   useEffect(() => {
     if (isSupabaseConfigured && supabase) {
-      loadProfiles();
+      void loadProfiles();
       supabase.auth.getUser().then(({ data }) => {
         setCurrentUserId(data.user?.id ?? null);
       });
     } else {
       setLoading(false);
     }
-  }, [filter, sort]);
-
-  const loadProfiles = async () => {
-    setLoading(true);
-    const data = await getFilteredProfiles(filter, sort, 50, searchQuery);
-    setProfiles(data);
-    setLoading(false);
-  };
+  }, [filter, sort, loadProfiles]);
 
   const handleSearch = async () => {
     loadProfiles();

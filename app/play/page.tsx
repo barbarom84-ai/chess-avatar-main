@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, Suspense, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import { Bot, AlertCircle } from "lucide-react";
@@ -33,22 +33,36 @@ function PlayContent() {
   const [error, setError] = useState("");
   const [showBotSelection, setShowBotSelection] = useState(false);
 
-  useEffect(() => {
-    const configParam = searchParams.get('config');
-    
-    if (configParam) {
-      try {
-        const decodedConfig = JSON.parse(decodeURIComponent(configParam));
-        setConfig(decodedConfig);
-        setShowBotSelection(false);
-      } catch (err) {
-        setError(t.ui.invalidConfig);
-        console.error("Config parse error:", err);
-      }
-    } else {
-      setShowBotSelection(true);
+  const urlConfigResult = useMemo(() => {
+    const configParam = searchParams.get("config");
+    if (!configParam) return { kind: "none" as const };
+    try {
+      const decoded = JSON.parse(
+        decodeURIComponent(configParam)
+      ) as EngineConfig;
+      return { kind: "ok" as const, config: decoded };
+    } catch {
+      return { kind: "error" as const };
     }
-  }, [searchParams, t.ui.invalidConfig]);
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (urlConfigResult.kind === "error") {
+      setError(t.ui.invalidConfig);
+      setShowBotSelection(false);
+      setConfig(null);
+      return;
+    }
+    if (urlConfigResult.kind === "ok") {
+      setConfig(urlConfigResult.config);
+      setShowBotSelection(false);
+      setError("");
+      return;
+    }
+    setShowBotSelection(true);
+    setConfig(null);
+    setError("");
+  }, [urlConfigResult, t.ui.invalidConfig]);
 
   const handleColorChange = () => {
     setPlayerColor(prev => prev === 'white' ? 'black' : 'white');

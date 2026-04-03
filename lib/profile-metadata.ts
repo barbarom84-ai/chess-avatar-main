@@ -86,7 +86,7 @@ export async function saveProfileMetadata(
     const existing = await getProfileMetadata(profileId);
 
     // Préparer les données au format snake_case
-    const dbData: any = {
+    const dbData: Record<string, unknown> = {
       profile_id: profileId,
       user_id: user.id
     };

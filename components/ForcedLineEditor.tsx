@@ -15,6 +15,27 @@ function isValidUci(s: string): boolean {
   return UCI_REG.test(s.trim());
 }
 
+function computeForcedLinePreview(
+  movesArray: string[],
+  variant: "full" | "bot-only"
+): string {
+  if (variant === "bot-only") {
+    return movesArray.join(", ") || "—";
+  }
+  try {
+    const chess = new Chess();
+    const san: string[] = [];
+    for (const uciMove of movesArray) {
+      const result = chess.move(uciMove);
+      if (!result) return "❌ Séquence invalide";
+      san.push(result.san);
+    }
+    return san.join(" ");
+  } catch {
+    return "❌ Erreur de validation";
+  }
+}
+
 interface ForcedLineEditorProps {
   forcedLine?: string[];
   onLineChange: (line: string[]) => void;
@@ -35,30 +56,8 @@ export default function ForcedLineEditor({ forcedLine = [], onLineChange, title,
 
   useEffect(() => {
     setMoves(forcedLine);
-    updatePreview(forcedLine);
-  }, [forcedLine]);
-
-  const updatePreview = (movesArray: string[]) => {
-    if (variant === "bot-only") {
-      setPreview(movesArray.join(", ") || "—");
-      return;
-    }
-    try {
-      const chess = new Chess();
-      const san: string[] = [];
-      for (const uciMove of movesArray) {
-        const result = chess.move(uciMove);
-        if (!result) {
-          setPreview("❌ Séquence invalide");
-          return;
-        }
-        san.push(result.san);
-      }
-      setPreview(san.join(" "));
-    } catch {
-      setPreview("❌ Erreur de validation");
-    }
-  };
+    setPreview(computeForcedLinePreview(forcedLine, variant));
+  }, [forcedLine, variant]);
 
   const addMove = () => {
     if (!newMove.trim()) return;
@@ -75,7 +74,7 @@ export default function ForcedLineEditor({ forcedLine = [], onLineChange, title,
       onLineChange(updatedMoves);
       setNewMove("");
       setError("");
-      updatePreview(updatedMoves);
+      setPreview(computeForcedLinePreview(updatedMoves, variant));
       return;
     }
 
@@ -93,7 +92,7 @@ export default function ForcedLineEditor({ forcedLine = [], onLineChange, title,
       onLineChange(updatedMoves);
       setNewMove("");
       setError("");
-      updatePreview(updatedMoves);
+      setPreview(computeForcedLinePreview(updatedMoves, variant));
     } catch (err: unknown) {
       setError((err as Error)?.message || t.forcedLine.invalidMove);
     }
@@ -103,7 +102,7 @@ export default function ForcedLineEditor({ forcedLine = [], onLineChange, title,
     const updatedMoves = moves.filter((_, i) => i !== index);
     setMoves(updatedMoves);
     onLineChange(updatedMoves);
-    updatePreview(updatedMoves);
+    setPreview(computeForcedLinePreview(updatedMoves, variant));
   };
 
   const clearAll = () => {
@@ -214,7 +213,7 @@ export default function ForcedLineEditor({ forcedLine = [], onLineChange, title,
                   const line = ["e2e4", "g1f3", "f1c4"];
                   setMoves(line);
                   onLineChange(line);
-                  updatePreview(line);
+                  setPreview(computeForcedLinePreview(line, variant));
                 }}
                 className="text-xs text-cyan-400 hover:text-cyan-300 block"
               >
@@ -226,7 +225,7 @@ export default function ForcedLineEditor({ forcedLine = [], onLineChange, title,
                   const line = ["e7e5", "b8c6", "g8f6"];
                   setMoves(line);
                   onLineChange(line);
-                  updatePreview(line);
+                  setPreview(computeForcedLinePreview(line, variant));
                 }}
                 className="text-xs text-cyan-400 hover:text-cyan-300 block"
               >
@@ -238,7 +237,7 @@ export default function ForcedLineEditor({ forcedLine = [], onLineChange, title,
                   const line = ["d2d4", "c2c4", "b1c3", "g1f3"];
                   setMoves(line);
                   onLineChange(line);
-                  updatePreview(line);
+                  setPreview(computeForcedLinePreview(line, variant));
                 }}
                 className="text-xs text-cyan-400 hover:text-cyan-300 block"
               >

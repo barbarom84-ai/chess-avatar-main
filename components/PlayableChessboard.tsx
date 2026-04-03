@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
-import { Chess } from "chess.js";
+import { Chess, type Square } from "chess.js";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -462,7 +462,7 @@ export default function PlayableChessboard({
     }
 
     // Détecter si c'est un mouvement de promotion
-    const piece = game.get(sourceSquare as any);
+    const piece = game.get(sourceSquare as Square);
     const isPromotion = piece && 
                        piece.type === 'p' && 
                        ((piece.color === 'w' && targetSquare[1] === '8') ||
@@ -501,7 +501,7 @@ export default function PlayableChessboard({
         }, 300);
         return true;
       }
-    } catch (error) {
+    } catch {
       return false;
     }
 
@@ -522,7 +522,7 @@ export default function PlayableChessboard({
       setGameResult(message);
       resultType = (g.turn() === 'w' && playerColor === 'black') || (g.turn() === 'b' && playerColor === 'white') ? 'win' : 'loss';
       setGameResultType(resultType);
-      await calculateFinalStats(resultType, message, hist, g);
+      await calculateFinalStats(resultType, message, hist);
       setShowResultModal(true);
       return;
     }
@@ -532,7 +532,7 @@ export default function PlayableChessboard({
       const message = t.board.drawStalemate;
       setGameResult(message);
       setGameResultType('draw');
-      await calculateFinalStats('draw', message, hist, g);
+      await calculateFinalStats('draw', message, hist);
       setShowResultModal(true);
       return;
     }
@@ -542,7 +542,7 @@ export default function PlayableChessboard({
       const message = t.board.drawThreefold;
       setGameResult(message);
       setGameResultType('draw');
-      await calculateFinalStats('draw', message, hist, g);
+      await calculateFinalStats('draw', message, hist);
       setShowResultModal(true);
       return;
     }
@@ -568,7 +568,7 @@ export default function PlayableChessboard({
       setGameResult(message);
       setGameResultType('draw');
       setGameOver(true);
-      await calculateFinalStats('draw', message, hist, g);
+      await calculateFinalStats('draw', message, hist);
       setShowResultModal(true);
       return;
     }
@@ -581,14 +581,14 @@ export default function PlayableChessboard({
         const message = t.board.draw50Moves;
         setGameResult(message);
         setGameResultType('draw');
-        await calculateFinalStats('draw', message, hist, g);
+        await calculateFinalStats('draw', message, hist);
         setShowResultModal(true);
         return;
       }
       const message = t.board.drawGeneric;
       setGameResult(message);
       setGameResultType('draw');
-      await calculateFinalStats('draw', message, hist, g);
+      await calculateFinalStats('draw', message, hist);
       setShowResultModal(true);
     }
   };
@@ -597,8 +597,7 @@ export default function PlayableChessboard({
   const calculateFinalStats = async (
     finalResultType: 'win' | 'loss' | 'draw',
     finalResultMessage: string,
-    currentMoveHistory: string[],
-    measureGame?: Chess
+    currentMoveHistory: string[]
   ) => {
     // Rejouer les coups pour obtenir l'historique complet (new Chess(fen) n'a pas d'historique)
     const replay = new Chess();
@@ -700,9 +699,7 @@ export default function PlayableChessboard({
       
       // Utiliser currentMoveHistory passé en paramètre
       const moves = currentMoveHistory;
-      console.log('📄 Génération PGN - Nombre de coups:', moves.length);
-      console.log('📄 Coups:', moves);
-      
+
       let movesStr = '';
       
       if (moves.length === 0) {
@@ -759,7 +756,6 @@ export default function PlayableChessboard({
         avgEval: undefined,
         botConfig: config
       });
-      console.log('✅ Partie sauvegardée');
     } catch (error) {
       console.error('Erreur lors de la sauvegarde de la partie:', error);
       // Ne pas bloquer l'affichage des résultats si la sauvegarde échoue
@@ -1438,9 +1434,15 @@ export default function PlayableChessboard({
                             const next = { ...prev };
                             const cur = next[annotatingMoveIndex];
                             if (cur) {
-                              const { emoji: _, ...rest } = cur;
-                              if (Object.keys(rest).length === 0) delete next[annotatingMoveIndex];
-                              else next[annotatingMoveIndex] = rest as { emoji?: string; note?: string };
+                              const rest = { ...cur };
+                              delete rest.emoji;
+                              if (Object.keys(rest).length === 0)
+                                delete next[annotatingMoveIndex];
+                              else
+                                next[annotatingMoveIndex] = rest as {
+                                  emoji?: string;
+                                  note?: string;
+                                };
                             }
                             return next;
                           });

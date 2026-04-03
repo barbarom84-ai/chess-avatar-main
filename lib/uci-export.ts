@@ -2,7 +2,6 @@
  * Système d'export UCI amélioré avec options complètes
  */
 
-import type { EngineConfig } from './analysis';
 import type { PlayingStyle } from '@/types/chess';
 
 // ========================================
@@ -212,11 +211,7 @@ export const UCI_PRESETS: UCIPreset[] = [
 /**
  * Convertir un PlayingStyle en options UCI
  */
-export function playingStyleToUCI(
-  style: PlayingStyle,
-  name: string,
-  baseConfig?: Partial<EngineConfig>
-): UCIOptions {
+export function playingStyleToUCI(style: PlayingStyle, name: string): UCIOptions {
   // Calculer le niveau moyen
   const avgStyle = (
     style.aggression + style.tactical + style.positional +

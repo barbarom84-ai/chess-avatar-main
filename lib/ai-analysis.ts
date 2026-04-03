@@ -140,10 +140,9 @@ function getDominantStyle(style: PlayingStyle): { name: string; value: number } 
 /**
  * Générer un résumé du style
  */
-function generateSummary(style: PlayingStyle, stats?: PersonaStats): string {
+function generateSummary(style: PlayingStyle): string {
   const dominant = getDominantStyle(style);
-  const rating = 1500; // Valeur par défaut, sera remplacée par l'ELO du profil si disponible
-  
+
   if (dominant.name === 'agressif' && dominant.value >= 80) {
     return `Joueur très agressif qui privilégie l'attaque directe et les sacrifices tactiques. N'hésite pas à prendre des risques pour obtenir l'initiative.`;
   } else if (dominant.name === 'tactique' && dominant.value >= 80) {
@@ -206,7 +205,7 @@ function generateStyleDescription(style: PlayingStyle): string {
 /**
  * Générer des recommandations personnalisées
  */
-function generateRecommendations(style: PlayingStyle, stats?: PersonaStats): string[] {
+function generateRecommendations(style: PlayingStyle): string[] {
   const recommendations: string[] = [];
   
   // Recommandations générales
@@ -319,9 +318,9 @@ export function generateAIAnalysis(
   const hasGoodData = gamesPlayed >= 10;
   
   return {
-    summary: generateSummary(style, stats),
+    summary: generateSummary(style),
     styleDescription: generateStyleDescription(style),
-    recommendations: generateRecommendations(style, stats),
+    recommendations: generateRecommendations(style),
     improvementAreas: findImprovementAreas(style),
     strengths: findStrengths(style),
     famousComparisons: findFamousComparisons(style),
