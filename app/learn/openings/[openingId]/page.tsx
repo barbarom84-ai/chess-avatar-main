@@ -56,6 +56,7 @@ export default function OpeningLessonPage() {
     reveal: ch?.reveal ?? "Show solution",
     tryAgain: ch?.tryAgain ?? "Reset",
     positionLabel: ch?.positionLabel ?? "Position before the move to find",
+    playOnBoard: ch?.playOnBoard,
   };
 
   if (catalogLoading && !lesson) {

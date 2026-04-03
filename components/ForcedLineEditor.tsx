@@ -1,13 +1,16 @@
 "use client";
 
 import { useLanguage } from "@/lib/language-context";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Plus, X, Trash2, AlertCircle } from "lucide-react";
 import { Chess } from "chess.js";
+import { useChessboardSettings } from "@/contexts/ChessboardSettingsContext";
+import { buildVerboseHistoryFromUci } from "@/lib/move-history-verbose";
+import SanNotation from "@/components/SanNotation";
 
 const UCI_REG = /^[a-h][1-8][a-h][1-8]([qrbn])?$/i;
 
@@ -49,6 +52,7 @@ interface ForcedLineEditorProps {
 
 export default function ForcedLineEditor({ forcedLine = [], onLineChange, title, description, variant = "full" }: ForcedLineEditorProps) {
   const { t } = useLanguage();
+  const { settings: boardUiSettings } = useChessboardSettings();
   const [moves, setMoves] = useState<string[]>(forcedLine);
   const [newMove, setNewMove] = useState("");
   const [error, setError] = useState("");
@@ -58,6 +62,11 @@ export default function ForcedLineEditor({ forcedLine = [], onLineChange, title,
     setMoves(forcedLine);
     setPreview(computeForcedLinePreview(forcedLine, variant));
   }, [forcedLine, variant]);
+
+  const previewVerbose = useMemo(() => {
+    if (variant === "bot-only" || moves.length === 0) return null;
+    return buildVerboseHistoryFromUci(moves);
+  }, [moves, variant]);
 
   const addMove = () => {
     if (!newMove.trim()) return;
@@ -165,7 +174,22 @@ export default function ForcedLineEditor({ forcedLine = [], onLineChange, title,
             {preview && !preview.includes("❌") && (
               <div className="bg-slate-950 p-3 rounded border border-slate-800">
                 <p className="text-xs text-slate-500 mb-1">{variant === "bot-only" ? t.forcedLine.uciSequence : t.forcedLine.sanNotation}</p>
-                <p className="text-sm text-green-400 font-mono">{preview}</p>
+                {variant === "bot-only" ? (
+                  <p className="text-sm text-green-400 font-mono">{preview}</p>
+                ) : previewVerbose && previewVerbose.length > 0 ? (
+                  <div className="flex flex-wrap gap-x-1.5 gap-y-1 items-center text-sm text-green-400">
+                    {previewVerbose.map((m, i) => (
+                      <SanNotation
+                        key={i}
+                        verboseMove={m}
+                        pieceSet={boardUiSettings.pieceSet}
+                        size="sm"
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-green-400 font-mono">{preview}</p>
+                )}
               </div>
             )}
           </div>

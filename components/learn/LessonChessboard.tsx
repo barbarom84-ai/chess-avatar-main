@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useCallback } from "react";
-import { Chess } from "chess.js";
+import { Chess, type Move } from "chess.js";
 import { Button } from "@/components/ui/button";
 import { ChevronFirst, ChevronLast, ChevronLeft, ChevronRight } from "lucide-react";
 import SimpleChessboard from "@/components/SimpleChessboard";
@@ -52,7 +52,8 @@ export default function LessonChessboard({
   moveIndex,
   onMoveIndexChange,
 }: LessonChessboardProps) {
-  const { fen, lastMove, currentSan, commentText } = useMemo(() => {
+  const { fen, lastMove, currentSan, currentVerboseMove, commentText } =
+    useMemo(() => {
     const g = new Chess();
     let last: { from: string; to: string } | null = null;
     for (let i = 0; i < moveIndex && i < uciMoves.length; i++) {
@@ -63,6 +64,7 @@ export default function LessonChessboard({
           fen: before,
           lastMove: last,
           currentSan: null as string | null,
+          currentVerboseMove: null as Move | null,
           commentText: null as string | null,
         };
       }
@@ -86,6 +88,7 @@ export default function LessonChessboard({
       fen: g.fen(),
       lastMove: last,
       currentSan: lastM ? lastM.san : null,
+      currentVerboseMove: lastM ?? null,
       commentText,
     };
   }, [uciMoves, comments, historicalAnnotations, moveIndex, lang]);
@@ -124,7 +127,9 @@ export default function LessonChessboard({
         moveIndex={moveIndex}
         totalMoves={total}
         currentSan={currentSan}
+        currentVerboseMove={currentVerboseMove}
         comment={moveIndex === 0 ? null : commentText}
+        commentLang={lang}
         labels={commentaryLabels}
       />
     </div>

@@ -24,6 +24,7 @@ interface HistoricGameSectionProps {
     reveal: string;
     tryAgain: string;
     positionLabel: string;
+    playOnBoard?: string;
   };
   challengesHeading: string;
 }

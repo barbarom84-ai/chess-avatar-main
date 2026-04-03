@@ -33,7 +33,9 @@ import {
   chessWithExplorationStack,
   mainlineMoveTargetSquare,
 } from "@/lib/review-chess";
+import { buildVerboseHistoryFromSan } from "@/lib/move-history-verbose";
 import { Input } from "@/components/ui/input";
+import SanNotation from "./SanNotation";
 
 const REVIEW_EMOJI_CHOICES = ["💡", "🔥", "❓", "!!", "!?", "⭐", "👍", "📌"];
 
@@ -144,6 +146,11 @@ export default function PlayableChessboard({
   const { isReady, isThinking, getBestMove, getBestMoveForFen, resetForcedLine, remainingForcedMoves } = useStockfish();
   const { t, lang } = useLanguage();
   const { settings: boardUiSettings } = useChessboardSettings();
+
+  const moveHistoryVerbose = useMemo(
+    () => buildVerboseHistoryFromSan(moveHistory),
+    [moveHistory]
+  );
 
   const playMoveSoundIfEnabled = () => {
     if (boardUiSettings.soundEnabled) playChessMoveSound();
@@ -1500,16 +1507,23 @@ export default function PlayableChessboard({
                             <button
                               type="button"
                               onClick={() => handleMoveClick(whiteIndex)}
-                              className={`px-1.5 py-0.5 rounded flex-1 text-center transition-all cursor-pointer min-w-0 truncate ${
+                              className={`px-1.5 py-0.5 rounded flex-1 text-center transition-all cursor-pointer min-w-0 flex flex-wrap items-center justify-center gap-0.5 ${
                                 reviewMode && currentMoveIndex === whiteIndex
                                   ? "bg-purple-600 text-white ring-2 ring-purple-400"
                                   : "text-slate-200 bg-slate-800 hover:bg-slate-700"
                               }`}
                               title={`Aller au coup ${whiteIndex + 1}`}
                             >
-                              {moveHistory[whiteIndex] || ""}{" "}
+                              <SanNotation
+                                verboseMove={
+                                  moveHistoryVerbose?.[whiteIndex] ?? null
+                                }
+                                fallbackSan={moveHistory[whiteIndex] || ""}
+                                pieceSet={boardUiSettings.pieceSet}
+                                size="sm"
+                              />
                               {moveAnnotations[whiteIndex]?.emoji
-                                ? moveAnnotations[whiteIndex].emoji
+                                ? ` ${moveAnnotations[whiteIndex].emoji}`
                                 : ""}
                             </button>
                             {reviewMode && (
@@ -1532,16 +1546,23 @@ export default function PlayableChessboard({
                               <button
                                 type="button"
                                 onClick={() => handleMoveClick(blackIndex)}
-                                className={`px-1.5 py-0.5 rounded flex-1 text-center transition-all cursor-pointer min-w-0 truncate ${
+                                className={`px-1.5 py-0.5 rounded flex-1 text-center transition-all cursor-pointer min-w-0 flex flex-wrap items-center justify-center gap-0.5 ${
                                   reviewMode && currentMoveIndex === blackIndex
                                     ? "bg-purple-600 text-white ring-2 ring-purple-400"
                                     : "text-slate-300 bg-slate-800/50 hover:bg-slate-700"
                                 }`}
                                 title={`Aller au coup ${blackIndex + 1}`}
                               >
-                                {moveHistory[blackIndex]}{" "}
+                                <SanNotation
+                                  verboseMove={
+                                    moveHistoryVerbose?.[blackIndex] ?? null
+                                  }
+                                  fallbackSan={moveHistory[blackIndex] ?? ""}
+                                  pieceSet={boardUiSettings.pieceSet}
+                                  size="sm"
+                                />
                                 {moveAnnotations[blackIndex]?.emoji
-                                  ? moveAnnotations[blackIndex].emoji
+                                  ? ` ${moveAnnotations[blackIndex].emoji}`
                                   : ""}
                               </button>
                               {reviewMode && (

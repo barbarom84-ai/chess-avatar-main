@@ -1,7 +1,10 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Chess } from "chess.js";
+import { useChessboardSettings } from "@/contexts/ChessboardSettingsContext";
+import { buildVerboseHistoryFromSan } from "@/lib/move-history-verbose";
+import SanNotation from "./SanNotation";
 import { ChevronLeft, ChevronRight, Play, RotateCcw, Pause, RotateCw, ChevronsRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -14,6 +17,7 @@ interface AdvancedGameViewerProps {
 }
 
 export default function AdvancedGameViewer({ pgn, playerColor = 'white' }: AdvancedGameViewerProps) {
+  const { settings: boardUiSettings } = useChessboardSettings();
   const [gamePositions, setGamePositions] = useState<string[]>([]);
   const [movesData, setMovesData] = useState<string[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0); 
@@ -46,6 +50,11 @@ export default function AdvancedGameViewer({ pgn, playerColor = 'white' }: Advan
       console.error("Erreur de parsing PGN:", error);
     }
   }, [pgn]);
+
+  const movesVerbose = useMemo(
+    () => buildVerboseHistoryFromSan(movesData),
+    [movesData]
+  );
 
   const handleNext = useCallback(() => {
     if (currentIndex < gamePositions.length - 1) {
@@ -219,26 +228,36 @@ export default function AdvancedGameViewer({ pgn, playerColor = 'white' }: Advan
                   {/* Coup blanc */}
                   <button
                     onClick={() => setCurrentIndex(whiteIndex)}
-                    className={`flex-1 px-2 py-1 rounded text-left transition-colors ${
+                    className={`flex-1 px-2 py-1 rounded text-left transition-colors flex items-center justify-center min-w-0 ${
                       currentIndex === whiteIndex
                         ? 'bg-cyan-600 text-white'
                         : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
                     }`}
                   >
-                    {movesData[idx * 2]}
+                    <SanNotation
+                      verboseMove={movesVerbose?.[idx * 2] ?? null}
+                      fallbackSan={movesData[idx * 2]}
+                      pieceSet={boardUiSettings.pieceSet}
+                      size="sm"
+                    />
                   </button>
                   
                   {/* Coup noir */}
                   {movesData[idx * 2 + 1] && (
                     <button
                       onClick={() => setCurrentIndex(blackIndex)}
-                      className={`flex-1 px-2 py-1 rounded text-left transition-colors ${
+                      className={`flex-1 px-2 py-1 rounded text-left transition-colors flex items-center justify-center min-w-0 ${
                         currentIndex === blackIndex
                           ? 'bg-cyan-600 text-white'
                           : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
                       }`}
                     >
-                      {movesData[idx * 2 + 1]}
+                      <SanNotation
+                        verboseMove={movesVerbose?.[idx * 2 + 1] ?? null}
+                        fallbackSan={movesData[idx * 2 + 1] ?? ""}
+                        pieceSet={boardUiSettings.pieceSet}
+                        size="sm"
+                      />
                     </button>
                   )}
                 </div>
