@@ -110,7 +110,8 @@ export default function Navigation() {
           <div className="hidden md:flex items-center gap-1">
             {navItems.map((item) => {
               const isActive = pathname === item.href || (item.href === "/learn" && pathname.startsWith("/learn"));
-              const pieceSrc = getPieceImagePath(settings.pieceSet, pieceColor, item.piece);
+              const navPieceColor = item.href === "/learn" ? "b" : pieceColor;
+              const pieceSrc = getPieceImagePath(settings.pieceSet, navPieceColor, item.piece);
               const label = item.href === "/learn" ? t.header.learn : item.label[lang];
               return (
                 <Link key={item.href} href={item.href}>
@@ -265,7 +266,8 @@ export default function Navigation() {
         <div className="md:hidden flex items-center gap-1 pb-3 overflow-x-auto">
           {navItems.map((item) => {
             const isActive = pathname === item.href || (item.href === "/learn" && pathname.startsWith("/learn"));
-            const pieceSrc = getPieceImagePath(settings.pieceSet, pieceColor, item.piece);
+            const navPieceColor = item.href === "/learn" ? "b" : pieceColor;
+            const pieceSrc = getPieceImagePath(settings.pieceSet, navPieceColor, item.piece);
             const label = item.href === "/learn" ? t.header.learn : item.label[lang];
             return (
               <Link key={item.href} href={item.href}>
