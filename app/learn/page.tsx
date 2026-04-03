@@ -2,13 +2,16 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { BookOpen, Filter } from "lucide-react";
+import { BookOpen, Filter, Shield } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useLanguage } from "@/lib/language-context";
-import { getAllLessons, lessonWithOpening, pickLocalized } from "@/lib/opening-lessons";
+import { pickLocalized } from "@/lib/opening-lessons";
+import { lessonWithMergedOpening } from "@/lib/learn-merge";
+import { useLearnCatalog } from "@/hooks/useLearnCatalog";
+import { useSuperUser } from "@/hooks/useSuperUser";
 import OpeningLevelBadge from "@/components/learn/OpeningLevelBadge";
 
 type ColorFilter = "all" | "white" | "black" | "both";
@@ -16,6 +19,8 @@ type LevelFilter = "all" | "1" | "2" | "3" | "4" | "5";
 
 export default function LearnHubPage() {
   const { lang, t } = useLanguage();
+  const { catalog, loading: catalogLoading } = useLearnCatalog();
+  const { isSuperUser, loading: superLoading } = useSuperUser();
   const [search, setSearch] = useState("");
   const [color, setColor] = useState<ColorFilter>("all");
   const [level, setLevel] = useState<LevelFilter>("all");
@@ -23,17 +28,17 @@ export default function LearnHubPage() {
 
   const characters = useMemo(() => {
     const s = new Set<string>();
-    for (const lesson of getAllLessons()) {
-      const o = lessonWithOpening(lesson, lang).opening;
+    for (const lesson of catalog.lessons) {
+      const o = catalog.openingById.get(lesson.openingId);
       if (o) s.add(o.character);
     }
     return Array.from(s).sort();
-  }, [lang]);
+  }, [catalog]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return getAllLessons().filter((lesson) => {
-      const { opening, title } = lessonWithOpening(lesson, lang);
+    return catalog.lessons.filter((lesson) => {
+      const { opening, title } = lessonWithMergedOpening(lesson, catalog.openingById, lang);
       if (!opening) return false;
       if (color !== "all" && opening.color !== color) return false;
       if (level !== "all" && String(opening.difficulty) !== level) return false;
@@ -49,7 +54,7 @@ export default function LearnHubPage() {
       }
       return true;
     });
-  }, [search, color, level, character, lang]);
+  }, [search, color, level, character, lang, catalog]);
 
   const labels = t.learn.difficultyLabels as [string, string, string, string, string];
 
@@ -57,12 +62,23 @@ export default function LearnHubPage() {
     <main className="min-h-screen theme-gradient theme-text-primary p-4 md:p-8">
       <div className="max-w-6xl mx-auto space-y-8">
         <div className="text-center space-y-3">
-          <div className="flex items-center justify-center gap-3">
+          <div className="flex flex-wrap items-center justify-center gap-3">
             <BookOpen className="h-11 w-11 text-cyan-400" />
             <h1 className="text-3xl md:text-4xl font-bold neon-cyan">{t.learn.title}</h1>
+            {isSuperUser && !superLoading && (
+              <Button asChild variant="outline" size="sm" className="border-amber-600/50 text-amber-200/90 gap-2">
+                <Link href="/learn/admin">
+                  <Shield className="h-4 w-4" />
+                  {t.learn.admin.hubLink}
+                </Link>
+              </Button>
+            )}
           </div>
           <p className="text-cyan-200/70 max-w-2xl mx-auto">{t.learn.subtitle}</p>
           <p className="text-sm text-slate-400 max-w-2xl mx-auto">{t.learn.hubIntro}</p>
+          {catalogLoading && (
+            <p className="text-xs text-slate-500">{t.learn.loadingCatalog}</p>
+          )}
         </div>
 
         <Card className="theme-bg-secondary theme-border">
@@ -148,8 +164,9 @@ export default function LearnHubPage() {
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {filtered.map((lesson) => {
-              const { opening, title } = lessonWithOpening(lesson, lang);
+              const { opening, title } = lessonWithMergedOpening(lesson, catalog.openingById, lang);
               if (!opening) return null;
+              const cloud = catalog.cloudOpeningIds.has(lesson.openingId);
               return (
                 <Card key={lesson.openingId} className="theme-bg-secondary theme-border flex flex-col">
                   <CardHeader>
@@ -158,6 +175,11 @@ export default function LearnHubPage() {
                         {t.learn.eco} {opening.eco}
                       </span>
                       <OpeningLevelBadge difficulty={opening.difficulty} labels={labels} />
+                      {cloud && (
+                        <span className="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded bg-violet-950/80 text-violet-300 border border-violet-700/50">
+                          {t.learn.admin.cloudBadge}
+                        </span>
+                      )}
                     </div>
                     <CardTitle className="text-lg leading-tight">{title}</CardTitle>
                     <CardDescription className="theme-text-secondary line-clamp-3">

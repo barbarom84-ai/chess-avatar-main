@@ -3,12 +3,15 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowLeft, BookOpen } from "lucide-react";
+import { ArrowLeft, BookOpen, Shield } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLanguage } from "@/lib/language-context";
-import { getLesson, lessonWithOpening, pickLocalized } from "@/lib/opening-lessons";
+import { pickLocalized } from "@/lib/opening-lessons";
+import { lessonWithMergedOpening } from "@/lib/learn-merge";
+import { useLearnCatalog } from "@/hooks/useLearnCatalog";
+import { useSuperUser } from "@/hooks/useSuperUser";
 import OpeningLevelBadge from "@/components/learn/OpeningLevelBadge";
 import LessonChessboard from "@/components/learn/LessonChessboard";
 import HistoricGameSection from "@/components/learn/HistoricGameSection";
@@ -19,13 +22,18 @@ export default function OpeningLessonPage() {
   const params = useParams();
   const openingId = params.openingId as string;
   const { lang, t } = useLanguage();
-  const lesson = getLesson(openingId);
+  const { catalog, loading: catalogLoading } = useLearnCatalog();
+  const { isSuperUser, loading: superLoading } = useSuperUser();
+  const lesson = useMemo(
+    () => catalog.lessons.find((l) => l.openingId === openingId),
+    [catalog.lessons, openingId],
+  );
   const [modelMoveIndex, setModelMoveIndex] = useState(0);
 
   const { opening, title } = useMemo(() => {
     if (!lesson) return { opening: undefined, title: "" };
-    return lessonWithOpening(lesson, lang);
-  }, [lesson, lang]);
+    return lessonWithMergedOpening(lesson, catalog.openingById, lang);
+  }, [lesson, lang, catalog.openingById]);
 
   const labels = t.learn.difficultyLabels as [string, string, string, string, string];
   const commentaryLabels = {
@@ -49,6 +57,14 @@ export default function OpeningLessonPage() {
     tryAgain: ch?.tryAgain ?? "Reset",
     positionLabel: ch?.positionLabel ?? "Position before the move to find",
   };
+
+  if (catalogLoading && !lesson) {
+    return (
+      <main className="min-h-screen theme-gradient theme-text-primary p-8 flex flex-col items-center justify-center gap-4">
+        <p className="text-slate-400">{t.learn.loadingCatalog}</p>
+      </main>
+    );
+  }
 
   if (!lesson || !opening) {
     return (
@@ -76,6 +92,14 @@ export default function OpeningLessonPage() {
               {t.learn.detail.backToHub}
             </Link>
           </Button>
+          {isSuperUser && !superLoading && (
+            <Button asChild variant="outline" size="sm" className="border-amber-600/50 text-amber-200/90 gap-2">
+              <Link href={`/learn/admin/edit/${openingId}`}>
+                <Shield className="h-4 w-4" />
+                {t.learn.admin.editThisLesson}
+              </Link>
+            </Button>
+          )}
         </div>
 
         <div className="flex flex-wrap items-start gap-3">

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import { hasActivePremiumAccess } from '@/lib/subscription-access';
 
 interface PremiumState {
   isPremium: boolean;
@@ -40,7 +41,7 @@ export function usePremium(): PremiumState {
           .eq('user_id', user.id)
           .single();
 
-        const isPremium = data?.plan === 'premium' && data?.status === 'active';
+        const isPremium = hasActivePremiumAccess(data?.plan, data?.status);
 
         if (mounted) {
           setState({

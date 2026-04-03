@@ -3,6 +3,7 @@
  */
 
 import { supabase, isSupabaseConfigured, type DbProfile } from './supabase';
+import { hasActivePremiumAccess } from './subscription-access';
 import type { EngineConfig, PersonaStats } from './analysis';
 import { getSavedConfigs } from './storage';
 
@@ -74,7 +75,7 @@ export async function checkPremiumStatus(): Promise<boolean> {
       .eq('user_id', user.id)
       .single();
 
-    return data?.plan === 'premium' && data?.status === 'active';
+    return hasActivePremiumAccess(data?.plan, data?.status);
   } catch {
     return false;
   }
