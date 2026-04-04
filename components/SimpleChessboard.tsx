@@ -50,6 +50,7 @@ export default function SimpleChessboard({
   const [arrowStart, setArrowStart] = useState<{ square: string; color: string } | null>(null);
   const [dragClientPos, setDragClientPos] = useState<{ x: number; y: number } | null>(null);
   const [dragPiece, setDragPiece] = useState<{ type: string; color: string } | null>(null);
+  const [dragGhostSize, setDragGhostSize] = useState<{ width: number; height: number } | null>(null);
 
   const dragMovedRef = useRef(false);
   const suppressNextClickRef = useRef(false);
@@ -107,6 +108,7 @@ export default function SimpleChessboard({
     setDraggedSquare(null);
     setDragClientPos(null);
     setDragPiece(null);
+    setDragGhostSize(null);
     setHighlightedSquares([]);
     dragMovedRef.current = false;
     dragStartClientRef.current = null;
@@ -126,9 +128,11 @@ export default function SimpleChessboard({
     dragStartClientRef.current = { x: e.clientX, y: e.clientY };
     activeDragSquareRef.current = square;
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     setDraggedSquare(square);
     setDragPiece({ type: piece.type, color: piece.color });
     setDragClientPos({ x: e.clientX, y: e.clientY });
+    setDragGhostSize({ width: rect.width, height: rect.height });
 
     if (showLegalMoves) {
       const moves = game.moves({ square: square as Square, verbose: true });
@@ -317,6 +321,7 @@ export default function SimpleChessboard({
         setDraggedSquare(null);
         setDragClientPos(null);
         setDragPiece(null);
+        setDragGhostSize(null);
         setHighlightedSquares([]);
         dragMovedRef.current = false;
         dragStartClientRef.current = null;
@@ -506,13 +511,15 @@ export default function SimpleChessboard({
         )}
       </div>
 
-      {dragPiece && dragClientPos && (
+      {dragPiece && dragClientPos && dragGhostSize && (
         <div
           aria-hidden
-          className="pointer-events-none fixed z-[200] h-[min(14vw,104px)] w-[min(14vw,104px)]"
+          className="pointer-events-none fixed z-[200]"
           style={{
             left: dragClientPos.x,
             top: dragClientPos.y,
+            width: dragGhostSize.width,
+            height: dragGhostSize.height,
             transform: "translate(-50%, -50%)",
           }}
         >
@@ -521,7 +528,7 @@ export default function SimpleChessboard({
               src={getPieceImage(dragPiece)}
               alt=""
               fill
-              sizes="104px"
+              sizes={`${Math.ceil(dragGhostSize.width)}px`}
               className="object-contain drop-shadow-lg"
               unoptimized
               draggable={false}
