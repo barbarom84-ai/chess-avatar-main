@@ -130,6 +130,27 @@ export function validateLearnPair(
   return null;
 }
 
+function lessonHasAnyChallenges(lesson: OpeningLesson): boolean {
+  return lesson.historicalGames.some((g) => (g.challenges?.length ?? 0) > 0);
+}
+
+/**
+ * Lorsqu’une leçon Supabase remplace la fiche statique :
+ * - `historicalGames` vide → on reprend ceux du dépôt (Histoire + défis).
+ * - parties cloud sans aucun défi alors que le dépôt en définit → on reprend ceux du dépôt
+ *   (JSON cloud souvent enregistré avant l’ajout des défis).
+ */
+export function mergeCloudLessonWithStatic(cloud: OpeningLesson, staticLesson: OpeningLesson): OpeningLesson {
+  if (cloud.openingId !== staticLesson.openingId) return cloud;
+  let historicalGames = staticLesson.historicalGames;
+  if (cloud.historicalGames.length > 0) {
+    const cloudCh = lessonHasAnyChallenges(cloud);
+    const staticCh = lessonHasAnyChallenges(staticLesson);
+    historicalGames = !cloudCh && staticCh ? staticLesson.historicalGames : cloud.historicalGames;
+  }
+  return { ...cloud, historicalGames };
+}
+
 export interface MergedLearnCatalog {
   lessons: OpeningLesson[];
   openingById: Map<string, Opening>;
@@ -163,7 +184,8 @@ export function buildMergedCatalog(rows: LearnEntryRow[]): MergedLearnCatalog {
   const lessons: OpeningLesson[] = [];
   const seenStatic = new Set<string>();
   for (const l of OPENING_LESSONS) {
-    lessons.push(overrideMap.get(l.openingId)?.lesson ?? l);
+    const cloud = overrideMap.get(l.openingId)?.lesson;
+    lessons.push(cloud ? mergeCloudLessonWithStatic(cloud, l) : l);
     seenStatic.add(l.openingId);
   }
   for (const [id, { lesson }] of overrideMap) {

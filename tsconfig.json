@@ -24,6 +24,7 @@
   },
   "include": [
     "next-env.d.ts",
+    "pgn-modules.d.ts",
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
