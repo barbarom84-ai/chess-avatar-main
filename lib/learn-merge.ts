@@ -1,6 +1,6 @@
 import type { Opening } from "@/lib/openings-library";
 import { OPENINGS_DATABASE } from "@/lib/openings-library";
-import type { LocalizedString, OpeningLesson } from "@/lib/opening-lessons";
+import type { HistoricalGame, LocalizedString, OpeningLesson } from "@/lib/opening-lessons";
 import { OPENING_LESSONS } from "@/lib/opening-lessons";
 
 export interface LearnEntryRow {
@@ -135,10 +135,34 @@ function lessonHasAnyChallenges(lesson: OpeningLesson): boolean {
 }
 
 /**
+ * Ordre et liste des `id` viennent du dépôt ; le cloud peut surcharger une partie par `id`.
+ * Les parties présentes seulement dans le dépôt (nouveaux PGN) restent visibles même si le JSON
+ * cloud a été enregistré avant leur ajout.
+ */
+function mergeHistoricalGamesFromStaticAndCloud(
+  staticGames: HistoricalGame[],
+  cloudGames: HistoricalGame[],
+): HistoricalGame[] {
+  const cloudById = new Map(cloudGames.map((g) => [g.id, g]));
+  const staticIds = new Set(staticGames.map((g) => g.id));
+  const merged: HistoricalGame[] = [];
+  for (const g of staticGames) {
+    merged.push(cloudById.get(g.id) ?? g);
+  }
+  for (const g of cloudGames) {
+    if (!staticIds.has(g.id)) {
+      merged.push(g);
+    }
+  }
+  return merged;
+}
+
+/**
  * Lorsqu’une leçon Supabase remplace la fiche statique :
  * - `historicalGames` vide → on reprend ceux du dépôt (Histoire + défis).
  * - parties cloud sans aucun défi alors que le dépôt en définit → on reprend ceux du dépôt
  *   (JSON cloud souvent enregistré avant l’ajout des défis).
+ * - sinon → fusion par `id` : dépôt comme base, surcharge cloud pour les mêmes `id`.
  */
 export function mergeCloudLessonWithStatic(cloud: OpeningLesson, staticLesson: OpeningLesson): OpeningLesson {
   if (cloud.openingId !== staticLesson.openingId) return cloud;
@@ -146,7 +170,14 @@ export function mergeCloudLessonWithStatic(cloud: OpeningLesson, staticLesson: O
   if (cloud.historicalGames.length > 0) {
     const cloudCh = lessonHasAnyChallenges(cloud);
     const staticCh = lessonHasAnyChallenges(staticLesson);
-    historicalGames = !cloudCh && staticCh ? staticLesson.historicalGames : cloud.historicalGames;
+    if (!cloudCh && staticCh) {
+      historicalGames = staticLesson.historicalGames;
+    } else {
+      historicalGames = mergeHistoricalGamesFromStaticAndCloud(
+        staticLesson.historicalGames,
+        cloud.historicalGames,
+      );
+    }
   }
   return { ...cloud, historicalGames };
 }

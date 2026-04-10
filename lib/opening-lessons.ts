@@ -3,6 +3,9 @@ import steinitzZukertort1886R14Pgn from "@/data/historical-games/steinitz-zukert
 import birdAnderssen1851LondonPgn from "@/data/historical-games/bird-anderssen-1851-london.pgn";
 import anderssenSuhle1864Pgn from "@/data/historical-games/anderssen-suhle-1864.pgn";
 import hebertSeirawan1982LuzernPgn from "@/data/historical-games/hebert-seirawan-1982-luzern.pgn";
+import bogoljubowAlekhineKarlsbad1923Pgn from "@/data/historical-games/bogoljubow-alekhine-karlsbad-1923.pgn";
+import dovliatovMamedyarovBaku2006Pgn from "@/data/historical-games/dovliatov-mamedyarov-baku-2006.pgn";
+import donchenkoBortnykTtChesscom2024Pgn from "@/data/historical-games/donchenko-bortnyk-tt-chesscom-2024.pgn";
 import { pgnBlockToUciMoves } from "@/lib/pgn-to-uci";
 
 const STEINITZ_ZUKERTORT_1886_R14_UCI: string[] = (() => {
@@ -33,6 +36,30 @@ const HEBERT_SEIRAWAN_1982_LUZERN_UCI: string[] = (() => {
   const u = pgnBlockToUciMoves(hebertSeirawan1982LuzernPgn);
   if (!u) {
     throw new Error("PGN invalide : data/historical-games/hebert-seirawan-1982-luzern.pgn");
+  }
+  return u;
+})();
+
+const BOGOLJUBOW_ALEKHINE_KARLSBAD_1923_UCI: string[] = (() => {
+  const u = pgnBlockToUciMoves(bogoljubowAlekhineKarlsbad1923Pgn);
+  if (!u) {
+    throw new Error("PGN invalide : data/historical-games/bogoljubow-alekhine-karlsbad-1923.pgn");
+  }
+  return u;
+})();
+
+const DOVLIATOV_MAMEDYAROV_BAKU_2006_UCI: string[] = (() => {
+  const u = pgnBlockToUciMoves(dovliatovMamedyarovBaku2006Pgn);
+  if (!u) {
+    throw new Error("PGN invalide : data/historical-games/dovliatov-mamedyarov-baku-2006.pgn");
+  }
+  return u;
+})();
+
+const DONCHENKO_BORTNYK_TT_CHESSCOM_2024_UCI: string[] = (() => {
+  const u = pgnBlockToUciMoves(donchenkoBortnykTtChesscom2024Pgn);
+  if (!u) {
+    throw new Error("PGN invalide : data/historical-games/donchenko-bortnyk-tt-chesscom-2024.pgn");
   }
   return u;
 })();
@@ -950,7 +977,266 @@ export const OPENING_LESSONS: OpeningLesson[] = [
       { uci: "f6d5", comment: { fr: "Cavalier central flexible.", en: "Flexible central knight." } },
       { uci: "d2d4", comment: { fr: "Soutien de e5 et ouverture lignes.", en: "Supports e5 and opens lines." } },
     ],
-    historicalGames: [],
+    historicalGames: [
+      {
+        id: "bogoljubow-alekhine-karlsbad-1923",
+        white: "Efim Bogoljubow",
+        black: "Alexander Alekhine",
+        result: "0-1",
+        date: "1923-05-10",
+        event: {
+          fr: "Tournoi international de maîtres, Karlsbad 1923 — ronde 10",
+          en: "Karlsbad 1923 International Masters — round 10",
+        },
+        anecdote: {
+          fr: "Une Alekhine (ECO B02) où les blancs choisissent 2.Cc3 au lieu de 2.e5 : la partie reste tranchante et Alekhine convertit une attaque de roi.",
+          en: "An Alekhine (ECO B02) where White opts for 2.Nc3 instead of 2.e5: the game stays sharp and Alekhine converts a kingside attack.",
+        },
+        uciMoves: BOGOLJUBOW_ALEKHINE_KARLSBAD_1923_UCI,
+        annotations: [
+          {
+            afterMoveIndex: 2,
+            text: {
+              fr: "2.Cc3 : alternative à 2.e5 — les blancs gardent la tension centrale et évitent la ligne principale à quatre pions.",
+              en: "2.Nc3: an alternative to 2.e5 — White keeps central tension and sidesteps the main Four Pawns Attack.",
+            },
+          },
+          {
+            afterMoveIndex: 12,
+            text: {
+              fr: "Fxc6 bxc6 : structure avec pions doublés c pour les noirs — compensation typique Alekhine : cases d5 et jeu dynamique.",
+              en: "Bxc6 bxc6: doubled c-pawns for Black — classic Alekhine compensation: d5 squares and dynamic play.",
+            },
+          },
+          {
+            afterMoveIndex: 14,
+            text: {
+              fr: "e6 ! : le pion blanc en e6 gêne le développement noir et crée des cases faibles autour du roi.",
+              en: "e6!: White’s e-pawn wedge cramps Black and creates holes near the king.",
+            },
+          },
+          {
+            afterMoveIndex: 20,
+            text: {
+              fr: "Cg5 : le cavalier attaque e6 et presse le roi noir avant que la structure se stabilise.",
+              en: "Ng5: the knight hits e6 and pressures the black king before the structure stabilizes.",
+            },
+          },
+          {
+            afterMoveIndex: 56,
+            text: {
+              fr: "Cxf8 : les blancs prennent la tour en f8, mais la position reste floue ; Alekhine garde des ressources tactiques sur l’aile roi.",
+              en: "Nxf8: White wins the rook on f8, yet the position stays messy; Alekhine keeps tactical resources on the kingside.",
+            },
+          },
+          {
+            afterMoveIndex: 102,
+            text: {
+              fr: "Ce5 : ultime ressort des blancs au centre ; les noirs reprennent à la tour et le roi blanc ne tient plus.",
+              en: "Ne5: White’s last central try; Black answers with the rook and the white king collapses.",
+            },
+          },
+        ],
+        challenges: [
+          {
+            id: "karlsbad-1923-nxf8",
+            afterMoveCount: 56,
+            correctUci: "g6f8",
+            prompt: {
+              fr: "Les noirs viennent de jouer …Df7. Quel coup des blancs avec le cavalier en g6 capture la tour en f8 ?",
+              en: "Black has just played …Qf7. Which White move with the knight on g6 captures the rook on f8?",
+            },
+            wrongChoices: ["g6h8", "g6e7", "g6h4"],
+            hints: [
+              {
+                fr: "Le cavalier peut prendre la tour sur f8 — ce n’est ni une retraite ni une case sur la colonne h pour la tour.",
+                en: "The knight can capture the rook on f8 — not a retreat or a hop to an h-file square for the rook.",
+              },
+              {
+                fr: "Pense « prise sur f8 » avec le cavalier.",
+                en: "Think “capture on f8” with the knight.",
+              },
+            ],
+            insight: {
+              fr: "Cxf8 : les blancs gagnent la tour, mais la partie reste tactique — la conversion demande encore de la précision des deux côtés.",
+              en: "Nxf8: White wins the rook, but the game stays tactical — both sides still need accuracy.",
+            },
+          },
+        ],
+      },
+      {
+        id: "dovliatov-mamedyarov-baku-2006",
+        white: "Sanan Dovliatov",
+        black: "Shakhriyar Mamedyarov",
+        result: "0-1",
+        date: "2006-05-08",
+        event: {
+          fr: "President’s Cup de Bakou 2006 — ronde 5",
+          en: "2006 Baku President’s Cup — round 5",
+        },
+        anecdote: {
+          fr: "Alekhine moderne (2.e5 Cd5, fianchetto roi) : Mamedyarov accepte une structure avec pions c doublés et un jeu tactique où la dame et le fou g7 décident vite.",
+          en: "Modern Alekhine (2.e5 Nd5, kingside fianchetto): Mamedyarov accepts doubled c-pawns and sharp play where the queen and Bg7 decide quickly.",
+        },
+        uciMoves: DOVLIATOV_MAMEDYAROV_BAKU_2006_UCI,
+        annotations: [
+          {
+            afterMoveIndex: 3,
+            text: {
+              fr: "…Cd5 : la tabiya de l’Alekhine — le cavalier bloque le pion d4 futur et garde la case f6 pour le roi.",
+              en: "…Nd5: the Alekhine tabiya — the knight blocks the future d-pawn and keeps f6 for the king.",
+            },
+          },
+          {
+            afterMoveIndex: 12,
+            text: {
+              fr: "bxc3 : les blancs ont des pions c doublés — compensation typique pour les noirs : cases d5 et pièces actives.",
+              en: "bxc3: White has doubled c-pawns — typical Black compensation: d5 squares and active pieces.",
+            },
+          },
+          {
+            afterMoveIndex: 23,
+            text: {
+              fr: "…Dxc3 : la dame noire s’invite en territoire blanc ; les blancs doivent montrer du jeu concret (Ff4, tours).",
+              en: "…Qxc3: Black’s queen invades; White must show concrete play (Bf4, rooks).",
+            },
+          },
+          {
+            afterMoveIndex: 32,
+            text: {
+              fr: "Fxg7 : le fou blanc casse le fianchetto noir — le roi noir est exposé même après la reprise en g7.",
+              en: "Bxg7: White smashes the fianchetto — the black king is loose even after recaptures.",
+            },
+          },
+          {
+            afterMoveIndex: 48,
+            text: {
+              fr: "Dxb6 : la dame blanche cueille un pion, mais les noirs gardent la coordination (dame + cavalier + colonnes ouvertes).",
+              en: "Qxb6: White grabs a pawn, but Black keeps coordination (queen + knight + open files).",
+            },
+          },
+          {
+            afterMoveIndex: 53,
+            text: {
+              fr: "Cf3+ ! : fourchette roi–dame ; la position blanche s’effondre.",
+              en: "Nf3+!: a king-and-queen fork; White’s position collapses.",
+            },
+          },
+        ],
+        challenges: [
+          {
+            id: "baku-2006-bxg7",
+            afterMoveCount: 32,
+            correctUci: "h6g7",
+            prompt: {
+              fr: "Les noirs viennent de jouer …Fxa2. Comment les blancs continuent-ils avec le fou en h6 dans la partie ?",
+              en: "Black has just played …Bxa2. How did White continue with the bishop on h6 in the game?",
+            },
+            wrongChoices: ["h6g5", "h6f4", "h6e3"],
+            hints: [
+              {
+                fr: "Le fou attaque le pion g7 défendu par le roi — une prise qui ouvre le roi noir.",
+                en: "The bishop hits the g7-pawn defended by the king — a capture that exposes Black’s king.",
+              },
+              {
+                fr: "Ce n’est pas une retraite en diagonale vers le centre : c’est une capture sur la case g7.",
+                en: "Not a retreat toward the center — it’s a capture on g7.",
+              },
+            ],
+            insight: {
+              fr: "Fxg7 : échange de fous où les blancs espèrent le jeu d’attaque ; Mamedyarov garde malgré tout l’initiative grâce à la dame active.",
+              en: "Bxg7: a bishop trade where White hopes for attack; Mamedyarov still keeps initiative thanks to his active queen.",
+            },
+          },
+        ],
+      },
+      {
+        id: "donchenko-bortnyk-tt-chesscom-2024",
+        white: "Alexander Donchenko",
+        black: "Olexandr Bortnyk",
+        result: "0-1",
+        date: "2024-03-26",
+        event: {
+          fr: "Titled Tuesday (Chess.com), session internationale — ronde 9",
+          en: "Titled Tuesday (Chess.com), international late — round 9",
+        },
+        anecdote: {
+          fr: "Même famille B02 (2.Cc3 d5) que Karlsbad 1923 : une partie de blitz moderne où les blancs tentent le jeu d’attaque au roi, mais les noirs terminent par un mat de dame sur c1.",
+          en: "Same B02 family (2.Nc3 d5) as Karlsbad 1923: a modern blitz game where White goes for a king attack, but Black finishes with a queen mate on c1.",
+        },
+        uciMoves: DONCHENKO_BORTNYK_TT_CHESSCOM_2024_UCI,
+        annotations: [
+          {
+            afterMoveIndex: 8,
+            text: {
+              fr: "Cxd5 : sacrifice de cavalier pour ouvrir le centre — les blancs espèrent une initiative après Dxd4.",
+              en: "Nxd5: knight sacrifice to open the center — White hopes for initiative after Qxd4.",
+            },
+          },
+          {
+            afterMoveIndex: 18,
+            text: {
+              fr: "O-O-O : les blancs roquent long pour attaquer sur l’aile roi ; le roi noir est encore au centre.",
+              en: "O-O-O: White castles long to attack on the kingside; Black’s king is still central.",
+            },
+          },
+          {
+            afterMoveIndex: 20,
+            text: {
+              fr: "Dh4 : la dame s’aligne sur h4 pour presser le roi noir — jeu typique de la partie d’attaque.",
+              en: "Qh4: the queen lines up on h4 to pressure the black king — typical attacking play.",
+            },
+          },
+          {
+            afterMoveIndex: 26,
+            text: {
+              fr: "dxc6 : structure avec pion c passé pour les blancs, mais la dame noire reste ultra-active.",
+              en: "dxc6: White gets a c-passer, but Black’s queen stays extremely active.",
+            },
+          },
+          {
+            afterMoveIndex: 34,
+            text: {
+              fr: "Td8+ ! : sacrifice de tour pour dévier la tour noire — dernière chance tactique des blancs.",
+              en: "Rd8+!: rook sacrifice to deflect Black’s rook — White’s last tactical chance.",
+            },
+          },
+          {
+            afterMoveIndex: 43,
+            text: {
+              fr: "Dc1# : mat de la dame sur la première rangée — les blancs ne peuvent plus parer.",
+              en: "Qc1#: back-rank queen mate — White has no defense.",
+            },
+          },
+        ],
+        challenges: [
+          {
+            id: "chesscom-2024-rd8",
+            afterMoveCount: 34,
+            correctUci: "d1d8",
+            prompt: {
+              fr: "Les noirs viennent de jouer …Cc4. Quel coup des blancs avec la tour en d1 force immédiatement la prise en d8 ?",
+              en: "Black has just played …Nc4. Which White move with the rook on d1 forces an immediate capture on d8?",
+            },
+            wrongChoices: ["d1d7", "d1d6", "d1e1"],
+            hints: [
+              {
+                fr: "C’est un sacrifice de tour sur la huitième rangée avec échec.",
+                en: "It’s a rook sacrifice on the eighth rank with check.",
+              },
+              {
+                fr: "La tour blanche va sur la case du roi noir en échec.",
+                en: "The white rook goes to the black king’s square with check.",
+              },
+            ],
+            insight: {
+              fr: "Td8+ : les blancs espèrent désorganiser la coordination noire ; Bortnyk reprend tout de même la partie avec la contre-attaque.",
+              en: "Rd8+: White tries to scramble Black’s coordination; Bortnyk still takes over with counterplay.",
+            },
+          },
+        ],
+      },
+    ],
   },
   {
     openingId: "london-system",
