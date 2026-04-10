@@ -1,11 +1,38 @@
 import { getOpeningById, type Opening } from "@/lib/openings-library";
 import steinitzZukertort1886R14Pgn from "@/data/historical-games/steinitz-zukertort-1886-wch-r14.pgn";
+import birdAnderssen1851LondonPgn from "@/data/historical-games/bird-anderssen-1851-london.pgn";
+import anderssenSuhle1864Pgn from "@/data/historical-games/anderssen-suhle-1864.pgn";
+import hebertSeirawan1982LuzernPgn from "@/data/historical-games/hebert-seirawan-1982-luzern.pgn";
 import { pgnBlockToUciMoves } from "@/lib/pgn-to-uci";
 
 const STEINITZ_ZUKERTORT_1886_R14_UCI: string[] = (() => {
   const u = pgnBlockToUciMoves(steinitzZukertort1886R14Pgn);
   if (!u) {
     throw new Error("PGN invalide : data/historical-games/steinitz-zukertort-1886-wch-r14.pgn");
+  }
+  return u;
+})();
+
+const BIRD_ANDERSSEN_1851_LONDON_UCI: string[] = (() => {
+  const u = pgnBlockToUciMoves(birdAnderssen1851LondonPgn);
+  if (!u) {
+    throw new Error("PGN invalide : data/historical-games/bird-anderssen-1851-london.pgn");
+  }
+  return u;
+})();
+
+const ANDERSSEN_SUHLE_1864_UCI: string[] = (() => {
+  const u = pgnBlockToUciMoves(anderssenSuhle1864Pgn);
+  if (!u) {
+    throw new Error("PGN invalide : data/historical-games/anderssen-suhle-1864.pgn");
+  }
+  return u;
+})();
+
+const HEBERT_SEIRAWAN_1982_LUZERN_UCI: string[] = (() => {
+  const u = pgnBlockToUciMoves(hebertSeirawan1982LuzernPgn);
+  if (!u) {
+    throw new Error("PGN invalide : data/historical-games/hebert-seirawan-1982-luzern.pgn");
   }
   return u;
 })();
@@ -371,6 +398,85 @@ export const OPENING_LESSONS: OpeningLesson[] = [
     ],
     historicalGames: [
       {
+        id: "bird-anderssen-1851-london",
+        white: "Henry Edward Bird",
+        black: "Adolf Anderssen",
+        result: "1-0",
+        date: "1851",
+        event: {
+          fr: "Tournoi international de Londres (London2)",
+          en: "London international tournament (London2)",
+        },
+        anecdote: {
+          fr: "Lors du premier grand tournoi international à Londres en 1851, Bird bat Anderssen dans une Espagnole fougueuse (ECO C65) : roques opposés et finale où les blancs convertissent l’avantage.",
+          en: "At the first major international tournament in London, 1851, Bird defeated Anderssen in a sharp Spanish (ECO C65): opposite-side castling and a finish where White converts the edge.",
+        },
+        uciMoves: BIRD_ANDERSSEN_1851_LONDON_UCI,
+        annotations: [
+          {
+            afterMoveIndex: 5,
+            text: {
+              fr: "3…Cf6 : la défense berlinoise apparaît déjà — la partie reste dans le répertoire espagnol moderne.",
+              en: "3…Nf6: the Berlin Defense appears — still within today’s Spanish repertoire.",
+            },
+          },
+          {
+            afterMoveIndex: 9,
+            text: {
+              fr: "5.Cxd4 exd4 : le centre s’ouvre ; les blancs auront la paire de fous et des lignes pour la dame.",
+              en: "5.Nxd4 exd4: the center opens; White keeps the bishop pair and lines for the queen.",
+            },
+          },
+          {
+            afterMoveIndex: 23,
+            text: {
+              fr: "12…O-O-O : les noirs roquent long ; la lutte se joue sur les deux ailes avec la dame blanche déjà active.",
+              en: "12…O-O-O: Black castles long; the fight runs on both wings with White’s queen already active.",
+            },
+          },
+          {
+            afterMoveIndex: 24,
+            text: {
+              fr: "13.Dxa7 ! : la dame capture le pion a7 — gain matériel dans une position encore très tactique.",
+              en: "13.Qxa7!: the queen snaps the a7-pawn — material gain in a still-tactical position.",
+            },
+          },
+          {
+            afterMoveIndex: 76,
+            text: {
+              fr: "c7 ! : le pion c bondit vers la promotion et fixe la défense noire — la partie bascule clairement pour les blancs.",
+              en: "c7!: the c-pawn races toward promotion and ties Black down — White’s advantage is decisive.",
+            },
+          },
+        ],
+        challenges: [
+          {
+            id: "bird-1851-qxa7",
+            afterMoveCount: 24,
+            correctUci: "d4a7",
+            prompt: {
+              fr: "Les noirs viennent de roquer long (…O-O-O). Quel coup des blancs, joué dans la partie, saisit immédiatement du matériel à l’aile dame ?",
+              en: "Black has just castled long (…O-O-O). Which White move, as played in the game, grabs material on the queenside right away?",
+            },
+            wrongChoices: ["d4b6", "d4e5", "d4c4"],
+            hints: [
+              {
+                fr: "La dame en d4 peut attaquer le pion le plus avancé de l’aile dame noire en une case.",
+                en: "The queen on d4 can attack Black’s most advanced queenside pawn in one go.",
+              },
+              {
+                fr: "Ce n’est pas un échec : c’est une prise de pion sur la 7ᵉ rangée.",
+                en: "It’s not a check — it’s capturing a pawn on the 7th rank.",
+              },
+            ],
+            insight: {
+              fr: "13.Dxa7 : les blancs prennent un pion tout en gardant la dame très active dans la position à roques opposés.",
+              en: "13.Qxa7: White grabs a pawn while keeping the queen very active in an opposite-castling middlegame.",
+            },
+          },
+        ],
+      },
+      {
         id: "steinitz-zukertort-1886-wch-r14",
         white: "William Steinitz",
         black: "Johannes Zukertort",
@@ -525,6 +631,92 @@ export const OPENING_LESSONS: OpeningLesson[] = [
     ],
     historicalGames: [
       {
+        id: "anderssen-suhle-1864",
+        white: "Adolf Anderssen",
+        black: "Berthold Suhle",
+        result: "1-0",
+        date: "1864",
+        event: {
+          fr: "Match de parties amicales, Berlin (ronde 3)",
+          en: "Casual match, Berlin (round 3)",
+        },
+        anecdote: {
+          fr: "Série de parties à Berlin en 1864 entre Anderssen et Suhle ; cette Sicilienne (ECO B20) montre 2.Fc4 puis un milieu de jeu tactique où les blancs exploitent la colonne ouverte.",
+          en: "A 1864 Berlin match between Anderssen and Suhle; this Sicilian (ECO B20) features 2.Bc4 and a tactical middlegame where White exploits the open lines.",
+        },
+        uciMoves: ANDERSSEN_SUHLE_1864_UCI,
+        annotations: [
+          {
+            afterMoveIndex: 1,
+            text: {
+              fr: "1…c5 : la défense sicilienne — les noirs évitent la symétrie e5 et visent un jeu dynamique.",
+              en: "1…c5: the Sicilian — Black avoids the e5 symmetry and aims for dynamic play.",
+            },
+          },
+          {
+            afterMoveIndex: 2,
+            text: {
+              fr: "2.Fc4 : variante rare (au lieu de 2.Cf3 ou 2.c3) — développement du fou vers la grande diagonale avant le choc central.",
+              en: "2.Bc4: a rare line (instead of 2.Nf3 or 2.c3) — developing the bishop toward the long diagonal before central tension.",
+            },
+          },
+          {
+            afterMoveIndex: 21,
+            text: {
+              fr: "…O-O : les noirs roquent ; la structure e6–d5 échangée laisse des cases claires pour les pièces.",
+              en: "…O-O: Black castles; the traded e6/d5 center leaves light-square play for the pieces.",
+            },
+          },
+          {
+            afterMoveIndex: 44,
+            text: {
+              fr: "Fd3 : le fou revient en diagonale active vers le roi noir, coordonné avec les tours sur la colonne d.",
+              en: "Bd3: the bishop returns on an active diagonal toward the Black king, coordinated with rooks on the d-file.",
+            },
+          },
+          {
+            afterMoveIndex: 45,
+            text: {
+              fr: "…c4 : rupture à l’aile dame ; les noirs cherchent du contre-jeu mais la position reste tendue.",
+              en: "…c4: queenside break; Black seeks counterplay but the position stays sharp.",
+            },
+          },
+          {
+            afterMoveIndex: 62,
+            text: {
+              fr: "Cxh5+ ! : le cavalier prend en h5 avec échec — les blancs ramassent un pion et gardent l’attaque.",
+              en: "Nxh5+!: the knight snaps on h5 with check — White picks up a pawn and keeps the initiative.",
+            },
+          },
+        ],
+        challenges: [
+          {
+            id: "anderssen-1864-nxh5",
+            afterMoveCount: 62,
+            correctUci: "f6h5",
+            prompt: {
+              fr: "Les noirs viennent de jouer …Fe3. Comment Anderssen continue-t-il immédiatement avec le cavalier en f6 ?",
+              en: "Black has just played …Be3. How does Anderssen continue immediately with the knight on f6?",
+            },
+            wrongChoices: ["f6h7", "f6g4", "f6e4"],
+            hints: [
+              {
+                fr: "Le cavalier peut donner échec tout en prenant un pion avancé sur l’aile roi.",
+                en: "The knight can give check while capturing an advanced pawn on the kingside.",
+              },
+              {
+                fr: "Pense à une case sur la colonne h, pas à un recul défensif.",
+                en: "Think of a square on the h-file, not a defensive retreat.",
+              },
+            ],
+            insight: {
+              fr: "Cxh5+ : fourchette tactique typique — échec et gain de matériel avant de reprendre l’initiative sur le roi noir.",
+              en: "Nxh5+: a typical tactical fork — check and material gain while keeping pressure on the black king.",
+            },
+          },
+        ],
+      },
+      {
         id: "fischer-petrosian-1971",
         white: "Bobby Fischer",
         black: "Tigran Petrosian",
@@ -631,7 +823,87 @@ export const OPENING_LESSONS: OpeningLesson[] = [
       { uci: "e4e5", comment: { fr: "Avance : espace mais cases claires pour Cd7.", en: "Advance: space but holes for Nd7." } },
       { uci: "c7c5", comment: { fr: "Rupture classique contre la chaîne.", en: "Classic break vs the chain." } },
     ],
-    historicalGames: [],
+    historicalGames: [
+      {
+        id: "hebert-seirawan-1982-luzern",
+        white: "Jean Hebert",
+        black: "Yasser Seirawan",
+        result: "0-1",
+        date: "1982-11-08",
+        event: {
+          fr: "Olympiade de Lucerne 1982 — ronde 9 (Canada – États-Unis)",
+          en: "1982 Lucerne Olympiad — round 9 (Canada vs United States)",
+        },
+        anecdote: {
+          fr: "Partie d’équipe au plus haut niveau : une française avec 2.d3 (ligne C00) où les noirs échangent les dames tôt puis imposent un jeu de positions et de finale à la Seirawan.",
+          en: "A top-team board: a French with 2.d3 (C00) where Black trades queens early and outplays White in the middlegame and ending.",
+        },
+        uciMoves: HEBERT_SEIRAWAN_1982_LUZERN_UCI,
+        annotations: [
+          {
+            afterMoveIndex: 7,
+            text: {
+              fr: "…c5 : contre-jeu typique à la française — les noirs frappent le centre blanc sans attendre.",
+              en: "…c5: classic French counterplay — Black hits White’s center without delay.",
+            },
+          },
+          {
+            afterMoveIndex: 14,
+            text: {
+              fr: "Dxd7+ : les dames disparaissent — la partie bascule vers une finale où la structure de pions et les fous comptent beaucoup.",
+              en: "Qxd7+: the queens come off — the game turns toward an ending where pawn structure and bishops matter.",
+            },
+          },
+          {
+            afterMoveIndex: 16,
+            text: {
+              fr: "e5 : les blancs revendiquent de l’espace sur l’aile roi ; le cavalier f6 doit se réorganiser (…Cg8).",
+              en: "e5: White claims kingside space; the f6 knight must regroup (…Ng8).",
+            },
+          },
+          {
+            afterMoveIndex: 34,
+            text: {
+              fr: "Txh8+ : échange de tours sur la colonne h ouverte — le roi noir reste exposé sur le pion g.",
+              en: "Rxh8+: rooks trade on the open h-file — the Black king stays loose on the g-pawn.",
+            },
+          },
+          {
+            afterMoveIndex: 79,
+            text: {
+              fr: "…Fg6 : le fou noir centralise et verrouille la case claire ; les blancs doivent défendre plusieurs faiblesses.",
+              en: "…Bg6: Black centralizes the bishop and eyes light squares; White must cover several weaknesses.",
+            },
+          },
+        ],
+        challenges: [
+          {
+            id: "luzern-1982-qxd7",
+            afterMoveCount: 14,
+            correctUci: "a4d7",
+            prompt: {
+              fr: "Les blancs ont joué Da4+ et les noirs …Dd7. Quel coup des blancs, joué dans la partie, échange les dames ?",
+              en: "White played Qa4+ and Black answered …Qd7. Which White move, as played, trades the queens?",
+            },
+            wrongChoices: ["a4b5", "a4c6", "a4a5"],
+            hints: [
+              {
+                fr: "La dame blanche peut prendre la dame noire sur la même colonne.",
+                en: "The white queen can capture the black queen on the same file.",
+              },
+              {
+                fr: "La prise en d7 avec la dame est forcée pour le bon sens des échanges.",
+                en: "Taking on d7 with the queen is the natural trade.",
+              },
+            ],
+            insight: {
+              fr: "Dxd7+ : les blancs éliminent les dames mais la partie reste très technique ; la suite favorise souvent les noirs si la structure est inférieure pour les blancs.",
+              en: "Qxd7+: White removes the queens but the game stays technical; the sequel often favors Black if White’s structure is worse.",
+            },
+          },
+        ],
+      },
+    ],
   },
   {
     openingId: "alekhine-defense",
