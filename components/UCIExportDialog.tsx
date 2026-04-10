@@ -35,6 +35,7 @@ import {
   playingStyleToUCI
 } from '@/lib/uci-export';
 import type { PlayingStyle } from '@/types/chess';
+import { UciConfigPreview } from '@/components/UciConfigPreview';
 
 interface UCIExportDialogProps {
   open: boolean;
@@ -461,9 +462,11 @@ export default function UCIExportDialog({
 
             {/* Onglet Prévisualisation */}
             <TabsContent value="preview" className="space-y-3 px-2">
-              <div className="p-4 bg-slate-950 rounded-lg border border-cyan-500/20 font-mono text-xs">
-                <pre className="text-slate-300 whitespace-pre-wrap">{preview}</pre>
-              </div>
+              <UciConfigPreview
+                content={preview}
+                windowTitle={t.uciExport.previewWindowTitle}
+                subtitle={t.uciExport.previewSubtitle}
+              />
               
               {errors.length > 0 && (
                 <div className="p-3 bg-red-900/20 border border-red-500/50 rounded-lg">

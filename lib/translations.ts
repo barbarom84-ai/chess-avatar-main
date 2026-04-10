@@ -883,7 +883,10 @@ export const translations = {
     uciExport: {
       depth: "Profondeur",
       unlimited: "Illimité",
-      playStyle: "Style de jeu"
+      playStyle: "Style de jeu",
+      previewWindowTitle: "uci-config — Chess Avatar",
+      previewSubtitle:
+        "Aperçu coloré : commentaires, options setoption et commandes go."
     },
 
     // Other UI
@@ -1866,7 +1869,10 @@ export const translations = {
     uciExport: {
       depth: "Depth",
       unlimited: "Unlimited",
-      playStyle: "Play style"
+      playStyle: "Play style",
+      previewWindowTitle: "uci-config — Chess Avatar",
+      previewSubtitle:
+        "Syntax highlighting: comments, setoption lines, and go commands."
     },
 
     // Other UI
