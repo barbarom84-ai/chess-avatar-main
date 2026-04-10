@@ -2,6 +2,7 @@
  * Regénère le Base64 (CRLF) depuis public/chess_avatar_banner.txt
  * et met à jour FromBase64String(...) dans tous les public/*.bat
  */
+/* eslint-disable @typescript-eslint/no-require-imports */
 const fs = require("fs");
 const path = require("path");
 

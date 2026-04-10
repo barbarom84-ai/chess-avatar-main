@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { Cpu, Zap, Clock, TrendingUp, Swords, Settings, RotateCcw, Sparkles, BookOpen, Target } from "lucide-react";
+import { Cpu, Zap, Clock, TrendingUp, Swords, Settings, RotateCcw, Sparkles, BookOpen, Target, Dices } from "lucide-react";
 import type { EngineConfig } from "@/lib/analysis";
 import OpeningRepertoireEditor from "./OpeningRepertoireEditor";
 import ForcedLineEditor from "./ForcedLineEditor";
@@ -95,6 +95,7 @@ export default function EngineConfigPanel({
       threads: validDifficulty >= 4 ? 4 : 2, // Minimum 2 threads
       depth,
       timeControl,
+      humanBlunderInterval: config.humanBlunderInterval ?? 10,
     };
   };
 
@@ -360,6 +361,35 @@ export default function EngineConfigPanel({
               <span>{t.engineConfig.mediumTime}</span>
               <span>{t.engineConfig.slowTime}</span>
             </div>
+          </div>
+
+          {/* Erreurs humaines périodiques */}
+          <div className="bg-slate-950 p-4 rounded-lg border border-slate-800">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Dices className="h-4 w-4 text-amber-400" />
+                <span className="text-sm font-semibold text-slate-300">
+                  {t.engineConfig.humanBlunderInterval}
+                </span>
+              </div>
+              <span className="text-sm font-bold text-amber-400">
+                {(config.humanBlunderInterval ?? 10) === 0
+                  ? t.engineConfig.humanBlunderOff
+                  : `N = ${config.humanBlunderInterval ?? 10}`}
+              </span>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="30"
+              step="1"
+              value={config.humanBlunderInterval ?? 10}
+              onChange={(e) =>
+                handleManualChange("humanBlunderInterval", Number(e.target.value))
+              }
+              className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-500"
+            />
+            <p className="text-xs text-slate-500 mt-1">{t.engineConfig.humanBlunderIntervalDesc}</p>
           </div>
 
         </div>

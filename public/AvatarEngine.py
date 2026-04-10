@@ -20,6 +20,7 @@ import subprocess
 import threading
 import configparser
 import random
+import re
 from pathlib import Path
 
 
@@ -63,6 +64,19 @@ class AvatarEngine:
         # 🆕 Pour la ligne forcée : next ply = len(current_position) ; abandon si l'adversaire dévie
         self.bot_color = None  # 'white' ou 'black'
         self.forced_line_active = True  # False si le bot a dévié de sa ligne (pas le joueur humain)
+
+        # Erreurs « humaines » périodiques (MultiPV) — aligné sur lib/bot-move-count.ts
+        self._blunder_lock = threading.Lock()
+        self._blunder_search_active = False
+        self._blunder_line_moves = {}
+        _hb = self.profile.get('humanBlunderInterval')
+        if _hb is None:
+            self.human_blunder_interval = 10
+        else:
+            try:
+                self.human_blunder_interval = int(_hb)
+            except (TypeError, ValueError):
+                self.human_blunder_interval = 10
     
     def _normalize_uci(self, uci):
         """Normalise un coup UCI (minuscules) pour comparaisons."""
@@ -70,6 +84,40 @@ class AvatarEngine:
             return ''
         s = uci.strip().lower()
         return s[:4] + (s[4] if len(s) > 4 else '')
+
+    def _count_bot_moves_played(self):
+        """Nombre de coups déjà joués par le bot (historique UCI)."""
+        if self.bot_color is None:
+            return 0
+        n = 0
+        for i, _ in enumerate(self.current_position):
+            is_white_move = (i % 2 == 0)
+            is_bot = (is_white_move == (self.bot_color == 'white'))
+            if is_bot:
+                n += 1
+        return n
+
+    def _should_play_human_blunder_move(self):
+        """Prochain coup bot = N, 2N… (cf. shouldPlayHumanBlunderMove côté web)."""
+        iv = self.human_blunder_interval
+        if not iv or iv < 1:
+            return False
+        played = self._count_bot_moves_played()
+        return (played + 1) % iv == 0
+
+    @staticmethod
+    def _pick_forced_human_blunder(best, line_moves):
+        """Choisit un coup parmi MultiPV rangs 2–4."""
+        if not best or not line_moves:
+            return best
+        candidates = []
+        for rank in (2, 3, 4):
+            m = line_moves.get(rank)
+            if m and m != best:
+                candidates.append(m)
+        if not candidates:
+            return best
+        return random.choice(candidates)
     
     def _load_forced_lines_by_color(self):
         """Coups blancs / noirs séparés (forcedLineWhite/Black ou legacy forcedLine entrelacé)."""
@@ -398,7 +446,38 @@ class AvatarEngine:
                     # Autres lignes pendant UCI (info, etc.)
                     self.uci_options.append(line)
             else:
-                # Mode normal: forward tout directement
+                with self._blunder_lock:
+                    blunder = self._blunder_search_active
+                if blunder:
+                    if line.startswith('info ') and ' pv ' in line and 'multipv' in line.lower():
+                        mp = re.search(r'\bmultipv\s+(\d+)', line, re.I)
+                        pv_m = re.search(r'\bpv\s+(\S+)', line)
+                        if mp and pv_m:
+                            idx = int(mp.group(1))
+                            first = pv_m.group(1)
+                            if first and re.match(r'^[a-h][1-8][a-h][1-8]', first):
+                                with self._blunder_lock:
+                                    self._blunder_line_moves[idx] = first
+                        print(line, flush=True)
+                        continue
+                    if line.startswith('bestmove'):
+                        parts = line.split()
+                        raw = parts[1] if len(parts) > 1 else ''
+                        best = raw if raw and raw != '(none)' else ''
+                        with self._blunder_lock:
+                            lm = dict(self._blunder_line_moves)
+                            self._blunder_search_active = False
+                            self._blunder_line_moves.clear()
+                        if not best:
+                            print(line, flush=True)
+                            self.send_to_engine('setoption name MultiPV value 1')
+                            continue
+                        picked = self._pick_forced_human_blunder(best, lm)
+                        print(f'bestmove {picked}', flush=True)
+                        self.send_to_engine('setoption name MultiPV value 1')
+                        continue
+                    print(line, flush=True)
+                    continue
                 print(line, flush=True)
     
     def send_to_engine(self, command):
@@ -504,7 +583,19 @@ class AvatarEngine:
             except Exception as e:
                 print(f"info string Opening selection error: {e}, fallback to Stockfish", file=sys.stderr)
         
-        # PRIORITÉ 3: Stockfish
+        # PRIORITÉ 3: Stockfish (optionnel : erreur « humaine » tous les N coups du bot)
+        do_blunder = self._should_play_human_blunder_move()
+        with self._blunder_lock:
+            self._blunder_line_moves.clear()
+            self._blunder_search_active = bool(do_blunder)
+        if do_blunder:
+            print(
+                f"info string Human blunder move (MultiPV), interval={self.human_blunder_interval}",
+                file=sys.stderr,
+            )
+            self.send_to_engine('setoption name MultiPV value 4')
+        else:
+            self.send_to_engine('setoption name MultiPV value 1')
         print(f"info string Forwarding to Stockfish: {line}", file=sys.stderr)
         self.send_to_engine(line)
     
@@ -579,6 +670,9 @@ class AvatarEngine:
                 self.opening_phase = True
                 self.bot_color = None
                 self.forced_line_active = True  # 🆕 Réactiver la ligne forcée
+                with self._blunder_lock:
+                    self._blunder_search_active = False
+                    self._blunder_line_moves.clear()
                 self.send_to_engine(line)
             elif line.startswith('setoption'):
                 self.handle_setoption(line)

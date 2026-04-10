@@ -19,9 +19,8 @@ Script d'installation automatique qui :
 **Utilisation** :
 ```cmd
 1. Placez tous les fichiers dans le même dossier
-2. Clic droit sur install_fritz20.bat
-3. "Exécuter en tant qu'administrateur"
-4. Suivez les instructions
+2. Double-cliquez sur install_engine.bat (aucun droit administrateur requis)
+3. Suivez les instructions
 ```
 
 #### `configure_level.bat` 🎯
@@ -153,9 +152,9 @@ C:\Users\[User]\Documents\ChessBase\Engines\MonAvatar\
 
 ```cmd
 # Méthode 1 : Script automatique (Recommandé)
-1. Télécharger install_fritz20.bat
+1. Télécharger install_engine.bat
 2. Placer avec AvatarEngine.exe, stockfish.exe, profile.json
-3. Exécuter en tant qu'administrateur
+3. Double-cliquer sur install_engine.bat (aucun droit administrateur requis)
 4. Ouvrir Fritz 20 et ajouter le moteur
 
 # Méthode 2 : Manuelle
@@ -219,7 +218,7 @@ Le guide complet fournit :
 ## 📝 Notes Importantes
 
 1. **Stockfish requis** : Version 16+ recommandée
-2. **Droits administrateur** : Nécessaires pour l'installation
+2. **Droits administrateur** : Non requis pour le script d'installation (copie sous `Documents\ChessBase\Engines`)
 3. **profile.json** : Doit être généré depuis le site
 4. **Minimum 15 parties** : Pour un profil précis
 

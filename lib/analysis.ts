@@ -54,6 +54,11 @@ export interface EngineConfig {
    */
   fritzBlackOpeningFallback?: FritzBlackOpeningFallbackEntry[];
   creatorName?: string;
+  /**
+   * Tous les N coups joués par l'avatar, jouer un coup sous-optimal (MultiPV).
+   * 0 = désactivé. undefined = 10 (comportement par défaut).
+   */
+  humanBlunderInterval?: number;
 }
 
 function normalizeOpeningName(raw?: string | null): string | null {
@@ -248,7 +253,8 @@ export function analyzePersona(
       timeControl: Math.max(300, (6 - difficulty) * 150), // 300-750ms (plus rapide)
       favoriteOpening,
       playStyle,
-      openings: openingBookObj
+      openings: openingBookObj,
+      humanBlunderInterval: 10
     }
   };
 }

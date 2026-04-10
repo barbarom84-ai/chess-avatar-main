@@ -201,7 +201,7 @@ export const translations = {
       },
       step3: {
         title: "Exécutez l'installation",
-        description: "Double-cliquez sur install_engine.bat (le script demande les droits administrateur). Suivez les instructions pour compiler AvatarEngine.exe avec PyInstaller."
+        description: "Double-cliquez sur install_engine.bat (aucun droit administrateur requis : tout s'installe dans votre dossier Documents). Suivez les instructions pour compiler AvatarEngine.exe avec PyInstaller."
       },
       step4: {
         title: "Configurez votre logiciel",
@@ -592,7 +592,11 @@ export const translations = {
       forcedLineFromOpenings: "Ouvertures du répertoire",
       forcedLineSyncDesc: "Les lignes forcées sont synchronisées avec les ouvertures sélectionnées dans l'onglet Ouvertures (1re ouverture blanche, 1re noire).",
       forcedLineWhiteDesc: "Coups que le bot jouera lorsqu'il a les blancs.",
-      forcedLineBlackDesc: "Coups que le bot jouera lorsqu'il a les noirs."
+      forcedLineBlackDesc: "Coups que le bot jouera lorsqu'il a les noirs.",
+      humanBlunderInterval: "Erreur « humaine » (tous les N coups)",
+      humanBlunderIntervalDesc:
+        "Tous les N coups joués par l'avatar, un coup sous-optimal est joué (0 = désactivé). Défaut : 10.",
+      humanBlunderOff: "Désactivé"
     },
 
     // Chessboard settings modal
@@ -1189,7 +1193,7 @@ export const translations = {
       },
       step3: {
         title: "Run the installation",
-        description: "Double-click on install_engine.bat (the script will request administrator rights). Follow the instructions to compile AvatarEngine.exe with PyInstaller."
+        description: "Double-click install_engine.bat (no administrator rights needed — everything installs under your Documents folder). Follow the instructions to compile AvatarEngine.exe with PyInstaller."
       },
       step4: {
         title: "Configure your software",
@@ -1578,7 +1582,11 @@ export const translations = {
       forcedLineFromOpenings: "From repertoire openings",
       forcedLineSyncDesc: "Forced lines are synced with the openings selected in the Openings tab (1st white opening, 1st black opening).",
       forcedLineWhiteDesc: "Moves the bot will play when it has white.",
-      forcedLineBlackDesc: "Moves the bot will play when it has black."
+      forcedLineBlackDesc: "Moves the bot will play when it has black.",
+      humanBlunderInterval: "Human-like slip (every N moves)",
+      humanBlunderIntervalDesc:
+        "Every N moves played by the avatar, a suboptimal move is played (0 = off). Default: 10.",
+      humanBlunderOff: "Off"
     },
 
     // Chessboard settings modal

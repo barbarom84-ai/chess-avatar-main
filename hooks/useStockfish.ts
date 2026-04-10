@@ -9,6 +9,11 @@ import {
   nextForcedMoveForBot,
   remainingForcedMovesForBot,
 } from "@/lib/forced-line-utils";
+import {
+  DEFAULT_HUMAN_BLUNDER_INTERVAL,
+  pickForcedHumanBlunder,
+  shouldPlayHumanBlunderMove,
+} from "@/lib/bot-move-count";
 
 const DEBUG = typeof window !== "undefined" && (window as unknown as { __CHESS_DEBUG?: boolean }).__CHESS_DEBUG;
 
@@ -189,7 +194,18 @@ export function useStockfish() {
 
     const threads = Math.max(2, config.threads);
     const skill = skillLevelFromDifficulty(config.difficulty);
-    const multiPv = multiPvCountForDifficulty(config.difficulty);
+    const baseMultiPv = multiPvCountForDifficulty(config.difficulty);
+    const hbInterval =
+      config.humanBlunderInterval === 0
+        ? 0
+        : (config.humanBlunderInterval ?? DEFAULT_HUMAN_BLUNDER_INTERVAL);
+    const botPlaysWhite = playerColor === "black";
+    const humanBlunder = shouldPlayHumanBlunderMove(
+      moveHistoryUci,
+      botPlaysWhite,
+      hbInterval
+    );
+    const multiPv = humanBlunder ? Math.max(baseMultiPv, 4) : baseMultiPv;
     const lineMoves = new Map<number, string>();
 
     const resetEngineOptions = () => {
@@ -236,7 +252,9 @@ export function useStockfish() {
         const raw = message.split(/\s+/)[1];
         let move = raw && raw !== "(none)" ? raw : "";
         if (multiPv > 1 && move) {
-          move = pickMoveWithSuboptimalNoise(move, lineMoves, config.difficulty);
+          move = humanBlunder
+            ? pickForcedHumanBlunder(move, lineMoves)
+            : pickMoveWithSuboptimalNoise(move, lineMoves, config.difficulty);
         }
         resetEngineOptions();
         setIsThinking(false);

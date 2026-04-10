@@ -3,13 +3,7 @@ title Chess Avatar - Installation moteur UCI
 color 0B
 mode con: cols=104 lines=45 >nul 2>&1
 powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "$s=[Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('ICAgX19fXyBfICAgICAgICAgICAgICAgICAgICAgIF8gICAgICAgICAgICAgXyAgICAgICAgICAgICANCiAgLyBfX198IHxfXyAgIF9fXyAgX19fIF9fXyAgIC8gXF9fICAgX19fXyBffCB8XyBfXyBfIF8gX18gDQogfCB8ICAgfCAnXyBcIC8gXyBcLyBfXy8gX198IC8gXyBcIFwgLyAvIF9gIHwgX18vIF9gIHwgJ19ffA0KIHwgfF9fX3wgfCB8IHwgIF9fL1xfXyBcX18gXC8gX19fIFwgViAvIChffCB8IHx8IChffCB8IHwgICANCiAgXF9fX198X3wgfF98XF9fX3x8X19fL19fXy9fLyAgIFxfXF8vIFxfXyxffFxfX1xfXyxffF98ICAgDQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIA0K')); [Console]::Out.Write($s)"
-:: Demander les droits administrateur si necessaire
-net session >nul 2>&1
-if %errorlevel% neq 0 (
-    echo Demande des droits administrateur...
-    powershell -Command "Start-Process '%~f0' -Verb RunAs"
-    exit /b
-)
+:: Installation dans Documents\ChessBase\Engines : aucun droit administrateur requis (double-clic suffit).
 
 setlocal enabledelayedexpansion
 echo ========================================
@@ -81,8 +75,8 @@ if %NEED_COMPILE%==1 (
     python -m pip show pyinstaller >nul 2>&1
     if errorlevel 1 (
         echo.
-        echo [INFO] Installation de PyInstaller...
-        python -m pip install pyinstaller
+        echo [INFO] Installation de PyInstaller ^(profil utilisateur, sans admin^)...
+        python -m pip install --user pyinstaller
         if errorlevel 1 (
             echo [ERREUR] Echec de l'installation de PyInstaller
             echo Si python -m pip est bloque ^(ex: Device Guard^), contactez votre administrateur ou utilisez un autre PC pour compiler AvatarEngine.exe.

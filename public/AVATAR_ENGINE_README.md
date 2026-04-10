@@ -45,7 +45,7 @@
 **Option A : Automatique (Recommandé)**
 1. Téléchargez `install_engine.bat`
 2. Placez-le dans le dossier `MonAvatar`
-3. Double-cliquez sur `install_engine.bat` (le script demandera les droits administrateur automatiquement)
+3. Double-cliquez sur `install_engine.bat` (aucun droit administrateur requis — l’installation se fait dans votre dossier Documents)
 4. Les fichiers seront copiés dans `Documents\ChessBase\Engines\MonAvatar`
 
 **Option B : Manuelle - Fritz 20 / ChessBase**
@@ -100,6 +100,11 @@ Le fichier `profile.json` contient :
 - **UCI_Elo** : `profile.elo` (1350-2850)
 - **Depth** : `profile.depth` (8-20)
 - **UCI_LimitStrength** : `true` (pour respecter l'ELO)
+
+### Coups plus « humains » (erreurs périodiques)
+
+- **`humanBlunderInterval`** (nombre entier, optionnel) : tous les **N** coups joués par l’avatar dans la partie, le moteur joue un coup **sous-optimal** (variantes MultiPV, comme sur le site). **Défaut : 10** si la clé est absente. Mettre **`0`** pour désactiver.
+- Les coups issus de la **ligne forcée**, du **répertoire d’ouvertures** ou du **fallback Fritz** ne sont pas modifiés.
 
 ## 🎮 Utilisation
 
