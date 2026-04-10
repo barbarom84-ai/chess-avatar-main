@@ -63,12 +63,15 @@ interface EngineConfigPanelProps {
   initialConfig: EngineConfig;
   onConfigChange: (config: EngineConfig) => void;
   onSave: () => void;
+  /** When false, the apply/save button is not rendered (e.g. parent provides its own footer). Default true. */
+  showApplyButton?: boolean;
 }
 
 export default function EngineConfigPanel({ 
   initialConfig, 
   onConfigChange,
-  onSave 
+  onSave,
+  showApplyButton = true,
 }: EngineConfigPanelProps) {
   const [mode, setMode] = useState<'auto' | 'manual'>('auto');
   const [config, setConfig] = useState<EngineConfig>(initialConfig);
@@ -506,15 +509,16 @@ export default function EngineConfigPanel({
           </TabsContent>
         </Tabs>
 
-        {/* Bouton Sauvegarder */}
-        <Button 
-          type="button"
-          onClick={onSave}
-          className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-bold shadow-lg border border-green-700"
-        >
-          <Zap className="mr-2 h-4 w-4" />
-          {t.engineConfig.applyConfig}
-        </Button>
+        {showApplyButton && (
+          <Button 
+            type="button"
+            onClick={onSave}
+            className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-bold shadow-lg border border-green-700"
+          >
+            <Zap className="mr-2 h-4 w-4" />
+            {t.engineConfig.applyConfig}
+          </Button>
+        )}
 
       </CardContent>
     </Card>

@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { 
   Bot, Swords, Shield, Activity, Cpu, Clock, Target, BookOpen, TrendingUp, 
-  Zap, BarChart, Save, Play, Pencil, User
+  Zap, BarChart, Play, Pencil, User
 } from "lucide-react";
 import type { DbProfile } from "@/lib/supabase";
 import type { EngineConfig, PersonaStats } from "@/lib/analysis";
@@ -91,8 +91,9 @@ export default function ProfileDetailsModal({
     setSaving(true);
     try {
       const toSave = editedConfig ?? config;
-      const ok = await Promise.resolve(onUpdate(profile.id, { config: toSave }));
-      if (ok === true) {
+      const result = await Promise.resolve(onUpdate(profile.id, { config: toSave }));
+      // Treat explicit false as failure; true or void (legacy handlers) as success
+      if (result !== false) {
         setIsEditing(false);
         setEditedConfig(null);
       }
@@ -369,16 +370,17 @@ export default function ProfileDetailsModal({
                     initialConfig={config}
                     onConfigChange={setEditedConfig}
                     onSave={handleSaveChanges}
+                    showApplyButton={false}
                   />
                   <div className="flex gap-2 mt-4">
                     <Button
                       type="button"
                       onClick={handleSaveChanges}
                       disabled={saving}
-                      className="flex-1 bg-green-600 hover:bg-green-500 text-white font-bold"
+                      className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-bold shadow-lg border border-green-700"
                     >
-                      <Save className="mr-2 h-4 w-4" />
-                      {saving ? t.profileDetails.saving : t.profileDetails.saveChanges}
+                      <Zap className="mr-2 h-4 w-4 shrink-0" />
+                      {saving ? t.profileDetails.saving : t.profileDetails.saveAndApply}
                     </Button>
                     <Button
                       type="button"

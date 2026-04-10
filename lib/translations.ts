@@ -687,6 +687,7 @@ export const translations = {
       estimatedElo: "ELO Estimé",
       levelLabel: "Niveau",
       saveChanges: "Enregistrer les Modifications",
+      saveAndApply: "Enregistrer et appliquer",
       saving: "Enregistrement…",
       cancel: "Annuler",
       createdBy: "Créé par"
@@ -1677,6 +1678,7 @@ export const translations = {
       estimatedElo: "Estimated ELO",
       levelLabel: "Level",
       saveChanges: "Save Changes",
+      saveAndApply: "Save and apply",
       saving: "Saving…",
       cancel: "Cancel",
       createdBy: "Created by"
