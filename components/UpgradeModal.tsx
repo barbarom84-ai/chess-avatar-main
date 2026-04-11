@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Crown, Palette, ImageIcon, Users, Loader2, CreditCard, Sparkles } from "lucide-react";
 import { useLanguage } from "@/lib/language-context";
+import { supabase } from "@/lib/supabase";
 
 interface UpgradeModalProps {
   open: boolean;
@@ -27,6 +28,10 @@ export default function UpgradeModal({ open, onOpenChange, userId, email, reason
       setError(t.upgrade.pleaseLogin);
       return;
     }
+    if (!supabase) {
+      setError(t.upgrade.notAuthenticated);
+      return;
+    }
 
     setLoading(true);
     setError('');
@@ -38,10 +43,21 @@ export default function UpgradeModal({ open, onOpenChange, userId, email, reason
     };
 
     try {
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession();
+      if (sessionError || !session?.access_token) {
+        throw new Error(errorMessages.NOT_AUTHENTICATED);
+      }
+
       const response = await fetch('/api/stripe/checkout', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, email, currency: selectedCurrency }),
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ currency: selectedCurrency }),
       });
 
       const data = await response.json();

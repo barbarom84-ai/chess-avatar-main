@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { escapeHtml } from "@/lib/html-escape";
 
 export async function POST(req: NextRequest) {
   try {
@@ -7,6 +8,10 @@ export async function POST(req: NextRequest) {
     if (!name || !email || !message) {
       return NextResponse.json({ error: "MISSING_FIELDS" }, { status: 400 });
     }
+
+    const safeName = escapeHtml(String(name));
+    const safeEmail = escapeHtml(String(email));
+    const safeMessage = escapeHtml(String(message));
 
     const resendKey = process.env.RESEND_API_KEY;
     if (!resendKey) {
@@ -24,14 +29,14 @@ export async function POST(req: NextRequest) {
         from: "Chess Avatar <noreply@contact.chessavatar.net>",
         to: ["chessavatarpro@gmail.com"],
         reply_to: email,
-        subject: `[Chess Avatar] Message from ${name}`,
+        subject: `[Chess Avatar] Message from ${String(name).slice(0, 200)}`,
         html: `
           <div style="font-family: sans-serif; max-width: 600px;">
             <h2 style="color: #00FFFF;">New contact message</h2>
-            <p><strong>Name:</strong> ${name}</p>
-            <p><strong>Email:</strong> ${email}</p>
+            <p><strong>Name:</strong> ${safeName}</p>
+            <p><strong>Email:</strong> ${safeEmail}</p>
             <hr style="border-color: #334155;" />
-            <p style="white-space: pre-wrap;">${message}</p>
+            <p style="white-space: pre-wrap;">${safeMessage}</p>
           </div>
         `,
       }),

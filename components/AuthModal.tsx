@@ -66,7 +66,7 @@ export default function AuthModal({ open, onOpenChange, onSuccess }: AuthModalPr
     setSuccess('');
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -76,11 +76,18 @@ export default function AuthModal({ open, onOpenChange, onSuccess }: AuthModalPr
 
       if (error) throw error;
 
-      setSuccess('Compte créé ! Vous pouvez vous connecter.');
-      setTimeout(() => {
-        setMode('signin');
-        setSuccess('');
-      }, 2000);
+      const session = data?.session ?? null;
+      if (session) {
+        setSuccess('Compte créé ! Connexion réussie.');
+        setTimeout(() => {
+          onOpenChange(false);
+          onSuccess?.();
+        }, 1000);
+      } else {
+        setSuccess(
+          "Compte créé ! Un email de confirmation vous a été envoyé. Cliquez sur le lien pour activer votre compte, puis connectez-vous depuis l'onglet Connexion."
+        );
+      }
     } catch (err: unknown) {
       setError(
         err instanceof Error ? err.message : "Erreur lors de l'inscription"

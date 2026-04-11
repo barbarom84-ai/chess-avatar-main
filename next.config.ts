@@ -1,5 +1,22 @@
 import type { NextConfig } from "next";
 
+/** Defense-in-depth; tuned for Next.js, Supabase, Stripe redirect, Lichess/Chess.com fetches, Stockfish WASM. */
+const CONTENT_SECURITY_POLICY = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval'",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob: https:",
+  "font-src 'self' data:",
+  "connect-src 'self' https://*.supabase.co https://*.supabase.io wss://*.supabase.co https://api.stripe.com https://r.stripe.com https://lichess.org https://lichess1.org https://api.chess.com https://www.chess.com https://images.chesscomfiles.com https://api.resend.com",
+  "worker-src 'self' blob:",
+  "frame-src https://js.stripe.com https://hooks.stripe.com https://checkout.stripe.com",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self' https://checkout.stripe.com https://billing.stripe.com",
+  "frame-ancestors 'none'",
+  "upgrade-insecure-requests",
+].join("; ");
+
 const nextConfig: NextConfig = {
   webpack(config) {
     config.module.rules.push({
@@ -53,6 +70,10 @@ const nextConfig: NextConfig = {
           {
             key: 'Permissions-Policy',
             value: 'camera=(), microphone=(), geolocation=()',
+          },
+          {
+            key: 'Content-Security-Policy',
+            value: CONTENT_SECURITY_POLICY,
           },
         ],
       },

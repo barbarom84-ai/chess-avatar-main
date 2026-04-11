@@ -1,4 +1,6 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { isValidChessUsername } from "@/lib/chess-username";
+import { rateLimit } from "@/lib/rate-limit";
 
 interface ChessComArchiveGame {
   uuid?: string;
@@ -8,25 +10,61 @@ interface ChessComArchiveGame {
   black?: { username?: string; result?: string };
 }
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
+  const limited = rateLimit(request, { windowMs: 60_000, max: 30 });
+  if (!limited.ok) {
+    return NextResponse.json(
+      { error: "Too many requests" },
+      {
+        status: 429,
+        headers: { "Retry-After": String(limited.retryAfterSec) },
+      }
+    );
+  }
+
   const { searchParams } = new URL(request.url);
   const username = searchParams.get("username");
 
   if (!username) return NextResponse.json({ error: "Username required" }, { status: 400 });
 
+  if (!isValidChessUsername(username)) {
+    return NextResponse.json({ error: "Invalid username" }, { status: 400 });
+  }
+
+  const encoded = encodeURIComponent(username);
+
   try {
-    const profileRes = await fetch(`https://api.chess.com/pub/player/${username}`);
-    if (!profileRes.ok) return NextResponse.json({ error: "Player not found", errorKey: "chesscomPlayerNotFound" }, { status: 404 });
-    const profile = await profileRes.json();
+    const profileRes = await fetch(`https://api.chess.com/pub/player/${encoded}`);
+    if (!profileRes.ok) {
+      return NextResponse.json(
+        { error: "Player not found", errorKey: "chesscomPlayerNotFound" },
+        { status: 404 }
+      );
+    }
+
+    const profile: unknown = await profileRes.json().catch(() => null);
+    if (!profile || typeof profile !== "object") {
+      return NextResponse.json(
+        { error: "Chess.com API error", errorKey: "genericError" },
+        { status: 500 }
+      );
+    }
+
+    const avatar =
+      "avatar" in profile && typeof (profile as { avatar?: string }).avatar === "string"
+        ? (profile as { avatar: string }).avatar
+        : undefined;
 
     // 2. Récupérer les archives mensuelles (et non seulement le mois en cours)
-    const archivesRes = await fetch(`https://api.chess.com/pub/player/${username}/games/archives`);
+    const archivesRes = await fetch(`https://api.chess.com/pub/player/${encoded}/games/archives`);
     if (!archivesRes.ok) {
       return NextResponse.json({ error: "Chess.com API error", errorKey: "genericError" }, { status: 500 });
     }
 
-    const archivesData = await archivesRes.json();
-    const archiveUrls: string[] = Array.isArray(archivesData?.archives) ? archivesData.archives : [];
+    const archivesData: unknown = await archivesRes.json().catch(() => null);
+    const archiveUrls: string[] = Array.isArray((archivesData as { archives?: unknown })?.archives)
+      ? ((archivesData as { archives: string[] }).archives)
+      : [];
 
     if (archiveUrls.length === 0) {
       return NextResponse.json({ error: "No games found for this player", errorKey: "noGamesFound" }, { status: 404 });
@@ -40,9 +78,15 @@ export async function GET(request: Request) {
       try {
         const monthlyRes = await fetch(archiveUrl);
         if (!monthlyRes.ok) continue;
-        const monthlyData = await monthlyRes.json();
-        if (Array.isArray(monthlyData?.games) && monthlyData.games.length > 0) {
-          collectedGames.push(...monthlyData.games);
+        const monthlyData: unknown = await monthlyRes.json().catch(() => null);
+        if (
+          monthlyData &&
+          typeof monthlyData === "object" &&
+          monthlyData !== null &&
+          Array.isArray((monthlyData as { games?: unknown }).games) &&
+          (monthlyData as { games: ChessComArchiveGame[] }).games.length > 0
+        ) {
+          collectedGames.push(...(monthlyData as { games: ChessComArchiveGame[] }).games);
         }
         // On s'arrête tôt dès qu'on a assez de parties pour l'analyse.
         if (collectedGames.length >= 30) break;
@@ -78,15 +122,13 @@ export async function GET(request: Request) {
                 black: { user: { name: blackUsername, title: null } }
             },
             // On passe l'avatar dans l'objet game pour l'utiliser plus tard si besoin
-            userAvatar: profile.avatar 
+            userAvatar: avatar
         };
     });
 
-    // On renvoie aussi l'avatar global dans le premier élément ou via une structure dédiée
-    // Pour simplifier, on l'ajoute comme propriété spéciale au tableau (hack JS) ou on l'inclura dans l'analyse
     return NextResponse.json({ 
         games: normalizedGames, 
-        avatarUrl: profile.avatar || "https://www.chess.com/bundles/web/images/user-image.svg" 
+        avatarUrl: avatar || "https://www.chess.com/bundles/web/images/user-image.svg" 
     });
 
   } catch {
