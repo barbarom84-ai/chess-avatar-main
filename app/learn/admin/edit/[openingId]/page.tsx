@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Trash2 } from "lucide-react";
+import { ArrowLeft, Download, Sparkles, Trash2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/lib/language-context";
@@ -19,6 +19,46 @@ import {
 } from "@/lib/learn-merge";
 import { useSuperUser } from "@/hooks/useSuperUser";
 import { toast } from "sonner";
+import { parsePgnBlock, splitPgnGames, type ParsedPgn } from "@/lib/pgn-to-uci";
+
+interface ParsedGameDraft {
+  id: string;
+  parsed: ParsedPgn;
+  selected: boolean;
+}
+
+function slugify(input: string): string {
+  return input
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
+}
+
+/** Build a draft `HistoricalGame` (with bilingual placeholders) from a parsed PGN block. */
+function parsedToDraftHistoricalGame(parsed: ParsedPgn, openingId: string, index: number) {
+  const headers = parsed.headers;
+  const white = headers.White ?? "?";
+  const black = headers.Black ?? "?";
+  const date = headers.Date ?? "—";
+  const eventText = headers.Event ?? `${openingId}-game-${index + 1}`;
+  const baseId = slugify(`${white}-${black}-${date}`) || `${openingId}-game-${index + 1}`;
+  return {
+    id: baseId,
+    white,
+    black,
+    result: headers.Result ?? parsed.result ?? "*",
+    date,
+    event: { fr: eventText, en: eventText },
+    uciMoves: parsed.uciMoves,
+    annotations: parsed.moveComments.map((c) => ({
+      afterMoveIndex: c.afterMoveIndex,
+      text: { fr: c.text, en: c.text },
+    })),
+  };
+}
 
 export default function LearnAdminEditPage() {
   const params = useParams();
@@ -30,6 +70,11 @@ export default function LearnAdminEditPage() {
   const [lessonText, setLessonText] = useState("");
   const [loaded, setLoaded] = useState(false);
   const [hasCloudRow, setHasCloudRow] = useState(false);
+  const [pgnUrl, setPgnUrl] = useState("");
+  const [pgnText, setPgnText] = useState("");
+  const [fetching, setFetching] = useState(false);
+  const [parsedDrafts, setParsedDrafts] = useState<ParsedGameDraft[]>([]);
+  const [pgnSourceLabel, setPgnSourceLabel] = useState<string | null>(null);
 
   const loadInitial = useCallback(async () => {
     if (!openingId || !isSupabaseConfigured || !supabase) {
@@ -126,6 +171,149 @@ export default function LearnAdminEditPage() {
     toast.success(t.learn.admin.saved);
   };
 
+  const formatTemplate = useCallback((template: string, vars: Record<string, string | number>): string => {
+    return template.replace(/\{(\w+)\}/g, (_, key) => String(vars[key] ?? `{${key}}`));
+  }, []);
+
+  const parsePgnBuffer = useCallback(
+    (raw: string, sourceLabel: string | null) => {
+      const trimmed = raw.trim();
+      if (!trimmed) {
+        toast.error(t.learn.admin.addGameNoGames);
+        setParsedDrafts([]);
+        setPgnSourceLabel(null);
+        return;
+      }
+      const blocks = splitPgnGames(trimmed);
+      const drafts: ParsedGameDraft[] = [];
+      for (let i = 0; i < blocks.length; i++) {
+        const parsed = parsePgnBlock(blocks[i]);
+        if (!parsed) continue;
+        drafts.push({ id: `${i}-${Date.now()}`, parsed, selected: drafts.length === 0 });
+      }
+      if (drafts.length === 0) {
+        toast.error(t.learn.admin.addGameNoGames);
+        setParsedDrafts([]);
+        setPgnSourceLabel(null);
+        return;
+      }
+      setParsedDrafts(drafts);
+      setPgnSourceLabel(sourceLabel);
+    },
+    [t.learn.admin.addGameNoGames],
+  );
+
+  const handleParsePastedPgn = () => {
+    parsePgnBuffer(pgnText, null);
+  };
+
+  const handleFetchUrl = async () => {
+    const trimmed = pgnUrl.trim();
+    if (!trimmed) {
+      toast.error(t.learn.admin.addGameInvalidUrl);
+      return;
+    }
+    if (!isSupabaseConfigured || !supabase) {
+      toast.error("Supabase non configuré.");
+      return;
+    }
+    setFetching(true);
+    try {
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession();
+      if (sessionError || !session?.access_token) {
+        toast.error(t.learn.admin.accessDenied);
+        return;
+      }
+      const res = await fetch("/api/pgn-fetch", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ url: trimmed }),
+      });
+      const data = (await res.json().catch(() => null)) as
+        | { pgn?: string; sourceLabel?: string; gameCount?: number; error?: string }
+        | null;
+      if (!data) {
+        toast.error(t.learn.admin.addGameFetchError);
+        return;
+      }
+      if (!res.ok) {
+        const code = data.error;
+        const map: Record<string, string> = {
+          INVALID_URL: t.learn.admin.addGameInvalidUrl,
+          UNSUPPORTED_HOST: t.learn.admin.addGameUnsupportedHost,
+          UNSUPPORTED_URL_FOR_HOST: t.learn.admin.addGameUnsupportedUrl,
+          PGN_TOO_LARGE: t.learn.admin.addGamePgnTooLarge,
+        };
+        toast.error((code && map[code]) || t.learn.admin.addGameFetchError);
+        return;
+      }
+      if (!data.pgn) {
+        toast.error(t.learn.admin.addGameNoGames);
+        return;
+      }
+      setPgnText(data.pgn);
+      parsePgnBuffer(data.pgn, data.sourceLabel ?? null);
+    } catch {
+      toast.error(t.learn.admin.addGameFetchError);
+    } finally {
+      setFetching(false);
+    }
+  };
+
+  const handleAppendSelected = () => {
+    const selected = parsedDrafts.filter((d) => d.selected);
+    if (selected.length === 0) {
+      toast.error(t.learn.admin.addGameSelectAtLeastOne);
+      return;
+    }
+    let lessonObj: Record<string, unknown>;
+    try {
+      lessonObj = JSON.parse(lessonText);
+      if (!lessonObj || typeof lessonObj !== "object") throw new Error("not object");
+    } catch {
+      toast.error(t.learn.admin.addGameLessonNotParsed);
+      return;
+    }
+    const existing = Array.isArray(lessonObj.historicalGames) ? lessonObj.historicalGames : [];
+    const usedIds = new Set<string>(
+      existing
+        .filter((g): g is { id: string } => Boolean(g) && typeof (g as { id?: unknown }).id === "string")
+        .map((g) => g.id),
+    );
+    const drafts = selected.map((d, i) => {
+      const draft = parsedToDraftHistoricalGame(d.parsed, openingId, i);
+      let id = draft.id;
+      let counter = 2;
+      while (usedIds.has(id)) {
+        id = `${draft.id}-${counter}`;
+        counter += 1;
+      }
+      usedIds.add(id);
+      return { ...draft, id };
+    });
+    const next = { ...lessonObj, historicalGames: [...existing, ...drafts] };
+    setLessonText(JSON.stringify(next, null, 2));
+    setParsedDrafts([]);
+    setPgnText("");
+    setPgnUrl("");
+    setPgnSourceLabel(null);
+    toast.success(formatTemplate(t.learn.admin.addGameAppended, { count: drafts.length }));
+  };
+
+  const sourceLine = useMemo(() => {
+    if (!pgnSourceLabel || parsedDrafts.length === 0) return null;
+    return formatTemplate(t.learn.admin.addGameSourceLabel, {
+      label: pgnSourceLabel,
+      count: parsedDrafts.length,
+    });
+  }, [pgnSourceLabel, parsedDrafts.length, formatTemplate, t.learn.admin.addGameSourceLabel]);
+
   const handleDelete = async () => {
     if (!isSupabaseConfigured || !supabase) return;
     if (!confirm(t.learn.admin.deleteConfirm)) return;
@@ -204,6 +392,111 @@ export default function LearnAdminEditPage() {
             </Button>
           )}
         </div>
+
+        <Card className="theme-bg-secondary theme-border">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base text-cyan-200 flex items-center gap-2">
+              <Sparkles className="h-4 w-4" />
+              {t.learn.admin.addGameTitle}
+            </CardTitle>
+            <CardDescription className="text-xs theme-text-secondary">{t.learn.admin.addGameHint}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-xs text-slate-400">{t.learn.admin.addGameUrlLabel}</label>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <input
+                  type="url"
+                  value={pgnUrl}
+                  onChange={(e) => setPgnUrl(e.target.value)}
+                  placeholder={t.learn.admin.addGameUrlPlaceholder}
+                  spellCheck={false}
+                  className="flex-1 rounded-md border border-slate-700 bg-slate-950 p-2 text-sm font-mono text-slate-200"
+                />
+                <Button
+                  type="button"
+                  onClick={handleFetchUrl}
+                  disabled={fetching}
+                  className="bg-amber-700 hover:bg-amber-600 gap-2"
+                >
+                  <Download className="h-4 w-4" />
+                  {fetching ? t.learn.admin.addGameFetching : t.learn.admin.addGameFetch}
+                </Button>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs text-slate-400">{t.learn.admin.addGamePastePgnLabel}</label>
+              <textarea
+                value={pgnText}
+                onChange={(e) => setPgnText(e.target.value)}
+                spellCheck={false}
+                className="w-full min-h-[140px] rounded-md border border-slate-700 bg-slate-950 p-2 font-mono text-xs text-slate-200"
+              />
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" variant="outline" onClick={handleParsePastedPgn}>
+                  {t.learn.admin.addGameParse}
+                </Button>
+                {parsedDrafts.length > 0 && (
+                  <Button type="button" onClick={handleAppendSelected} className="bg-cyan-700 hover:bg-cyan-600">
+                    {t.learn.admin.addGameAppendSelected}
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {sourceLine && <p className="text-xs text-slate-400">{sourceLine}</p>}
+
+            {parsedDrafts.length > 0 && (
+              <div className="overflow-x-auto rounded-md border border-slate-800">
+                <table className="w-full text-xs text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-900/60 text-slate-400">
+                      <th className="py-2 px-2 font-medium w-16">{t.learn.admin.addGameTableInclude}</th>
+                      <th className="py-2 px-2 font-medium">{t.learn.admin.addGameTableMatchup}</th>
+                      <th className="py-2 px-2 font-medium w-20">{t.learn.admin.addGameTableResult}</th>
+                      <th className="py-2 px-2 font-medium w-32">{t.learn.admin.addGameTableDate}</th>
+                      <th className="py-2 px-2 font-medium">{t.learn.admin.addGameTableEvent}</th>
+                      <th className="py-2 px-2 font-medium w-20 text-right">{t.learn.admin.addGameTableMoves}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {parsedDrafts.map((draft, idx) => {
+                      const h = draft.parsed.headers;
+                      return (
+                        <tr key={draft.id} className="border-t border-slate-800/80">
+                          <td className="py-2 px-2 align-top">
+                            <input
+                              type="checkbox"
+                              checked={draft.selected}
+                              onChange={(e) => {
+                                const checked = e.target.checked;
+                                setParsedDrafts((prev) =>
+                                  prev.map((d, i) => (i === idx ? { ...d, selected: checked } : d)),
+                                );
+                              }}
+                            />
+                          </td>
+                          <td className="py-2 px-2 text-slate-200">
+                            <div>{h.White ?? "?"}</div>
+                            <div className="text-slate-500">vs {h.Black ?? "?"}</div>
+                          </td>
+                          <td className="py-2 px-2 text-amber-200/90 font-mono">{h.Result ?? draft.parsed.result}</td>
+                          <td className="py-2 px-2 text-slate-400 font-mono">{h.Date ?? "—"}</td>
+                          <td className="py-2 px-2 text-slate-300">
+                            <div>{h.Event ?? "—"}</div>
+                            {h.ECO && <div className="text-slate-500 font-mono">{h.ECO}</div>}
+                          </td>
+                          <td className="py-2 px-2 text-right text-slate-400 font-mono">{draft.parsed.uciMoves.length}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         <div className="grid gap-6 lg:grid-cols-1">
           <Card className="theme-bg-secondary theme-border">
