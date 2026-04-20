@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Download, Sparkles, Trash2 } from "lucide-react";
+import { ArrowLeft, Download, HelpCircle, Sparkles, Trash2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/lib/language-context";
@@ -19,7 +19,14 @@ import {
 } from "@/lib/learn-merge";
 import { useSuperUser } from "@/hooks/useSuperUser";
 import { toast } from "sonner";
-import { parsePgnBlock, splitPgnGames, type ParsedPgn } from "@/lib/pgn-to-uci";
+import {
+  parsePgnBlock,
+  sanOfMoveAt,
+  splitPgnGames,
+  suggestWrongMoves,
+  uciSequenceToSan,
+  type ParsedPgn,
+} from "@/lib/pgn-to-uci";
 
 interface ParsedGameDraft {
   id: string;
@@ -75,6 +82,18 @@ export default function LearnAdminEditPage() {
   const [fetching, setFetching] = useState(false);
   const [parsedDrafts, setParsedDrafts] = useState<ParsedGameDraft[]>([]);
   const [pgnSourceLabel, setPgnSourceLabel] = useState<string | null>(null);
+
+  const [quizGameId, setQuizGameId] = useState<string>("");
+  const [quizPly, setQuizPly] = useState<number>(0);
+  const [quizCorrectUci, setQuizCorrectUci] = useState<string>("");
+  const [quizWrong, setQuizWrong] = useState<string[]>(["", "", ""]);
+  const [quizPromptFr, setQuizPromptFr] = useState("");
+  const [quizPromptEn, setQuizPromptEn] = useState("");
+  const [quizHintFr, setQuizHintFr] = useState("");
+  const [quizHintEn, setQuizHintEn] = useState("");
+  const [quizInsightFr, setQuizInsightFr] = useState("");
+  const [quizInsightEn, setQuizInsightEn] = useState("");
+  const [quizId, setQuizId] = useState<string>("");
 
   const loadInitial = useCallback(async () => {
     if (!openingId || !isSupabaseConfigured || !supabase) {
@@ -314,6 +333,177 @@ export default function LearnAdminEditPage() {
     });
   }, [pgnSourceLabel, parsedDrafts.length, formatTemplate, t.learn.admin.addGameSourceLabel]);
 
+  type LessonGameLite = {
+    id: string;
+    white?: string;
+    black?: string;
+    date?: string;
+    uciMoves: string[];
+  };
+
+  const lessonGames = useMemo<LessonGameLite[]>(() => {
+    try {
+      const obj = JSON.parse(lessonText) as Record<string, unknown>;
+      if (!obj || typeof obj !== "object" || !Array.isArray(obj.historicalGames)) return [];
+      const out: LessonGameLite[] = [];
+      for (const raw of obj.historicalGames as unknown[]) {
+        if (!raw || typeof raw !== "object") continue;
+        const g = raw as Record<string, unknown>;
+        if (typeof g.id !== "string" || !Array.isArray(g.uciMoves)) continue;
+        const moves = g.uciMoves.filter((m): m is string => typeof m === "string");
+        if (moves.length === 0) continue;
+        out.push({
+          id: g.id,
+          white: typeof g.white === "string" ? g.white : undefined,
+          black: typeof g.black === "string" ? g.black : undefined,
+          date: typeof g.date === "string" ? g.date : undefined,
+          uciMoves: moves,
+        });
+      }
+      return out;
+    } catch {
+      return [];
+    }
+  }, [lessonText]);
+
+  useEffect(() => {
+    if (lessonGames.length === 0) {
+      if (quizGameId !== "") setQuizGameId("");
+      return;
+    }
+    if (!quizGameId || !lessonGames.some((g) => g.id === quizGameId)) {
+      setQuizGameId(lessonGames[0].id);
+    }
+  }, [lessonGames, quizGameId]);
+
+  const selectedQuizGame = useMemo(
+    () => lessonGames.find((g) => g.id === quizGameId) ?? null,
+    [lessonGames, quizGameId],
+  );
+
+  const quizSanList = useMemo(
+    () => (selectedQuizGame ? uciSequenceToSan(selectedQuizGame.uciMoves) : []),
+    [selectedQuizGame],
+  );
+
+  const safeQuizPly = useMemo(() => {
+    if (!selectedQuizGame) return 0;
+    const max = Math.max(0, selectedQuizGame.uciMoves.length - 1);
+    return Math.min(Math.max(0, quizPly), max);
+  }, [selectedQuizGame, quizPly]);
+
+  const quizActualMove = useMemo(() => {
+    if (!selectedQuizGame) return null;
+    return sanOfMoveAt(selectedQuizGame.uciMoves, safeQuizPly);
+  }, [selectedQuizGame, safeQuizPly]);
+
+  const autoFillFromGame = useCallback(
+    (game: LessonGameLite, ply: number) => {
+      const actual = sanOfMoveAt(game.uciMoves, ply);
+      const correct = actual?.uci ?? "";
+      setQuizCorrectUci(correct);
+      const decoys = suggestWrongMoves(game.uciMoves, ply, correct, 3);
+      setQuizWrong([decoys[0] ?? "", decoys[1] ?? "", decoys[2] ?? ""]);
+      setQuizId(`${game.id}-q${ply}`);
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (!selectedQuizGame) return;
+    autoFillFromGame(selectedQuizGame, safeQuizPly);
+  }, [selectedQuizGame, safeQuizPly, autoFillFromGame]);
+
+  const handleAppendQuiz = () => {
+    if (!selectedQuizGame) {
+      toast.error(t.learn.admin.addQuizGameNoGames);
+      return;
+    }
+    const correct = quizCorrectUci.trim();
+    const decoys = quizWrong.map((s) => s.trim()).filter((s) => s.length > 0);
+    if (
+      !correct ||
+      decoys.length === 0 ||
+      !quizPromptFr.trim() ||
+      !quizPromptEn.trim()
+    ) {
+      toast.error(t.learn.admin.addQuizMissingFields);
+      return;
+    }
+
+    let lessonObj: Record<string, unknown>;
+    try {
+      const parsed = JSON.parse(lessonText);
+      if (!parsed || typeof parsed !== "object") throw new Error("not object");
+      lessonObj = parsed as Record<string, unknown>;
+    } catch {
+      toast.error(t.learn.admin.addGameLessonNotParsed);
+      return;
+    }
+
+    const gamesArr = Array.isArray(lessonObj.historicalGames)
+      ? (lessonObj.historicalGames as Record<string, unknown>[])
+      : [];
+    const idx = gamesArr.findIndex((g) => g && (g as { id?: unknown }).id === selectedQuizGame.id);
+    if (idx < 0) {
+      toast.error(t.learn.admin.addQuizGameNotInLesson);
+      return;
+    }
+
+    const game = gamesArr[idx] ?? {};
+    const existing = Array.isArray((game as { challenges?: unknown }).challenges)
+      ? ((game as { challenges?: unknown[] }).challenges ?? [])
+      : [];
+    const usedIds = new Set<string>(
+      existing
+        .filter(
+          (c): c is { id: string } =>
+            Boolean(c) && typeof (c as { id?: unknown }).id === "string",
+        )
+        .map((c) => c.id),
+    );
+    const baseId = (quizId.trim() || `${selectedQuizGame.id}-q${safeQuizPly}`) || "quiz";
+    let finalId = baseId;
+    let counter = 2;
+    while (usedIds.has(finalId)) {
+      finalId = `${baseId}-${counter}`;
+      counter += 1;
+    }
+
+    const hintFr = quizHintFr.trim();
+    const hintEn = quizHintEn.trim();
+    const hints =
+      hintFr || hintEn
+        ? [{ fr: hintFr || hintEn, en: hintEn || hintFr }]
+        : [];
+    const insightFr = quizInsightFr.trim() || quizPromptFr.trim();
+    const insightEn = quizInsightEn.trim() || quizPromptEn.trim();
+
+    const challenge = {
+      id: finalId,
+      afterMoveCount: safeQuizPly,
+      prompt: { fr: quizPromptFr.trim(), en: quizPromptEn.trim() },
+      correctUci: correct,
+      wrongChoices: decoys,
+      hints,
+      insight: { fr: insightFr, en: insightEn },
+    };
+
+    const updatedGame = { ...(game as Record<string, unknown>), challenges: [...existing, challenge] };
+    const nextGames = gamesArr.map((g, i) => (i === idx ? updatedGame : g));
+    const next = { ...lessonObj, historicalGames: nextGames };
+    setLessonText(JSON.stringify(next, null, 2));
+
+    setQuizPromptFr("");
+    setQuizPromptEn("");
+    setQuizHintFr("");
+    setQuizHintEn("");
+    setQuizInsightFr("");
+    setQuizInsightEn("");
+    setQuizId("");
+    toast.success(formatTemplate(t.learn.admin.addQuizAppended, { id: finalId }));
+  };
+
   const handleDelete = async () => {
     if (!isSupabaseConfigured || !supabase) return;
     if (!confirm(t.learn.admin.deleteConfirm)) return;
@@ -494,6 +684,241 @@ export default function LearnAdminEditPage() {
                   </tbody>
                 </table>
               </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="theme-bg-secondary theme-border">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base text-cyan-200 flex items-center gap-2">
+              <HelpCircle className="h-4 w-4" />
+              {t.learn.admin.addQuizTitle}
+            </CardTitle>
+            <CardDescription className="text-xs theme-text-secondary">
+              {t.learn.admin.addQuizHint}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {lessonGames.length === 0 ? (
+              <p className="text-xs text-amber-300/80">{t.learn.admin.addQuizGameNoGames}</p>
+            ) : (
+              <>
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div className="space-y-1">
+                    <label className="text-xs text-slate-400">{t.learn.admin.addQuizGameLabel}</label>
+                    <select
+                      value={quizGameId}
+                      onChange={(e) => setQuizGameId(e.target.value)}
+                      className="w-full rounded-md border border-slate-700 bg-slate-950 p-2 text-sm text-slate-200"
+                    >
+                      {lessonGames.map((g) => {
+                        const label = `${g.white ?? "?"} – ${g.black ?? "?"}${g.date ? ` (${g.date})` : ""}`;
+                        return (
+                          <option key={g.id} value={g.id}>
+                            {label} · {g.id}
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-slate-400">{t.learn.admin.addQuizIdLabel}</label>
+                    <input
+                      value={quizId}
+                      onChange={(e) => setQuizId(e.target.value)}
+                      spellCheck={false}
+                      className="w-full rounded-md border border-slate-700 bg-slate-950 p-2 text-sm font-mono text-slate-200"
+                    />
+                  </div>
+                </div>
+
+                {selectedQuizGame && (
+                  <div className="space-y-2">
+                    <label className="text-xs text-slate-400">
+                      {formatTemplate(t.learn.admin.addQuizPositionLabel, {
+                        plies: safeQuizPly,
+                        moveNumber: Math.floor(safeQuizPly / 2) + 1,
+                        side:
+                          safeQuizPly % 2 === 0
+                            ? t.learn.admin.addQuizSideWhite
+                            : t.learn.admin.addQuizSideBlack,
+                      })}
+                    </label>
+                    <input
+                      type="range"
+                      min={0}
+                      max={Math.max(0, selectedQuizGame.uciMoves.length - 1)}
+                      step={1}
+                      value={safeQuizPly}
+                      onChange={(e) => setQuizPly(Number(e.target.value))}
+                      className="w-full accent-cyan-500"
+                    />
+                    {quizActualMove && (
+                      <p className="text-xs text-amber-200/90 font-mono">
+                        {formatTemplate(t.learn.admin.addQuizActualMove, {
+                          san: quizActualMove.san,
+                          uci: quizActualMove.uci,
+                        })}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {selectedQuizGame && quizSanList.length > 0 && (
+                  <div className="space-y-2">
+                    <label className="text-xs text-slate-400">{t.learn.admin.addQuizMoveListLabel}</label>
+                    <div className="max-h-40 overflow-y-auto rounded-md border border-slate-800 bg-slate-950/60 p-2">
+                      <div className="flex flex-wrap gap-1 text-xs font-mono text-slate-300">
+                        {quizSanList.map((san, i) => {
+                          const isWhiteMove = i % 2 === 0;
+                          const moveNumberLabel = isWhiteMove ? `${i / 2 + 1}.` : null;
+                          const isSelected = i === safeQuizPly;
+                          return (
+                            <span key={i} className="flex items-center gap-1">
+                              {moveNumberLabel && (
+                                <span className="text-slate-500">{moveNumberLabel}</span>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => setQuizPly(i)}
+                                className={`rounded px-1.5 py-0.5 transition-colors ${
+                                  isSelected
+                                    ? "bg-cyan-700/70 text-white"
+                                    : "hover:bg-slate-800 text-slate-300"
+                                }`}
+                              >
+                                {san}
+                              </button>
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div className="space-y-1">
+                    <label className="text-xs text-slate-400">{t.learn.admin.addQuizCorrectLabel}</label>
+                    <div className="flex gap-2">
+                      <input
+                        value={quizCorrectUci}
+                        onChange={(e) => setQuizCorrectUci(e.target.value)}
+                        spellCheck={false}
+                        className="flex-1 rounded-md border border-slate-700 bg-slate-950 p-2 text-sm font-mono text-slate-200"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          if (selectedQuizGame) autoFillFromGame(selectedQuizGame, safeQuizPly);
+                        }}
+                      >
+                        {t.learn.admin.addQuizUseGameMove}
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-slate-400">{t.learn.admin.addQuizWrongLabel}</label>
+                    <div className="flex flex-col gap-2">
+                      <div className="flex gap-2">
+                        {[0, 1, 2].map((i) => (
+                          <input
+                            key={i}
+                            value={quizWrong[i] ?? ""}
+                            onChange={(e) => {
+                              const next = [...quizWrong];
+                              next[i] = e.target.value;
+                              setQuizWrong(next);
+                            }}
+                            spellCheck={false}
+                            className="flex-1 rounded-md border border-slate-700 bg-slate-950 p-2 text-sm font-mono text-slate-200"
+                          />
+                        ))}
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          if (!selectedQuizGame) return;
+                          const decoys = suggestWrongMoves(
+                            selectedQuizGame.uciMoves,
+                            safeQuizPly,
+                            quizCorrectUci.trim(),
+                            3,
+                          );
+                          setQuizWrong([decoys[0] ?? "", decoys[1] ?? "", decoys[2] ?? ""]);
+                        }}
+                      >
+                        {t.learn.admin.addQuizSuggestWrong}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div className="space-y-1">
+                    <label className="text-xs text-slate-400">{t.learn.admin.addQuizPromptFr}</label>
+                    <textarea
+                      value={quizPromptFr}
+                      onChange={(e) => setQuizPromptFr(e.target.value)}
+                      className="w-full min-h-[60px] rounded-md border border-slate-700 bg-slate-950 p-2 text-sm text-slate-200"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-slate-400">{t.learn.admin.addQuizPromptEn}</label>
+                    <textarea
+                      value={quizPromptEn}
+                      onChange={(e) => setQuizPromptEn(e.target.value)}
+                      className="w-full min-h-[60px] rounded-md border border-slate-700 bg-slate-950 p-2 text-sm text-slate-200"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-slate-400">{t.learn.admin.addQuizHintFr}</label>
+                    <textarea
+                      value={quizHintFr}
+                      onChange={(e) => setQuizHintFr(e.target.value)}
+                      className="w-full min-h-[50px] rounded-md border border-slate-700 bg-slate-950 p-2 text-sm text-slate-200"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-slate-400">{t.learn.admin.addQuizHintEn}</label>
+                    <textarea
+                      value={quizHintEn}
+                      onChange={(e) => setQuizHintEn(e.target.value)}
+                      className="w-full min-h-[50px] rounded-md border border-slate-700 bg-slate-950 p-2 text-sm text-slate-200"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-slate-400">{t.learn.admin.addQuizInsightFr}</label>
+                    <textarea
+                      value={quizInsightFr}
+                      onChange={(e) => setQuizInsightFr(e.target.value)}
+                      className="w-full min-h-[60px] rounded-md border border-slate-700 bg-slate-950 p-2 text-sm text-slate-200"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-slate-400">{t.learn.admin.addQuizInsightEn}</label>
+                    <textarea
+                      value={quizInsightEn}
+                      onChange={(e) => setQuizInsightEn(e.target.value)}
+                      className="w-full min-h-[60px] rounded-md border border-slate-700 bg-slate-950 p-2 text-sm text-slate-200"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Button
+                    type="button"
+                    onClick={handleAppendQuiz}
+                    className="bg-cyan-700 hover:bg-cyan-600"
+                  >
+                    {t.learn.admin.addQuizAppend}
+                  </Button>
+                </div>
+              </>
             )}
           </CardContent>
         </Card>

@@ -78,6 +78,92 @@ export function parsePgnBlock(pgnBlock: string): ParsedPgn | null {
   }
 }
 
+function uciToFromTo(uci: string): { from: string; to: string; promotion?: string } | null {
+  const m = uci.match(/^([a-h][1-8])([a-h][1-8])([qrbn])?$/i);
+  if (!m) return null;
+  return { from: m[1], to: m[2], promotion: m[3]?.toLowerCase() };
+}
+
+/**
+ * Replay a UCI sequence and return the SAN of every move (parallel array). Stops early
+ * and returns whatever was successfully replayed if a move turns out illegal.
+ */
+export function uciSequenceToSan(uciMoves: string[]): string[] {
+  const chess = new Chess();
+  const out: string[] = [];
+  for (const uci of uciMoves) {
+    const parts = uciToFromTo(uci);
+    if (!parts) break;
+    try {
+      const move = chess.move(parts);
+      if (!move) break;
+      out.push(move.san);
+    } catch {
+      break;
+    }
+  }
+  return out;
+}
+
+/**
+ * Build a Chess instance positioned after the first `afterMoveCount` plies of `uciMoves`.
+ * Returns `null` if the replay fails (illegal move, etc.).
+ */
+export function chessAtPly(uciMoves: string[], afterMoveCount: number): Chess | null {
+  const chess = new Chess();
+  const limit = Math.max(0, Math.min(afterMoveCount, uciMoves.length));
+  for (let i = 0; i < limit; i++) {
+    const parts = uciToFromTo(uciMoves[i]);
+    if (!parts) return null;
+    try {
+      const ok = chess.move(parts);
+      if (!ok) return null;
+    } catch {
+      return null;
+    }
+  }
+  return chess;
+}
+
+/**
+ * Pick up to `count` plausible wrong UCI moves from the position after `afterMoveCount`
+ * plies of `uciMoves`, excluding the actual game move (`correctUci`). Selection is
+ * deterministic (alphabetical by `from+to`) so the admin sees a stable suggestion list.
+ */
+export function suggestWrongMoves(
+  uciMoves: string[],
+  afterMoveCount: number,
+  correctUci: string,
+  count = 3,
+): string[] {
+  const chess = chessAtPly(uciMoves, afterMoveCount);
+  if (!chess) return [];
+  const verbose = chess.moves({ verbose: true });
+  const candidates = verbose
+    .map((m) => `${m.from}${m.to}${m.promotion ?? ""}`)
+    .filter((u) => u !== correctUci);
+  candidates.sort();
+  return candidates.slice(0, Math.max(0, count));
+}
+
+/**
+ * Convenience: SAN of the move at index `afterMoveCount` (i.e. the move played from the
+ * "after `afterMoveCount` plies" position). Returns `null` if out of range or replay fails.
+ */
+export function sanOfMoveAt(uciMoves: string[], afterMoveCount: number): { san: string; uci: string } | null {
+  if (afterMoveCount < 0 || afterMoveCount >= uciMoves.length) return null;
+  const chess = chessAtPly(uciMoves, afterMoveCount);
+  if (!chess) return null;
+  const parts = uciToFromTo(uciMoves[afterMoveCount]);
+  if (!parts) return null;
+  try {
+    const move = chess.move(parts);
+    return move ? { san: move.san, uci: uciMoves[afterMoveCount] } : null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Split a multi-game PGN string into individual game blocks.
  * Heuristic: a new game begins at a `[Event "..."]` tag preceded by a blank line or start of text.
