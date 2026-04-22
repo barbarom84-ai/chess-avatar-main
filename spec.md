@@ -18,7 +18,7 @@ Une application web permettant aux joueurs d'échecs de créer un "Clone IA" de 
 - **Dashboard:** Design inspiré de Chess.com/Lichess (Dark/Light mode, propre, réactif).
 - **Chess Board:** Un échiquier interactif (utiliser `chessboard.tsx` ou `react-chessboard`) pour rejouer les parties.
 - **Stats Panel:** Affichage visuel du style (Graphiques radar : Agressivité, Précision, Solidité).
-- **Persona Chat:** Un petit module LLM qui imite le style de chat du joueur (optionnel pour le MVP).
+- **Avatar Chat:** Un petit module LLM qui imite le style de chat du joueur (optionnel pour le MVP).
 
 ### C. Engine & Simulation
 - Intégration de Stockfish (via WebAssembly pour le web) pour l'analyse en direct.

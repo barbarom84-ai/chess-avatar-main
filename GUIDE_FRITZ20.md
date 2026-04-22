@@ -153,7 +153,7 @@ C:\Users\[User]\Documents\ChessBase\Engines\MonAvatar\
 ```cmd
 # Méthode 1 : Pack ZIP automatique (Recommandé - aucun Python requis)
 1. Sur la page d'accueil, analyser son profil Lichess/Chess.com
-2. Sur la carte persona, cliquer sur "Pack moteur" (bouton vert)
+2. Sur la carte avatar, cliquer sur "Pack moteur" (bouton vert)
 3. Décompresser le ZIP téléchargé n'importe où
 4. CLIC DROIT sur install_engine.bat > "Exécuter en tant qu'administrateur"
    (le script s'auto-élève via UAC si vous double-cliquez à la place)

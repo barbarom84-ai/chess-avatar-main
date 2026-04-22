@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 AvatarEngine.py - UCI Chess Engine Wrapper with Opening Book Support
-Wraps Stockfish with persona-based configuration, custom name/author, and opening repertoire
+Wraps Stockfish with avatar-based configuration, custom name/author, and opening repertoire
 
 Features:
 - Loads profile.json and engine.ini for configuration

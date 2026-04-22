@@ -192,7 +192,7 @@ export const translations = {
         description: "Depuis la page d'accueil, analysez votre profil puis téléchargez votre pack personnalisé.",
         steps: [
           "Allez sur la page d'accueil et analysez votre pseudo Lichess ou Chess.com",
-          "Sur la carte de votre persona, cliquez sur le bouton vert « Pack moteur »",
+          "Sur la carte de votre avatar, cliquez sur le bouton vert « Pack moteur »",
           "Un fichier ChessAvatar_<VotreNom>_Pack.zip se télécharge dans votre dossier Téléchargements"
         ],
         contents: "Le pack contient : AvatarEngine.exe (moteur pré-compilé), install_engine.bat (installation auto), swap_profile.bat (changement d'avatar), votre profil JSON et un README."
@@ -230,7 +230,7 @@ export const translations = {
         title: "Changer d'avatar plus tard (sans tout réinstaller)",
         description: "Le moteur recharge son profil à chaque démarrage. Vous pouvez changer d'avatar à la volée :",
         steps: [
-          "Téléchargez juste le nouveau profil JSON depuis le site (bouton « JSON seul » sur la carte persona)",
+          "Téléchargez juste le nouveau profil JSON depuis le site (bouton « JSON seul » sur la carte avatar)",
           "Allez dans Documents\\ChessBase\\Engines\\<VotreNom>_Avatar\\",
           "Double-cliquez sur swap_profile.bat",
           "Glissez-déposez votre nouveau .json dans la fenêtre, puis Entrée",
@@ -601,7 +601,7 @@ export const translations = {
       whiteWinsResignation: "Les blancs gagnent - Abandon"
     },
 
-    // Engine config / persona
+    // Engine config / avatar
     engineConfig: {
       difficultyBeginner: "Débutant",
       difficultyIntermediate: "Intermédiaire",
@@ -908,7 +908,7 @@ export const translations = {
       knight: "Cavalier"
     },
 
-    // Persona card
+    // Avatar card
     personaCard: {
       playAgainst: "Jouer Contre ce Moteur",
       supabaseNotConfigured: "Supabase non configuré. Consultez SUPABASE_SETUP.md pour les instructions.",
@@ -1265,7 +1265,7 @@ export const translations = {
         description: "From the homepage, analyze your profile then download your personalized pack.",
         steps: [
           "Go to the homepage and analyze your Lichess or Chess.com username",
-          "On your persona card, click the green \"Engine pack\" button",
+          "On your avatar card, click the green \"Engine pack\" button",
           "A ChessAvatar_<YourName>_Pack.zip file downloads to your Downloads folder"
         ],
         contents: "The pack contains: AvatarEngine.exe (pre-compiled engine), install_engine.bat (auto installer), swap_profile.bat (avatar swap tool), your JSON profile and a README."
@@ -1303,7 +1303,7 @@ export const translations = {
         title: "Switch avatars later (without reinstalling)",
         description: "The engine reloads its profile every startup. You can hot-swap avatars:",
         steps: [
-          "Download just the new JSON profile from the site (\"JSON only\" button on the persona card)",
+          "Download just the new JSON profile from the site (\"JSON only\" button on the avatar card)",
           "Go to Documents\\ChessBase\\Engines\\<YourName>_Avatar\\",
           "Double-click swap_profile.bat",
           "Drag-and-drop your new .json into the window, then press Enter",
@@ -1672,7 +1672,7 @@ export const translations = {
       whiteWinsResignation: "White wins - Resignation"
     },
 
-    // Engine config / persona
+    // Engine config / avatar
     engineConfig: {
       difficultyBeginner: "Beginner",
       difficultyIntermediate: "Intermediate",
@@ -1979,7 +1979,7 @@ export const translations = {
       knight: "Knight"
     },
 
-    // Persona card
+    // Avatar card
     personaCard: {
       playAgainst: "Play Against this Engine",
       supabaseNotConfigured: "Supabase not configured. See SUPABASE_SETUP.md for instructions.",
