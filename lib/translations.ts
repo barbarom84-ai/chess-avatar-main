@@ -199,14 +199,16 @@ export const translations = {
       },
       step2: {
         title: "Lancez l'installation automatique",
-        description: "Décompressez le ZIP n'importe où, puis double-cliquez sur install_engine.bat.",
+        description: "Décompressez le ZIP n'importe où, puis lancez install_engine.bat en tant qu'administrateur.",
         steps: [
           "Clic droit sur le ZIP → « Extraire tout… » dans un dossier de votre choix",
-          "Double-cliquez sur install_engine.bat (aucun droit administrateur requis)",
+          "Clic droit sur install_engine.bat → « Exécuter en tant qu'administrateur »",
+          "Acceptez l'invite UAC (le script en a besoin pour télécharger Stockfish et écrire dans Documents\\ChessBase)",
           "Le script télécharge Stockfish automatiquement si nécessaire (~30 Mo)",
           "Tout est copié dans Documents\\ChessBase\\Engines\\<VotreNom>_Avatar\\"
         ],
-        smartScreenNote: "⚠️ Windows peut afficher un avertissement SmartScreen sur le .bat téléchargé. Cliquez sur « Informations complémentaires » puis « Exécuter quand même ». Le code source est consultable dans le fichier."
+        adminNote: "⚠️ IMPORTANT : Le script doit être lancé en tant qu'administrateur. Un simple double-clic ne suffit pas — clic droit puis « Exécuter en tant qu'administrateur ». Sans cela, le téléchargement automatique de Stockfish ou la copie des fichiers peut échouer selon votre configuration Windows.",
+        smartScreenNote: "⚠️ Windows peut aussi afficher un avertissement SmartScreen sur le .bat téléchargé. Cliquez sur « Informations complémentaires » puis « Exécuter quand même ». Le code source est consultable dans le fichier."
       },
       step3: {
         title: "Configurez votre logiciel d'échecs",
@@ -1270,14 +1272,16 @@ export const translations = {
       },
       step2: {
         title: "Run the automatic installer",
-        description: "Extract the ZIP anywhere, then double-click install_engine.bat.",
+        description: "Extract the ZIP anywhere, then run install_engine.bat as administrator.",
         steps: [
           "Right-click the ZIP → \"Extract All...\" into a folder of your choice",
-          "Double-click install_engine.bat (no admin rights needed)",
+          "Right-click install_engine.bat → \"Run as administrator\"",
+          "Accept the UAC prompt (needed to download Stockfish and write into Documents\\ChessBase)",
           "The script auto-downloads Stockfish if needed (~30 MB)",
           "Everything is copied to Documents\\ChessBase\\Engines\\<YourName>_Avatar\\"
         ],
-        smartScreenNote: "⚠️ Windows may show a SmartScreen warning on the downloaded .bat. Click \"More info\" then \"Run anyway\". The source code is readable inside the file."
+        adminNote: "⚠️ IMPORTANT: The script must be launched as administrator. A plain double-click is not enough — right-click then \"Run as administrator\". Otherwise the automatic Stockfish download or the file copy may fail depending on your Windows setup.",
+        smartScreenNote: "⚠️ Windows may also show a SmartScreen warning on the downloaded .bat. Click \"More info\" then \"Run anyway\". The source code is readable inside the file."
       },
       step3: {
         title: "Configure your chess software",

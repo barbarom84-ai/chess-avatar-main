@@ -29,10 +29,16 @@ avatar comme moteur UCI dans Fritz, ChessBase, Arena ou Cutechess.
   Installation rapide (3 etapes)
 ----------------------------------------
 
+>>> IMPORTANT : install_engine.bat doit etre lance EN TANT QU'ADMINISTRATEUR.
+>>> Clic droit sur le fichier > "Executer en tant qu'administrateur".
+>>> Un simple double-clic peut echouer (telechargement Stockfish bloque,
+>>> copie de fichiers refusee selon votre configuration Windows).
+
 1. Decompressez ce ZIP dans un dossier de votre choix
    (par exemple sur le Bureau).
 
-2. Double-cliquez sur "install_engine.bat".
+2. CLIC DROIT sur "install_engine.bat" > "Executer en tant qu'administrateur".
+   Acceptez l'invite UAC.
    Le script va :
    - verifier la presence d'AvatarEngine.exe
    - telecharger Stockfish automatiquement s'il manque
@@ -45,7 +51,7 @@ avatar comme moteur UCI dans Fritz, ChessBase, Arena ou Cutechess.
    - Selectionnez AvatarEngine.exe dans le dossier ci-dessus
    - Votre moteur "${engineName}" est pret !
 
-Aucun droit administrateur requis. Aucune installation Python.
+Aucune installation Python requise.
 
 ----------------------------------------
   Comment changer d'avatar

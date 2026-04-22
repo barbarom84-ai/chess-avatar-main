@@ -1,5 +1,16 @@
 @echo off
 title Chess Avatar - Changement d'avatar
+
+:: Auto-elevation UAC (le dossier moteur peut avoir ete cree en admin
+:: par install_engine.bat, donc swap_profile.bat doit aussi etre admin).
+net session >nul 2>&1
+if errorlevel 1 (
+    echo [INFO] Privileges administrateur requis pour modifier le dossier moteur.
+    echo [INFO] Demande d'elevation UAC en cours...
+    powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process -FilePath '%~f0' -WorkingDirectory '%~dp0' -Verb RunAs"
+    exit /b 0
+)
+
 color 0B
 mode con: cols=104 lines=35 >nul 2>&1
 

@@ -1,10 +1,25 @@
 @echo off
 title Chess Avatar - Installation moteur UCI
+
+:: =====================================================
+:: Auto-elevation : relance le script en tant qu'admin
+:: si l'utilisateur a fait un simple double-clic.
+:: =====================================================
+net session >nul 2>&1
+if errorlevel 1 (
+    echo [INFO] Privileges administrateur requis.
+    echo [INFO] Demande d'elevation UAC en cours...
+    powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process -FilePath '%~f0' -WorkingDirectory '%~dp0' -Verb RunAs"
+    exit /b 0
+)
+
 color 0B
 mode con: cols=104 lines=45 >nul 2>&1
 powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "$s=[Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('ICAgX19fXyBfICAgICAgICAgICAgICAgICAgICAgIF8gICAgICAgICAgICAgXyAgICAgICAgICAgICANCiAgLyBfX198IHxfXyAgIF9fXyAgX19fIF9fXyAgIC8gXF9fICAgX19fXyBffCB8XyBfXyBfIF8gX18gDQogfCB8ICAgfCAnXyBcIC8gXyBcLyBfXy8gX198IC8gXyBcIFwgLyAvIF9gIHwgX18vIF9gIHwgJ19ffA0KIHwgfF9fX3wgfCB8IHwgIF9fL1xfXyBcX18gXC8gX19fIFwgViAvIChffCB8IHx8IChffCB8IHwgICANCiAgXF9fX198X3wgfF98XF9fX3x8X19fL19fXy9fLyAgIFxfXF8vIFxfXyxffFxfX1xfXyxffF98ICAgDQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIA0K')); [Console]::Out.Write($s)"
-:: Installation dans Documents\ChessBase\Engines : aucun droit administrateur requis (double-clic suffit).
 :: Aucune dependance Python : AvatarEngine.exe est livre pre-compile dans le ZIP.
+:: Le script s'auto-eleve en admin (UAC) si necessaire pour eviter tout
+:: probleme de blocage Windows lors du telechargement Stockfish ou de la
+:: copie des fichiers.
 
 setlocal enabledelayedexpansion
 echo ========================================

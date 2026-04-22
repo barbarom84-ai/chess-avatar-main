@@ -74,6 +74,13 @@ export default function GuidePage() {
             </CardHeader>
             <CardContent className="space-y-4 theme-text-secondary">
               <p>{t.guide.step2.description}</p>
+
+              <div className="bg-red-900/30 border-2 border-red-500 p-4 rounded-lg shadow-lg shadow-red-900/30">
+                <p className="text-red-100 text-sm font-semibold leading-relaxed">
+                  {t.guide.step2.adminNote}
+                </p>
+              </div>
+
               <ol className="list-decimal list-inside space-y-2 ml-4 theme-text-primary">
                 {t.guide.step2.steps.map((step: string, idx: number) => (
                   <li key={idx}>{step}</li>
