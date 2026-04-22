@@ -182,53 +182,71 @@ export const translations = {
       title: "UCI creator guide",
       subtitle: "Créez votre moteur UCI et jouez contre votre clone dans Fritz, ChessBase ou Arena.",
       download: "Télécharger",
+      ctaGeneratePack: "Générer mon pack moteur",
+      banner: {
+        title: "✨ Installation 100 % automatique — aucun Python requis",
+        text: "AvatarEngine.exe est livré pré-compilé dans le pack ZIP. Le script télécharge même Stockfish automatiquement si vous ne l'avez pas. Aucune dépendance, aucun droit administrateur, juste un double-clic."
+      },
       step1: {
-        title: "Préparez le dossier",
-        description: "Créez un dossier et téléchargez ces fichiers :",
-        files: [
-          "AvatarEngine.py",
-          "install_engine.bat",
-          "Stockfish",
-          "Votre profil JSON (généré depuis la page d'accueil)"
+        title: "Générez votre pack moteur",
+        description: "Depuis la page d'accueil, analysez votre profil puis téléchargez votre pack personnalisé.",
+        steps: [
+          "Allez sur la page d'accueil et analysez votre pseudo Lichess ou Chess.com",
+          "Sur la carte de votre persona, cliquez sur le bouton vert « Pack moteur »",
+          "Un fichier ChessAvatar_<VotreNom>_Pack.zip se télécharge dans votre dossier Téléchargements"
         ],
-        warning: "Windows va afficher un avertissement",
-        warningText: "C'est normal ! Windows protège contre les fichiers .bat téléchargés. Cliquez sur \"Informations complémentaires\" puis \"Exécuter quand même\".",
-        tip: "Le code est 100% open source et visible dans les fichiers téléchargés."
+        contents: "Le pack contient : AvatarEngine.exe (moteur pré-compilé), install_engine.bat (installation auto), swap_profile.bat (changement d'avatar), votre profil JSON et un README."
       },
       step2: {
-        title: "Renommez votre profil",
-        description: "Renommez votre fichier JSON en profile.json (optionnel : le script détecte tout .json)"
+        title: "Lancez l'installation automatique",
+        description: "Décompressez le ZIP n'importe où, puis double-cliquez sur install_engine.bat.",
+        steps: [
+          "Clic droit sur le ZIP → « Extraire tout… » dans un dossier de votre choix",
+          "Double-cliquez sur install_engine.bat (aucun droit administrateur requis)",
+          "Le script télécharge Stockfish automatiquement si nécessaire (~30 Mo)",
+          "Tout est copié dans Documents\\ChessBase\\Engines\\<VotreNom>_Avatar\\"
+        ],
+        smartScreenNote: "⚠️ Windows peut afficher un avertissement SmartScreen sur le .bat téléchargé. Cliquez sur « Informations complémentaires » puis « Exécuter quand même ». Le code source est consultable dans le fichier."
       },
       step3: {
-        title: "Exécutez l'installation",
-        description: "Double-cliquez sur install_engine.bat (aucun droit administrateur requis : tout s'installe dans votre dossier Documents). Suivez les instructions pour compiler AvatarEngine.exe avec PyInstaller."
-      },
-      step4: {
-        title: "Configurez votre logiciel",
-        fritzTitle: "Dans Fritz 20/ChessBase",
+        title: "Configurez votre logiciel d'échecs",
+        fritzTitle: "Dans Fritz 20 / ChessBase",
         fritzSteps: [
-          "Ouvrir Fichier → Ouvrir → Modules (ou Module → Module UCI)",
-          "Cliquer sur Nouveau module / ... pour parcourir",
-          "Sélectionner AvatarEngine.exe",
-          "Votre bot apparaît dans la liste !"
+          "Ouvrir Fritz / ChessBase",
+          "Onglet Module → Module UCI → bouton « ... » pour parcourir",
+          "Sélectionnez AvatarEngine.exe dans Documents\\ChessBase\\Engines\\<VotreNom>_Avatar\\",
+          "Votre bot apparaît sous son nom personnalisé !"
         ],
-        arenaTitle: "Dans Arena",
+        arenaTitle: "Dans Arena / Cutechess",
         arenaSteps: [
-          "Ouvrir Modules → Installer un nouveau module",
-          "Sélectionner AvatarEngine.exe",
-          "Votre bot apparaît dans la liste !"
+          "Menu Engines → Install New Engine",
+          "Sélectionnez AvatarEngine.exe dans le dossier ci-dessus",
+          "Votre bot apparaît dans la liste"
+        ]
+      },
+      swap: {
+        title: "Changer d'avatar plus tard (sans tout réinstaller)",
+        description: "Le moteur recharge son profil à chaque démarrage. Vous pouvez changer d'avatar à la volée :",
+        steps: [
+          "Téléchargez juste le nouveau profil JSON depuis le site (bouton « JSON seul » sur la carte persona)",
+          "Allez dans Documents\\ChessBase\\Engines\\<VotreNom>_Avatar\\",
+          "Double-cliquez sur swap_profile.bat",
+          "Glissez-déposez votre nouveau .json dans la fenêtre, puis Entrée",
+          "Relancez Fritz / Arena : votre moteur joue avec le nouveau profil"
         ]
       },
       troubleshooting: "Problèmes courants",
       problems: {
-        pythonNotFound: "Python introuvable",
-        pythonNotFoundSolution: "Installez Python depuis python.org (cochez \"Add Python to PATH\")",
-        engineNotWorking: "Le moteur ne réagit pas",
-        engineNotWorkingSolution: "Vérifiez que Stockfish et profile.json sont dans le même dossier que AvatarEngine.exe.",
-        windowsBlocking: "Windows bloque le fichier .bat",
-        windowsBlockingSolution: "Clic droit → Propriétés → Cochez \"Débloquer\" → OK",
-        pipBlocked: "pip bloqué (Device Guard) / PyInstaller inaccessible",
-        pipBlockedSolution: "Contactez votre administrateur pour autoriser pip, ou compilez AvatarEngine.exe sur un PC où pip fonctionne puis copiez l'exe."
+        windowsBlocking: "Windows bloque le fichier .bat (SmartScreen)",
+        windowsBlockingSolution: "Clic droit → Propriétés → cochez « Débloquer » → OK. Ou « Informations complémentaires » → « Exécuter quand même » dans la boîte SmartScreen.",
+        stockfishDownload: "Stockfish n'a pas pu être téléchargé",
+        stockfishDownloadSolution: "Vérifiez votre connexion Internet, ou téléchargez manuellement Stockfish depuis stockfishchess.org et placez stockfish.exe dans le dossier du ZIP avant de relancer install_engine.bat.",
+        engineNotWorking: "Le moteur ne réagit pas dans Fritz",
+        engineNotWorkingSolution: "Vérifiez que stockfish.exe, le fichier .json et engine.ini sont bien dans Documents\\ChessBase\\Engines\\<VotreNom>_Avatar\\ aux côtés de AvatarEngine.exe."
+      },
+      advanced: {
+        title: "Téléchargements avancés (développeurs)",
+        description: "Pour recompiler AvatarEngine.exe vous-même ou personnaliser le script d'installation, les fichiers individuels sont disponibles ici :"
       }
     },
 
@@ -908,7 +926,13 @@ export const translations = {
       drawsPercent: "Nulles",
       lossesPercent: "Pertes",
       save: "Sauvegarder",
-      profile: "Profil"
+      profile: "Profil",
+      packDownload: "Pack moteur",
+      packDownloading: "Préparation...",
+      packDownloadSuccess: "Pack moteur téléchargé !",
+      packDownloadError: "Échec du téléchargement du pack",
+      jsonOnly: "JSON seul",
+      jsonOnlyTooltip: "Télécharger uniquement le profil JSON (utilisateurs avancés)"
     },
 
     // Playable chessboard
@@ -1229,53 +1253,71 @@ export const translations = {
       title: "UCI creator guide",
       subtitle: "Create your UCI engine and play against your clone in Fritz, ChessBase or Arena.",
       download: "Download",
+      ctaGeneratePack: "Generate my engine pack",
+      banner: {
+        title: "✨ 100% automatic install — no Python required",
+        text: "AvatarEngine.exe is shipped pre-compiled inside the ZIP pack. The script even auto-downloads Stockfish if you don't have it. No dependencies, no admin rights, just a double-click."
+      },
       step1: {
-        title: "Prepare the folder",
-        description: "Create a folder and download these files:",
-        files: [
-          "AvatarEngine.py",
-          "install_engine.bat",
-          "Stockfish",
-          "Your JSON profile (generated from the homepage)"
+        title: "Generate your engine pack",
+        description: "From the homepage, analyze your profile then download your personalized pack.",
+        steps: [
+          "Go to the homepage and analyze your Lichess or Chess.com username",
+          "On your persona card, click the green \"Engine pack\" button",
+          "A ChessAvatar_<YourName>_Pack.zip file downloads to your Downloads folder"
         ],
-        warning: "Windows will display a warning",
-        warningText: "This is normal! Windows protects against downloaded .bat files. Click \"More info\" then \"Run anyway\".",
-        tip: "The code is 100% open source and visible in the downloaded files."
+        contents: "The pack contains: AvatarEngine.exe (pre-compiled engine), install_engine.bat (auto installer), swap_profile.bat (avatar swap tool), your JSON profile and a README."
       },
       step2: {
-        title: "Rename your profile",
-        description: "Rename your JSON file to profile.json (optional: the script detects any .json)"
+        title: "Run the automatic installer",
+        description: "Extract the ZIP anywhere, then double-click install_engine.bat.",
+        steps: [
+          "Right-click the ZIP → \"Extract All...\" into a folder of your choice",
+          "Double-click install_engine.bat (no admin rights needed)",
+          "The script auto-downloads Stockfish if needed (~30 MB)",
+          "Everything is copied to Documents\\ChessBase\\Engines\\<YourName>_Avatar\\"
+        ],
+        smartScreenNote: "⚠️ Windows may show a SmartScreen warning on the downloaded .bat. Click \"More info\" then \"Run anyway\". The source code is readable inside the file."
       },
       step3: {
-        title: "Run the installation",
-        description: "Double-click install_engine.bat (no administrator rights needed — everything installs under your Documents folder). Follow the instructions to compile AvatarEngine.exe with PyInstaller."
-      },
-      step4: {
-        title: "Configure your software",
-        fritzTitle: "In Fritz 20/ChessBase",
+        title: "Configure your chess software",
+        fritzTitle: "In Fritz 20 / ChessBase",
         fritzSteps: [
-          "Open File → Open → Engines (or Module → UCI Module)",
-          "Click New Engine / ... to browse",
-          "Select AvatarEngine.exe",
-          "Your bot appears in the list!"
+          "Open Fritz / ChessBase",
+          "Module tab → UCI Module → \"...\" button to browse",
+          "Select AvatarEngine.exe in Documents\\ChessBase\\Engines\\<YourName>_Avatar\\",
+          "Your bot appears with its custom name!"
         ],
-        arenaTitle: "In Arena",
+        arenaTitle: "In Arena / Cutechess",
         arenaSteps: [
-          "Open Engines → Install new engine",
-          "Select AvatarEngine.exe",
-          "Your bot appears in the list!"
+          "Engines menu → Install New Engine",
+          "Select AvatarEngine.exe in the folder above",
+          "Your bot appears in the list"
+        ]
+      },
+      swap: {
+        title: "Switch avatars later (without reinstalling)",
+        description: "The engine reloads its profile every startup. You can hot-swap avatars:",
+        steps: [
+          "Download just the new JSON profile from the site (\"JSON only\" button on the persona card)",
+          "Go to Documents\\ChessBase\\Engines\\<YourName>_Avatar\\",
+          "Double-click swap_profile.bat",
+          "Drag-and-drop your new .json into the window, then press Enter",
+          "Restart Fritz / Arena: your engine plays with the new profile"
         ]
       },
       troubleshooting: "Common Issues",
       problems: {
-        pythonNotFound: "Python not found",
-        pythonNotFoundSolution: "Install Python from python.org (check \"Add Python to PATH\")",
-        engineNotWorking: "Engine not responding",
-        engineNotWorkingSolution: "Check that Stockfish and profile.json are in the same folder as AvatarEngine.exe.",
-        windowsBlocking: "Windows blocks the .bat file",
-        windowsBlockingSolution: "Right-click → Properties → Check \"Unblock\" → OK",
-        pipBlocked: "pip blocked (Device Guard) / PyInstaller unavailable",
-        pipBlockedSolution: "Contact your administrator to allow pip, or compile AvatarEngine.exe on a PC where pip works and copy the exe."
+        windowsBlocking: "Windows blocks the .bat file (SmartScreen)",
+        windowsBlockingSolution: "Right-click → Properties → check \"Unblock\" → OK. Or \"More info\" → \"Run anyway\" in the SmartScreen dialog.",
+        stockfishDownload: "Stockfish couldn't be downloaded",
+        stockfishDownloadSolution: "Check your Internet connection, or manually download Stockfish from stockfishchess.org and place stockfish.exe in the ZIP folder before re-running install_engine.bat.",
+        engineNotWorking: "Engine not responding in Fritz",
+        engineNotWorkingSolution: "Check that stockfish.exe, the .json file and engine.ini are all inside Documents\\ChessBase\\Engines\\<YourName>_Avatar\\ next to AvatarEngine.exe."
+      },
+      advanced: {
+        title: "Advanced downloads (developers)",
+        description: "To recompile AvatarEngine.exe yourself or customize the install script, individual files are available here:"
       }
     },
 
@@ -1953,7 +1995,13 @@ export const translations = {
       drawsPercent: "Draws",
       lossesPercent: "Losses",
       save: "Save",
-      profile: "Profile"
+      profile: "Profile",
+      packDownload: "Engine pack",
+      packDownloading: "Preparing...",
+      packDownloadSuccess: "Engine pack downloaded!",
+      packDownloadError: "Failed to download pack",
+      jsonOnly: "JSON only",
+      jsonOnlyTooltip: "Download only the JSON profile (advanced users)"
     },
 
     // Playable chessboard

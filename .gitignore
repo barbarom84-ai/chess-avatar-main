@@ -20,6 +20,10 @@
 # production
 /build
 
+# PyInstaller artifacts (npm run build:engine)
+.engine-build/
+public/__pycache__/
+
 # misc
 .DS_Store
 *.pem

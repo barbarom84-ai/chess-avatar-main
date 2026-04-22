@@ -4,6 +4,7 @@ color 0B
 mode con: cols=104 lines=45 >nul 2>&1
 powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "$s=[Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('ICAgX19fXyBfICAgICAgICAgICAgICAgICAgICAgIF8gICAgICAgICAgICAgXyAgICAgICAgICAgICANCiAgLyBfX198IHxfXyAgIF9fXyAgX19fIF9fXyAgIC8gXF9fICAgX19fXyBffCB8XyBfXyBfIF8gX18gDQogfCB8ICAgfCAnXyBcIC8gXyBcLyBfXy8gX198IC8gXyBcIFwgLyAvIF9gIHwgX18vIF9gIHwgJ19ffA0KIHwgfF9fX3wgfCB8IHwgIF9fL1xfXyBcX18gXC8gX19fIFwgViAvIChffCB8IHx8IChffCB8IHwgICANCiAgXF9fX198X3wgfF98XF9fX3x8X19fL19fXy9fLyAgIFxfXF8vIFxfXyxffFxfX1xfXyxffF98ICAgDQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIA0K')); [Console]::Out.Write($s)"
 :: Installation dans Documents\ChessBase\Engines : aucun droit administrateur requis (double-clic suffit).
+:: Aucune dependance Python : AvatarEngine.exe est livre pre-compile dans le ZIP.
 
 setlocal enabledelayedexpansion
 echo ========================================
@@ -11,126 +12,35 @@ echo Installation du Moteur UCI
 echo ========================================
 echo.
 
-:: Obtenir le dossier du script
 cd /d "%~dp0"
 
 echo Dossier actuel : %CD%
 echo.
 
 :: =====================================================
-:: ETAPE 1 : Compilation (si necessaire)
+:: ETAPE 1 : Verification des fichiers fournis dans le ZIP
 :: =====================================================
 
-:: Verifier si AvatarEngine.py existe
-if not exist "AvatarEngine.py" (
-    echo [ERREUR] AvatarEngine.py introuvable !
-    echo.
-    echo Telechargez AvatarEngine.py depuis le site ChessAvatar
-    pause
-    exit /b 1
-)
-
-echo [OK] AvatarEngine.py trouve
-
-:: Verifier si recompilation necessaire
-set NEED_COMPILE=0
-
-if not exist "AvatarEngine.exe" (
-    echo [INFO] AvatarEngine.exe introuvable
-    set NEED_COMPILE=1
-) else (
-    :: Verifier si .py est plus recent que .exe
-    for %%A in (AvatarEngine.py) do set PY_TIME=%%~tA
-    for %%B in (AvatarEngine.exe) do set EXE_TIME=%%~tB
-    
-    if "!PY_TIME!" GTR "!EXE_TIME!" (
-        echo [INFO] AvatarEngine.py a ete modifie
-        echo [INFO] Recompilation necessaire
-        set NEED_COMPILE=1
-    ) else (
-        echo [OK] AvatarEngine.exe deja a jour
-    )
-)
-
-:: Compiler si necessaire
-if %NEED_COMPILE%==1 (
-    echo.
-    echo [INFO] Compilation automatique en cours...
-    echo.
-    
-    :: Verifier Python
-    python --version >nul 2>&1
-    if errorlevel 1 (
-        echo [ERREUR] Python n'est pas installe ou n'est pas dans le PATH
-        echo.
-        echo Telechargez Python depuis: https://www.python.org/downloads/
-        echo Assurez-vous de cocher "Add Python to PATH" lors de l'installation
-        pause
-        exit /b 1
-    )
-    
-    echo [OK] Python detecte
-    
-    :: Verifier PyInstaller
-    python -m pip show pyinstaller >nul 2>&1
-    if errorlevel 1 (
-        echo.
-        echo [INFO] Installation de PyInstaller ^(profil utilisateur, sans admin^)...
-        python -m pip install --user pyinstaller
-        if errorlevel 1 (
-            echo [ERREUR] Echec de l'installation de PyInstaller
-            echo Si python -m pip est bloque ^(ex: Device Guard^), contactez votre administrateur ou utilisez un autre PC pour compiler AvatarEngine.exe.
-            pause
-            exit /b 1
-        )
-    )
-    
-    echo [OK] PyInstaller detecte
-    echo.
-    echo ========================================
-    echo   Compilation en cours...
-    echo ========================================
-    echo.
-    
-    pyinstaller --onefile --console --clean --name AvatarEngine AvatarEngine.py
-    
-    if errorlevel 1 (
-        echo [ERREUR] La compilation a echoue
-        pause
-        exit /b 1
-    )
-    
-    if exist "dist\AvatarEngine.exe" (
-        copy /Y "dist\AvatarEngine.exe" "AvatarEngine.exe" >nul
-        echo [OK] AvatarEngine.exe compile avec succes !
-        rmdir /S /Q build 2>nul
-        rmdir /S /Q dist 2>nul
-        del /Q AvatarEngine.spec 2>nul
-    ) else (
-        echo [ERREUR] AvatarEngine.exe n'a pas ete cree
-        pause
-        exit /b 1
-    )
-    
-    echo.
-)
-
-:: =====================================================
-:: ETAPE 2 : Verification des fichiers
-:: =====================================================
-
-:: AvatarEngine.exe requis
 if not exist "AvatarEngine.exe" (
     echo [ERREUR] AvatarEngine.exe introuvable !
     echo.
-    echo Lancez d'abord la compilation ^(etape 1^) ou placez AvatarEngine.exe dans ce dossier.
+    echo Ce script doit etre lance depuis le dossier extrait du pack ZIP
+    echo telecharge depuis le site ChessAvatar. Le pack contient :
+    echo   - AvatarEngine.exe
+    echo   - install_engine.bat ^(ce fichier^)
+    echo   - swap_profile.bat
+    echo   - Bot_VotreNom.profile.json
+    echo   - README.txt
     pause
     exit /b 1
 )
 
 echo [OK] AvatarEngine.exe trouve
 
-:: Chercher Stockfish
+:: =====================================================
+:: ETAPE 2 : Stockfish ^(auto-telechargement si absent^)
+:: =====================================================
+
 set STOCKFISH_FOUND=0
 set STOCKFISH_FILE=
 
@@ -143,17 +53,48 @@ for %%f in (stockfish*.exe) do (
 
 :stockfish_ok
 if %STOCKFISH_FOUND%==0 (
-    echo [ERREUR] Aucun fichier Stockfish trouve !
+    echo [INFO] Stockfish absent - telechargement automatique en cours...
+    echo [INFO] Source : https://stockfishchess.org ^(version officielle, ~30 Mo^)
     echo.
-    echo Fichiers .exe presents :
-    dir /B *.exe
-    echo.
-    echo Telechargez Stockfish depuis stockfishchess.org
-    pause
-    exit /b 1
+
+    powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+      "try {" ^
+      "  $url = 'https://github.com/official-stockfish/Stockfish/releases/download/sf_17/stockfish-windows-x86-64-avx2.zip';" ^
+      "  Write-Host '[INFO] Telechargement depuis' $url;" ^
+      "  Invoke-WebRequest -Uri $url -OutFile 'stockfish.zip' -UseBasicParsing;" ^
+      "  Expand-Archive -Path 'stockfish.zip' -DestinationPath '.\stockfish_tmp' -Force;" ^
+      "  $exe = Get-ChildItem -Path '.\stockfish_tmp' -Recurse -Filter 'stockfish*.exe' | Select-Object -First 1;" ^
+      "  if ($exe) { Copy-Item $exe.FullName -Destination '.\stockfish.exe' -Force; Write-Host '[OK] stockfish.exe pret' } else { throw 'Executable Stockfish introuvable dans l archive' };" ^
+      "  Remove-Item 'stockfish.zip' -Force -ErrorAction SilentlyContinue;" ^
+      "  Remove-Item '.\stockfish_tmp' -Recurse -Force -ErrorAction SilentlyContinue;" ^
+      "  exit 0" ^
+      "} catch {" ^
+      "  Write-Host '[ERREUR] Echec du telechargement Stockfish :' $_.Exception.Message;" ^
+      "  exit 1" ^
+      "}"
+
+    if errorlevel 1 (
+        echo.
+        echo [ERREUR] Impossible de telecharger Stockfish automatiquement.
+        echo.
+        echo Solutions :
+        echo   1. Verifiez votre connexion Internet
+        echo   2. Telechargez manuellement Stockfish depuis https://stockfishchess.org
+        echo   3. Placez stockfish.exe dans CE dossier puis relancez ce script
+        pause
+        exit /b 1
+    )
+
+    set STOCKFISH_FILE=stockfish.exe
+    set STOCKFISH_FOUND=1
 )
 
-:: Chercher le fichier de profil JSON (n'importe quel .json)
+echo [OK] Stockfish pret : !STOCKFISH_FILE!
+
+:: =====================================================
+:: ETAPE 3 : Profil JSON ^(detecte automatiquement^)
+:: =====================================================
+
 set PROFILE_FOUND=0
 set PROFILE_FILE=
 
@@ -168,11 +109,7 @@ for %%f in (*.json) do (
 if %PROFILE_FOUND%==0 (
     echo [ERREUR] Aucun fichier .json trouve !
     echo.
-    echo Fichiers presents :
-    dir /B
-    echo.
-    echo Generez votre profil sur le site ChessAvatar
-    echo Le nom du fichier peut etre profile.json ou Bot_VotreNom.profile.json
+    echo Telechargez votre profil depuis le site ChessAvatar et placez-le ici.
     pause
     exit /b 1
 )
@@ -181,14 +118,11 @@ echo [OK] Tous les fichiers sont presents
 echo.
 
 :: =====================================================
-:: ETAPE 3 : Configuration automatique
+:: ETAPE 4 : Configuration automatique
 :: =====================================================
 
-:: Lire le nom depuis profile.json
 echo Lecture de %PROFILE_FILE%...
-setlocal enabledelayedexpansion
 
-:: Chercher "username" dans profile.json
 set ENGINE_NAME=
 for /f "tokens=2 delims=:," %%a in ('type "%PROFILE_FILE%" ^| findstr /i "username"') do (
     set temp=%%a
@@ -199,7 +133,6 @@ for /f "tokens=2 delims=:," %%a in ('type "%PROFILE_FILE%" ^| findstr /i "userna
 )
 
 :name_found
-:: Si pas de username, chercher "name"
 if "!ENGINE_NAME!"=="" (
     for /f "tokens=2 delims=:," %%a in ('type "%PROFILE_FILE%" ^| findstr /i /v "opening" ^| findstr /i "name"') do (
         set temp=%%a
@@ -211,13 +144,10 @@ if "!ENGINE_NAME!"=="" (
 )
 
 :name_found2
-:: Par defaut si pas trouve
 if "!ENGINE_NAME!"=="" set ENGINE_NAME=ChessAvatar
 
-:: Ajouter suffixe _Avatar
 set ENGINE_NAME=!ENGINE_NAME!_Avatar
 
-:: Auteur fixe
 set AUTHOR_NAME=Chess Avatar
 
 echo.
@@ -225,12 +155,11 @@ echo ========================================
 echo Configuration automatique detectee
 echo ========================================
 echo [INFO] Fichier de profil : %PROFILE_FILE%
-echo [INFO] Nom du moteur : !ENGINE_NAME!
-echo [INFO] Auteur : !AUTHOR_NAME!
-echo [INFO] Stockfish : %STOCKFISH_FILE%
+echo [INFO] Nom du moteur     : !ENGINE_NAME!
+echo [INFO] Auteur            : !AUTHOR_NAME!
+echo [INFO] Stockfish         : !STOCKFISH_FILE!
 echo.
 
-:: Demander si l'utilisateur veut personnaliser
 set /p CUSTOMIZE="Voulez-vous personnaliser le nom et l'auteur? (O/N) [N]: "
 
 if /i "!CUSTOMIZE!"=="O" (
@@ -238,28 +167,27 @@ if /i "!CUSTOMIZE!"=="O" (
     echo ========================================
     echo Personnalisation
     echo ========================================
-    
+
     set /p CUSTOM_ENGINE_NAME="Nom du moteur [!ENGINE_NAME!]: "
     if not "!CUSTOM_ENGINE_NAME!"=="" set ENGINE_NAME=!CUSTOM_ENGINE_NAME!
-    
+
     set /p CUSTOM_AUTHOR="Nom de l'auteur [!AUTHOR_NAME!]: "
     if not "!CUSTOM_AUTHOR!"=="" set AUTHOR_NAME=!CUSTOM_AUTHOR!
-    
+
     echo.
     echo [INFO] Configuration personnalisee :
     echo [INFO] Nom du moteur : !ENGINE_NAME!
-    echo [INFO] Auteur : !AUTHOR_NAME!
+    echo [INFO] Auteur        : !AUTHOR_NAME!
     echo.
 )
 
-:: Creer engine.ini dans le dossier actuel
 echo Creation du fichier engine.ini...
 (
 echo [Engine]
 echo Name=!ENGINE_NAME!
 echo Author=!AUTHOR_NAME!
 echo Protocol=UCI
-echo StockfishPath=%STOCKFISH_FILE%
+echo StockfishPath=!STOCKFISH_FILE!
 echo.
 echo [Options]
 echo Hash=128
@@ -280,22 +208,21 @@ if exist "engine.ini" (
 )
 
 :: =====================================================
-:: ETAPE 4 : Installation
+:: ETAPE 5 : Installation dans Documents\ChessBase\Engines
 :: =====================================================
 
-:: Creer le dossier du moteur
 set MOTOR_DIR=%USERPROFILE%\Documents\ChessBase\Engines\!ENGINE_NAME!
 echo.
 echo Creation du dossier : !MOTOR_DIR!
 if not exist "!MOTOR_DIR!" mkdir "!MOTOR_DIR!"
 
-:: Copier les fichiers
 echo.
 echo Copie des fichiers...
-copy /Y "AvatarEngine.exe" "!MOTOR_DIR!\"
-copy /Y "%STOCKFISH_FILE%" "!MOTOR_DIR!\"
-copy /Y "%PROFILE_FILE%" "!MOTOR_DIR!\"
-copy /Y "engine.ini" "!MOTOR_DIR!\"
+copy /Y "AvatarEngine.exe" "!MOTOR_DIR!\" >nul
+copy /Y "!STOCKFISH_FILE!" "!MOTOR_DIR!\" >nul
+copy /Y "%PROFILE_FILE%" "!MOTOR_DIR!\" >nul
+copy /Y "engine.ini" "!MOTOR_DIR!\" >nul
+if exist "swap_profile.bat" copy /Y "swap_profile.bat" "!MOTOR_DIR!\" >nul
 
 if errorlevel 1 (
     echo.
@@ -314,9 +241,10 @@ echo Dossier d'installation : !MOTOR_DIR!
 echo.
 echo Fichiers installes :
 echo - AvatarEngine.exe
-echo - %STOCKFISH_FILE%
+echo - !STOCKFISH_FILE!
 echo - %PROFILE_FILE%
-echo - engine.ini (Nom: !ENGINE_NAME!, Auteur: !AUTHOR_NAME!)
+echo - engine.ini ^(Nom: !ENGINE_NAME!, Auteur: !AUTHOR_NAME!^)
+if exist "swap_profile.bat" echo - swap_profile.bat ^(pour changer d'avatar plus tard^)
 echo.
 echo Prochaines etapes :
 echo.
@@ -331,6 +259,10 @@ echo.
 echo Pour Arena / Cutechess :
 echo 1. Menu Engines ^> Install New Engine
 echo 2. Selectionnez : !MOTOR_DIR!\AvatarEngine.exe
+echo.
+echo Pour changer d'avatar plus tard :
+echo   Lancez swap_profile.bat dans !MOTOR_DIR!
+echo   ^(voir README.txt pour les details^)
 echo.
 echo Votre avatar est pret a jouer !
 echo.

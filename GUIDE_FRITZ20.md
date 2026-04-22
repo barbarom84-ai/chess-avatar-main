@@ -151,15 +151,25 @@ C:\Users\[User]\Documents\ChessBase\Engines\MonAvatar\
 ## 🚀 Installation Rapide
 
 ```cmd
-# Méthode 1 : Script automatique (Recommandé)
-1. Télécharger install_engine.bat
-2. Placer avec AvatarEngine.exe, stockfish.exe, profile.json
-3. Double-cliquer sur install_engine.bat (aucun droit administrateur requis)
-4. Ouvrir Fritz 20 et ajouter le moteur
+# Méthode 1 : Pack ZIP automatique (Recommandé - aucun Python requis)
+1. Sur la page d'accueil, analyser son profil Lichess/Chess.com
+2. Sur la carte persona, cliquer sur "Pack moteur" (bouton vert)
+3. Décompresser le ZIP téléchargé n'importe où
+4. Double-cliquer sur install_engine.bat
+   → Stockfish est auto-téléchargé si manquant
+   → Tout est copié dans Documents\ChessBase\Engines\<Nom>_Avatar\
+5. Ouvrir Fritz 20 et ajouter le moteur via Module > Module UCI
 
-# Méthode 2 : Manuelle
+# Méthode 2 : Hot-swap d'avatar (changer de profil sans réinstaller)
+1. Télécharger juste un nouveau profil JSON (bouton "JSON seul")
+2. Aller dans Documents\ChessBase\Engines\<Nom>_Avatar\
+3. Double-cliquer sur swap_profile.bat
+4. Glisser-déposer le nouveau .json, presser Entrée
+5. Relancer Fritz : le moteur joue avec le nouveau profil
+
+# Méthode 3 : Manuelle (utilisateurs avancés)
 1. Créer le dossier Documents\ChessBase\Engines\MonAvatar
-2. Copier les 3 fichiers dedans
+2. Copier AvatarEngine.exe, stockfish.exe, profile.json dedans
 3. Ouvrir Fritz 20
 4. Menu Moteur > Créer un moteur UCI
 5. Sélectionner AvatarEngine.exe
@@ -217,10 +227,12 @@ Le guide complet fournit :
 
 ## 📝 Notes Importantes
 
-1. **Stockfish requis** : Version 16+ recommandée
-2. **Droits administrateur** : Non requis pour le script d'installation (copie sous `Documents\ChessBase\Engines`)
-3. **profile.json** : Doit être généré depuis le site
-4. **Minimum 15 parties** : Pour un profil précis
+1. **Aucun Python requis** : `AvatarEngine.exe` est livré pré-compilé dans le pack ZIP. Plus besoin d'installer Python ou PyInstaller chez l'utilisateur.
+2. **Stockfish auto-téléchargé** : Si stockfish.exe est absent, `install_engine.bat` le télécharge automatiquement depuis stockfishchess.org (~30 Mo).
+3. **Droits administrateur** : Non requis (installation sous `Documents\ChessBase\Engines`).
+4. **profile.json** : Embarqué dans le ZIP au moment de la génération côté serveur (route `/api/engine-pack`). Renommé automatiquement `profile.json` lors du hot-swap via `swap_profile.bat`.
+5. **Minimum 15 parties** : Pour un profil précis.
+6. **Recompilation côté dev** : Si vous modifiez `public/AvatarEngine.py`, lancez `npm run build:engine` pour régénérer `public/AvatarEngine.exe` puis commitez-le.
 
 ## 🔄 Mises à Jour Futures
 

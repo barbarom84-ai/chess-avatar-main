@@ -54,6 +54,7 @@ export default function PersonaCard({ stats, config, profileId }: PersonaCardPro
   const [customConfig, setCustomConfig] = useState<EngineConfig>(config);
   const [isAuth, setIsAuth] = useState(false);
   const [savingCloud, setSavingCloud] = useState(false);
+  const [downloadingPack, setDownloadingPack] = useState(false);
   const { userId, email } = usePremium();
 
   useEffect(() => {
@@ -75,16 +76,18 @@ export default function PersonaCard({ stats, config, profileId }: PersonaCardPro
     setIsAuth(auth);
   };
   
-  const handleDownload = () => {
+  const buildExportData = () => {
     const exportConfig = prepareConfigForExport(customConfig, {
       openingsDatabase: OPENINGS_DATABASE,
     });
-    const exportData = {
+    return {
       ...exportConfig,
       openingsDatabase: OPENINGS_DATABASE,
     };
-    
-    // Création du fichier JSON
+  };
+
+  const handleDownloadJson = () => {
+    const exportData = buildExportData();
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2));
     const downloadAnchorNode = document.createElement('a');
     downloadAnchorNode.setAttribute("href", dataStr);
@@ -92,6 +95,54 @@ export default function PersonaCard({ stats, config, profileId }: PersonaCardPro
     document.body.appendChild(downloadAnchorNode);
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
+  };
+
+  const handleDownloadPack = async () => {
+    if (downloadingPack) return;
+    setDownloadingPack(true);
+    try {
+      const exportData = buildExportData();
+      const res = await fetch("/api/engine-pack", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(exportData),
+      });
+
+      if (!res.ok) {
+        let detail = `HTTP ${res.status}`;
+        try {
+          const j = await res.json();
+          if (j && typeof j === "object" && "error" in j) {
+            detail = String((j as { error: unknown }).error);
+          }
+        } catch {
+          // ignore JSON parse error on non-JSON body
+        }
+        toast.error(`${t.personaCard.packDownloadError} (${detail})`);
+        return;
+      }
+
+      const blob = await res.blob();
+      const cd = res.headers.get("Content-Disposition") || "";
+      const match = cd.match(/filename="([^"]+)"/);
+      const filename = match?.[1] || `ChessAvatar_${customConfig.name}_Pack.zip`;
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+      toast.success(t.personaCard.packDownloadSuccess);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      toast.error(`${t.personaCard.packDownloadError} (${message})`);
+    } finally {
+      setDownloadingPack(false);
+    }
   };
 
   const handlePlayAgainst = () => {
@@ -346,13 +397,24 @@ export default function PersonaCard({ stats, config, profileId }: PersonaCardPro
               </Button>
             )}
 
-            <Button 
-              onClick={handleDownload} 
+            <Button
+              onClick={handleDownloadPack}
+              disabled={downloadingPack}
               variant="outline"
               className="border-2 border-green-500 bg-green-500/10 text-green-300 hover:bg-green-500/20 hover:text-green-200 hover:border-green-400 font-semibold shadow-md"
             >
               <Download className="mr-2 h-4 w-4" />
-              Profil
+              {downloadingPack ? t.personaCard.packDownloading : t.personaCard.packDownload}
+            </Button>
+
+            <Button
+              onClick={handleDownloadJson}
+              variant="outline"
+              size="sm"
+              className="border border-cyan-500/50 bg-transparent text-cyan-300/80 hover:bg-cyan-500/10 hover:text-cyan-200 text-xs"
+              title={t.personaCard.jsonOnlyTooltip}
+            >
+              {t.personaCard.jsonOnly}
             </Button>
           </div>
         </div>

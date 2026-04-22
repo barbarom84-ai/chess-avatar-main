@@ -1,6 +1,18 @@
 @echo off
 REM ====================================================================
-REM Compilation d'AvatarEngine.py en AvatarEngine.exe
+REM [OUTIL DEVELOPPEUR] Compilation d'AvatarEngine.py en AvatarEngine.exe
+REM
+REM Ce script est destine UNIQUEMENT aux developpeurs qui modifient
+REM AvatarEngine.py. Les utilisateurs finaux n'en ont PAS besoin :
+REM AvatarEngine.exe est livre pre-compile dans le pack ZIP telecharge
+REM depuis le site (route /api/engine-pack).
+REM
+REM Cote dev, l'equivalent recommande est :
+REM   npm run build:engine
+REM
+REM Prerequis (developpeurs uniquement) :
+REM   - Python 3.11+ dans le PATH
+REM   - PyInstaller (pip install pyinstaller)
 REM ====================================================================
 if not defined CA_IN_WT (
   if not defined WT_SESSION_ID (
