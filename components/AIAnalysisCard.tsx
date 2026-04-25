@@ -105,6 +105,17 @@ export default function AIAnalysisCard({ analysis, loading, onRefresh }: AIAnaly
           </p>
         </div>
 
+        {analysis.statsInsight && (
+          <div>
+            <h3 className="text-sm font-semibold text-slate-200 mb-2">
+              {t.aiAnalysisCard.statsContext}
+            </h3>
+            <p className="text-slate-400 text-sm leading-relaxed">
+              {analysis.statsInsight}
+            </p>
+          </div>
+        )}
+
         {/* Description du style */}
         <div>
           <h3 className="text-sm font-semibold text-purple-300 mb-2 flex items-center gap-2">

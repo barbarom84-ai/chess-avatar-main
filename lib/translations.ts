@@ -961,7 +961,8 @@ export const translations = {
     // AI analysis card
     aiAnalysisCard: {
       similarPlayers: "Joueurs Similaires",
-      percentSimilar: "similaire"
+      percentSimilar: "similaire",
+      statsContext: "Aperçu des données d’échantillon"
     },
 
     // UCI export dialog
@@ -2032,7 +2033,8 @@ export const translations = {
     // AI analysis card
     aiAnalysisCard: {
       similarPlayers: "Similar Players",
-      percentSimilar: "similar"
+      percentSimilar: "similar",
+      statsContext: "Sample data snapshot"
     },
 
     // UCI export dialog

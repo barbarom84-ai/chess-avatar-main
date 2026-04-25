@@ -457,6 +457,7 @@ export default function PersonaCard({ stats, config, profileId }: PersonaCardPro
         onOpenChange={setShowProfileEditor}
         profileId={profileId}
         profileName={customConfig.name}
+        personaStats={stats}
       />
     )}
 

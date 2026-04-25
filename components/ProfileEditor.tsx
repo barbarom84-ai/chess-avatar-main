@@ -24,6 +24,7 @@ import {
 import { generateAIAnalysis, shouldUpdateAIAnalysis } from '@/lib/ai-analysis';
 import { recommendOpenings, suggestOptimalConfig } from '@/lib/profile-suggestions';
 import type { AIAnalysis } from '@/lib/ai-analysis';
+import type { PersonaStats } from '@/lib/analysis';
 import type { OpeningRecommendation, ConfigSuggestion } from '@/lib/profile-suggestions';
 import {
   AVAILABLE_TAGS,
@@ -35,18 +36,33 @@ import {
 } from '@/types/chess';
 import { toast } from 'sonner';
 
+function resolveGameSampleCount(
+  metadata: ProfileMetadata | null,
+  favoriteOpeningsLength: number,
+  personaStats?: PersonaStats
+): number {
+  return Math.max(
+    favoriteOpeningsLength,
+    metadata?.gamesPlayed ?? 0,
+    personaStats?.gameCount ?? 0
+  );
+}
+
 interface ProfileEditorProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   profileId: string;
   profileName: string;
+  /** Stats Lichess / Chess.com du profil, pour enrichir l’analyse heuristique. */
+  personaStats?: PersonaStats;
 }
 
 export default function ProfileEditor({
   open,
   onOpenChange,
   profileId,
-  profileName
+  profileName,
+  personaStats
 }: ProfileEditorProps) {
   const { t, lang } = useLanguage();
   // États
@@ -107,7 +123,8 @@ export default function ProfileEditor({
             strengths: [],
             famousComparisons: [],
             confidence: metadata.aiConfidence || 0,
-            generatedAt: metadata.aiUpdatedAt || new Date().toISOString()
+            generatedAt: metadata.aiUpdatedAt || new Date().toISOString(),
+            statsInsight: undefined
           });
         }
       }
@@ -133,7 +150,8 @@ export default function ProfileEditor({
       let aiData = {};
       
       if (shouldUpdateAIAnalysis(metadata)) {
-        const analysis = generateAIAnalysis(playingStyle, undefined, favoriteOpenings.length);
+        const n = resolveGameSampleCount(metadata, favoriteOpenings.length, personaStats);
+        const analysis = generateAIAnalysis(playingStyle, personaStats, n);
         setAiAnalysis(analysis);
         aiData = {
           aiSummary: analysis.summary,
@@ -170,7 +188,9 @@ export default function ProfileEditor({
   const handleGenerateAI = async () => {
     setGeneratingAI(true);
     try {
-      const analysis = generateAIAnalysis(playingStyle, undefined, favoriteOpenings.length);
+      const metadata = await getProfileMetadata(profileId);
+      const n = resolveGameSampleCount(metadata, favoriteOpenings.length, personaStats);
+      const analysis = generateAIAnalysis(playingStyle, personaStats, n);
       setAiAnalysis(analysis);
     } catch (error) {
       console.error('Erreur lors de la génération de l\'analyse IA:', error);
