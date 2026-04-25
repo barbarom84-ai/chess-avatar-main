@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -11,6 +11,9 @@ import {
   AlertTriangle,
   Pause,
   Play,
+  Sparkles,
+  Loader2,
+  MessageCircleQuestion,
 } from "lucide-react";
 import {
   LineChart,
@@ -34,6 +37,7 @@ import {
   CLASSIFICATION_COLORS,
   hashPgn,
   parsePgnForReview,
+  uciToSan,
   uciToSquares,
   type GameReviewResult,
   type ParsedGameForReview,
@@ -41,6 +45,7 @@ import {
 } from "@/lib/game-review";
 import { loadCachedReview, saveReview } from "@/lib/game-review-storage";
 import { useLanguage } from "@/lib/language-context";
+import { useCoachExplain } from "@/hooks/useCoachExplain";
 
 interface GameReviewerProps {
   pgn: string;
@@ -55,6 +60,8 @@ interface GameReviewerProps {
   showAllBestArrows: boolean;
   /** When provided, attempt to load/save the review from Supabase. */
   cacheUserId?: string | null;
+  /** Triggered when the Coach UI asks the user to upgrade (e.g. quota reached). */
+  onRequestUpgrade?: () => void;
 }
 
 export default function GameReviewer({
@@ -63,6 +70,7 @@ export default function GameReviewer({
   maxPlies,
   showAllBestArrows,
   cacheUserId,
+  onRequestUpgrade,
 }: GameReviewerProps) {
   const { t } = useLanguage();
 
@@ -92,13 +100,28 @@ export default function GameReviewer({
         depth,
       });
       if (cancelled) return;
+      // Older cache entries may contain a `bestMove` (UCI) that is illegal in
+      // the position it claims to apply to (a stale-search bug fixed in
+      // useStockfish). Re-validate against the live FEN and strip bad fields
+      // so we don't draw a wrong arrow or mislabel "Best was: …".
+      if (cached && parsed) {
+        cached.moves = cached.moves.map((m, idx) => {
+          const fenBefore = parsed.fenBefore[idx];
+          if (!fenBefore || !m.bestMove) return m;
+          const validatedSan = uciToSan(fenBefore, m.bestMove);
+          if (!validatedSan) {
+            return { ...m, bestMove: "", bestSan: "" };
+          }
+          return m.bestSan ? m : { ...m, bestSan: validatedSan };
+        });
+      }
       if (cached) setCachedResult(cached);
       setCacheChecked(true);
     })();
     return () => {
       cancelled = true;
     };
-  }, [cacheUserId, pgnHash, depth]);
+  }, [cacheUserId, pgnHash, depth, parsed]);
 
   // Skip live analysis if we already have a cached result.
   const review = useGameReview({
@@ -381,7 +404,16 @@ export default function GameReviewer({
           </div>
         </div>
 
-        <CurrentMoveDetail move={currentMove} />
+        <CurrentMoveDetail
+          move={currentMove}
+          fenBefore={
+            currentIndex > 0 ? parsed.fenBefore[currentIndex - 1] : undefined
+          }
+          moveNumber={
+            currentIndex > 0 ? Math.floor((currentIndex - 1) / 2) + 1 : undefined
+          }
+          onRequestUpgrade={onRequestUpgrade}
+        />
 
         {evalSeries.length > 1 && (
           <Card className="bg-slate-900/60 border-cyan-500/20">
@@ -596,8 +628,18 @@ function MoveCell({
   );
 }
 
-function CurrentMoveDetail({ move }: { move?: ReviewedMove }) {
-  const { t } = useLanguage();
+function CurrentMoveDetail({
+  move,
+  fenBefore,
+  moveNumber,
+  onRequestUpgrade,
+}: {
+  move?: ReviewedMove;
+  fenBefore?: string;
+  moveNumber?: number;
+  onRequestUpgrade?: () => void;
+}) {
+  const { t, lang } = useLanguage();
   if (!move) {
     return (
       <Card className="bg-slate-900/60 border-cyan-500/20">
@@ -618,6 +660,13 @@ function CurrentMoveDetail({ move }: { move?: ReviewedMove }) {
     miss: t.review.classMiss,
   };
   const isSubOptimal = move.uci !== move.bestMove;
+  const showCoach =
+    isSubOptimal &&
+    !!move.bestMove &&
+    !!fenBefore &&
+    move.classification !== "best" &&
+    move.classification !== "excellent";
+
   return (
     <Card className={`${colors.bg} ${colors.border} border`}>
       <CardContent className="py-3 space-y-2">
@@ -644,14 +693,193 @@ function CurrentMoveDetail({ move }: { move?: ReviewedMove }) {
               <AlertTriangle className="h-3 w-3" />
               <span>
                 {t.review.bestWas}{" "}
-                <strong className="font-mono">{move.bestMove}</strong> (
-                {formatEval(move.bestEval)})
+                <strong className="font-mono">
+                  {move.bestSan || move.bestMove}
+                </strong>
+                {move.bestSan && (
+                  <span className="text-[10px] text-emerald-400/60 font-mono ml-1">
+                    ({move.bestMove})
+                  </span>
+                )}{" "}
+                ({formatEval(move.bestEval)})
               </span>
             </div>
           )}
         </div>
+
+        {showCoach && (
+          <CoachSubCard
+            move={move}
+            fenBefore={fenBefore!}
+            moveNumber={moveNumber}
+            lang={lang}
+            onRequestUpgrade={onRequestUpgrade}
+          />
+        )}
       </CardContent>
     </Card>
+  );
+}
+
+/**
+ * Sub-card hosted inside CurrentMoveDetail: shows a "Why?" button that fires
+ * an LLM call to /api/coach/explain. Resets when the parent move changes.
+ */
+function CoachSubCard({
+  move,
+  fenBefore,
+  moveNumber,
+  lang,
+  onRequestUpgrade,
+}: {
+  move: ReviewedMove;
+  fenBefore: string;
+  moveNumber?: number;
+  lang: "fr" | "en";
+  onRequestUpgrade?: () => void;
+}) {
+  const { t } = useLanguage();
+  const coach = useCoachExplain();
+
+  // Reset whenever the user navigates to a new move.
+  useEffect(() => {
+    coach.reset();
+    // We intentionally key only on move identity (ply + uci), not on the
+    // unstable `coach` object reference.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [move.ply, move.uci]);
+
+  const handleClick = useCallback(() => {
+    void coach.explain({ move, fenBefore, lang, moveNumber });
+  }, [coach, move, fenBefore, lang, moveNumber]);
+
+  // Idle state: show the Why? button.
+  if (coach.status === "idle") {
+    return (
+      <div className="pt-1">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={handleClick}
+          className="border-purple-500/40 bg-purple-500/10 text-purple-200 hover:bg-purple-500/20"
+        >
+          <MessageCircleQuestion className="h-3.5 w-3.5 mr-1.5" />
+          {t.review.coach.whyButton}
+        </Button>
+      </div>
+    );
+  }
+
+  if (coach.status === "loading") {
+    return (
+      <div className="rounded border border-purple-500/30 bg-purple-500/10 px-3 py-2 text-xs text-purple-200 flex items-center gap-2">
+        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+        {t.review.coach.loading}
+      </div>
+    );
+  }
+
+  if (coach.status === "ready" && coach.explanation) {
+    const remaining = coach.remaining;
+    const limit = coach.limit;
+    return (
+      <div className="rounded border border-purple-500/30 bg-purple-500/10 px-3 py-2 space-y-1.5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-purple-200 font-bold">
+            <Sparkles className="h-3 w-3" />
+            {t.review.coach.title}
+          </div>
+          {coach.cached && (
+            <span className="text-[10px] text-purple-300/70 font-mono">
+              {t.review.coach.cached}
+            </span>
+          )}
+        </div>
+        <p className="text-xs text-slate-100 leading-relaxed whitespace-pre-wrap">
+          {coach.explanation}
+        </p>
+        <div className="flex items-center justify-between pt-1 border-t border-purple-500/20">
+          <span className="text-[10px] text-slate-500 italic">
+            {t.review.coach.disclaimer}
+          </span>
+          {limit !== null && remaining !== null ? (
+            <span className="text-[10px] text-purple-300/80 font-mono">
+              {t.review.coach.quotaRemaining
+                .replace("{remaining}", String(remaining))
+                .replace("{limit}", String(limit))}
+            </span>
+          ) : limit === null ? (
+            <span className="text-[10px] text-amber-300/80">
+              {t.review.coach.unlimited}
+            </span>
+          ) : null}
+        </div>
+      </div>
+    );
+  }
+
+  // Error state.
+  const code = coach.error;
+  const isQuota = code === "QUOTA_EXCEEDED";
+  const isAuth = code === "NOT_AUTHENTICATED";
+
+  let message: string;
+  if (isQuota) {
+    message = t.review.coach.quotaReached
+      .replace("{used}", String(coach.used ?? coach.limit ?? "?"))
+      .replace("{limit}", String(coach.limit ?? "?"));
+  } else if (isAuth) {
+    message = t.review.coach.loginRequired;
+  } else if (code === "OPENAI_KEY_MISSING") {
+    message = t.review.coach.openaiKeyMissing;
+  } else if (code === "SUPABASE_NOT_CONFIGURED") {
+    message = t.review.coach.supabaseNotConfigured;
+  } else if (code === "OPENAI_ERROR") {
+    message = t.review.coach.openaiError;
+  } else if (code === "RATE_LIMITED") {
+    message = t.review.coach.rateLimited;
+  } else if (code === "NETWORK") {
+    message = t.review.coach.network;
+  } else if (code === "INVALID_BODY") {
+    message = t.review.coach.invalidBody;
+  } else {
+    message = t.review.coach.unavailable;
+  }
+
+  return (
+    <div className="rounded border border-red-500/30 bg-red-500/10 px-3 py-2 space-y-2">
+      <p className="text-xs text-red-200">{message}</p>
+      {coach.detail && (
+        <p className="text-[10px] text-red-300/70 font-mono break-words">
+          {coach.detail}
+        </p>
+      )}
+      <div className="text-[10px] text-red-300/60 font-mono">
+        code: {code ?? "UNKNOWN"}
+      </div>
+      <div className="flex gap-2">
+        {isQuota && onRequestUpgrade && (
+          <Button
+            size="sm"
+            onClick={onRequestUpgrade}
+            className="bg-amber-500 hover:bg-amber-400 text-slate-900 font-bold"
+          >
+            <Crown className="h-3.5 w-3.5 mr-1.5" />
+            {t.review.coach.upgradeCta}
+          </Button>
+        )}
+        {!isQuota && !isAuth && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleClick}
+            className="border-red-500/40 text-red-200 hover:bg-red-500/10"
+          >
+            {t.review.coach.retry}
+          </Button>
+        )}
+      </div>
+    </div>
   );
 }
 

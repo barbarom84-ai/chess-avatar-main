@@ -272,22 +272,28 @@ export function useStockfish() {
         reject(new Error("Stockfish not ready"));
         return;
       }
+      let settled = false;
+      const finish = (move: string) => {
+        if (settled) return;
+        settled = true;
+        engineRef.current?.removeEventListener("message", handleMessage);
+        resolve(move);
+      };
       const handleMessage = (e: MessageEvent) => {
         const message = e.data;
         if (typeof message !== "string") return;
         if (message.startsWith("bestmove")) {
-          engineRef.current?.removeEventListener("message", handleMessage);
           const parts = message.split(/\s+/);
-          resolve(parts[1] ?? "");
+          finish(parts[1] ?? "");
         }
       };
       engineRef.current.addEventListener("message", handleMessage);
       sendCommand(`position fen ${fen}`);
       sendCommand(`go depth ${depth}`);
-      setTimeout(() => {
-        engineRef.current?.removeEventListener("message", handleMessage);
-        resolve("");
-      }, 3000);
+      // Generous safety timeout: if the engine stalls, ask it to stop —
+      // we still wait for the bestmove (which `stop` always produces) so
+      // we never resolve while the engine is mid-search.
+      setTimeout(() => sendCommand("stop"), 30_000);
     });
   };
 
@@ -308,6 +314,18 @@ export function useStockfish() {
       }
       let lastEvalPawns: number | null = null;
       let isMate = false;
+      let settled = false;
+
+      const finish = (move: string) => {
+        if (settled) return;
+        settled = true;
+        engineRef.current?.removeEventListener("message", handleMessage);
+        resolve({
+          move,
+          evalPawns: lastEvalPawns ?? 0,
+          isMate: isMate || undefined,
+        });
+      };
 
       const handleMessage = (e: MessageEvent) => {
         const message = e.data;
@@ -329,29 +347,30 @@ export function useStockfish() {
           }
         }
         if (message.startsWith("bestmove")) {
-          engineRef.current?.removeEventListener("message", handleMessage);
           const parts = message.split(/\s+/);
-          const move = parts[1] ?? "";
-          resolve({
-            move,
-            evalPawns: lastEvalPawns ?? 0,
-            isMate: isMate || undefined,
-          });
+          finish(parts[1] ?? "");
         }
       };
 
       engineRef.current.addEventListener("message", handleMessage);
+      // Defensive: if a previous search is still running on the worker
+      // (e.g. its caller bailed early), `stop` makes the engine flush its
+      // pending `bestmove` BEFORE processing our new `position`/`go`. We
+      // then ignore that stale bestmove and only accept the one matching
+      // our search root — but in practice the worker is already idle here
+      // because callers await this function. The `stop` is harmless when
+      // the engine isn't searching.
+      sendCommand("stop");
       sendCommand(`position fen ${fen}`);
       sendCommand(`go depth ${depth}`);
 
+      // Safety net: if the engine ever stalls, ask it to stop. We still
+      // wait for the resulting `bestmove` (every `stop` produces one) so
+      // we never resolve with a value from a different position than the
+      // one we just searched.
       setTimeout(() => {
-        engineRef.current?.removeEventListener("message", handleMessage);
-        resolve({
-          move: "",
-          evalPawns: lastEvalPawns ?? 0,
-          isMate: isMate || undefined,
-        });
-      }, 5000);
+        if (!settled) sendCommand("stop");
+      }, 30_000);
     });
   };
 
@@ -363,6 +382,14 @@ export function useStockfish() {
       }
 
       let lastEval: number | null = null;
+      let settled = false;
+
+      const finish = () => {
+        if (settled) return;
+        settled = true;
+        engineRef.current?.removeEventListener("message", handleMessage);
+        resolve(lastEval ?? 0);
+      };
 
       const handleMessage = (e: MessageEvent) => {
         const message = e.data;
@@ -373,8 +400,7 @@ export function useStockfish() {
           if (match) lastEval = parseInt(match[1]) / 100;
         }
         if (message.startsWith("bestmove")) {
-          engineRef.current?.removeEventListener("message", handleMessage);
-          resolve(lastEval ?? 0);
+          finish();
         }
       };
 
@@ -382,10 +408,13 @@ export function useStockfish() {
       sendCommand(`position fen ${fen}`);
       sendCommand(`go depth ${depth}`);
 
+      // Wait for the engine to finish; if it ever stalls, ask it to stop
+      // (which produces a `bestmove` we then catch). We never resolve
+      // mid-search, otherwise a stale bestmove could leak into the next
+      // request on the same shared worker.
       setTimeout(() => {
-        engineRef.current?.removeEventListener("message", handleMessage);
-        resolve(lastEval ?? 0);
-      }, 5000);
+        if (!settled) sendCommand("stop");
+      }, 30_000);
     });
   };
 

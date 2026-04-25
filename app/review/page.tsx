@@ -74,10 +74,10 @@ function ReviewContent() {
             <Button
               variant="ghost"
               className="text-cyan-300 hover:text-cyan-100"
-              onClick={() => router.push("/analyze")}
+              onClick={() => router.push("/review/import")}
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
-              {t.backToHome}
+              {t.review.import.backToImport}
             </Button>
           </CardContent>
         </Card>
@@ -143,6 +143,7 @@ function ReviewContent() {
           maxPlies={maxPlies}
           showAllBestArrows={showAllBestArrows}
           cacheUserId={isPremium ? userId : null}
+          onRequestUpgrade={() => setShowUpgrade(true)}
         />
       </div>
 
@@ -151,7 +152,7 @@ function ReviewContent() {
         onOpenChange={setShowUpgrade}
         userId={userId}
         email={email}
-        reason="profiles"
+        reason="coach"
       />
     </main>
   );

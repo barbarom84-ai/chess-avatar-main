@@ -14,7 +14,7 @@ interface UpgradeModalProps {
   onOpenChange: (open: boolean) => void;
   userId: string | null;
   email: string | null;
-  reason?: 'theme' | 'pieces' | 'profiles';
+  reason?: 'theme' | 'pieces' | 'profiles' | 'coach' | 'review';
 }
 
 export default function UpgradeModal({ open, onOpenChange, userId, email, reason }: UpgradeModalProps) {

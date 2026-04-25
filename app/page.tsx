@@ -20,6 +20,13 @@ export default function HomePage() {
     },
     {
       icon: <Sparkles className="h-8 w-8 text-purple-400" />,
+      title: lang === "fr" ? "Game Review" : "Game Review",
+      description: lang === "fr"
+        ? "Classification coup-par-coup, ACPL, moments clés et meilleures lignes"
+        : "Move-by-move classification, ACPL, key moments and best lines"
+    },
+    {
+      icon: <Sparkles className="h-8 w-8 text-purple-400" />,
       title: lang === "fr" ? "IA Personnalisée" : "Personalized AI",
       description: lang === "fr"
         ? "Créez un bot qui joue exactement comme vous"
@@ -106,6 +113,13 @@ export default function HomePage() {
                 <Button size="lg" className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-lg px-8 py-6 shadow-2xl shadow-cyan-900/50 border-2 border-cyan-400/30">
                   <Search className="mr-2 h-6 w-6" />
                   {lang === "fr" ? "Analyser mon Profil" : "Analyze my Profile"}
+                </Button>
+              </Link>
+
+              <Link href="/review/import">
+                <Button size="lg" variant="outline" className="border-2 border-purple-500/50 text-purple-300 hover:bg-purple-500/10 hover:border-purple-400 font-bold text-lg px-8 py-6">
+                  <Sparkles className="mr-2 h-6 w-6" />
+                  {lang === "fr" ? "Analyser une partie" : "Review a Game"}
                 </Button>
               </Link>
 

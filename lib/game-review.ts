@@ -35,6 +35,8 @@ export interface ReviewedMove {
   evalBefore: number;
   /** Engine best move at the position before the move (UCI). */
   bestMove: string;
+  /** Engine best move in SAN (e.g. "Na6", "Nxd5+"). Empty when not computable. */
+  bestSan: string;
   /** Eval (white POV, pawns) after the engine's best move. */
   bestEval: number;
   /** Eval (white POV, pawns) after the move actually played. */
@@ -199,6 +201,7 @@ export function buildReviewedMove(args: {
   sideToMove: "white" | "black";
   evalBefore: number;
   bestMove: string;
+  bestSan?: string;
   bestEval: number;
   playerEval: number;
   isMateBest?: boolean;
@@ -241,6 +244,7 @@ export function buildReviewedMove(args: {
     sideToMove: args.sideToMove,
     evalBefore: args.evalBefore,
     bestMove: args.bestMove,
+    bestSan: args.bestSan ?? "",
     bestEval: args.bestEval,
     playerEval: args.playerEval,
     cpl,
@@ -248,6 +252,25 @@ export function buildReviewedMove(args: {
     isMateBest: args.isMateBest,
     isMatePlayer: args.isMatePlayer,
   };
+}
+
+/**
+ * Convert a UCI move (e.g. "b8a6") to SAN (e.g. "Na6") in the context of `fen`.
+ * Returns an empty string when the move is not legal in the position (the
+ * caller should then fall back to displaying the UCI).
+ */
+export function uciToSan(fen: string, uci: string): string {
+  if (!uci || uci.length < 4) return "";
+  try {
+    const tmp = new Chess(fen);
+    const from = uci.slice(0, 2);
+    const to = uci.slice(2, 4);
+    const promotion = uci.length > 4 ? uci.slice(4, 5) : undefined;
+    const move = tmp.move({ from, to, promotion });
+    return move?.san ?? "";
+  } catch {
+    return "";
+  }
 }
 
 // ---------------------------------------------------------------------------

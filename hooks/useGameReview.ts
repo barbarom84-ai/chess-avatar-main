@@ -5,6 +5,7 @@ import { useStockfish } from "./useStockfish";
 import {
   aggregateReview,
   buildReviewedMove,
+  uciToSan,
   type GameReviewResult,
   type ParsedGameForReview,
   type ReviewedMove,
@@ -184,13 +185,22 @@ export function useGameReview({
           // best line). We use that for the "best line eval".
           const bestEvalWhite = evalBeforeWhite;
 
+          const rawBestUci = best.move ?? "";
+          // Validate the engine response against the actual position. If the
+          // returned UCI is not legal in `fenBefore`, it almost certainly
+          // belongs to a different (stale) search root — discard it so we
+          // never paint a wrong arrow or claim "Best was: <illegal move>".
+          const bestSan = rawBestUci ? uciToSan(fenBefore, rawBestUci) : "";
+          const bestUci = bestSan ? rawBestUci : "";
+
           const reviewed = buildReviewedMove({
             ply,
             san,
             uci,
             sideToMove,
             evalBefore: evalBeforeWhite,
-            bestMove: best.move ?? "",
+            bestMove: bestUci,
+            bestSan,
             bestEval: bestEvalWhite,
             playerEval: playerIsBest ? bestEvalWhite : playerEvalPawns,
             isMateBest: best.isMate,
