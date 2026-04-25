@@ -1,15 +1,17 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { Chess } from "chess.js";
 import { useChessboardSettings } from "@/contexts/ChessboardSettingsContext";
 import { buildVerboseHistoryFromSan } from "@/lib/move-history-verbose";
 import SanNotation from "./SanNotation";
-import { ChevronLeft, ChevronRight, Play, RotateCcw, Pause, RotateCw, ChevronsRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Play, RotateCcw, Pause, RotateCw, ChevronsRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import SimpleChessboard from "./SimpleChessboard";
+import { useLanguage } from "@/lib/language-context";
 
 interface AdvancedGameViewerProps {
   pgn: string;
@@ -18,6 +20,14 @@ interface AdvancedGameViewerProps {
 
 export default function AdvancedGameViewer({ pgn, playerColor = 'white' }: AdvancedGameViewerProps) {
   const { settings: boardUiSettings } = useChessboardSettings();
+  const router = useRouter();
+  const { t } = useLanguage();
+
+  const openReview = useCallback(() => {
+    if (!pgn || typeof window === "undefined") return;
+    sessionStorage.setItem("chess-avatar.review.pgn", pgn);
+    router.push("/review");
+  }, [pgn, router]);
   const [gamePositions, setGamePositions] = useState<string[]>([]);
   const [movesData, setMovesData] = useState<string[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0); 
@@ -129,16 +139,30 @@ export default function AdvancedGameViewer({ pgn, playerColor = 'white' }: Advan
         <Badge variant="outline" className="text-xs">
           Coup {currentIndex}/{gamePositions.length - 1}
         </Badge>
-        
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={() => setBoardOrientation(prev => prev === 'white' ? 'black' : 'white')}
-          className="h-7 text-slate-400 hover:text-slate-200"
-          title="Retourner l'échiquier"
-        >
-          <RotateCw className="h-3 w-3" />
-        </Button>
+
+        <div className="flex items-center gap-1">
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={openReview}
+            disabled={!pgn || gamePositions.length <= 1}
+            className="h-7 text-cyan-300 hover:text-cyan-100 hover:bg-cyan-500/10"
+            title={t.review.reviewThisGame}
+          >
+            <Sparkles className="h-3 w-3 mr-1" />
+            <span className="text-xs">{t.review.reviewThisGame}</span>
+          </Button>
+
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => setBoardOrientation(prev => prev === 'white' ? 'black' : 'white')}
+            className="h-7 text-slate-400 hover:text-slate-200"
+            title="Retourner l'échiquier"
+          >
+            <RotateCw className="h-3 w-3" />
+          </Button>
+        </div>
       </div>
 
       {/* Layout principal */}

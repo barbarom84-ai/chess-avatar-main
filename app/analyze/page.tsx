@@ -3,7 +3,8 @@
 import { useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { Search, Loader2, AlertCircle, Trophy, ArrowLeft } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Search, Loader2, AlertCircle, Trophy, ArrowLeft, Sparkles } from "lucide-react";
 
 // Imports UI
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -33,6 +34,13 @@ const GameViewer = dynamic(() => import("@/components/GameViewer"), {
 
 export default function AnalyzePage() {
   const { t } = useLanguage();
+  const router = useRouter();
+
+  const openReview = (pgn: string | undefined) => {
+    if (!pgn || typeof window === "undefined") return;
+    sessionStorage.setItem("chess-avatar.review.pgn", pgn);
+    router.push("/review");
+  };
   
   // --- ÉTATS ---
   const [platform, setPlatform] = useState<"lichess" | "chesscom">("lichess");
@@ -233,12 +241,28 @@ export default function AnalyzePage() {
                                 {game.createdAt ? new Date(game.createdAt).toLocaleDateString() : ""}
                             </span>
                           </div>
-                          <div className="flex items-center gap-2 text-xs text-slate-400">
-                            <Trophy className="h-3 w-3" />
-                            <span>
-                                {(game.winner === (isWhite ? 'white' : 'black')) ? t.victory : 
-                                 (!game.winner || game.winner === 'draw') ? t.draw : t.defeat}
-                            </span>
+                          <div className="flex items-center justify-between gap-2 text-xs text-slate-400">
+                            <div className="flex items-center gap-2">
+                              <Trophy className="h-3 w-3" />
+                              <span>
+                                  {(game.winner === (isWhite ? 'white' : 'black')) ? t.victory : 
+                                   (!game.winner || game.winner === 'draw') ? t.draw : t.defeat}
+                              </span>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openReview(game.pgn);
+                              }}
+                              disabled={!game.pgn}
+                              className="h-6 px-2 text-[11px] text-cyan-300 hover:text-cyan-100 hover:bg-cyan-500/10"
+                              title={t.review.reviewThisGame}
+                            >
+                              <Sparkles className="h-3 w-3 mr-1" />
+                              {t.review.reviewThisGame}
+                            </Button>
                           </div>
                         </div>
                       );
