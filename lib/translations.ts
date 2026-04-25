@@ -174,7 +174,11 @@ export const translations = {
       importPgnNoValidGames: "Aucune partie valide pour ce nom dans le fichier.",
       importPgnGenericError: "Erreur lors de l'import.",
       importPgnInProgress: "Import en cours...",
-      importPgnNoFile: "Veuillez choisir un fichier .pgn."
+      importPgnNoFile: "Veuillez choisir un fichier .pgn.",
+      quickReviewSection: "Game Review rapide",
+      quickReviewSectionHint: "Analysez n'importe quel PGN sans l'enregistrer dans votre bibliothèque.",
+      backToHub: "Retour à mes parties",
+      reviewing: "Analyse en cours"
     },
     
     // Guide Page (UCI creator guide)
@@ -801,7 +805,8 @@ export const translations = {
         errorAuthRequired: "Connexion requise pour le fetch d'URL.",
         errorPremiumOnly: "Le fetch d'URL nécessite un compte Super.",
         errorUnsupportedHost: "Hôte non supporté (Lichess et Chess.com uniquement).",
-        errorFetch: "Échec de la récupération du PGN."
+        errorFetch: "Échec de la récupération du PGN.",
+        adhocLabel: "PGN importé"
       },
       coach: {
         whyButton: "Pourquoi ?",
@@ -1342,7 +1347,11 @@ export const translations = {
       importPgnNoValidGames: "No valid games for this name in the file.",
       importPgnGenericError: "Import failed.",
       importPgnInProgress: "Importing...",
-      importPgnNoFile: "Please choose a .pgn file."
+      importPgnNoFile: "Please choose a .pgn file.",
+      quickReviewSection: "Quick Game Review",
+      quickReviewSectionHint: "Analyze any PGN without saving it to your library.",
+      backToHub: "Back to my games",
+      reviewing: "Reviewing"
     },
     
     // Guide Page (UCI creator guide)
@@ -1967,7 +1976,8 @@ export const translations = {
         errorAuthRequired: "Sign-in required for URL fetch.",
         errorPremiumOnly: "URL fetch requires a Super account.",
         errorUnsupportedHost: "Unsupported host (Lichess and Chess.com only).",
-        errorFetch: "Failed to fetch PGN."
+        errorFetch: "Failed to fetch PGN.",
+        adhocLabel: "Imported PGN"
       },
       coach: {
         whyButton: "Why?",

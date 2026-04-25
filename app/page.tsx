@@ -116,7 +116,7 @@ export default function HomePage() {
                 </Button>
               </Link>
 
-              <Link href="/review/import">
+              <Link href="/games">
                 <Button size="lg" variant="outline" className="border-2 border-purple-500/50 text-purple-300 hover:bg-purple-500/10 hover:border-purple-400 font-bold text-lg px-8 py-6">
                   <Sparkles className="mr-2 h-6 w-6" />
                   {lang === "fr" ? "Analyser une partie" : "Review a Game"}

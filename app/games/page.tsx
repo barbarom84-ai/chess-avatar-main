@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, type ChangeEvent } from "react";
 import dynamic from "next/dynamic";
-import type { EngineConfig } from "@/lib/analysis";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,11 +9,12 @@ import { Input } from "@/components/ui/input";
 import {
   Trophy, Target, Calendar, Clock, Download, Trash2,
   Search, TrendingUp, Eye, ChevronLeft, ChevronRight,
-  CheckSquare, Square, X, Upload, Loader2
+  CheckSquare, Square, X, Upload, Loader2, Crown
 } from "lucide-react";
 import { getUserGames, getGamesStats, deleteGame, saveGameToCloud, type DbGame } from "@/lib/supabase-storage";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { useLanguage } from "@/lib/language-context";
+import { usePremium } from "@/hooks/usePremium";
 import Image from "next/image";
 import {
   Dialog,
@@ -31,37 +31,26 @@ import {
   listPlayerNamesFromPgn,
   parsePgnFileForGames,
 } from "@/lib/pgn-import";
+import PgnImportCard from "@/components/PgnImportCard";
+import UpgradeModal from "@/components/UpgradeModal";
 
-/** Config factice : la page archive n’utilise pas le moteur, seulement le mode review. */
-const GAMES_ARCHIVE_ENGINE_STUB: EngineConfig = {
-  name: "—",
-  elo: 1500,
-  difficulty: 1,
-  aggressiveness: 50,
-  threads: 2,
-  depth: 8,
-  timeControl: 1000,
-  favoriteOpening: "",
-  playStyle: "équilibré",
-  openings: {},
-};
+/** Same Game Review tiering as /review/page.tsx so behavior stays consistent. */
+const FREE_DEPTH = 12;
+const FREE_MAX_PLIES = 60;
+const PREMIUM_DEPTH = 18;
 
-function GamesChessboardLoading() {
-  const { t } = useLanguage();
-  return (
-    <div className="w-full min-h-[420px] rounded-lg bg-slate-950 border border-slate-800 flex items-center justify-center text-slate-500 text-sm">
-      {t.loadingChessboard}
-    </div>
-  );
-}
-
-const PlayableChessboard = dynamic(() => import("@/components/PlayableChessboard"), {
+const GameReviewer = dynamic(() => import("@/components/GameReviewer"), {
   ssr: false,
-  loading: GamesChessboardLoading,
+  loading: () => (
+    <div className="w-full h-[60dvh] lg:h-[600px] bg-slate-900 rounded-lg animate-pulse flex items-center justify-center text-slate-700">
+      Loading…
+    </div>
+  ),
 });
 
 export default function GamesPage() {
   const { t, lang } = useLanguage();
+  const { isPremium, userId, email } = usePremium();
   const [games, setGames] = useState<DbGame[]>([]);
   const [filteredGames, setFilteredGames] = useState<DbGame[]>([]);
   const [stats, setStats] = useState({ total: 0, wins: 0, losses: 0, draws: 0, winRate: 0 });
@@ -69,10 +58,37 @@ export default function GamesPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterResult, setFilterResult] = useState<'all' | 'win' | 'loss' | 'draw'>('all');
   const [selectedGame, setSelectedGame] = useState<DbGame | null>(null);
+  // Active PGN being reviewed inline (either a saved game or an ad-hoc import).
+  const [reviewPgn, setReviewPgn] = useState<string | null>(null);
+  const [reviewSourceLabel, setReviewSourceLabel] = useState<string>("");
+  const [showUpgrade, setShowUpgrade] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [compactMobile, setCompactMobile] = useState(true);
   const gamesPerPage = 10;
+
+  const reviewDepth = isPremium ? PREMIUM_DEPTH : FREE_DEPTH;
+  const reviewMaxPlies = isPremium ? Number.POSITIVE_INFINITY : FREE_MAX_PLIES;
+  const reviewShowAllArrows = isPremium;
+  const reviewCacheUserId = isPremium ? userId : null;
+
+  const openReviewForGame = (game: DbGame) => {
+    setSelectedGame(game);
+    setReviewSourceLabel(game.opponent_name);
+    setReviewPgn(game.pgn);
+  };
+
+  const openReviewForAdhoc = (pgn: string) => {
+    setSelectedGame(null);
+    setReviewSourceLabel(t.review.import.adhocLabel);
+    setReviewPgn(pgn);
+  };
+
+  const closeReview = () => {
+    setReviewPgn(null);
+    setSelectedGame(null);
+    setReviewSourceLabel("");
+  };
 
   const pgnFileInputRef = useRef<HTMLInputElement>(null);
   const pgnScanGen = useRef(0);
@@ -344,43 +360,44 @@ export default function GamesPage() {
     );
   }
 
-  if (selectedGame) {
+  if (reviewPgn) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 py-8 px-4">
-        <div className="max-w-7xl mx-auto">
-          <Button
-            onClick={() => setSelectedGame(null)}
-            className="mb-4 border-cyan-500/50 text-cyan-300 hover:bg-cyan-500/10"
-            variant="outline"
-          >
-            <ChevronLeft className="mr-2 h-4 w-4" />
-            {t.games.backToList}
-          </Button>
-
-          <Card className="bg-slate-900 border-cyan-500/20">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  {selectedGame.opponent_avatar && (
-                    <Image 
-                      src={selectedGame.opponent_avatar} 
-                      alt={selectedGame.opponent_name}
-                      width={48}
-                      height={48}
-                      className="rounded-full"
-                    />
-                  )}
-                  <div>
-                    <CardTitle className="text-cyan-100">
-                      {t.games.gameAgainst} {selectedGame.opponent_name}
-                    </CardTitle>
-                    <div className="text-sm text-slate-400 mt-1 flex items-center gap-2">
-                      <span>{formatDate(selectedGame.created_at)}</span>
-                      <span>•</span>
-                      {getResultBadge(selectedGame.result)}
-                    </div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 py-6 px-3 md:px-4">
+        <div className="max-w-[1500px] mx-auto space-y-4">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <Button
+              onClick={closeReview}
+              className="border-cyan-500/50 text-cyan-300 hover:bg-cyan-500/10"
+              variant="outline"
+            >
+              <ChevronLeft className="mr-2 h-4 w-4" />
+              {t.games.backToHub}
+            </Button>
+            <div className="flex items-center gap-3 min-w-0">
+              {selectedGame?.opponent_avatar && (
+                <Image
+                  src={selectedGame.opponent_avatar}
+                  alt={selectedGame.opponent_name}
+                  width={36}
+                  height={36}
+                  className="rounded-full shrink-0"
+                />
+              )}
+              <div className="min-w-0">
+                <h1 className="text-lg md:text-xl font-bold text-cyan-300 truncate">
+                  {t.games.reviewing} · {reviewSourceLabel}
+                </h1>
+                {selectedGame && (
+                  <div className="text-xs text-slate-400 mt-0.5 flex items-center gap-2 flex-wrap">
+                    <span>{formatDate(selectedGame.created_at)}</span>
+                    <span>•</span>
+                    {getResultBadge(selectedGame.result)}
                   </div>
-                </div>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {selectedGame && (
                 <Button
                   onClick={() => downloadPGN(selectedGame)}
                   variant="outline"
@@ -390,19 +407,49 @@ export default function GamesPage() {
                   <Download className="mr-2 h-4 w-4" />
                   PGN
                 </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <PlayableChessboard
-                key={selectedGame.id}
-                config={GAMES_ARCHIVE_ENGINE_STUB}
-                playerColor={selectedGame.player_color as "white" | "black"}
-                archivePgn={selectedGame.pgn}
-                archiveViewLabel={selectedGame.opponent_name}
-              />
-            </CardContent>
-          </Card>
+              )}
+            </div>
+          </div>
+
+          {!isPremium && (
+            <Card className="bg-amber-900/20 border-amber-500/30">
+              <CardContent className="py-3 flex items-center justify-between gap-3 flex-wrap">
+                <div className="text-xs text-amber-200">
+                  {t.review.freeLimits
+                    .replace("{depth}", String(FREE_DEPTH))
+                    .replace("{plies}", String(FREE_MAX_PLIES))}
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowUpgrade(true)}
+                  className="border-amber-500/50 text-amber-200 hover:bg-amber-500/10"
+                >
+                  <Crown className="h-4 w-4 mr-2" />
+                  {t.review.upgradeForFull}
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
+          <GameReviewer
+            key={reviewPgn}
+            pgn={reviewPgn}
+            depth={reviewDepth}
+            maxPlies={reviewMaxPlies}
+            showAllBestArrows={reviewShowAllArrows}
+            cacheUserId={reviewCacheUserId}
+            onRequestUpgrade={() => setShowUpgrade(true)}
+          />
         </div>
+
+        <UpgradeModal
+          open={showUpgrade}
+          onOpenChange={setShowUpgrade}
+          userId={userId}
+          email={email}
+          reason="coach"
+        />
       </div>
     );
   }
@@ -415,6 +462,19 @@ export default function GamesPage() {
           <h1 className="text-3xl font-bold neon-cyan mb-2">{t.games.title}</h1>
           <p className="text-cyan-400/70">{t.games.subtitle}</p>
         </div>
+
+        {/* Quick Game Review entry — analyse jetable, ne sauvegarde rien */}
+        <section aria-label={t.games.quickReviewSection} className="space-y-2">
+          <div className="flex items-baseline justify-between gap-3 flex-wrap">
+            <h2 className="text-lg md:text-xl font-bold text-cyan-300">
+              {t.games.quickReviewSection}
+            </h2>
+            <p className="text-xs text-slate-400">
+              {t.games.quickReviewSectionHint}
+            </p>
+          </div>
+          <PgnImportCard onPgnReady={openReviewForAdhoc} />
+        </section>
 
         {/* Statistiques */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -646,7 +706,7 @@ export default function GamesPage() {
                           <Button
                             size={compactMobile ? "icon" : "sm"}
                             variant="outline"
-                            onClick={() => setSelectedGame(game)}
+                            onClick={() => openReviewForGame(game)}
                             className={`border-cyan-500/50 text-cyan-300 hover:bg-cyan-500/10 ${compactMobile ? "h-8 w-8" : ""}`}
                             title={t.games.viewGame}
                           >

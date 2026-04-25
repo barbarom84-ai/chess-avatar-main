@@ -27,11 +27,10 @@ const NAV_PIECE_COLOR_DEFAULT = "w" as const;
 const NAV_ITEMS: NavItemDef[] = [
   { href: "/", piece: "K", label: { fr: "Accueil", en: "Home" } },
   { href: "/analyze", piece: "Q", label: { fr: "Analyser", en: "Analyze" } },
-  { href: "/review/import", piece: "B", label: { fr: "Game Review", en: "Game Review" } },
   { href: "/play", piece: "N", label: { fr: "Jouer", en: "Play" } },
   { href: "/learn", piece: "Q", label: { fr: "Apprentissage", en: "Learn" } },
   { href: "/profile", piece: "B", label: { fr: "Profil", en: "Profile" } },
-  { href: "/games", piece: "R", label: { fr: "Parties", en: "Games" } },
+  { href: "/games", piece: "R", label: { fr: "Parties / Game Review", en: "Games / Review" } },
   { href: "/guide", piece: "P", label: { fr: "UCI creator guide", en: "UCI creator guide" } },
 ];
 

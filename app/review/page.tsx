@@ -74,7 +74,7 @@ function ReviewContent() {
             <Button
               variant="ghost"
               className="text-cyan-300 hover:text-cyan-100"
-              onClick={() => router.push("/review/import")}
+              onClick={() => router.push("/games")}
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
               {t.review.import.backToImport}
@@ -104,7 +104,7 @@ function ReviewContent() {
     <main className="min-h-screen theme-gradient theme-text-primary p-3 md:p-6">
       <div className="max-w-[1500px] mx-auto space-y-4">
         <div className="flex items-center justify-between gap-2">
-          <Link href="/analyze">
+          <Link href="/games">
             <Button variant="ghost" className="text-cyan-300 hover:text-cyan-100">
               <ArrowLeft className="mr-2 h-4 w-4" />
               {t.backToHome}

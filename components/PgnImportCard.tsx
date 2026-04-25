@@ -26,7 +26,16 @@ const PGN_SESSION_KEY = "chess-avatar.review.pgn";
 /** 200 KB cap on user-supplied PGN to prevent abuse. */
 const MAX_PGN_BYTES = 200 * 1024;
 
-export default function PgnImportCard() {
+export interface PgnImportCardProps {
+  /**
+   * When provided, validated PGN is forwarded to this callback instead of
+   * being persisted to sessionStorage and navigated to `/review`. Lets a
+   * parent host the GameReviewer inline (e.g. the unified `/games` hub).
+   */
+  onPgnReady?: (pgn: string) => void;
+}
+
+export default function PgnImportCard({ onPgnReady }: PgnImportCardProps = {}) {
   const { t, lang } = useLanguage();
   const router = useRouter();
   const { isPremium } = usePremium();
@@ -38,8 +47,9 @@ export default function PgnImportCard() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   /**
-   * Validate, persist to sessionStorage and navigate to /review.
-   * Centralized so all 4 entry points (paste/file/url/sample) share the same path.
+   * Validate the PGN. If `onPgnReady` is supplied the parent handles the
+   * follow-up (typically rendering GameReviewer inline). Otherwise we keep
+   * the legacy behaviour: persist to sessionStorage and navigate to `/review`.
    */
   const goReview = useCallback(
     (pgn: string): boolean => {
@@ -58,6 +68,10 @@ export default function PgnImportCard() {
         setError(t.review.import.errorInvalid);
         return false;
       }
+      if (onPgnReady) {
+        onPgnReady(trimmed);
+        return true;
+      }
       try {
         sessionStorage.setItem(PGN_SESSION_KEY, trimmed);
       } catch {
@@ -67,7 +81,7 @@ export default function PgnImportCard() {
       router.push("/review");
       return true;
     },
-    [router, t.review.import]
+    [onPgnReady, router, t.review.import]
   );
 
   const handlePasteSubmit = useCallback(() => {
