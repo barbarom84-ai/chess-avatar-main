@@ -89,8 +89,22 @@ function PlayContent() {
       <main className="min-h-screen theme-gradient theme-text-primary p-4 md:p-8">
         <div className="max-w-6xl mx-auto space-y-6">
           <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-cyan-400 mb-2">
-              ♟️ {t.play.selectOpponent}
+            <h1 className="text-4xl font-bold text-cyan-400 mb-2 flex items-center justify-center gap-3">
+              <span
+                aria-hidden
+                className="inline-block h-9 w-9 bg-cyan-400 shrink-0 drop-shadow-[0_0_8px_rgba(34,211,238,0.55)]"
+                style={{
+                  WebkitMaskImage: "url('/pieces/alpha/bP.svg')",
+                  maskImage: "url('/pieces/alpha/bP.svg')",
+                  WebkitMaskSize: "contain",
+                  maskSize: "contain",
+                  WebkitMaskRepeat: "no-repeat",
+                  maskRepeat: "no-repeat",
+                  WebkitMaskPosition: "center",
+                  maskPosition: "center",
+                }}
+              />
+              {t.play.selectOpponent}
             </h1>
             <p className="theme-text-secondary">
               {t.play.selectBotDescription}
