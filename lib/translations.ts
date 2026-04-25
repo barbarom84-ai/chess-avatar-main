@@ -808,6 +808,23 @@ export const translations = {
         errorFetch: "Échec de la récupération du PGN.",
         adhocLabel: "PGN importé"
       },
+      opening: {
+        theory: "Théorie",
+        bookMove: "Coup de théorie",
+        outOfBook: "Hors théorie",
+        leftBookAt: "Sorti de la théorie au coup {move}",
+        exitTheoryNow: "Sortie de la théorie"
+      },
+      flags: {
+        check: "Échec",
+        checkmate: "Échec et mat",
+        forced: "Coup forcé",
+        forcedShort: "Forcé",
+        mateInBest: "Mat en {n} ({side})",
+        mateInPlayer: "Mat en {n} après ce coup ({side})",
+        whiteShort: "blancs",
+        blackShort: "noirs"
+      },
       coach: {
         whyButton: "Pourquoi ?",
         loading: "Le coach réfléchit…",
@@ -1978,6 +1995,23 @@ export const translations = {
         errorUnsupportedHost: "Unsupported host (Lichess and Chess.com only).",
         errorFetch: "Failed to fetch PGN.",
         adhocLabel: "Imported PGN"
+      },
+      opening: {
+        theory: "Theory",
+        bookMove: "Book move",
+        outOfBook: "Out of book",
+        leftBookAt: "Left theory at move {move}",
+        exitTheoryNow: "Leaving opening theory"
+      },
+      flags: {
+        check: "Check",
+        checkmate: "Checkmate",
+        forced: "Forced move",
+        forcedShort: "Forced",
+        mateInBest: "Mate in {n} ({side})",
+        mateInPlayer: "Mate in {n} after this move ({side})",
+        whiteShort: "White",
+        blackShort: "Black"
       },
       coach: {
         whyButton: "Why?",

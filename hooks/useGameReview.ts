@@ -149,6 +149,11 @@ export function useGameReview({
           //    Otherwise we must evaluate the position after the played move.
           let playerEvalPawns = best.evalPawns;
           let isMatePlayer: boolean | undefined = best.isMate;
+          // Mate distance for the played move's resulting position (white POV).
+          let playerMateInMovesWhite: number | undefined =
+            best.mateInMoves !== undefined
+              ? mateToWhitePov(best.mateInMoves, sideToMove)
+              : undefined;
           const playerIsBest = best.move && best.move === uci;
           if (!playerIsBest) {
             const afterPlayer = await getBestMoveAndEval(fenAfter, depth);
@@ -173,6 +178,10 @@ export function useGameReview({
               opposite(sideToMove)
             );
             isMatePlayer = afterPlayer.isMate;
+            playerMateInMovesWhite =
+              afterPlayer.mateInMoves !== undefined
+                ? mateToWhitePov(afterPlayer.mateInMoves, opposite(sideToMove))
+                : undefined;
           }
 
           // Stockfish's eval at fenBefore is from `sideToMove` POV (the side to move).
@@ -193,6 +202,14 @@ export function useGameReview({
           const bestSan = rawBestUci ? uciToSan(fenBefore, rawBestUci) : "";
           const bestUci = bestSan ? rawBestUci : "";
 
+          // For the engine's best line we report `mate in N` from the white
+          // POV. `best` was searched at `fenBefore` (whose side-to-move is
+          // `sideToMove`), so we normalize the same way as evals.
+          const bestMateInMovesWhite =
+            best.mateInMoves !== undefined
+              ? mateToWhitePov(best.mateInMoves, sideToMove)
+              : undefined;
+
           const reviewed = buildReviewedMove({
             ply,
             san,
@@ -205,6 +222,10 @@ export function useGameReview({
             playerEval: playerIsBest ? bestEvalWhite : playerEvalPawns,
             isMateBest: best.isMate,
             isMatePlayer,
+            bestMateInMoves: bestMateInMovesWhite,
+            playerMateInMoves: playerIsBest
+              ? bestMateInMovesWhite
+              : playerMateInMovesWhite,
           });
 
           collected.push(reviewed);
@@ -257,4 +278,16 @@ function normalizeToWhitePov(
   sideToMove: "white" | "black"
 ): number {
   return sideToMove === "white" ? evalPawnsStmPov : -evalPawnsStmPov;
+}
+
+/**
+ * Convert a signed `mate in N` (side-to-move POV, as Stockfish reports it)
+ * to a signed value in white POV. Positive => white mates in N, negative =>
+ * black mates in N.
+ */
+function mateToWhitePov(
+  mateInMovesStmPov: number,
+  sideToMove: "white" | "black"
+): number {
+  return sideToMove === "white" ? mateInMovesStmPov : -mateInMovesStmPov;
 }

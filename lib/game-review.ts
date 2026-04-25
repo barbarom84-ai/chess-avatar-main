@@ -46,6 +46,18 @@ export interface ReviewedMove {
   classification: MoveClassification;
   isMateBest?: boolean;
   isMatePlayer?: boolean;
+  /**
+   * Signed mate distance in moves (NOT plies) for the engine's best line,
+   * normalized to white POV. Positive => white mates in N, negative => black
+   * mates in N. Undefined when the engine never reported a mate score for
+   * the best line.
+   */
+  bestMateInMoves?: number;
+  /**
+   * Signed mate distance in moves for the position after the played move,
+   * normalized to white POV. Same sign convention as `bestMateInMoves`.
+   */
+  playerMateInMoves?: number;
 }
 
 export interface SideAccuracy extends GameAccuracyResult {
@@ -206,6 +218,8 @@ export function buildReviewedMove(args: {
   playerEval: number;
   isMateBest?: boolean;
   isMatePlayer?: boolean;
+  bestMateInMoves?: number;
+  playerMateInMoves?: number;
 }): ReviewedMove {
   const cplPawns =
     args.sideToMove === "white"
@@ -251,6 +265,8 @@ export function buildReviewedMove(args: {
     classification,
     isMateBest: args.isMateBest,
     isMatePlayer: args.isMatePlayer,
+    bestMateInMoves: args.bestMateInMoves,
+    playerMateInMoves: args.playerMateInMoves,
   };
 }
 

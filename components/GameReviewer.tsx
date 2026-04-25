@@ -14,7 +14,13 @@ import {
   Sparkles,
   Loader2,
   MessageCircleQuestion,
+  BookOpen,
+  ShieldAlert,
+  Skull,
+  Lock,
+  LogOut,
 } from "lucide-react";
+import { Chess } from "chess.js";
 import {
   LineChart,
   Line,
@@ -46,6 +52,11 @@ import {
 import { loadCachedReview, saveReview } from "@/lib/game-review-storage";
 import { useLanguage } from "@/lib/language-context";
 import { useCoachExplain } from "@/hooks/useCoachExplain";
+import {
+  detectOpening,
+  getOpeningName,
+  type Opening,
+} from "@/lib/openings-library";
 
 interface GameReviewerProps {
   pgn: string;
@@ -203,6 +214,81 @@ export default function GameReviewer({
     [effectiveMoves]
   );
 
+  // Per-ply opening detection (longest-prefix-match against the local opening
+  // database). `openingByPly[i]` is the opening whose UCI prefix matches the
+  // first `i + 1` plies of the game, or null when we've left book theory.
+  const openingByPly = useMemo<Array<Opening | null>>(() => {
+    if (!parsed) return [];
+    const result: Array<Opening | null> = [];
+    let stillInBook = true;
+    for (let i = 0; i < parsed.uci.length; i++) {
+      if (!stillInBook) {
+        result.push(null);
+        continue;
+      }
+      const match = detectOpening(parsed.uci.slice(0, i + 1));
+      if (match) {
+        result.push(match);
+      } else {
+        stillInBook = false;
+        result.push(null);
+      }
+    }
+    return result;
+  }, [parsed]);
+
+  // Per-ply tactical flags computed entirely from the FEN snapshots that
+  // chess.js already produced. No engine round-trips, runs once when the
+  // game changes and is then memoized.
+  //   - isForced: the side to move had exactly ONE legal move at fenBefore.
+  //   - isCheck:  fenAfter is a check (but not mate).
+  //   - isCheckmate: fenAfter is mate. Implies isCheck conceptually but we
+  //     keep them mutually exclusive in this struct so the UI can pick the
+  //     right badge directly.
+  const moveFlagsByPly = useMemo(() => {
+    if (!parsed) {
+      return [] as Array<{
+        isForced: boolean;
+        isCheck: boolean;
+        isCheckmate: boolean;
+      }>;
+    }
+    return parsed.fenBefore.map((fen, i) => {
+      let isForced = false;
+      let isCheck = false;
+      let isCheckmate = false;
+      try {
+        const before = new Chess(fen);
+        isForced = before.moves().length === 1;
+      } catch {
+        // ignore
+      }
+      try {
+        const after = new Chess(parsed.fenAfter[i]);
+        isCheckmate = after.isCheckmate();
+        isCheck = !isCheckmate && after.inCheck();
+      } catch {
+        // ignore
+      }
+      return { isForced, isCheck, isCheckmate };
+    });
+  }, [parsed]);
+
+  // Index of the first ply that exits opening theory, or -1 if the entire
+  // game stays in book / no theory was ever entered.
+  const exitTheoryPly = useMemo(() => {
+    if (!openingByPly.length) return -1;
+    let everInBook = false;
+    for (let i = 0; i < openingByPly.length; i++) {
+      if (openingByPly[i]) {
+        everInBook = true;
+      } else if (everInBook) {
+        return i;
+      }
+    }
+    return -1;
+  }, [openingByPly]);
+
   if (!parsed) {
     return (
       <Card className="bg-slate-900/50 border-red-500/30">
@@ -287,6 +373,9 @@ export default function GameReviewer({
                 parsed={parsed}
                 moves={effectiveMoves}
                 currentIndex={currentIndex}
+                openingByPly={openingByPly}
+                moveFlagsByPly={moveFlagsByPly}
+                exitTheoryPly={exitTheoryPly}
                 onSelect={(idx) => setCurrentIndex(idx)}
               />
             </ScrollArea>
@@ -412,6 +501,20 @@ export default function GameReviewer({
           moveNumber={
             currentIndex > 0 ? Math.floor((currentIndex - 1) / 2) + 1 : undefined
           }
+          opening={
+            currentIndex > 0 ? openingByPly[currentIndex - 1] ?? null : null
+          }
+          previousOpening={
+            currentIndex > 1 ? openingByPly[currentIndex - 2] ?? null : null
+          }
+          flags={
+            currentIndex > 0
+              ? moveFlagsByPly[currentIndex - 1] ?? null
+              : null
+          }
+          isExitingTheory={
+            currentIndex > 0 && exitTheoryPly === currentIndex - 1
+          }
           onRequestUpgrade={onRequestUpgrade}
         />
 
@@ -535,21 +638,48 @@ function ProgressHeader({
   );
 }
 
+interface MoveFlags {
+  isForced: boolean;
+  isCheck: boolean;
+  isCheckmate: boolean;
+}
+
 function MovesList({
   parsed,
   moves,
   currentIndex,
+  openingByPly,
+  moveFlagsByPly,
+  exitTheoryPly,
   onSelect,
 }: {
   parsed: ParsedGameForReview;
   moves: ReviewedMove[];
   currentIndex: number;
+  openingByPly: Array<Opening | null>;
+  moveFlagsByPly: MoveFlags[];
+  exitTheoryPly: number;
   onSelect: (idx: number) => void;
 }) {
+  const { t } = useLanguage();
   const rows: Array<{
     moveNumber: number;
-    white: { san: string; ply: number; reviewed?: ReviewedMove };
-    black?: { san: string; ply: number; reviewed?: ReviewedMove };
+    white: {
+      san: string;
+      ply: number;
+      reviewed?: ReviewedMove;
+      opening: Opening | null;
+      flags: MoveFlags | null;
+      isExitTheory: boolean;
+    };
+    black?: {
+      san: string;
+      ply: number;
+      reviewed?: ReviewedMove;
+      opening: Opening | null;
+      flags: MoveFlags | null;
+      isExitTheory: boolean;
+    };
   }> = [];
 
   for (let i = 0; i < parsed.san.length; i += 2) {
@@ -558,9 +688,23 @@ function MovesList({
     const blackSan = parsed.san[i + 1];
     rows.push({
       moveNumber,
-      white: { san: whiteSan, ply: i, reviewed: moves[i] },
+      white: {
+        san: whiteSan,
+        ply: i,
+        reviewed: moves[i],
+        opening: openingByPly[i] ?? null,
+        flags: moveFlagsByPly[i] ?? null,
+        isExitTheory: exitTheoryPly === i,
+      },
       black: blackSan
-        ? { san: blackSan, ply: i + 1, reviewed: moves[i + 1] }
+        ? {
+            san: blackSan,
+            ply: i + 1,
+            reviewed: moves[i + 1],
+            opening: openingByPly[i + 1] ?? null,
+            flags: moveFlagsByPly[i + 1] ?? null,
+            isExitTheory: exitTheoryPly === i + 1,
+          }
         : undefined,
     });
   }
@@ -578,12 +722,14 @@ function MovesList({
           <MoveCell
             sanPly={row.white}
             isActive={currentIndex === row.white.ply + 1}
+            t={t}
             onSelect={onSelect}
           />
           {row.black ? (
             <MoveCell
               sanPly={row.black}
               isActive={currentIndex === row.black.ply + 1}
+              t={t}
               onSelect={onSelect}
             />
           ) : (
@@ -598,14 +744,25 @@ function MovesList({
 function MoveCell({
   sanPly,
   isActive,
+  t,
   onSelect,
 }: {
-  sanPly: { san: string; ply: number; reviewed?: ReviewedMove };
+  sanPly: {
+    san: string;
+    ply: number;
+    reviewed?: ReviewedMove;
+    opening: Opening | null;
+    flags: MoveFlags | null;
+    isExitTheory: boolean;
+  };
   isActive: boolean;
+  t: ReturnType<typeof useLanguage>["t"];
   onSelect: (idx: number) => void;
 }) {
   const r = sanPly.reviewed;
   const colors = r ? CLASSIFICATION_COLORS[r.classification] : null;
+  const isBook = sanPly.opening !== null;
+  const flags = sanPly.flags;
   return (
     <button
       type="button"
@@ -617,6 +774,36 @@ function MoveCell({
       }`}
     >
       <span>{sanPly.san}</span>
+      {isBook && (
+        <BookOpen
+          className="h-3 w-3 text-amber-300/80 shrink-0"
+          aria-label={t.review.opening.bookMove}
+        />
+      )}
+      {sanPly.isExitTheory && (
+        <LogOut
+          className="h-3 w-3 text-orange-300 shrink-0"
+          aria-label={t.review.opening.exitTheoryNow}
+        />
+      )}
+      {flags?.isCheckmate && (
+        <Skull
+          className="h-3 w-3 text-rose-400 shrink-0"
+          aria-label={t.review.flags.checkmate}
+        />
+      )}
+      {flags?.isCheck && !flags?.isCheckmate && (
+        <ShieldAlert
+          className="h-3 w-3 text-orange-400 shrink-0"
+          aria-label={t.review.flags.check}
+        />
+      )}
+      {flags?.isForced && (
+        <Lock
+          className="h-3 w-3 text-sky-300 shrink-0"
+          aria-label={t.review.flags.forced}
+        />
+      )}
       {colors && (
         <span
           className={`text-[10px] leading-none px-1 rounded ${colors.bg} ${colors.text} ${colors.border} border`}
@@ -632,11 +819,19 @@ function CurrentMoveDetail({
   move,
   fenBefore,
   moveNumber,
+  opening,
+  previousOpening,
+  flags,
+  isExitingTheory,
   onRequestUpgrade,
 }: {
   move?: ReviewedMove;
   fenBefore?: string;
   moveNumber?: number;
+  opening?: Opening | null;
+  previousOpening?: Opening | null;
+  flags?: MoveFlags | null;
+  isExitingTheory?: boolean;
   onRequestUpgrade?: () => void;
 }) {
   const { t, lang } = useLanguage();
@@ -683,6 +878,83 @@ function CurrentMoveDetail({
             {t.review.cpl}: <strong className="text-slate-200">{move.cpl}</strong>
           </span>
         </div>
+        {opening ? (
+          <div className="flex items-center gap-1.5 text-[11px] text-amber-200/90 bg-amber-500/10 border border-amber-500/30 rounded px-2 py-1">
+            <BookOpen className="h-3 w-3 shrink-0" />
+            <span className="font-semibold uppercase tracking-wider text-amber-300/90">
+              {t.review.opening.theory}
+            </span>
+            <span className="text-amber-100">
+              {getOpeningName(opening, lang)}
+            </span>
+            <span className="font-mono text-amber-300/70">({opening.eco})</span>
+          </div>
+        ) : isExitingTheory && previousOpening ? (
+          <div className="flex items-center gap-1.5 text-[11px] text-orange-100 bg-orange-500/15 border border-orange-500/40 rounded px-2 py-1">
+            <LogOut className="h-3.5 w-3.5 shrink-0 text-orange-300" />
+            <span className="uppercase tracking-wider font-bold text-orange-200">
+              {t.review.opening.exitTheoryNow}
+            </span>
+            <span className="text-orange-200/70">·</span>
+            <span className="text-orange-100">
+              {getOpeningName(previousOpening, lang)}
+            </span>
+            <span className="font-mono text-orange-300/80">
+              ({previousOpening.eco})
+            </span>
+          </div>
+        ) : null}
+        {(flags?.isCheckmate ||
+          flags?.isCheck ||
+          flags?.isForced ||
+          (typeof move.bestMateInMoves === "number" &&
+            move.bestMateInMoves !== 0) ||
+          (typeof move.playerMateInMoves === "number" &&
+            move.playerMateInMoves !== 0)) && (
+          <div className="flex flex-wrap items-center gap-1.5">
+            {flags?.isCheckmate && (
+              <Badge className="bg-rose-500/15 text-rose-200 border-rose-500/40 border font-bold">
+                <Skull className="h-3 w-3 mr-1" />
+                {t.review.flags.checkmate}
+              </Badge>
+            )}
+            {flags?.isCheck && !flags?.isCheckmate && (
+              <Badge className="bg-orange-500/15 text-orange-200 border-orange-500/40 border font-semibold">
+                <ShieldAlert className="h-3 w-3 mr-1" />
+                {t.review.flags.check}
+              </Badge>
+            )}
+            {flags?.isForced && (
+              <Badge className="bg-sky-500/15 text-sky-200 border-sky-500/40 border font-semibold">
+                <Lock className="h-3 w-3 mr-1" />
+                {t.review.flags.forced}
+              </Badge>
+            )}
+            {typeof move.bestMateInMoves === "number" &&
+              move.bestMateInMoves !== 0 && (
+                <Badge className="bg-emerald-500/15 text-emerald-200 border-emerald-500/40 border font-mono">
+                  {formatMateBadge(
+                    t.review.flags.mateInBest,
+                    move.bestMateInMoves,
+                    t.review.flags.whiteShort,
+                    t.review.flags.blackShort
+                  )}
+                </Badge>
+              )}
+            {typeof move.playerMateInMoves === "number" &&
+              move.playerMateInMoves !== 0 &&
+              move.playerMateInMoves !== move.bestMateInMoves && (
+                <Badge className="bg-purple-500/15 text-purple-200 border-purple-500/40 border font-mono">
+                  {formatMateBadge(
+                    t.review.flags.mateInPlayer,
+                    move.playerMateInMoves,
+                    t.review.flags.whiteShort,
+                    t.review.flags.blackShort
+                  )}
+                </Badge>
+              )}
+          </div>
+        )}
         <div className="text-xs text-slate-300 space-y-1">
           <div>
             {t.review.evalAfterPlayed}:{" "}
@@ -1052,4 +1324,19 @@ function clamp(v: number, lo: number, hi: number): number {
 function formatEval(pawns: number): string {
   const v = clamp(pawns, -99, 99);
   return `${v >= 0 ? "+" : ""}${v.toFixed(2)}`;
+}
+
+/**
+ * Render the localized "Mate in N (side)" badge text.
+ * `mateInMovesWhitePov` is signed: > 0 => white mates, < 0 => black mates.
+ */
+function formatMateBadge(
+  template: string,
+  mateInMovesWhitePov: number,
+  whiteLabel: string,
+  blackLabel: string
+): string {
+  const n = Math.abs(mateInMovesWhitePov);
+  const side = mateInMovesWhitePov > 0 ? whiteLabel : blackLabel;
+  return template.replace("{n}", String(n)).replace("{side}", side);
 }

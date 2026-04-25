@@ -306,7 +306,18 @@ export function useStockfish() {
   const getBestMoveAndEval = (
     fen: string,
     depth = 18
-  ): Promise<{ move: string; evalPawns: number; isMate?: boolean }> => {
+  ): Promise<{
+    move: string;
+    evalPawns: number;
+    isMate?: boolean;
+    /**
+     * Signed mate distance in moves (NOT plies) from the side-to-move's POV
+     * at search root. Positive => side-to-move is delivering mate, negative
+     * => side-to-move is being mated. Undefined when the engine never reports
+     * a mate score for this position.
+     */
+    mateInMoves?: number;
+  }> => {
     return new Promise((resolve, reject) => {
       if (!isReady || !engineRef.current) {
         reject(new Error("Stockfish not ready"));
@@ -314,6 +325,7 @@ export function useStockfish() {
       }
       let lastEvalPawns: number | null = null;
       let isMate = false;
+      let lastMateInMoves: number | null = null;
       let settled = false;
 
       const finish = (move: string) => {
@@ -324,6 +336,7 @@ export function useStockfish() {
           move,
           evalPawns: lastEvalPawns ?? 0,
           isMate: isMate || undefined,
+          mateInMoves: lastMateInMoves ?? undefined,
         });
       };
 
@@ -336,6 +349,7 @@ export function useStockfish() {
           if (match) {
             lastEvalPawns = parseInt(match[1], 10) / 100;
             isMate = false;
+            lastMateInMoves = null;
           }
         }
         if (message.includes("score mate")) {
@@ -344,6 +358,11 @@ export function useStockfish() {
             const mateIn = parseInt(match[1], 10);
             lastEvalPawns = mateIn > 0 ? 10 : -10;
             isMate = true;
+            // Stockfish reports `score mate N` in full moves (not plies),
+            // signed from the side-to-move's POV: +N => stm mates in N,
+            // -N => stm gets mated in N. We forward the signed value as-is
+            // and let the caller normalize to the desired POV.
+            lastMateInMoves = mateIn;
           }
         }
         if (message.startsWith("bestmove")) {
