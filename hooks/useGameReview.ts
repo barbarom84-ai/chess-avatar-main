@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Chess } from "chess.js";
 import { useStockfish } from "./useStockfish";
 import {
   aggregateReview,
@@ -156,32 +157,64 @@ export function useGameReview({
               : undefined;
           const playerIsBest = best.move && best.move === uci;
           if (!playerIsBest) {
-            const afterPlayer = await getBestMoveAndEval(fenAfter, depth);
-            if (cancelRef.current) {
-              runningRef.current = false;
-              setStatus("cancelled");
-              return;
+            // Short-circuit terminal positions BEFORE asking Stockfish to
+            // search them. Several Stockfish.wasm builds either silently
+            // ignore `go` on a position with no legal moves, or emit
+            // `bestmove (none)` after a long delay — in practice the worker
+            // ends up never resolving for the very last ply of a checkmate
+            // game, freezing the whole review on the final move. chess.js
+            // can tell us instantly whether the side to move has any legal
+            // reply, so we synthesize the eval/mate distance ourselves and
+            // skip the engine call entirely.
+            const terminal = classifyTerminalPosition(fenAfter);
+            if (terminal === "checkmate") {
+              // The side that just moved delivered mate — eval is +∞ in
+              // their favor (white POV: + when white mates, − when black).
+              playerEvalPawns = sideToMove === "white" ? 10 : -10;
+              isMatePlayer = true;
+              // Mate has already been delivered; the conventional notation
+              // is "mate in 0" but most UIs render that awkwardly, so we
+              // surface "mate in 1" (the move that was just played) signed
+              // by the mating side.
+              playerMateInMovesWhite = sideToMove === "white" ? 1 : -1;
+            } else if (terminal !== null) {
+              // Stalemate, insufficient material, threefold, 50-move => draw.
+              playerEvalPawns = 0;
+              isMatePlayer = false;
+              playerMateInMovesWhite = undefined;
+            } else {
+              const afterPlayer = await getBestMoveAndEval(fenAfter, depth);
+              if (cancelRef.current) {
+                runningRef.current = false;
+                setStatus("cancelled");
+                return;
+              }
+              // Eval after player's move: we just searched the position from
+              // the opponent's POV. Stockfish's `score cp` is from the side
+              // to move, but `getBestMoveAndEval` already returns it in
+              // white POV pawns (it parses raw `score cp` which is
+              // side-to-move; see note below).
+              //
+              // Stockfish reports `score cp` from the side to move. To
+              // convert to white POV we'd need to negate when it's black to
+              // move. The existing `getBestMoveAndEval` does NOT negate, so
+              // the value is side-to-move POV. For our CPL math we only
+              // need consistency, so we normalize both `bestEval` and
+              // `playerEval` to white POV here.
+              playerEvalPawns = normalizeToWhitePov(
+                afterPlayer.evalPawns,
+                // The side to move in fenAfter is the opponent of `sideToMove`.
+                opposite(sideToMove)
+              );
+              isMatePlayer = afterPlayer.isMate;
+              playerMateInMovesWhite =
+                afterPlayer.mateInMoves !== undefined
+                  ? mateToWhitePov(
+                      afterPlayer.mateInMoves,
+                      opposite(sideToMove)
+                    )
+                  : undefined;
             }
-            // Eval after player's move: we just searched the position from the
-            // opponent's POV. Stockfish's `score cp` is from the side to move,
-            // but `getBestMoveAndEval` already returns it in white POV pawns
-            // (it parses raw `score cp` which is side-to-move; see note below).
-            //
-            // Stockfish reports `score cp` from the side to move. To convert to
-            // white POV we'd need to negate when it's black to move. The
-            // existing `getBestMoveAndEval` does NOT negate, so the value is
-            // side-to-move POV. For our CPL math we only need consistency, so
-            // we normalize both `bestEval` and `playerEval` to white POV here.
-            playerEvalPawns = normalizeToWhitePov(
-              afterPlayer.evalPawns,
-              // The side to move in fenAfter is the opponent of `sideToMove`.
-              opposite(sideToMove)
-            );
-            isMatePlayer = afterPlayer.isMate;
-            playerMateInMovesWhite =
-              afterPlayer.mateInMoves !== undefined
-                ? mateToWhitePov(afterPlayer.mateInMoves, opposite(sideToMove))
-                : undefined;
           }
 
           // Stockfish's eval at fenBefore is from `sideToMove` POV (the side to move).
@@ -290,4 +323,31 @@ function mateToWhitePov(
   sideToMove: "white" | "black"
 ): number {
   return sideToMove === "white" ? mateInMovesStmPov : -mateInMovesStmPov;
+}
+
+type TerminalKind = "checkmate" | "stalemate" | "draw" | null;
+
+/**
+ * Returns the terminal classification of `fen` according to chess.js, or
+ * null when the side to move still has legal options. Used to bypass
+ * Stockfish for positions where there is nothing to search.
+ */
+function classifyTerminalPosition(fen: string): TerminalKind {
+  try {
+    const c = new Chess(fen);
+    if (c.isCheckmate()) return "checkmate";
+    if (c.isStalemate()) return "stalemate";
+    if (
+      c.isInsufficientMaterial() ||
+      c.isThreefoldRepetition() ||
+      c.isDraw()
+    ) {
+      return "draw";
+    }
+    return null;
+  } catch {
+    // Defensive: if chess.js can't parse the FEN we fall back to letting
+    // the engine try (it would presumably also fail, but that's fine).
+    return null;
+  }
 }
