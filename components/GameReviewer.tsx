@@ -14,6 +14,7 @@ import {
   Sparkles,
   Loader2,
   MessageCircleQuestion,
+  BarChart3,
   BookOpen,
   ShieldAlert,
   Skull,
@@ -58,11 +59,8 @@ import { type CoachToneId } from "@/lib/coach-tone";
 import { loadCachedReview, saveReview } from "@/lib/game-review-storage";
 import { useLanguage } from "@/lib/language-context";
 import { useCoachExplain } from "@/hooks/useCoachExplain";
-import {
-  findBestOpeningByPrefix,
-  getOpeningName,
-  type Opening,
-} from "@/lib/openings-library";
+import { getOpeningName, type Opening } from "@/lib/openings-library";
+import { findBestOpeningByPrefix } from "@/lib/openings-registry";
 import {
   describeTheoryHitsForUi,
   getOpeningTheorySans,
@@ -699,6 +697,7 @@ export default function GameReviewer({
 
         <CurrentMoveDetail
           move={currentMove}
+          explorerFen={currentFen}
           fenBefore={
             currentIndex > 0 ? parsed.fenBefore[currentIndex - 1] : undefined
           }
@@ -1022,8 +1021,104 @@ function MoveCell({
   );
 }
 
+interface MastersExplorerBody {
+  white?: number;
+  draws?: number;
+  black?: number;
+  moves?: Array<{
+    san?: string;
+    uci?: string;
+    white?: number;
+    draws?: number;
+    black?: number;
+  }>;
+}
+
+function OpeningExplorerPanel({ fen }: { fen: string }) {
+  const { t } = useLanguage();
+  const [expanded, setExpanded] = useState(false);
+  const [body, setBody] = useState<MastersExplorerBody | null>(null);
+  const [fromCache, setFromCache] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    if (!expanded || !fen) return;
+    let cancelled = false;
+    setLoading(true);
+    setError(false);
+    void (async () => {
+      try {
+        const res = await fetch(
+          `/api/openings/explorer?fen=${encodeURIComponent(fen)}&pool=masters`
+        );
+        const json = (await res.json().catch(() => null)) as {
+          data?: MastersExplorerBody;
+          cached?: boolean;
+        } | null;
+        if (cancelled) return;
+        if (!res.ok || !json?.data) {
+          setError(true);
+          setBody(null);
+          return;
+        }
+        setBody(json.data);
+        setFromCache(Boolean(json.cached));
+      } catch {
+        if (!cancelled) setError(true);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [expanded, fen]);
+
+  return (
+    <div className="rounded border border-sky-500/25 bg-sky-950/30 px-2 py-2 text-[11px]">
+      <button
+        type="button"
+        onClick={() => setExpanded((e) => !e)}
+        className="flex items-center gap-2 w-full text-left font-semibold text-sky-200 hover:text-sky-100"
+      >
+        <BarChart3 className="h-3.5 w-3.5 shrink-0" />
+        {t.review.opening.explorerTitle}
+      </button>
+      {expanded && loading && (
+        <div className="flex items-center gap-2 mt-2 text-sky-300">
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          {t.review.opening.explorerLoading}
+        </div>
+      )}
+      {expanded && error && (
+        <p className="mt-2 text-red-300">{t.review.opening.explorerError}</p>
+      )}
+      {expanded && body?.moves && body.moves.length > 0 && (
+        <ul className="mt-2 space-y-1 max-h-40 overflow-y-auto">
+          {body.moves.slice(0, 10).map((m, i) => (
+            <li
+              key={`${m.uci ?? m.san}-${i}`}
+              className="flex justify-between gap-2 font-mono text-[10px] text-slate-200"
+            >
+              <span>{m.san ?? m.uci}</span>
+              <span className="text-slate-500 shrink-0">
+                W{m.white ?? 0} · D{m.draws ?? 0} · B{m.black ?? 0}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+      {expanded && fromCache && !loading && (
+        <p className="text-[10px] text-slate-500 mt-1">{t.review.opening.explorerCached}</p>
+      )}
+    </div>
+  );
+}
+
 function CurrentMoveDetail({
   move,
+  explorerFen,
   fenBefore,
   moveNumber,
   opening,
@@ -1035,6 +1130,8 @@ function CurrentMoveDetail({
   theorySnapshot,
 }: {
   move?: ReviewedMove;
+  /** Position affichée (explorer Lichess : stats depuis cette position). */
+  explorerFen: string;
   fenBefore?: string;
   moveNumber?: number;
   opening?: Opening | null;
@@ -1173,6 +1270,7 @@ function CurrentMoveDetail({
             )}
           </div>
         )}
+        <OpeningExplorerPanel fen={explorerFen} />
         {(flags?.isCheckmate ||
           flags?.isCheck ||
           flags?.isForced ||

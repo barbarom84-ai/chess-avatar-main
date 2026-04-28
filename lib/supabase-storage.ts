@@ -13,6 +13,10 @@ export type { DbProfile } from './supabase';
 /**
  * Interface pour une partie sauvegardée
  */
+/**
+ * Partie stockée pour l’utilisateur (Supabase). Pour corpus bulk / millions de parties,
+ * voir [`game-sources`](./game-sources.ts) — ne pas utiliser cette ligne comme entrepôt analytique.
+ */
 export interface DbGame {
   id: string;
   user_id: string;
@@ -35,6 +39,9 @@ export interface DbGame {
   created_at: string;
   updated_at: string;
   bot_config?: EngineConfig;
+  /** Optionnel : lien ou ID jeu distant — voir `DbGameExternalRef` dans game-sources.ts */
+  external_game_id?: string;
+  external_game_url?: string;
 }
 
 /**

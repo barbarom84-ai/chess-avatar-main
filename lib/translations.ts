@@ -840,6 +840,10 @@ export const translations = {
         divergedFromBook:
           "La partie ne suit plus ce coup à coup la ligne ci-dessus ; correspondance partielle surlignée.",
         transpositions: "Autres repères menant ici",
+        explorerTitle: "Stats masters (Lichess proxy)",
+        explorerLoading: "Chargement des statistiques…",
+        explorerError: "Impossible de charger l’explorer (réseau ou limite).",
+        explorerCached: "Réponse mise en cache (quelques minutes).",
       },
       flags: {
         check: "Échec",
@@ -2054,6 +2058,10 @@ export const translations = {
         divergedFromBook:
           "The game no longer follows this line move-for-move; highlighted moves match the longest compatible prefix.",
         transpositions: "Also reached via",
+        explorerTitle: "Master stats (Lichess proxy)",
+        explorerLoading: "Loading statistics…",
+        explorerError: "Could not load explorer (network or rate limit).",
+        explorerCached: "Cached response (a few minutes).",
       },
       flags: {
         check: "Check",

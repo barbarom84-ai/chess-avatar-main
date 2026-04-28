@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev --webpack",
     "build": "next build --webpack",
+    "build:opening-index": "node scripts/build-opening-fen-index.mjs",
     "start": "next start",
     "lint": "eslint",
     "build:engine": "cd public && pyinstaller --onefile --console --clean --distpath . --workpath ../.engine-build --specpath ../.engine-build --name AvatarEngine AvatarEngine.py"
