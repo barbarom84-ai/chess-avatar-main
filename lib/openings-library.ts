@@ -578,32 +578,46 @@ export function selectRandomOpening(
   return openings[0].id;
 }
 
-// Détecter l'ouverture à partir des coups UCI
-export function detectOpening(uciMoves: string[]): Opening | null {
-  if (uciMoves.length === 0) return null;
-  
-  // Chercher la correspondance la plus longue
-  let bestMatch: Opening | null = null;
-  let bestMatchLength = 0;
-  
-  for (const opening of OPENINGS_DATABASE) {
-    const matchLength = Math.min(opening.uciMoves.length, uciMoves.length);
-    let matches = 0;
-    
-    for (let i = 0; i < matchLength; i++) {
-      if (opening.uciMoves[i] === uciMoves[i]) {
-        matches++;
-      } else {
-        break;
-      }
+export interface PrefixMatchResult {
+  opening: Opening | null;
+  /** Demi-coups initiaux qui coïncident avec la ligne en base (préfixe commun). */
+  matchedPlies: number;
+}
+
+/**
+ * Ligne théorique la plus spécifique encore compatible avec les coups joués.
+ * Tie-break à préfixe égal : ligne dont la séquence UCI est la plus longue.
+ */
+export function findBestOpeningByPrefix(uciMoves: string[]): PrefixMatchResult {
+  if (uciMoves.length === 0) {
+    return { opening: null, matchedPlies: 0 };
+  }
+
+  let best: Opening | null = null;
+  let bestMatch = 0;
+
+  for (const o of OPENINGS_DATABASE) {
+    let m = 0;
+    const lim = Math.min(o.uciMoves.length, uciMoves.length);
+    for (; m < lim; m++) {
+      if (o.uciMoves[m] !== uciMoves[m]) break;
     }
-    
-    // Si tous les coups de l'ouverture correspondent et c'est la meilleure correspondance
-    if (matches === opening.uciMoves.length && matches > bestMatchLength) {
-      bestMatch = opening;
-      bestMatchLength = matches;
+    if (m === 0) continue;
+
+    if (!best || m > bestMatch) {
+      bestMatch = m;
+      best = o;
+    } else if (m === bestMatch && best && o.uciMoves.length > best.uciMoves.length) {
+      best = o;
+    } else if (m === bestMatch && !best) {
+      best = o;
     }
   }
-  
-  return bestMatch;
+
+  return { opening: best, matchedPlies: bestMatch };
+}
+
+/** @deprecated Préférer findBestOpeningByPrefix — conservé pour compat. */
+export function detectOpening(uciMoves: string[]): Opening | null {
+  return findBestOpeningByPrefix(uciMoves).opening;
 }
