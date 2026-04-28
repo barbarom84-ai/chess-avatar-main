@@ -268,13 +268,11 @@ export default function GameReviewer({
     setAutoPlay(false);
   }, [pgn]);
 
-  // Auto-start the review as soon as the engine is ready (skip if cache hit).
+  // Keep the selected ply in range when analysis resets or move list shrinks.
   useEffect(() => {
-    if (!parsed || cachedResult || !cacheChecked) return;
-    if (review.status === "idle" && review.engineReady) {
-      review.start();
-    }
-  }, [parsed, cachedResult, cacheChecked, review]);
+    const max = effectiveMoves.length;
+    setCurrentIndex((i) => (max === 0 ? 0 : Math.min(i, max)));
+  }, [effectiveMoves.length]);
 
   // Auto-advance the board to follow the engine while it's analyzing.
   useEffect(() => {
@@ -588,13 +586,18 @@ export default function GameReviewer({
       {/* CENTER — Board + Eval + Controls + per-move detail */}
       <div className="lg:col-span-6 order-1 lg:order-2 space-y-3">
         <ProgressHeader
-          status={effectiveStatus}
+          effectiveStatus={effectiveStatus}
+          reviewStatus={review.status}
+          cacheChecked={cacheChecked}
+          hasCachedResult={!!cachedResult}
+          engineReady={review.engineReady}
           progress={effectiveProgress}
           total={effectiveTotal}
           onCancel={review.cancel}
+          onStartAnalysis={() => review.start()}
         />
 
-        <EvaluationBar evaluation={evalForBar} playerColor={orientation} />
+        <EvaluationBar evaluation={evalForBar} />
 
         <div className="flex items-start gap-3">
           <div className="flex-1">
@@ -784,62 +787,116 @@ export default function GameReviewer({
 // ---------------------------------------------------------------------------
 
 function ProgressHeader({
-  status,
+  effectiveStatus,
+  reviewStatus,
+  cacheChecked,
+  hasCachedResult,
+  engineReady,
   progress,
   total,
   onCancel,
+  onStartAnalysis,
 }: {
-  status: ReviewStatus;
+  effectiveStatus: ReviewStatus;
+  reviewStatus: ReviewStatus;
+  cacheChecked: boolean;
+  hasCachedResult: boolean;
+  engineReady: boolean;
   progress: number;
   total: number;
   onCancel: () => void;
+  onStartAnalysis: () => void;
 }) {
   const { t } = useLanguage();
   const pct = total > 0 ? Math.round((progress / total) * 100) : 0;
 
-  if (status === "idle" || status === "engine-loading") {
+  if (effectiveStatus === "error") {
+    return <div className="text-xs text-red-300">{t.review.error}</div>;
+  }
+
+  if (effectiveStatus === "done") {
+    return (
+      <div className="text-xs text-emerald-300 flex items-center gap-2">
+        <Crown className="h-3 w-3" /> {t.review.done}
+      </div>
+    );
+  }
+
+  if (!cacheChecked) {
     return (
       <div className="flex items-center gap-3 text-xs text-slate-400">
-        <div className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse" />
+        <Loader2 className="h-3 w-3 animate-spin text-cyan-400" />
         {t.review.engineLoading}
       </div>
     );
   }
-  if (status === "running") {
-    return (
-      <div className="space-y-1">
-        <div className="flex items-center justify-between text-xs text-slate-300">
-          <span>
-            {t.review.analyzing.replace("{n}", String(progress)).replace(
-              "{total}",
-              String(total)
-            )}
-          </span>
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-6 px-2 text-red-300 hover:text-red-100 hover:bg-red-500/10"
-            onClick={onCancel}
-          >
-            <Square className="h-3 w-3 mr-1" />
-            {t.review.stop}
-          </Button>
+
+  if (!hasCachedResult) {
+    if (reviewStatus === "running") {
+      return (
+        <div className="space-y-1">
+          <div className="flex items-center justify-between text-xs text-slate-300">
+            <span>
+              {t.review.analyzing.replace("{n}", String(progress)).replace(
+                "{total}",
+                String(total)
+              )}
+            </span>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-6 px-2 text-red-300 hover:text-red-100 hover:bg-red-500/10"
+              onClick={onCancel}
+            >
+              <Square className="h-3 w-3 mr-1" />
+              {t.review.stop}
+            </Button>
+          </div>
+          <Progress value={pct} className="h-1.5" />
         </div>
-        <Progress value={pct} className="h-1.5" />
-      </div>
-    );
+      );
+    }
+    if (reviewStatus === "cancelled") {
+      return (
+        <div className="text-xs text-yellow-300">{t.review.cancelled}</div>
+      );
+    }
+    if (reviewStatus === "idle" || reviewStatus === "engine-loading") {
+      if (!engineReady) {
+        return (
+          <div className="flex items-center gap-3 text-xs text-slate-400">
+            <div className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse" />
+            {t.review.engineLoading}
+          </div>
+        );
+      }
+      if (reviewStatus === "idle") {
+        return (
+          <div className="flex items-center justify-end">
+            <Button
+              size="sm"
+              className="h-8 bg-cyan-600 hover:bg-cyan-500 text-white"
+              onClick={onStartAnalysis}
+            >
+              <Play className="h-3.5 w-3.5 mr-1.5" />
+              {t.review.startAnalysis}
+            </Button>
+          </div>
+        );
+      }
+      return (
+        <div className="flex items-center gap-3 text-xs text-slate-400">
+          <Loader2 className="h-3 w-3 animate-spin text-cyan-400" />
+          {t.review.engineLoading}
+        </div>
+      );
+    }
   }
-  if (status === "cancelled") {
-    return (
-      <div className="text-xs text-yellow-300">{t.review.cancelled}</div>
-    );
-  }
-  if (status === "error") {
-    return <div className="text-xs text-red-300">{t.review.error}</div>;
-  }
+
   return (
-    <div className="text-xs text-emerald-300 flex items-center gap-2">
-      <Crown className="h-3 w-3" /> {t.review.done}
+    <div className="flex items-center gap-3 text-xs text-slate-400">
+      <Loader2 className="h-3 w-3 animate-spin text-cyan-400" />
+      {t.review.engineLoading}
     </div>
   );
 }

@@ -82,18 +82,23 @@ export function useGameReview({
     : 0;
 
   const reset = useCallback(() => {
-    cancelRef.current = false;
+    cancelRef.current = true;
+    try {
+      stopThinking();
+    } catch {
+      /* best-effort */
+    }
     runningRef.current = false;
     setStatus("idle");
     setMoves([]);
     setResult(null);
     setError(null);
-  }, []);
+  }, [stopThinking]);
 
-  // Reset when the parsed game or analysis profile changes.
+  // Reset when the parsed game or analysis parameters change (depth/maxPlies included).
   useEffect(() => {
     reset();
-  }, [parsed, reset, analysisStrictness]);
+  }, [parsed, reset, analysisStrictness, depth, maxPlies]);
 
   const cancel = useCallback(() => {
     if (!runningRef.current) return;
