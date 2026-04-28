@@ -6,6 +6,7 @@
  *   [`getAggregatedOpenings`](./openings-registry.ts) (imports statiques ; chunks séparés possible par fichier).
  * - **Couche C — stats terrain** : API [`/api/openings/explorer`](../app/api/openings/explorer/route.ts)
  *   (proxy + cache vers explorer.lichess.ovh), sans dupliquer la base mondiale.
+ *   Les gros exports PGN locaux (ex. `data/database2025/`) ne remplacent pas cette couche : voir README du dossier.
  */
 
 export const OPENING_DATA_LAYERS = {

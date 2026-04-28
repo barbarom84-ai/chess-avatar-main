@@ -1094,6 +1094,7 @@ interface MastersExplorerBody {
 function OpeningExplorerPanel({ fen }: { fen: string }) {
   const { t } = useLanguage();
   const [expanded, setExpanded] = useState(false);
+  const [pool, setPool] = useState<"masters" | "lichess">("lichess");
   const [body, setBody] = useState<MastersExplorerBody | null>(null);
   const [fromCache, setFromCache] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -1107,7 +1108,7 @@ function OpeningExplorerPanel({ fen }: { fen: string }) {
     void (async () => {
       try {
         const res = await fetch(
-          `/api/openings/explorer?fen=${encodeURIComponent(fen)}&pool=masters`
+          `/api/openings/explorer?fen=${encodeURIComponent(fen)}&pool=${pool}`
         );
         const json = (await res.json().catch(() => null)) as {
           data?: MastersExplorerBody;
@@ -1130,7 +1131,7 @@ function OpeningExplorerPanel({ fen }: { fen: string }) {
     return () => {
       cancelled = true;
     };
-  }, [expanded, fen]);
+  }, [expanded, fen, pool]);
 
   return (
     <div className="rounded border border-sky-500/25 bg-sky-950/30 px-2 py-2 text-[11px]">
@@ -1142,6 +1143,35 @@ function OpeningExplorerPanel({ fen }: { fen: string }) {
         <BarChart3 className="h-3.5 w-3.5 shrink-0" />
         {t.review.opening.explorerTitle}
       </button>
+      {expanded && (
+        <div className="mt-2 space-y-1">
+          <div className="flex flex-wrap items-center gap-1">
+            <button
+              type="button"
+              onClick={() => setPool("masters")}
+              className={`rounded px-2 py-0.5 text-[10px] border transition-colors ${
+                pool === "masters"
+                  ? "border-sky-400 bg-sky-900/80 text-sky-100"
+                  : "border-sky-800/60 text-slate-400 hover:border-sky-600"
+              }`}
+            >
+              {t.review.opening.explorerPoolMasters}
+            </button>
+            <button
+              type="button"
+              onClick={() => setPool("lichess")}
+              className={`rounded px-2 py-0.5 text-[10px] border transition-colors ${
+                pool === "lichess"
+                  ? "border-sky-400 bg-sky-900/80 text-sky-100"
+                  : "border-sky-800/60 text-slate-400 hover:border-sky-600"
+              }`}
+            >
+              {t.review.opening.explorerPoolLichess}
+            </button>
+          </div>
+          <p className="text-[10px] text-slate-500 leading-snug">{t.review.opening.explorerPoolHint}</p>
+        </div>
+      )}
       {expanded && loading && (
         <div className="flex items-center gap-2 mt-2 text-sky-300">
           <Loader2 className="h-3.5 w-3.5 animate-spin" />

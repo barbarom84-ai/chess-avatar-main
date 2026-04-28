@@ -1220,6 +1220,63 @@ const BASE_LESSONS: OpeningLesson[] = [
     ],
   },
   {
+    openingId: "four-knights-scotch",
+    hook: {
+      fr: "Après 1.e4 e5 2.Cf3 Cc6 3.Cc3 Cf6, 4.d4 transpose souvent vers une partie écossaise dynamique.",
+      en: "After 1.e4 e5 2.Nf3 Nc6 3.Nc3 Nf6, 4.d4 often transposes into a sharp Scotch-type battle.",
+    },
+    recommendedFor: {
+      fr: "Joueur de club qui veut sortir des lignes les plus mainlines du quatre cavaliers tout en gardant une structure familière.",
+      en: "Club players who want to sidestep the quietest Four Knights lines while keeping familiar structures.",
+    },
+    overview: {
+      fr: "La variante écossaise du quatre cavaliers centre le jeu plus vite qu’une ligne purement fermée : la poussée d4 change la nature tactique du milieu de partie.",
+      en: "The Scotch branch of the Four Knights speeds things up compared with purely closed lines: d4 changes the middlegame character.",
+    },
+    mainIdeas: [
+      {
+        fr: "Ouvrir le centre avec d4 quand la structure le permet ; surveiller les tactiques sur e5 et les colonnes.",
+        en: "Open with d4 when the structure allows; watch tactics around e5 and open files.",
+      },
+      {
+        fr: "Les transpositions vers Écossaise ou autres quatre cavaliers sont fréquentes — nomme la structure après 6–8 coups.",
+        en: "Transpositions to Scotch or other Four Knights schemes are common — name the structure after 6–8 moves.",
+      },
+    ],
+    typicalPlans: [
+      {
+        fr: "Blancs : pression centrale, développement des fianchetti ou pièces vers le roi noir selon la ligne.",
+        en: "White: central pressure, development toward fianchetto structures or kingside pressure depending on the line.",
+      },
+      {
+        fr: "Noirs : contre-jeu …d5 ou jeu solide avec …F7 ; éviter les temps perdus en ouverture.",
+        en: "Black: …d5 counterplay or solid …Be7 setups; avoid wasting tempi early.",
+      },
+    ],
+    traps: [
+      {
+        fr: "Ne pas jouer mécaniquement : la colonne d ouverte peut favoriser les tactiques pour les deux camps.",
+        en: "Don’t play on autopilot: an open d-file can fuel tactics for both sides.",
+      },
+    ],
+    whatToRemember: [
+      {
+        fr: "Quatre cavaliers + d4 : prépare-toi à une partie plus ouverte qu’un quatre cavaliers « tranquille ».",
+        en: "Four Knights with d4: expect a more open game than the quietest Four Knights paths.",
+      },
+    ],
+    modelLine: [
+      { uci: "e2e4", comment: { fr: "1.e4", en: "1.e4" } },
+      { uci: "e7e5", comment: { fr: "1…e5", en: "1…e5" } },
+      { uci: "g1f3", comment: { fr: "2.Cf3", en: "2.Nf3" } },
+      { uci: "b8c6", comment: { fr: "2…Cc6", en: "2…Nc6" } },
+      { uci: "b1c3", comment: { fr: "3.Cc3", en: "3.Nc3" } },
+      { uci: "g8f6", comment: { fr: "3…Cf6", en: "3…Nf6" } },
+      { uci: "d2d4", comment: { fr: "4.d4 variante écossaise.", en: "4.d4 Scotch branch." } },
+    ],
+    historicalGames: [],
+  },
+  {
     openingId: "reti-opening",
     hook: {
       fr: "1.Cf3 : hypermoderne — contrôle central sans pion e4/d4 immédiat, très flexible.",

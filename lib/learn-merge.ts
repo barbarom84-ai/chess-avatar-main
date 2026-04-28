@@ -1,5 +1,5 @@
 import type { Opening } from "@/lib/openings-library";
-import { OPENINGS_DATABASE } from "@/lib/openings-library";
+import { getAggregatedOpenings } from "@/lib/openings-registry";
 import type { HistoricalGame, LocalizedString, OpeningLesson } from "@/lib/opening-lessons";
 import { OPENING_LESSONS } from "@/lib/opening-lessons";
 
@@ -203,7 +203,10 @@ export function buildMergedCatalog(rows: LearnEntryRow[]): MergedLearnCatalog {
   }
 
   const openingById = new Map<string, Opening>();
-  for (const o of OPENINGS_DATABASE) {
+  const seenAgg = new Set<string>();
+  for (const o of getAggregatedOpenings()) {
+    if (seenAgg.has(o.id)) continue;
+    seenAgg.add(o.id);
     openingById.set(o.id, overrideMap.get(o.id)?.opening ?? o);
   }
   for (const [id, { opening }] of overrideMap) {

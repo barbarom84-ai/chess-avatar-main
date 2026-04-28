@@ -263,6 +263,16 @@ export const translations = {
       headerNav: "Apprentissage",
       hubIntro:
         "Chaque fiche relie l’ouverture à des idées de milieu de partie. Utilisez les filtres pour trouver une ligne adaptée à votre niveau.",
+      catalog: {
+        lessonsTab: "Leçons",
+        openingsTab: "Toutes les ouvertures",
+        intro:
+          "Liste complète des lignes répertoriées dans l’application (noyau + extensions JSON). Les lignes sans leçon détaillée sont indiquées ; les super-abonnés peuvent en publier via l’admin Learn lorsque Supabase est configuré.",
+        searchPlaceholder: "Rechercher (nom, code ECO, identifiant, tag)…",
+        countListed: "{count} ouvertures répertoriées",
+        hasLessonBadge: "Leçon",
+        noLessonBadge: "Pas encore de leçon",
+      },
       filters: {
         allColors: "Toutes couleurs",
         white: "Blancs",
@@ -839,10 +849,13 @@ export const translations = {
         divergedFromBook:
           "La partie ne suit plus ce coup à coup la ligne ci-dessus ; correspondance partielle surlignée.",
         transpositions: "Autres repères menant ici",
-        explorerTitle: "Stats masters (Lichess proxy)",
+        explorerTitle: "Explorer Lichess",
         explorerLoading: "Chargement des statistiques…",
         explorerError: "Impossible de charger l’explorer (réseau ou limite).",
         explorerCached: "Réponse mise en cache (quelques minutes).",
+        explorerPoolMasters: "Masters",
+        explorerPoolLichess: "Lichess (large)",
+        explorerPoolHint: "Source des stats : bases publiques Lichess (pas le PGN local).",
       },
       flags: {
         check: "Échec",
@@ -1482,6 +1495,16 @@ export const translations = {
       headerNav: "Learn",
       hubIntro:
         "Each lesson connects the opening to middlegame ideas. Use filters to find a line suited to your level.",
+      catalog: {
+        lessonsTab: "Lessons",
+        openingsTab: "All openings",
+        intro:
+          "Full list of lines tracked in the app (core library + JSON partitions). Lines without a full lesson are labeled; super subscribers can publish content via Learn admin when Supabase is configured.",
+        searchPlaceholder: "Search (name, ECO code, id, tag)…",
+        countListed: "{count} openings listed",
+        hasLessonBadge: "Lesson",
+        noLessonBadge: "No lesson yet",
+      },
       filters: {
         allColors: "All colors",
         white: "White",
@@ -2056,10 +2079,13 @@ export const translations = {
         divergedFromBook:
           "The game no longer follows this line move-for-move; highlighted moves match the longest compatible prefix.",
         transpositions: "Also reached via",
-        explorerTitle: "Master stats (Lichess proxy)",
+        explorerTitle: "Lichess explorer",
         explorerLoading: "Loading statistics…",
         explorerError: "Could not load explorer (network or rate limit).",
         explorerCached: "Cached response (a few minutes).",
+        explorerPoolMasters: "Masters",
+        explorerPoolLichess: "Lichess (all games)",
+        explorerPoolHint: "Stats come from Lichess public databases (not your local PGN).",
       },
       flags: {
         check: "Check",

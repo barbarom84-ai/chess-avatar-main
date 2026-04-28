@@ -6,6 +6,8 @@
     "dev": "next dev --webpack",
     "build": "next build --webpack",
     "build:opening-index": "node scripts/build-opening-fen-index.mjs",
+    "pgn:count-games": "node scripts/count-pgn-games.mjs",
+    "pgn:split-chunks": "node scripts/split-pgn-chunks.mjs",
     "start": "next start",
     "lint": "eslint",
     "build:engine": "cd public && pyinstaller --onefile --console --clean --distpath . --workpath ../.engine-build --specpath ../.engine-build --name AvatarEngine AvatarEngine.py"

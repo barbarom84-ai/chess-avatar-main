@@ -1,0 +1,19 @@
+# Exclude large / irrelevant paths from Vercel CLI uploads (max ~100 MB per deployment step).
+# Especially important if bulky files were committed before being gitignored.
+
+/node_modules
+/.next
+/out
+/build
+.engine-build
+coverage
+
+# Local ChessBase bulk exports — never deploy via Vercel
+data/database2025/*.pgn
+data/database2025/*.pgi
+data/database2025/parts
+
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
