@@ -59,10 +59,14 @@ import { loadCachedReview, saveReview } from "@/lib/game-review-storage";
 import { useLanguage } from "@/lib/language-context";
 import { useCoachExplain } from "@/hooks/useCoachExplain";
 import {
-  detectOpening,
+  findBestOpeningByPrefix,
   getOpeningName,
   type Opening,
 } from "@/lib/openings-library";
+import {
+  describeTheoryHitsForUi,
+  getOpeningTheorySans,
+} from "@/lib/opening-theory";
 
 const FREE_ENGINE_DEPTH = 12;
 const PREMIUM_DEPTH_OPTIONS = [14, 18, 22] as const;
@@ -120,7 +124,7 @@ export default function GameReviewer({
   cacheUserId,
   onRequestUpgrade,
 }: GameReviewerProps) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
 
   const [analysisStrictness, setAnalysisStrictness] =
     useState<AnalysisStrictnessId>(readStoredStrictness);
@@ -315,9 +319,10 @@ export default function GameReviewer({
         result.push(null);
         continue;
       }
-      const match = detectOpening(parsed.uci.slice(0, i + 1));
-      if (match) {
-        result.push(match);
+      const slice = parsed.uci.slice(0, i + 1);
+      const { opening, matchedPlies } = findBestOpeningByPrefix(slice);
+      if (opening && matchedPlies === slice.length) {
+        result.push(opening);
       } else {
         stillInBook = false;
         result.push(null);
@@ -325,6 +330,29 @@ export default function GameReviewer({
     }
     return result;
   }, [parsed]);
+
+  /** Ligne théorique + transpositions pour le coup courant (revue). */
+  const openingTheorySnapshot = useMemo(() => {
+    if (!parsed || currentIndex === 0) return null;
+    const slice = parsed.uci.slice(0, currentIndex);
+    const { opening, matchedPlies } = findBestOpeningByPrefix(slice);
+    if (!opening) return null;
+    const sans = getOpeningTheorySans(opening);
+    if (sans.length === 0) return null;
+    const fen = parsed.fenAfter[currentIndex - 1];
+    const aligned = matchedPlies === slice.length;
+    const transpositionHints = describeTheoryHitsForUi(fen, lang, {
+      skipOpeningId: aligned ? opening.id : undefined,
+      skipTheoryStep: aligned ? matchedPlies : undefined,
+    });
+    return {
+      opening,
+      matchedPlies,
+      sans,
+      aligned,
+      transpositionHints,
+    };
+  }, [parsed, currentIndex, lang]);
 
   // Per-ply tactical flags computed entirely from the FEN snapshots that
   // chess.js already produced. No engine round-trips, runs once when the
@@ -693,6 +721,7 @@ export default function GameReviewer({
           }
           onRequestUpgrade={onRequestUpgrade}
           coachTone={coachTone}
+          theorySnapshot={openingTheorySnapshot}
         />
 
         {evalSeries.length > 1 && (
@@ -1003,6 +1032,7 @@ function CurrentMoveDetail({
   isExitingTheory,
   onRequestUpgrade,
   coachTone,
+  theorySnapshot,
 }: {
   move?: ReviewedMove;
   fenBefore?: string;
@@ -1013,6 +1043,15 @@ function CurrentMoveDetail({
   isExitingTheory?: boolean;
   onRequestUpgrade?: () => void;
   coachTone: CoachToneId;
+  theorySnapshot:
+    | {
+        opening: Opening;
+        matchedPlies: number;
+        sans: string[];
+        aligned: boolean;
+        transpositionHints: string[];
+      }
+    | null;
 }) {
   const { t, lang } = useLanguage();
   if (!move) {
@@ -1096,6 +1135,44 @@ function CurrentMoveDetail({
             </span>
           </div>
         ) : null}
+        {theorySnapshot && (
+          <div className="rounded border border-amber-500/25 bg-amber-950/40 px-2 py-2 space-y-1.5 text-[11px]">
+            <div className="font-semibold text-amber-200/95 flex items-center gap-1.5">
+              <BookOpen className="h-3.5 w-3.5 shrink-0" />
+              {t.review.opening.theoryMainLine}
+            </div>
+            <p className="text-amber-100/90">
+              {getOpeningName(theorySnapshot.opening, lang)}
+              <span className="font-mono text-amber-300/60 ml-1">
+                ({theorySnapshot.opening.eco})
+              </span>
+            </p>
+            {!theorySnapshot.aligned && (
+              <p className="text-orange-300/95">{t.review.opening.divergedFromBook}</p>
+            )}
+            <p className="text-slate-300 leading-relaxed break-words font-mono text-[10px]">
+              {theorySnapshot.sans.map((san, i) => (
+                <span
+                  key={`${san}-${i}`}
+                  className={
+                    i < theorySnapshot.matchedPlies
+                      ? "text-amber-100 font-semibold"
+                      : "text-slate-500"
+                  }
+                >
+                  {san}
+                  {i < theorySnapshot.sans.length - 1 ? " " : ""}
+                </span>
+              ))}
+            </p>
+            {theorySnapshot.transpositionHints.length > 0 && (
+              <p className="text-slate-400 text-[10px] leading-snug border-t border-amber-500/20 pt-1.5">
+                <span className="text-slate-500">{t.review.opening.transpositions}: </span>
+                {theorySnapshot.transpositionHints.join(" · ")}
+              </p>
+            )}
+          </div>
+        )}
         {(flags?.isCheckmate ||
           flags?.isCheck ||
           flags?.isForced ||

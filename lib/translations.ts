@@ -835,7 +835,11 @@ export const translations = {
         bookMove: "Coup de théorie",
         outOfBook: "Hors théorie",
         leftBookAt: "Sorti de la théorie au coup {move}",
-        exitTheoryNow: "Sortie de la théorie"
+        exitTheoryNow: "Sortie de la théorie",
+        theoryMainLine: "Ligne de référence (base locale)",
+        divergedFromBook:
+          "La partie ne suit plus ce coup à coup la ligne ci-dessus ; correspondance partielle surlignée.",
+        transpositions: "Autres repères menant ici",
       },
       flags: {
         check: "Échec",
@@ -2045,7 +2049,11 @@ export const translations = {
         bookMove: "Book move",
         outOfBook: "Out of book",
         leftBookAt: "Left theory at move {move}",
-        exitTheoryNow: "Leaving opening theory"
+        exitTheoryNow: "Leaving opening theory",
+        theoryMainLine: "Reference line (local database)",
+        divergedFromBook:
+          "The game no longer follows this line move-for-move; highlighted moves match the longest compatible prefix.",
+        transpositions: "Also reached via",
       },
       flags: {
         check: "Check",
