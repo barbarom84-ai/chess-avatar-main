@@ -5,6 +5,7 @@ import OpenAI from "openai";
 
 import { rateLimit } from "@/lib/rate-limit";
 import { hasActivePremiumAccess } from "@/lib/subscription-access";
+import { type CoachToneId, isCoachToneId } from "@/lib/coach-tone";
 
 export const runtime = "nodejs";
 
@@ -31,6 +32,7 @@ interface ExplainRequest {
   /** Optional: SAN played and SAN best — improve readability of the prompt. */
   sanPlayed?: string;
   sanBest?: string;
+  coachTone?: CoachToneId;
 }
 
 type ExplainErrorCode =
@@ -77,9 +79,11 @@ function isValidFen(fen: unknown): fen is string {
 function buildCacheKey(req: ExplainRequest): string {
   // Bucketize CPL so similar blunders share an explanation.
   const cplBucket = Math.min(20, Math.floor(req.cpl / 50));
+  const tone = req.coachTone ?? "pedagogical";
   const payload = [
     MODEL,
     req.lang,
+    tone,
     req.fenBefore,
     req.uciPlayed,
     req.uciBest,
@@ -89,8 +93,30 @@ function buildCacheKey(req: ExplainRequest): string {
   return createHash("sha256").update(payload).digest("hex");
 }
 
+function coachSystemPrompt(lang: "fr" | "en", tone: CoachToneId): string {
+  if (lang === "fr") {
+    switch (tone) {
+      case "concise":
+        return "Tu es un coach d'échecs ultra-bref : une ou deux phrases maximum, aucune variante longue, aucune liste.";
+      case "witty":
+        return "Tu es un coach d'échecs avec une pointe d'humour léger et bienveillant — sans moquerie du joueur. Reste factuel sur l'échiquier. 2 à 4 phrases courtes.";
+      default:
+        return "Tu es un coach d'échecs concis. Tu expliques pourquoi un coup est sous-optimal en 2 à 4 phrases courtes. Pas de variantes longues, pas de notation algébrique multi-coups, pas de listes — juste une explication claire et pédagogique.";
+    }
+  }
+  switch (tone) {
+    case "concise":
+      return "You are an ultra-brief chess coach: one or two sentences max, no long variations, no bullet lists.";
+    case "witty":
+      return "You are a chess coach with light, kind humor — never mock the player. Stay accurate about the position. 2–4 short sentences.";
+    default:
+      return "You are a concise chess coach. Explain why a move is sub-optimal in 2 to 4 short sentences. No long variations, no multi-move algebraic notation, no bullet lists — just a clear, educational explanation.";
+  }
+}
+
 function buildPrompt(req: ExplainRequest): { system: string; user: string } {
   const isFr = req.lang === "fr";
+  const tone = req.coachTone ?? "pedagogical";
   const sideLabel = req.sideToMove === "white"
     ? (isFr ? "les Blancs" : "White")
     : (isFr ? "les Noirs" : "Black");
@@ -100,9 +126,7 @@ function buildPrompt(req: ExplainRequest): { system: string; user: string } {
     ? `Perte évaluée à ${req.cpl} centipions (${req.classification}).`
     : `Estimated loss: ${req.cpl} centipawns (${req.classification}).`;
 
-  const system = isFr
-    ? "Tu es un coach d'échecs concis. Tu expliques pourquoi un coup est sous-optimal en 2 à 4 phrases courtes. Pas de variantes longues, pas de notation algébrique multi-coups, pas de listes — juste une explication claire et pédagogique."
-    : "You are a concise chess coach. Explain why a move is sub-optimal in 2 to 4 short sentences. No long variations, no multi-move algebraic notation, no bullet lists — just a clear, educational explanation.";
+  const system = coachSystemPrompt(req.lang, tone);
 
   const user = isFr
     ? `Position FEN : ${req.fenBefore}\nCoup joué par ${sideLabel} : ${moveLabel}\nMeilleur coup recommandé : ${bestLabel}\n${cpInfo}\n\nExplique en 2-4 phrases pourquoi ${moveLabel} est moins bon que ${bestLabel}, et ce que ${sideLabel} aurait dû considérer.`
@@ -158,6 +182,10 @@ export async function POST(req: NextRequest) {
   ) {
     return errorResponse("INVALID_BODY", 400);
   }
+  const toneRaw = body.coachTone;
+  const coachTone: CoachToneId =
+    isCoachToneId(toneRaw) ? toneRaw : "pedagogical";
+
   const explainReq: ExplainRequest = {
     fenBefore: body.fenBefore,
     uciPlayed: body.uciPlayed,
@@ -169,6 +197,7 @@ export async function POST(req: NextRequest) {
     moveNumber: typeof body.moveNumber === "number" ? body.moveNumber : undefined,
     sanPlayed: typeof body.sanPlayed === "string" ? body.sanPlayed.slice(0, 16) : undefined,
     sanBest: typeof body.sanBest === "string" ? body.sanBest.slice(0, 16) : undefined,
+    coachTone,
   };
 
   // 3) Service-role client for shared cache + usage writes.

@@ -24,9 +24,7 @@ const GameReviewer = dynamic(() => import("@/components/GameReviewer"), {
 
 const PGN_SESSION_KEY = "chess-avatar.review.pgn";
 
-const FREE_DEPTH = 12;
 const FREE_MAX_PLIES = 60;
-const PREMIUM_DEPTH = 18;
 
 function ReviewContent() {
   const { t } = useLanguage();
@@ -96,7 +94,6 @@ function ReviewContent() {
     );
   }
 
-  const depth = isPremium ? PREMIUM_DEPTH : FREE_DEPTH;
   const maxPlies = isPremium ? Number.POSITIVE_INFINITY : FREE_MAX_PLIES;
   const showAllBestArrows = isPremium;
 
@@ -121,7 +118,7 @@ function ReviewContent() {
             <CardContent className="py-3 flex items-center justify-between gap-3 flex-wrap">
               <div className="text-xs text-amber-200">
                 {t.review.freeLimits
-                  .replace("{depth}", String(FREE_DEPTH))
+                  .replace("{depth}", String(12))
                   .replace("{plies}", String(FREE_MAX_PLIES))}
               </div>
               <Button
@@ -139,7 +136,7 @@ function ReviewContent() {
 
         <GameReviewer
           pgn={pgn}
-          depth={depth}
+          isPremium={isPremium}
           maxPlies={maxPlies}
           showAllBestArrows={showAllBestArrows}
           cacheUserId={isPremium ? userId : null}

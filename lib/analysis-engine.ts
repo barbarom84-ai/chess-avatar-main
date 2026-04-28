@@ -4,6 +4,15 @@
  * Does not call Stockfish; callers supply MoveEvalInput[].
  */
 
+import {
+  type AnalysisProfile,
+  getAnalysisProfile,
+  type AnalysisStrictnessId,
+  ANALYSIS_PROFILES,
+} from "./analysis-profiles";
+
+export type { AnalysisStrictnessId, AnalysisProfile } from "./analysis-profiles";
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -49,20 +58,10 @@ export interface GameAccuracyResult {
 // Constants (tuning)
 // ---------------------------------------------------------------------------
 
-const CPL_BANDS = {
-  excellent: 20,
-  good: 50,
-  inaccuracy: 100,
-  mistake: 300,
-} as const;
-
 /** Context weight: 1 + k / (1 + |evalBefore|). k chosen so equal positions scale CPL up. */
 const CONTEXT_WEIGHT_K = 1.2;
 
-/** Eval swing (pawns) above which we classify as Miss (missed tactic). */
-const MISS_SWING_PAWNS = 4.0;
-
-/** For averaging, cap single-move CPL so one blunder doesn't dominate. Optional; we use scaled CPL as-is. */
+/** For averaging, cap single-move CPL so one blunder doesn't dominate. */
 const AVG_CPL_CAP = 500;
 
 /** Human curve: target typical raw accuracy (e.g. 50) -> displayed 70%. */
@@ -79,6 +78,11 @@ const QUALITY_WEIGHTS: Record<MoveClassification, number> = {
   blunder: 0,
   miss: 0,
 };
+
+// Backward-compatible exports (match `standard` profile)
+const STANDARD = ANALYSIS_PROFILES.standard;
+const CPL_BANDS = STANDARD.bands;
+const MISS_SWING_PAWNS = STANDARD.missSwingPawns;
 
 // ---------------------------------------------------------------------------
 // CPL and context weight
@@ -104,28 +108,50 @@ function getContextWeight(evalBeforePawns: number | undefined): number {
   return 1 + CONTEXT_WEIGHT_K / (1 + absEval);
 }
 
-function isMiss(input: MoveEvalInput): boolean {
-  if (input.isMateBest && !input.isMatePlayer) {
-    return true;
-  }
-  const swing = Math.abs(input.playerEvalPawns - input.bestEvalPawns);
-  return swing > MISS_SWING_PAWNS;
+function evalSwingPawns(input: MoveEvalInput): number {
+  return Math.abs(input.playerEvalPawns - input.bestEvalPawns);
 }
 
-// ---------------------------------------------------------------------------
-// Classification from scaled CPL and Miss
-// ---------------------------------------------------------------------------
+/**
+ * Pure CPL-based step (best → blunder), ignoring miss/mate overrides.
+ */
+function classifyFromScaledCpl(
+  scaledCpl: number,
+  bands: AnalysisProfile["bands"]
+): MoveClassification {
+  if (scaledCpl <= 0) return "best";
+  if (scaledCpl <= bands.excellent) return "excellent";
+  if (scaledCpl <= bands.good) return "good";
+  if (scaledCpl <= bands.inaccuracy) return "inaccuracy";
+  if (scaledCpl <= bands.mistake) return "mistake";
+  return "blunder";
+}
 
-function classifyMove(scaledCpl: number, input: MoveEvalInput): MoveClassification {
-  if (isMiss(input)) {
+/**
+ * 1) Missed forced mate → miss.
+ * 2) Otherwise if CPL alone says blunder → blunder (huge material loss stays "blunder", not only "miss").
+ * 3) Else large eval swing → miss (tactical opportunity).
+ * 4) Else CPL bucket.
+ */
+export function classifyMove(
+  scaledCpl: number,
+  input: MoveEvalInput,
+  profile: AnalysisProfile
+): MoveClassification {
+  const bands = profile.bands;
+  const base = classifyFromScaledCpl(scaledCpl, bands);
+  const swing = evalSwingPawns(input);
+
+  if (input.isMateBest && !input.isMatePlayer) {
     return "miss";
   }
-  if (scaledCpl <= 0) return "best";
-  if (scaledCpl <= CPL_BANDS.excellent) return "excellent";
-  if (scaledCpl <= CPL_BANDS.good) return "good";
-  if (scaledCpl <= CPL_BANDS.inaccuracy) return "inaccuracy";
-  if (scaledCpl <= CPL_BANDS.mistake) return "mistake";
-  return "blunder";
+  if (base === "blunder") {
+    return "blunder";
+  }
+  if (swing > profile.missSwingPawns) {
+    return "miss";
+  }
+  return base;
 }
 
 // ---------------------------------------------------------------------------
@@ -136,12 +162,6 @@ function rawAccuracy(avgScaledCpl: number): number {
   return 100 * Math.exp(-0.005 * avgScaledCpl);
 }
 
-/**
- * Linear rescale so that typical raw (50) maps to 70% and 0->0, 100->100.
- * Points: (0, 0) and (TYPICAL_RAW_ACCURACY, TARGET_DISPLAYED_ACCURACY) and (100, 100).
- * For 0<=raw<=50: a = 70/50 = 1.4, so displayed = 1.4*raw (0->0, 50->70).
- * For 50<=raw<=100: segment from (50,70) to (100,100): a = 30/50 = 0.6, b = 40, so displayed = 0.6*raw + 40.
- */
 function humanCurve(raw: number): number {
   if (raw <= TYPICAL_RAW_ACCURACY) {
     const slope = TARGET_DISPLAYED_ACCURACY / TYPICAL_RAW_ACCURACY;
@@ -170,7 +190,12 @@ const EMPTY_CLASSIFICATIONS: GameAccuracyResult["classifications"] = {
  * Compute game accuracy and move classifications from per-move eval data.
  * Skips entries with non-finite evals. Returns 0 accuracy and all-zero counts if no valid moves.
  */
-export function computeGameAccuracy(moveEvals: MoveEvalInput[]): GameAccuracyResult {
+export function computeGameAccuracy(
+  moveEvals: MoveEvalInput[],
+  strictness?: AnalysisStrictnessId
+): GameAccuracyResult {
+  const profile = getAnalysisProfile(strictness);
+
   const valid = moveEvals.filter(
     (m) =>
       Number.isFinite(m.bestEvalPawns) &&
@@ -193,7 +218,7 @@ export function computeGameAccuracy(moveEvals: MoveEvalInput[]): GameAccuracyRes
     const scaledCpl = Math.min(AVG_CPL_CAP, cpl * weight);
     sumScaledCpl += scaledCpl;
 
-    const classification = classifyMove(scaledCpl, input);
+    const classification = classifyMove(scaledCpl, input, profile);
     classifications[classification]++;
   }
 
@@ -207,5 +232,4 @@ export function computeGameAccuracy(moveEvals: MoveEvalInput[]): GameAccuracyRes
   };
 }
 
-// Export for tests or tuning
 export { QUALITY_WEIGHTS, CPL_BANDS, MISS_SWING_PAWNS };

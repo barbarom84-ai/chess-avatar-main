@@ -35,9 +35,7 @@ import PgnImportCard from "@/components/PgnImportCard";
 import UpgradeModal from "@/components/UpgradeModal";
 
 /** Same Game Review tiering as /review/page.tsx so behavior stays consistent. */
-const FREE_DEPTH = 12;
 const FREE_MAX_PLIES = 60;
-const PREMIUM_DEPTH = 18;
 
 const GameReviewer = dynamic(() => import("@/components/GameReviewer"), {
   ssr: false,
@@ -67,7 +65,6 @@ export default function GamesPage() {
   const [compactMobile, setCompactMobile] = useState(true);
   const gamesPerPage = 10;
 
-  const reviewDepth = isPremium ? PREMIUM_DEPTH : FREE_DEPTH;
   const reviewMaxPlies = isPremium ? Number.POSITIVE_INFINITY : FREE_MAX_PLIES;
   const reviewShowAllArrows = isPremium;
   const reviewCacheUserId = isPremium ? userId : null;
@@ -416,7 +413,7 @@ export default function GamesPage() {
               <CardContent className="py-3 flex items-center justify-between gap-3 flex-wrap">
                 <div className="text-xs text-amber-200">
                   {t.review.freeLimits
-                    .replace("{depth}", String(FREE_DEPTH))
+                    .replace("{depth}", String(12))
                     .replace("{plies}", String(FREE_MAX_PLIES))}
                 </div>
                 <Button
@@ -435,7 +432,7 @@ export default function GamesPage() {
           <GameReviewer
             key={reviewPgn}
             pgn={reviewPgn}
-            depth={reviewDepth}
+            isPremium={isPremium}
             maxPlies={reviewMaxPlies}
             showAllBestArrows={reviewShowAllArrows}
             cacheUserId={reviewCacheUserId}

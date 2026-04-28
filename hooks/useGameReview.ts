@@ -11,6 +11,10 @@ import {
   type ParsedGameForReview,
   type ReviewedMove,
 } from "@/lib/game-review";
+import {
+  type AnalysisStrictnessId,
+  DEFAULT_ANALYSIS_STRICTNESS,
+} from "@/lib/analysis-profiles";
 
 export type ReviewStatus =
   | "idle"
@@ -27,6 +31,8 @@ export interface UseGameReviewOptions {
   depth: number;
   /** Maximum number of plies analyzed. Use Infinity for full game. */
   maxPlies: number;
+  /** CPL band profile — must match UI selection so badges match accuracy. */
+  analysisStrictness?: AnalysisStrictnessId;
 }
 
 export interface UseGameReviewState {
@@ -59,6 +65,7 @@ export function useGameReview({
   parsed,
   depth,
   maxPlies,
+  analysisStrictness = DEFAULT_ANALYSIS_STRICTNESS,
 }: UseGameReviewOptions): UseGameReviewState {
   const { isReady, getBestMoveAndEval, stopThinking } = useStockfish();
 
@@ -83,10 +90,10 @@ export function useGameReview({
     setError(null);
   }, []);
 
-  // Reset when the parsed game changes (e.g. user opens a different PGN).
+  // Reset when the parsed game or analysis profile changes.
   useEffect(() => {
     reset();
-  }, [parsed, reset]);
+  }, [parsed, reset, analysisStrictness]);
 
   const cancel = useCallback(() => {
     if (!runningRef.current) return;
@@ -243,29 +250,32 @@ export function useGameReview({
               ? mateToWhitePov(best.mateInMoves, sideToMove)
               : undefined;
 
-          const reviewed = buildReviewedMove({
-            ply,
-            san,
-            uci,
-            sideToMove,
-            evalBefore: evalBeforeWhite,
-            bestMove: bestUci,
-            bestSan,
-            bestEval: bestEvalWhite,
-            playerEval: playerIsBest ? bestEvalWhite : playerEvalPawns,
-            isMateBest: best.isMate,
-            isMatePlayer,
-            bestMateInMoves: bestMateInMovesWhite,
-            playerMateInMoves: playerIsBest
-              ? bestMateInMovesWhite
-              : playerMateInMovesWhite,
-          });
+          const reviewed = buildReviewedMove(
+            {
+              ply,
+              san,
+              uci,
+              sideToMove,
+              evalBefore: evalBeforeWhite,
+              bestMove: bestUci,
+              bestSan,
+              bestEval: bestEvalWhite,
+              playerEval: playerIsBest ? bestEvalWhite : playerEvalPawns,
+              isMateBest: best.isMate,
+              isMatePlayer,
+              bestMateInMoves: bestMateInMovesWhite,
+              playerMateInMoves: playerIsBest
+                ? bestMateInMovesWhite
+                : playerMateInMovesWhite,
+            },
+            analysisStrictness
+          );
 
           collected.push(reviewed);
           setMoves((prev) => [...prev, reviewed]);
         }
 
-        const aggregated = aggregateReview(collected);
+        const aggregated = aggregateReview(collected, analysisStrictness);
         setResult(aggregated);
         setStatus("done");
       } catch (err) {
@@ -275,7 +285,14 @@ export function useGameReview({
         runningRef.current = false;
       }
     }
-  }, [parsed, totalPlies, isReady, depth, getBestMoveAndEval]);
+  }, [
+    parsed,
+    totalPlies,
+    isReady,
+    depth,
+    analysisStrictness,
+    getBestMoveAndEval,
+  ]);
 
   // Auto-start once the engine becomes ready if the caller already requested it.
   useEffect(() => {

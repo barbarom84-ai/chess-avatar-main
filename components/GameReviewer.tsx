@@ -35,13 +35,14 @@ import SimpleChessboard from "./SimpleChessboard";
 import EvaluationBar from "./EvaluationBar";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { Label } from "./ui/label";
 import { Badge } from "./ui/badge";
 import { Progress } from "./ui/progress";
 import { ScrollArea } from "./ui/scroll-area";
 import { useGameReview, type ReviewStatus } from "@/hooks/useGameReview";
 import {
   CLASSIFICATION_COLORS,
-  hashPgn,
+  hashReviewCacheKey,
   parsePgnForReview,
   uciToSan,
   uciToSquares,
@@ -49,6 +50,11 @@ import {
   type ParsedGameForReview,
   type ReviewedMove,
 } from "@/lib/game-review";
+import {
+  type AnalysisStrictnessId,
+  DEFAULT_ANALYSIS_STRICTNESS,
+} from "@/lib/analysis-profiles";
+import { type CoachToneId } from "@/lib/coach-tone";
 import { loadCachedReview, saveReview } from "@/lib/game-review-storage";
 import { useLanguage } from "@/lib/language-context";
 import { useCoachExplain } from "@/hooks/useCoachExplain";
@@ -58,10 +64,41 @@ import {
   type Opening,
 } from "@/lib/openings-library";
 
+const FREE_ENGINE_DEPTH = 12;
+const PREMIUM_DEPTH_OPTIONS = [14, 18, 22] as const;
+
+const STORAGE_STRICTNESS = "chess-avatar.review.strictness";
+const STORAGE_PREMIUM_DEPTH = "chess-avatar.review.premiumDepth";
+const STORAGE_COACH_TONE = "chess-avatar.review.coachTone";
+
+function readStoredStrictness(): AnalysisStrictnessId {
+  if (typeof window === "undefined") return DEFAULT_ANALYSIS_STRICTNESS;
+  const v = localStorage.getItem(STORAGE_STRICTNESS);
+  if (v === "relaxed" || v === "standard" || v === "strict") return v;
+  return DEFAULT_ANALYSIS_STRICTNESS;
+}
+
+function readStoredPremiumDepth(): number {
+  if (typeof window === "undefined") return 18;
+  const v = localStorage.getItem(STORAGE_PREMIUM_DEPTH);
+  const n = v ? parseInt(v, 10) : NaN;
+  if (PREMIUM_DEPTH_OPTIONS.includes(n as (typeof PREMIUM_DEPTH_OPTIONS)[number])) {
+    return n;
+  }
+  return 18;
+}
+
+function readStoredCoachTone(): CoachToneId {
+  if (typeof window === "undefined") return "pedagogical";
+  const v = localStorage.getItem(STORAGE_COACH_TONE);
+  if (v === "pedagogical" || v === "concise" || v === "witty") return v;
+  return "pedagogical";
+}
+
 interface GameReviewerProps {
   pgn: string;
-  /** Search depth used per position. */
-  depth: number;
+  /** When true, user may choose deeper engine search (see PREMIUM_DEPTH_OPTIONS). */
+  isPremium: boolean;
   /** Maximum number of plies analyzed (Infinity = full game). */
   maxPlies: number;
   /**
@@ -77,13 +114,20 @@ interface GameReviewerProps {
 
 export default function GameReviewer({
   pgn,
-  depth,
+  isPremium,
   maxPlies,
   showAllBestArrows,
   cacheUserId,
   onRequestUpgrade,
 }: GameReviewerProps) {
   const { t } = useLanguage();
+
+  const [analysisStrictness, setAnalysisStrictness] =
+    useState<AnalysisStrictnessId>(readStoredStrictness);
+  const [premiumDepth, setPremiumDepth] = useState(readStoredPremiumDepth);
+  const [coachTone, setCoachTone] = useState<CoachToneId>(readStoredCoachTone);
+
+  const engineDepth = isPremium ? premiumDepth : FREE_ENGINE_DEPTH;
 
   const parsed = useMemo<ParsedGameForReview | null>(
     () => parsePgnForReview(pgn),
@@ -93,7 +137,10 @@ export default function GameReviewer({
   const [cachedResult, setCachedResult] = useState<GameReviewResult | null>(null);
   const [cacheChecked, setCacheChecked] = useState(false);
 
-  const pgnHash = useMemo(() => hashPgn(pgn), [pgn]);
+  const pgnHash = useMemo(
+    () => hashReviewCacheKey(pgn, analysisStrictness, engineDepth),
+    [pgn, analysisStrictness, engineDepth]
+  );
 
   // Try to load a cached review for premium logged-in users.
   useEffect(() => {
@@ -108,7 +155,7 @@ export default function GameReviewer({
       const cached = await loadCachedReview({
         userId: cacheUserId,
         pgnHash,
-        depth,
+        depth: engineDepth,
       });
       if (cancelled) return;
       // Older cache entries may contain a `bestMove` (UCI) that is illegal in
@@ -132,14 +179,17 @@ export default function GameReviewer({
     return () => {
       cancelled = true;
     };
-  }, [cacheUserId, pgnHash, depth, parsed]);
+  }, [cacheUserId, pgnHash, engineDepth, parsed]);
 
   // Skip live analysis if we already have a cached result.
   const review = useGameReview({
     parsed: cachedResult ? null : parsed,
-    depth,
+    depth: engineDepth,
     maxPlies,
+    analysisStrictness,
   });
+
+  const { cancel: cancelReview, reset: resetReview } = review;
 
   // Persist completed reviews to the cache.
   useEffect(() => {
@@ -148,10 +198,49 @@ export default function GameReviewer({
     void saveReview({
       userId: cacheUserId,
       pgnHash,
-      depth,
+      depth: engineDepth,
       result: review.result,
     });
-  }, [cacheUserId, pgnHash, depth, review.status, review.result]);
+  }, [cacheUserId, pgnHash, engineDepth, review.status, review.result]);
+
+  const invalidateCacheAndReanalyze = useCallback(() => {
+    try {
+      cancelReview();
+    } catch {
+      /* best-effort */
+    }
+    setCachedResult(null);
+    resetReview();
+  }, [cancelReview, resetReview]);
+
+  const handleStrictnessChange = useCallback(
+    (next: AnalysisStrictnessId) => {
+      setAnalysisStrictness(next);
+      if (typeof window !== "undefined") {
+        localStorage.setItem(STORAGE_STRICTNESS, next);
+      }
+      invalidateCacheAndReanalyze();
+    },
+    [invalidateCacheAndReanalyze]
+  );
+
+  const handlePremiumDepthChange = useCallback(
+    (next: number) => {
+      setPremiumDepth(next);
+      if (typeof window !== "undefined") {
+        localStorage.setItem(STORAGE_PREMIUM_DEPTH, String(next));
+      }
+      invalidateCacheAndReanalyze();
+    },
+    [invalidateCacheAndReanalyze]
+  );
+
+  const handleCoachToneChange = useCallback((next: CoachToneId) => {
+    setCoachTone(next);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(STORAGE_COACH_TONE, next);
+    }
+  }, []);
 
   // Effective values consumed by the UI: cache hit takes precedence over live run.
   const effectiveStatus: ReviewStatus = cachedResult
@@ -357,8 +446,95 @@ export default function GameReviewer({
     if (target !== undefined) setCurrentIndex(target + 1);
   };
 
+  const strictnessSelectClass =
+    "mt-1 w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-1.5 text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500/40";
+
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+    <div className="space-y-3">
+      <Card className="bg-slate-900/70 border-cyan-500/25">
+        <CardHeader className="py-3 pb-2">
+          <CardTitle className="text-sm text-cyan-300 flex items-center gap-2">
+            <Sparkles className="h-4 w-4" />
+            {t.review.analysisSettings.title}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-0">
+          <div>
+            <Label className="text-[11px] uppercase tracking-wide text-slate-500">
+              {t.review.analysisSettings.strictnessLabel}
+            </Label>
+            <select
+              className={strictnessSelectClass}
+              value={analysisStrictness}
+              onChange={(e) =>
+                handleStrictnessChange(e.target.value as AnalysisStrictnessId)
+              }
+              aria-label={t.review.analysisSettings.strictnessLabel}
+            >
+              <option value="relaxed">{t.review.analysisSettings.strictnessRelaxed}</option>
+              <option value="standard">{t.review.analysisSettings.strictnessStandard}</option>
+              <option value="strict">{t.review.analysisSettings.strictnessStrict}</option>
+            </select>
+            <p className="mt-1 text-[10px] text-slate-500 leading-snug">
+              {analysisStrictness === "relaxed" && t.review.analysisSettings.strictnessHintRelaxed}
+              {analysisStrictness === "standard" && t.review.analysisSettings.strictnessHintStandard}
+              {analysisStrictness === "strict" && t.review.analysisSettings.strictnessHintStrict}
+            </p>
+          </div>
+          <div>
+            <Label className="text-[11px] uppercase tracking-wide text-slate-500">
+              {t.review.analysisSettings.depthLabel}
+            </Label>
+            {isPremium ? (
+              <>
+                <select
+                  className={strictnessSelectClass}
+                  value={premiumDepth}
+                  onChange={(e) =>
+                    handlePremiumDepthChange(Number(e.target.value))
+                  }
+                  aria-label={t.review.analysisSettings.depthLabel}
+                >
+                  {PREMIUM_DEPTH_OPTIONS.map((d) => (
+                    <option key={d} value={d}>
+                      {t.review.analysisSettings.depthOption.replace("{n}", String(d))}
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-1 text-[10px] text-slate-500">
+                  {t.review.analysisSettings.depthHintPremium}
+                </p>
+              </>
+            ) : (
+              <p className="mt-1 text-xs text-slate-400">
+                {t.review.analysisSettings.depthLocked.replace(
+                  "{n}",
+                  String(FREE_ENGINE_DEPTH)
+                )}
+              </p>
+            )}
+          </div>
+          <div>
+            <Label className="text-[11px] uppercase tracking-wide text-slate-500">
+              {t.review.analysisSettings.coachToneLabel}
+            </Label>
+            <select
+              className={strictnessSelectClass}
+              value={coachTone}
+              onChange={(e) =>
+                handleCoachToneChange(e.target.value as CoachToneId)
+              }
+              aria-label={t.review.analysisSettings.coachToneLabel}
+            >
+              <option value="pedagogical">{t.review.analysisSettings.coachTonePedagogical}</option>
+              <option value="concise">{t.review.analysisSettings.coachToneConcise}</option>
+              <option value="witty">{t.review.analysisSettings.coachToneWitty}</option>
+            </select>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
       {/* LEFT — Move list */}
       <div className="lg:col-span-3 order-2 lg:order-1">
         <Card className="bg-slate-900/60 border-cyan-500/20 h-full">
@@ -516,6 +692,7 @@ export default function GameReviewer({
             currentIndex > 0 && exitTheoryPly === currentIndex - 1
           }
           onRequestUpgrade={onRequestUpgrade}
+          coachTone={coachTone}
         />
 
         {evalSeries.length > 1 && (
@@ -568,6 +745,7 @@ export default function GameReviewer({
           onNext={() => goToKeyMoment(1)}
           disabled={!effectiveResult || effectiveResult.keyMoments.length === 0}
         />
+      </div>
       </div>
     </div>
   );
@@ -824,6 +1002,7 @@ function CurrentMoveDetail({
   flags,
   isExitingTheory,
   onRequestUpgrade,
+  coachTone,
 }: {
   move?: ReviewedMove;
   fenBefore?: string;
@@ -833,6 +1012,7 @@ function CurrentMoveDetail({
   flags?: MoveFlags | null;
   isExitingTheory?: boolean;
   onRequestUpgrade?: () => void;
+  coachTone: CoachToneId;
 }) {
   const { t, lang } = useLanguage();
   if (!move) {
@@ -874,9 +1054,21 @@ function CurrentMoveDetail({
               {move.sideToMove === "white" ? "♔" : "♚"} {move.san}
             </span>
           </div>
-          <span className="text-xs text-slate-400">
-            {t.review.cpl}: <strong className="text-slate-200">{move.cpl}</strong>
-          </span>
+          <div className="text-right text-xs text-slate-400 space-y-0.5">
+            <div>
+              {t.review.cpl}:{" "}
+              <strong className="text-slate-200">{move.cpl}</strong>
+            </div>
+            {isSubOptimal && (
+              <div className="text-[10px]">
+                {t.review.evalSwing}:{" "}
+                <span className="font-mono text-slate-300">
+                  {Math.abs(move.bestEval - move.playerEval).toFixed(2)}
+                </span>{" "}
+                {t.review.evalSwingUnit}
+              </div>
+            )}
+          </div>
         </div>
         {opening ? (
           <div className="flex items-center gap-1.5 text-[11px] text-amber-200/90 bg-amber-500/10 border border-amber-500/30 rounded px-2 py-1">
@@ -985,6 +1177,7 @@ function CurrentMoveDetail({
             fenBefore={fenBefore!}
             moveNumber={moveNumber}
             lang={lang}
+            coachTone={coachTone}
             onRequestUpgrade={onRequestUpgrade}
           />
         )}
@@ -1002,12 +1195,14 @@ function CoachSubCard({
   fenBefore,
   moveNumber,
   lang,
+  coachTone,
   onRequestUpgrade,
 }: {
   move: ReviewedMove;
   fenBefore: string;
   moveNumber?: number;
   lang: "fr" | "en";
+  coachTone: CoachToneId;
   onRequestUpgrade?: () => void;
 }) {
   const { t } = useLanguage();
@@ -1022,8 +1217,8 @@ function CoachSubCard({
   }, [move.ply, move.uci]);
 
   const handleClick = useCallback(() => {
-    void coach.explain({ move, fenBefore, lang, moveNumber });
-  }, [coach, move, fenBefore, lang, moveNumber]);
+    void coach.explain({ move, fenBefore, lang, moveNumber, coachTone });
+  }, [coach, move, fenBefore, lang, moveNumber, coachTone]);
 
   // Idle state: show the Why? button.
   if (coach.status === "idle") {

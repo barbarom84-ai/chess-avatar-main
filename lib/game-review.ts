@@ -1,10 +1,16 @@
 import { Chess } from "chess.js";
 import {
+  classifyMove,
   computeGameAccuracy,
   type MoveClassification,
   type MoveEvalInput,
   type GameAccuracyResult,
 } from "./analysis-engine";
+import {
+  type AnalysisStrictnessId,
+  getAnalysisProfile,
+  DEFAULT_ANALYSIS_STRICTNESS,
+} from "./analysis-profiles";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -138,7 +144,10 @@ export function parsePgnForReview(pgn: string): ParsedGameForReview | null {
  * Reuses `computeGameAccuracy` from analysis-engine.ts and adds an averageCpl.
  * keyMoments contains the indexes of blunders and missed tactics (in playing order).
  */
-export function aggregateReview(moves: ReviewedMove[]): GameReviewResult {
+export function aggregateReview(
+  moves: ReviewedMove[],
+  strictness: AnalysisStrictnessId = DEFAULT_ANALYSIS_STRICTNESS
+): GameReviewResult {
   const whiteInputs: MoveEvalInput[] = [];
   const blackInputs: MoveEvalInput[] = [];
   let whiteCplSum = 0;
@@ -167,8 +176,8 @@ export function aggregateReview(moves: ReviewedMove[]): GameReviewResult {
     }
   }
 
-  const whiteAcc = computeGameAccuracy(whiteInputs);
-  const blackAcc = computeGameAccuracy(blackInputs);
+  const whiteAcc = computeGameAccuracy(whiteInputs, strictness);
+  const blackAcc = computeGameAccuracy(blackInputs, strictness);
 
   const white: SideAccuracy = {
     ...whiteAcc,
@@ -190,37 +199,33 @@ export function aggregateReview(moves: ReviewedMove[]): GameReviewResult {
 // Per-move classification helper
 // ---------------------------------------------------------------------------
 
-const CPL_BANDS = {
-  excellent: 20,
-  good: 50,
-  inaccuracy: 100,
-  mistake: 300,
-} as const;
-
-const MISS_SWING_PAWNS = 4.0;
 const CONTEXT_WEIGHT_K = 1.2;
 const SCALED_CPL_CAP = 500;
 
 /**
  * Build a single ReviewedMove from raw engine outputs.
- * Mirrors the bands used by analysis-engine.classifyMove so the per-move badge
- * agrees with the aggregated accuracy.
+ * Uses analysis-engine.classifyMove so the badge matches aggregated accuracy.
  */
-export function buildReviewedMove(args: {
-  ply: number;
-  san: string;
-  uci: string;
-  sideToMove: "white" | "black";
-  evalBefore: number;
-  bestMove: string;
-  bestSan?: string;
-  bestEval: number;
-  playerEval: number;
-  isMateBest?: boolean;
-  isMatePlayer?: boolean;
-  bestMateInMoves?: number;
-  playerMateInMoves?: number;
-}): ReviewedMove {
+export function buildReviewedMove(
+  args: {
+    ply: number;
+    san: string;
+    uci: string;
+    sideToMove: "white" | "black";
+    evalBefore: number;
+    bestMove: string;
+    bestSan?: string;
+    bestEval: number;
+    playerEval: number;
+    isMateBest?: boolean;
+    isMatePlayer?: boolean;
+    bestMateInMoves?: number;
+    playerMateInMoves?: number;
+  },
+  strictness: AnalysisStrictnessId = DEFAULT_ANALYSIS_STRICTNESS
+): ReviewedMove {
+  const profile = getAnalysisProfile(strictness);
+
   const cplPawns =
     args.sideToMove === "white"
       ? args.bestEval - args.playerEval
@@ -231,25 +236,15 @@ export function buildReviewedMove(args: {
     1 + CONTEXT_WEIGHT_K / (1 + Math.abs(args.evalBefore));
   const scaledCpl = Math.min(SCALED_CPL_CAP, cpl * contextWeight);
 
-  const swing = Math.abs(args.playerEval - args.bestEval);
-  const isMissedMate = !!args.isMateBest && !args.isMatePlayer;
-  const isBigSwing = swing > MISS_SWING_PAWNS;
-  let classification: MoveClassification;
-  if (isMissedMate || isBigSwing) {
-    classification = "miss";
-  } else if (scaledCpl <= 0) {
-    classification = "best";
-  } else if (scaledCpl <= CPL_BANDS.excellent) {
-    classification = "excellent";
-  } else if (scaledCpl <= CPL_BANDS.good) {
-    classification = "good";
-  } else if (scaledCpl <= CPL_BANDS.inaccuracy) {
-    classification = "inaccuracy";
-  } else if (scaledCpl <= CPL_BANDS.mistake) {
-    classification = "mistake";
-  } else {
-    classification = "blunder";
-  }
+  const moveInput: MoveEvalInput = {
+    bestEvalPawns: args.bestEval,
+    playerEvalPawns: args.playerEval,
+    sideToMove: args.sideToMove,
+    evalBeforePawns: args.evalBefore,
+    isMateBest: args.isMateBest,
+    isMatePlayer: args.isMatePlayer,
+  };
+  const classification = classifyMove(scaledCpl, moveInput, profile);
 
   return {
     ply: args.ply,
@@ -367,4 +362,15 @@ export function hashPgn(pgn: string): string {
     hash = Math.imul(hash, 0x01000193);
   }
   return (hash >>> 0).toString(16).padStart(8, "0");
+}
+
+/**
+ * Cache key for persisted reviews: same game + strictness + depth can hit cloud cache.
+ */
+export function hashReviewCacheKey(
+  pgn: string,
+  strictness: AnalysisStrictnessId,
+  depth: number
+): string {
+  return hashPgn(`${pgn}\nstrict=${strictness}\ndepth=${depth}`);
 }

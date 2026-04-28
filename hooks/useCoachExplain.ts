@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import type { ReviewedMove } from "@/lib/game-review";
+import type { CoachToneId } from "@/lib/coach-tone";
 
 export type CoachStatus = "idle" | "loading" | "ready" | "error";
 
@@ -38,6 +39,8 @@ export interface CoachExplainArgs {
   fenBefore: string;
   lang: "fr" | "en";
   moveNumber?: number;
+  /** Affects the system prompt in /api/coach/explain. Default pedagogical. */
+  coachTone?: CoachToneId;
 }
 
 interface ExplainPayload {
@@ -51,6 +54,7 @@ interface ExplainPayload {
   moveNumber?: number;
   sanPlayed?: string;
   sanBest?: string;
+  coachTone?: CoachToneId;
 }
 
 const INITIAL_STATE: CoachState = {
@@ -123,6 +127,7 @@ export function useCoachExplain() {
       moveNumber: args.moveNumber,
       sanPlayed: args.move.san,
       sanBest: args.move.bestSan || undefined,
+      coachTone: args.coachTone ?? "pedagogical",
     };
 
     try {
