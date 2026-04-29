@@ -175,6 +175,7 @@ export default function MoveChallengeCard({
                 <SanNotation
                   verboseMove={verbose}
                   fallbackSan={san}
+                  movingColor={sideToMove}
                   pieceSet={settings.pieceSet}
                   size="sm"
                 />

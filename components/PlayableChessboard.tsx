@@ -1594,6 +1594,7 @@ export default function PlayableChessboard({
                                   moveHistoryVerbose?.[whiteIndex] ?? null
                                 }
                                 fallbackSan={moveHistory[whiteIndex] || ""}
+                                movingColor="w"
                                 pieceSet={boardUiSettings.pieceSet}
                                 size="sm"
                               />
@@ -1633,6 +1634,7 @@ export default function PlayableChessboard({
                                     moveHistoryVerbose?.[blackIndex] ?? null
                                   }
                                   fallbackSan={moveHistory[blackIndex] ?? ""}
+                                  movingColor="b"
                                   pieceSet={boardUiSettings.pieceSet}
                                   size="sm"
                                 />
