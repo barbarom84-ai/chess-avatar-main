@@ -567,7 +567,9 @@ export const translations = {
       rematch: "Revanche",
       switchColor: "Changer couleur",
       configure: "Configurer",
-      home: "Accueil"
+      home: "Accueil",
+      precisionAnalyzing: "Analyse de la précision…",
+      precisionAnalysisPlyCount: "{{current}} / {{total}} coups"
     },
 
     // Header / nav
@@ -1802,7 +1804,9 @@ export const translations = {
       rematch: "Rematch",
       switchColor: "Switch color",
       configure: "Configure",
-      home: "Home"
+      home: "Home",
+      precisionAnalyzing: "Analyzing accuracy…",
+      precisionAnalysisPlyCount: "{{current}} / {{total}} moves"
     },
 
     // Header / nav
