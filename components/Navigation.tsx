@@ -30,7 +30,7 @@ const NAV_ITEMS: NavItemDef[] = [
   { href: "/play", piece: "N", label: { fr: "Jouer", en: "Play" } },
   { href: "/learn", piece: "Q", label: { fr: "Apprentissage", en: "Learn" } },
   { href: "/profile", piece: "B", label: { fr: "Profil", en: "Profile" } },
-  { href: "/games", piece: "R", label: { fr: "Parties / Game Review", en: "Games / Review" } },
+  { href: "/games", piece: "R", label: { fr: "Parties", en: "Games" } },
   { href: "/guide", piece: "P", label: { fr: "UCI creator guide", en: "UCI creator guide" } },
 ];
 
@@ -45,7 +45,9 @@ function navItemLabel(
   lang: Language,
   t: Translations
 ): string {
-  return item.href === "/learn" ? t.header.learn : item.label[lang];
+  if (item.href === "/learn") return t.header.learn;
+  if (item.href === "/games") return t.header.games;
+  return item.label[lang];
 }
 
 function NavItemLinks({
@@ -80,11 +82,9 @@ function NavItemLinks({
             <Button
               variant={isActive ? "default" : "ghost"}
               size="sm"
-              className={
-                isActive
-                  ? "bg-cyan-600 text-white"
-                  : inactiveClass
-              }
+              className={`${
+                isActive ? "bg-cyan-600 text-white" : inactiveClass
+              } whitespace-normal leading-tight text-center`}
             >
               <Image
                 src={pieceSrc}
@@ -151,7 +151,7 @@ export default function Navigation() {
   return (
     <nav className="bg-slate-950/80 backdrop-blur-sm border-b border-slate-800 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between min-h-16">
           <Link
             href="/"
             className="flex items-center gap-2 text-xl font-bold text-cyan-400 hover:text-cyan-300 transition-colors"
@@ -167,7 +167,7 @@ export default function Navigation() {
             Chess Avatar
           </Link>
 
-          <div className="hidden md:flex items-center gap-1">
+          <div className="hidden md:flex flex-wrap items-center gap-x-1 gap-y-1">
             <NavItemLinks
               items={NAV_ITEMS}
               pathname={pathname}
@@ -195,9 +195,9 @@ export default function Navigation() {
                       )}
                     </button>
                     {showUserMenu && (
-                      <div className="absolute right-0 mt-2 w-48 bg-slate-900 border border-slate-700 rounded-lg shadow-xl py-1 z-50">
+                      <div className="absolute right-0 mt-2 min-w-[12rem] max-w-[min(20rem,90vw)] w-max text-left bg-slate-900 border border-slate-700 rounded-lg shadow-xl py-1 z-50">
                         <div className="px-3 py-2 border-b border-slate-700">
-                          <p className="text-xs text-slate-400">{user.email}</p>
+                          <p className="text-xs text-slate-400 break-words">{user.email}</p>
                           {isPremium && (
                             <span className="inline-flex items-center gap-1 text-xs text-amber-400 mt-1">
                               <Crown className="h-3 w-3" /> Premium

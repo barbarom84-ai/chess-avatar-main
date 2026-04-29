@@ -13,11 +13,8 @@
  */
 
 import { Chess } from "chess.js";
-import {
-  OPENINGS_DATABASE,
-  type Opening,
-  getOpeningById,
-} from "./openings-library";
+import { type Opening, getOpeningById } from "./openings-library";
+import { getAggregatedOpenings } from "./openings-registry";
 
 /** Partie « positionnelle » du FEN (échiquier + trait + roques + case EP). */
 export function fenPositionKey(fen: string): string {
@@ -36,7 +33,7 @@ let fenIndexCache: Map<string, TheoryPositionHit[]> | null = null;
 function buildFenTheoryIndex(): Map<string, TheoryPositionHit[]> {
   const map = new Map<string, TheoryPositionHit[]>();
 
-  for (const opening of OPENINGS_DATABASE) {
+  for (const opening of getAggregatedOpenings()) {
     const g = new Chess();
     for (let ply = 0; ply < opening.uciMoves.length; ply++) {
       const uci = opening.uciMoves[ply];

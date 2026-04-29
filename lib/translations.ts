@@ -263,6 +263,18 @@ export const translations = {
       headerNav: "Apprentissage",
       hubIntro:
         "Chaque fiche relie l’ouverture à des idées de milieu de partie. Utilisez les filtres pour trouver une ligne adaptée à votre niveau.",
+      catalog: {
+        lessonsTab: "Leçons",
+        openingsTab: "Toutes les ouvertures",
+        intro:
+          "Liste complète des lignes répertoriées dans l’application (noyau + extensions JSON). Chaque ligne a au minimum une fiche Apprendre dérivée du répertoire ; les leçons détaillées « guidées » sont repérées à part. Les super-abonnés peuvent publier des fiches cloud via l’admin Learn lorsque Supabase est configuré.",
+        searchPlaceholder: "Rechercher (nom, code ECO, identifiant, tag)…",
+        countListed: "{count} ouvertures répertoriées",
+        hasLessonBadge: "Guidée",
+        repertoireAutoBadge: "Répertoire",
+        customLessonBadge: "Publiée",
+        noLessonBadge: "Pas encore de fiche",
+      },
       filters: {
         allColors: "Toutes couleurs",
         white: "Blancs",
@@ -307,6 +319,8 @@ export const translations = {
         useInRepertoire: "Créer / configurer un bot",
         useInRepertoireHint:
           "Sur la page d’accueil, ajoutez cette ouverture au répertoire de votre avatar après analyse.",
+        repertoireAutoNotice:
+          "Fiche auto à partir du répertoire : textes courts et ligne modèle ; les parties historiques et défis du dépôt s’affichent ci-dessous lorsqu’ils sont disponibles pour cet identifiant.",
         notFound: "Cette leçon n’existe pas ou n’est pas encore publiée.",
       },
       commentary: {
@@ -343,6 +357,7 @@ export const translations = {
         tableTitle: "Titre",
         tableSource: "Source",
         sourceBuiltin: "Intégré",
+        sourceRepertoireAuto: "Répertoire (auto)",
         sourceCloudOverride: "Cloud (remplace l’intégré)",
         sourceCloudOnly: "Cloud uniquement",
         cloudBadge: "Cloud",
@@ -568,15 +583,13 @@ export const translations = {
     // Evaluation bar
     evaluationBar: {
       evaluating: "Évaluation en cours...",
-      youDominatingWhite: "Vous (Blanc) dominez",
-      youDominatingBlack: "Vous (Noir) dominez",
-      blackDominating: "Noir domine",
-      whiteDominating: "Blanc domine",
-      equalPosition: "Position égale",
-      youDominate: "Vous dominez",
-      youDominateWidely: "Vous dominez largement",
-      opponentDominates: "Adversaire domine",
-      opponentDominatesWidely: "Adversaire domine largement",
+      equal: "Position équilibrée",
+      whiteSlight: "Léger avantage blancs",
+      whiteClear: "Avantage blancs",
+      whiteWinning: "Les blancs sont gagnants",
+      blackSlight: "Léger avantage noirs",
+      blackClear: "Avantage noirs",
+      blackWinning: "Les noirs sont gagnants",
       black: "Noir",
       white: "Blanc"
     },
@@ -747,6 +760,7 @@ export const translations = {
       cancelled: "Analyse annulée",
       error: "Erreur lors de l'analyse",
       done: "Analyse terminée",
+      startAnalysis: "Lancer l'analyse",
       computing: "Calcul en cours…",
       notYetAvailable: "Disponible à la fin de l'analyse",
       movesTitle: "Coups",
@@ -840,6 +854,13 @@ export const translations = {
         divergedFromBook:
           "La partie ne suit plus ce coup à coup la ligne ci-dessus ; correspondance partielle surlignée.",
         transpositions: "Autres repères menant ici",
+        explorerTitle: "Explorer Lichess",
+        explorerLoading: "Chargement des statistiques…",
+        explorerError: "Impossible de charger l’explorer (réseau ou limite).",
+        explorerCached: "Réponse mise en cache (quelques minutes).",
+        explorerPoolMasters: "Masters",
+        explorerPoolLichess: "Lichess (large)",
+        explorerPoolHint: "Source des stats : bases publiques Lichess (pas le PGN local).",
       },
       flags: {
         check: "Échec",
@@ -1479,6 +1500,18 @@ export const translations = {
       headerNav: "Learn",
       hubIntro:
         "Each lesson connects the opening to middlegame ideas. Use filters to find a line suited to your level.",
+      catalog: {
+        lessonsTab: "Lessons",
+        openingsTab: "All openings",
+        intro:
+          "Full list of lines tracked in the app (core library + JSON partitions). Each line has at least a Learn page derived from the repertoire; fully guided lessons are called out separately. Super subscribers can publish cloud lessons via Learn admin when Supabase is configured.",
+        searchPlaceholder: "Search (name, ECO code, id, tag)…",
+        countListed: "{count} openings listed",
+        hasLessonBadge: "Guided",
+        repertoireAutoBadge: "Repertoire",
+        customLessonBadge: "Published",
+        noLessonBadge: "No page yet",
+      },
       filters: {
         allColors: "All colors",
         white: "White",
@@ -1522,6 +1555,8 @@ export const translations = {
         challengesInGame: "Challenges in this game",
         useInRepertoire: "Build / configure a bot",
         useInRepertoireHint: "On the homepage, add this opening to your avatar’s repertoire after analysis.",
+        repertoireAutoNotice:
+          "Auto-generated from the repertoire card: short text and model line; historic games and challenges from the repo appear below when available for this id.",
         notFound: "This lesson does not exist or is not published yet.",
       },
       commentary: {
@@ -1558,6 +1593,7 @@ export const translations = {
         tableTitle: "Title",
         tableSource: "Source",
         sourceBuiltin: "Built-in",
+        sourceRepertoireAuto: "Repertoire (auto)",
         sourceCloudOverride: "Cloud (overrides built-in)",
         sourceCloudOnly: "Cloud-only",
         cloudBadge: "Cloud",
@@ -1782,15 +1818,13 @@ export const translations = {
     // Evaluation bar
     evaluationBar: {
       evaluating: "Evaluating...",
-      youDominatingWhite: "You (White) are dominating",
-      youDominatingBlack: "You (Black) are dominating",
-      blackDominating: "Black is dominating",
-      whiteDominating: "White is dominating",
-      equalPosition: "Equal position",
-      youDominate: "You are dominating",
-      youDominateWidely: "You are dominating widely",
-      opponentDominates: "Opponent is dominating",
-      opponentDominatesWidely: "Opponent is dominating widely",
+      equal: "Equal position",
+      whiteSlight: "Slight advantage for White",
+      whiteClear: "Clear advantage for White",
+      whiteWinning: "White is winning",
+      blackSlight: "Slight advantage for Black",
+      blackClear: "Clear advantage for Black",
+      blackWinning: "Black is winning",
       black: "Black",
       white: "White"
     },
@@ -1961,6 +1995,7 @@ export const translations = {
       cancelled: "Analysis cancelled",
       error: "Analysis error",
       done: "Analysis complete",
+      startAnalysis: "Start analysis",
       computing: "Computing…",
       notYetAvailable: "Available once analysis completes",
       movesTitle: "Moves",
@@ -2054,6 +2089,13 @@ export const translations = {
         divergedFromBook:
           "The game no longer follows this line move-for-move; highlighted moves match the longest compatible prefix.",
         transpositions: "Also reached via",
+        explorerTitle: "Lichess explorer",
+        explorerLoading: "Loading statistics…",
+        explorerError: "Could not load explorer (network or rate limit).",
+        explorerCached: "Cached response (a few minutes).",
+        explorerPoolMasters: "Masters",
+        explorerPoolLichess: "Lichess (all games)",
+        explorerPoolHint: "Stats come from Lichess public databases (not your local PGN).",
       },
       flags: {
         check: "Check",

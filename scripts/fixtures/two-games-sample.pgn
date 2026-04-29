@@ -1,0 +1,19 @@
+[Event "Test A"]
+[Site "?"]
+[Date "2024.01.01"]
+[Round "?"]
+[White "A"]
+[Black "B"]
+[Result "*"]
+
+1. e4 e5 *
+
+[Event "Test B"]
+[Site "?"]
+[Date "2024.01.02"]
+[Round "?"]
+[White "C"]
+[Black "D"]
+[Result "*"]
+
+1. d4 d5 *

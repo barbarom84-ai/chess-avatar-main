@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Chess } from "chess.js";
 import type { EngineConfig } from "@/lib/analysis";
 import {
@@ -113,11 +113,11 @@ export function useStockfish() {
     }
   }, []);
 
-  const sendCommand = (command: string) => {
+  const sendCommand = useCallback((command: string) => {
     if (!engineRef.current) return;
     if (isReady) engineRef.current.postMessage(command);
     else messageQueueRef.current.push(command);
-  };
+  }, [isReady]);
 
   const getBestMove = (
     fen: string,
@@ -303,7 +303,7 @@ export function useStockfish() {
    * For "score mate N", returns a sentinel eval (±10 pawns) and isMate: true.
    * Use with getPositionEvaluation(fenAfterPlayerMove) to build MoveEvalInput for analysis-engine.
    */
-  const getBestMoveAndEval = (
+  const getBestMoveAndEval = useCallback((
     fen: string,
     depth = 18
   ): Promise<{
@@ -391,9 +391,9 @@ export function useStockfish() {
         if (!settled) sendCommand("stop");
       }, 30_000);
     });
-  };
+  }, [isReady, sendCommand]);
 
-  const getPositionEvaluation = (fen: string, depth = 18): Promise<number> => {
+  const getPositionEvaluation = useCallback((fen: string, depth = 18): Promise<number> => {
     return new Promise((resolve, reject) => {
       if (!isReady || !engineRef.current) {
         reject(new Error("Stockfish not ready"));
@@ -435,7 +435,7 @@ export function useStockfish() {
         if (!settled) sendCommand("stop");
       }, 30_000);
     });
-  };
+  }, [isReady, sendCommand]);
 
   const analyzePosition = (fen: string, depth = 15) => {
     if (isReady && engineRef.current) {
@@ -444,12 +444,12 @@ export function useStockfish() {
     }
   };
 
-  const stopThinking = () => {
+  const stopThinking = useCallback(() => {
     if (engineRef.current) {
-      sendCommand("stop");
+      engineRef.current.postMessage("stop");
       setIsThinking(false);
     }
-  };
+  }, []);
 
   const resetForcedLine = () => setRemainingForcedMoves([]);
 

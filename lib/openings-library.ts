@@ -1,7 +1,11 @@
 /**
  * Bibliothèque complète d'ouvertures d'échecs
  * Avec métadonnées, caractéristiques et styles de jeu
+ * (Lignes supplémentaires : `lib/data/openings/partitions/*.json` — voir openings-registry.)
  */
+
+import e4Extended from "./data/openings/partitions/e4-extended.json";
+import lichessNamed from "./data/openings/partitions/lichess-named-openings.json";
 
 export interface Opening {
   id: string;
@@ -534,14 +538,23 @@ export const REPERTOIRE_PRESETS: OpeningRepertoire[] = [
  * Utilitaires
  */
 
-// Trouver une ouverture par ID
+const EXTRA_OPENING_LINES: Opening[] = [
+  ...(e4Extended as Opening[]),
+  ...(lichessNamed as Opening[]),
+];
+
+// Trouver une ouverture par ID (noyau + partitions JSON)
 export function getOpeningById(id: string): Opening | undefined {
-  return OPENINGS_DATABASE.find(o => o.id === id);
+  return (
+    OPENINGS_DATABASE.find((o) => o.id === id) ??
+    EXTRA_OPENING_LINES.find((o) => o.id === id)
+  );
 }
 
 // Filtrer par couleur
 export function getOpeningsByColor(color: 'white' | 'black' | 'both'): Opening[] {
-  return OPENINGS_DATABASE.filter(o => o.color === color || o.color === 'both');
+  const pool = [...OPENINGS_DATABASE, ...EXTRA_OPENING_LINES];
+  return pool.filter((o) => o.color === color || o.color === 'both');
 }
 
 // Filtrer par caractère
@@ -584,40 +597,3 @@ export interface PrefixMatchResult {
   matchedPlies: number;
 }
 
-/**
- * Ligne théorique la plus spécifique encore compatible avec les coups joués.
- * Tie-break à préfixe égal : ligne dont la séquence UCI est la plus longue.
- */
-export function findBestOpeningByPrefix(uciMoves: string[]): PrefixMatchResult {
-  if (uciMoves.length === 0) {
-    return { opening: null, matchedPlies: 0 };
-  }
-
-  let best: Opening | null = null;
-  let bestMatch = 0;
-
-  for (const o of OPENINGS_DATABASE) {
-    let m = 0;
-    const lim = Math.min(o.uciMoves.length, uciMoves.length);
-    for (; m < lim; m++) {
-      if (o.uciMoves[m] !== uciMoves[m]) break;
-    }
-    if (m === 0) continue;
-
-    if (!best || m > bestMatch) {
-      bestMatch = m;
-      best = o;
-    } else if (m === bestMatch && best && o.uciMoves.length > best.uciMoves.length) {
-      best = o;
-    } else if (m === bestMatch && !best) {
-      best = o;
-    }
-  }
-
-  return { opening: best, matchedPlies: bestMatch };
-}
-
-/** @deprecated Préférer findBestOpeningByPrefix — conservé pour compat. */
-export function detectOpening(uciMoves: string[]): Opening | null {
-  return findBestOpeningByPrefix(uciMoves).opening;
-}

@@ -23,6 +23,7 @@ export default function OpeningLessonPage() {
   const openingId = params.openingId as string;
   const { lang, t } = useLanguage();
   const { catalog, loading: catalogLoading } = useLearnCatalog();
+  const isRepertoireAuto = catalog.syntheticOpeningIds.has(openingId);
   const { isSuperUser, loading: superLoading } = useSuperUser();
   const lesson = useMemo(
     () => catalog.lessons.find((l) => l.openingId === openingId),
@@ -123,6 +124,14 @@ export default function OpeningLessonPage() {
           </Button>
           <p className="text-xs text-slate-500 self-center max-w-md">{t.learn.detail.useInRepertoireHint}</p>
         </div>
+
+        {isRepertoireAuto && (
+          <Card className="theme-bg-secondary border-amber-800/50 bg-amber-950/20">
+            <CardContent className="py-3 text-sm text-amber-100/90 leading-relaxed">
+              {t.learn.detail.repertoireAutoNotice}
+            </CardContent>
+          </Card>
+        )}
 
         <Tabs defaultValue="overview" className="w-full">
           <TabsList className="flex flex-wrap h-auto gap-1 bg-slate-950 border border-slate-800 p-1">

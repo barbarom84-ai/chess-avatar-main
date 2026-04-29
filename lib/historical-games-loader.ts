@@ -13,7 +13,7 @@ import type {
  * from inline `{ ... }` PGN comments when no override is supplied.
  */
 export interface HistoricalGameMeta {
-  /** Lesson `openingId` this game belongs to (must match an entry in `OPENING_LESSONS`). */
+  /** Lesson `openingId` — doit correspondre à une ouverture du catalogue agrégé (répertoire / partitions). */
   openingId: string;
   /** Raw PGN string (typically `import pgn from "./name.pgn"`). */
   pgn: string;

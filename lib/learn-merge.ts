@@ -1,5 +1,7 @@
 import type { Opening } from "@/lib/openings-library";
-import { OPENINGS_DATABASE } from "@/lib/openings-library";
+import { getOpeningName } from "@/lib/openings-library";
+import { getAggregatedOpenings } from "@/lib/openings-registry";
+import { attachStaticGames, loadHistoricalGames } from "@/lib/historical-games-loader";
 import type { HistoricalGame, LocalizedString, OpeningLesson } from "@/lib/opening-lessons";
 import { OPENING_LESSONS } from "@/lib/opening-lessons";
 
@@ -187,6 +189,81 @@ export interface MergedLearnCatalog {
   openingById: Map<string, Opening>;
   /** opening_id présents dans Supabase (override ou fiche 100 % cloud) */
   cloudOpeningIds: Set<string>;
+  /** Leçons générées depuis les fiches répertoire (pas les BASE_LESSONS détaillées) */
+  syntheticOpeningIds: Set<string>;
+  /** Identifiants ayant une leçon « guidée » dans le dépôt (BASE_LESSONS + jeux attachés) */
+  coreLessonIds: Set<string>;
+}
+
+/**
+ * Leçon minimale dérivée d'une fiche [`Opening`](./openings-library.ts) pour couvrir tout le catalogue agrégé.
+ * Les parties / défis depuis `data/historical-games/*.meta.ts` sont fusionnées ensuite via `attachStaticGames`.
+ */
+export function syntheticLessonFromOpening(o: Opening): OpeningLesson {
+  const modelLine =
+    o.uciMoves.length > 0
+      ? o.uciMoves.map((uci, idx) => ({
+          uci,
+          comment: {
+            fr:
+              idx === 0
+                ? `Ligne principale : ${o.moves}`
+                : `Suite de la ligne (${idx + 1}/${o.uciMoves.length}).`,
+            en:
+              idx === 0
+                ? `Main line: ${o.moves}`
+                : `Continuation (${idx + 1}/${o.uciMoves.length}).`,
+          },
+        }))
+      : [
+          {
+            uci: "e2e4",
+            comment: { fr: "1.e4 — placeholder (aucune ligne UCI sur la fiche).", en: "1.e4 — placeholder (no UCI line on card)." },
+          },
+        ];
+
+  const descFr =
+    o.description.trim() ||
+    `Ouverture « ${o.name} » (${o.eco}) — fiche du répertoire agrégé.`;
+  const descEn =
+    (o.descriptionEn ?? o.description).trim() ||
+    `Opening "${o.nameEn ?? o.name}" (${o.eco}) — aggregated repertoire card.`;
+
+  return {
+    openingId: o.id,
+    hook: { fr: descFr, en: descEn },
+    recommendedFor: {
+      fr: "Tous niveaux — contenu de base issu de la fiche répertoire ; les parties du dossier `historical-games` et les défis s’affichent ici lorsqu’ils existent.",
+      en: "All levels — baseline content from the repertoire card; historic games and challenges from `historical-games` appear here when present.",
+    },
+    overview: { fr: descFr, en: descEn },
+    mainIdeas: [
+      {
+        fr: `Code ECO ${o.eco}, style ${o.character}. Caractéristique : ${o.moves}`,
+        en: `ECO ${o.eco}, ${o.character} style. Characteristic: ${o.moves}`,
+      },
+    ],
+    typicalPlans: [
+      {
+        fr: "Affinez votre compréhension avec la ligne modèle ci-dessous et les parties en bas de page.",
+        en: "Build understanding using the model line below and the games at the bottom.",
+      },
+    ],
+    traps: [
+      {
+        fr: "Les erreurs typiques varient selon la branche — parcourez la ligne et les parties historiques.",
+        en: "Typical mistakes depend on the branch — review the line and historic games.",
+      },
+    ],
+    whatToRemember: [
+      {
+        fr: `${o.eco} — ${o.name}`,
+        en: `${o.eco} — ${o.nameEn ?? o.name}`,
+      },
+    ],
+    modelLine,
+    historicalGames: [],
+  };
 }
 
 export function buildMergedCatalog(rows: LearnEntryRow[]): MergedLearnCatalog {
@@ -203,7 +280,10 @@ export function buildMergedCatalog(rows: LearnEntryRow[]): MergedLearnCatalog {
   }
 
   const openingById = new Map<string, Opening>();
-  for (const o of OPENINGS_DATABASE) {
+  const seenAgg = new Set<string>();
+  for (const o of getAggregatedOpenings()) {
+    if (seenAgg.has(o.id)) continue;
+    seenAgg.add(o.id);
     openingById.set(o.id, overrideMap.get(o.id)?.opening ?? o);
   }
   for (const [id, { opening }] of overrideMap) {
@@ -225,7 +305,39 @@ export function buildMergedCatalog(rows: LearnEntryRow[]): MergedLearnCatalog {
     }
   }
 
-  return { lessons, openingById, cloudOpeningIds };
+  const coveredIds = new Set(lessons.map((l) => l.openingId));
+  const coreLessonIds = new Set(OPENING_LESSONS.map((l) => l.openingId));
+  const syntheticOpeningIds = new Set<string>();
+
+  const syntheticCandidates: Opening[] = [];
+  for (const o of openingById.values()) {
+    if (!coveredIds.has(o.id)) {
+      syntheticCandidates.push(o);
+    }
+  }
+  syntheticCandidates.sort((a, b) => {
+    const eco = a.eco.localeCompare(b.eco);
+    if (eco !== 0) return eco;
+    return getOpeningName(a, "fr").localeCompare(getOpeningName(b, "fr"), "fr");
+  });
+
+  const extraHistorical = loadHistoricalGames();
+  const syntheticLessons = attachStaticGames(
+    syntheticCandidates.map((o) => syntheticLessonFromOpening(o)),
+    extraHistorical,
+  );
+  for (const l of syntheticLessons) {
+    lessons.push(l);
+    syntheticOpeningIds.add(l.openingId);
+  }
+
+  return {
+    lessons,
+    openingById,
+    cloudOpeningIds,
+    syntheticOpeningIds,
+    coreLessonIds,
+  };
 }
 
 export function lessonWithMergedOpening(

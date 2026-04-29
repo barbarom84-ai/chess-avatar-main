@@ -24,6 +24,14 @@
 .engine-build/
 public/__pycache__/
 
+# Local ChessBase / bulk PGN exports (often 500MB–2GB+; keep outside git)
+data/database2025/*.pgn
+data/database2025/*.pgi
+data/database2025/parts/
+
+scripts/fixtures/out-split-test/
+scripts/fixtures/out-split-test2/
+
 # misc
 .DS_Store
 *.pem

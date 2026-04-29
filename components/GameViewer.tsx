@@ -111,7 +111,7 @@ function GameViewerInner({ pgn }: GameViewerProps) {
   return (
     <div className="space-y-4">
       {currentEval !== null && (
-        <EvaluationBar evaluation={currentEval} playerColor={playerColor} />
+        <EvaluationBar evaluation={currentEval} />
       )}
 
       <div className="flex items-start gap-4">
