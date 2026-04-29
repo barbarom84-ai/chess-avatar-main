@@ -9,12 +9,25 @@ import {
 } from "./openings-library";
 import type { PrefixMatchResult } from "./openings-library";
 import e4Extended from "./data/openings/partitions/e4-extended.json";
+import lichessNamed from "./data/openings/partitions/lichess-named-openings.json";
 
-const PARTITIONS: Opening[][] = [e4Extended as Opening[]];
+const PARTITIONS: Opening[][] = [
+  e4Extended as Opening[],
+  lichessNamed as Opening[],
+];
 
 export function getAggregatedOpenings(): Opening[] {
   const extra = PARTITIONS.flat();
-  return extra.length === 0 ? [...OPENINGS_DATABASE] : [...OPENINGS_DATABASE, ...extra];
+  const merged =
+    extra.length === 0 ? [...OPENINGS_DATABASE] : [...OPENINGS_DATABASE, ...extra];
+  const seen = new Set<string>();
+  const out: Opening[] = [];
+  for (const o of merged) {
+    if (seen.has(o.id)) continue;
+    seen.add(o.id);
+    out.push(o);
+  }
+  return out;
 }
 
 /**

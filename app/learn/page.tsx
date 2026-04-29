@@ -42,6 +42,7 @@ export default function LearnHubPage() {
   const [character, setCharacter] = useState<string>("all");
 
   const lessonIdsSet = useMemo(() => new Set(catalog.lessons.map((l) => l.openingId)), [catalog.lessons]);
+  const { coreLessonIds, syntheticOpeningIds, cloudOpeningIds } = catalog;
 
   const catalogOpeningsSorted = useMemo(() => {
     const uniq = dedupeOpeningsByFirstId(getAggregatedOpenings());
@@ -228,7 +229,9 @@ export default function LearnHubPage() {
                 {filtered.map((lesson) => {
                   const { opening, title } = lessonWithMergedOpening(lesson, catalog.openingById, lang);
                   if (!opening) return null;
-                  const cloud = catalog.cloudOpeningIds.has(lesson.openingId);
+                  const cloud = cloudOpeningIds.has(lesson.openingId);
+                  const guided = coreLessonIds.has(lesson.openingId);
+                  const repertoireAuto = syntheticOpeningIds.has(lesson.openingId);
                   return (
                     <Card key={lesson.openingId} className="theme-bg-secondary theme-border flex flex-col">
                       <CardHeader>
@@ -237,6 +240,21 @@ export default function LearnHubPage() {
                             {t.learn.eco} {opening.eco}
                           </span>
                           <OpeningLevelBadge difficulty={opening.difficulty} labels={labels} />
+                          {guided && (
+                            <span className="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded bg-emerald-950/70 text-emerald-300 border border-emerald-800/50">
+                              {tc.hasLessonBadge}
+                            </span>
+                          )}
+                          {!guided && repertoireAuto && (
+                            <span className="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded bg-amber-950/70 text-amber-200 border border-amber-800/50">
+                              {tc.repertoireAutoBadge}
+                            </span>
+                          )}
+                          {!guided && !repertoireAuto && (
+                            <span className="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded bg-sky-950/70 text-sky-200 border border-sky-800/50">
+                              {tc.customLessonBadge}
+                            </span>
+                          )}
                           {cloud && (
                             <span className="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded bg-violet-950/80 text-violet-300 border border-violet-700/50">
                               {t.learn.admin.cloudBadge}
@@ -291,8 +309,10 @@ export default function LearnHubPage() {
                   <tbody>
                     {filteredCatalogRows.map((o) => {
                       const hasLesson = lessonIdsSet.has(o.id);
+                      const guided = coreLessonIds.has(o.id);
+                      const repertoireAuto = syntheticOpeningIds.has(o.id);
                       const title = getOpeningName(o, lang);
-                      const cloud = catalog.cloudOpeningIds.has(o.id);
+                      const cloud = cloudOpeningIds.has(o.id);
                       return (
                         <tr key={o.id} className="border-b border-slate-800/80 hover:bg-slate-900/40">
                           <td className="px-3 py-2 font-mono text-amber-400/90 whitespace-nowrap">{o.eco}</td>
@@ -303,17 +323,29 @@ export default function LearnHubPage() {
                           <td className="px-3 py-2 text-slate-400 capitalize hidden sm:table-cell">{o.character}</td>
                           <td className="px-3 py-2">
                             {hasLesson ? (
-                              <span className="inline-flex items-center rounded px-2 py-0.5 text-xs bg-emerald-950/70 text-emerald-300 border border-emerald-800/50">
-                                {tc.hasLessonBadge}
-                              </span>
+                              <>
+                                {guided ? (
+                                  <span className="inline-flex items-center rounded px-2 py-0.5 text-xs bg-emerald-950/70 text-emerald-300 border border-emerald-800/50">
+                                    {tc.hasLessonBadge}
+                                  </span>
+                                ) : repertoireAuto ? (
+                                  <span className="inline-flex items-center rounded px-2 py-0.5 text-xs bg-amber-950/70 text-amber-200 border border-amber-800/50">
+                                    {tc.repertoireAutoBadge}
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center rounded px-2 py-0.5 text-xs bg-sky-950/70 text-sky-200 border border-sky-800/50">
+                                    {tc.customLessonBadge}
+                                  </span>
+                                )}
+                                {cloud && (
+                                  <span className="ml-1 text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-violet-950/80 text-violet-300 border border-violet-700/50">
+                                    {t.learn.admin.cloudBadge}
+                                  </span>
+                                )}
+                              </>
                             ) : (
                               <span className="inline-flex items-center rounded px-2 py-0.5 text-xs bg-slate-800 text-slate-400 border border-slate-700">
                                 {tc.noLessonBadge}
-                              </span>
-                            )}
-                            {cloud && hasLesson && (
-                              <span className="ml-1 text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-violet-950/80 text-violet-300 border border-violet-700/50">
-                                {t.learn.admin.cloudBadge}
                               </span>
                             )}
                           </td>

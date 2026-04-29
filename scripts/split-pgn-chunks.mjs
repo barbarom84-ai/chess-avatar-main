@@ -9,10 +9,11 @@
  *   DATABASE2025_PGN_PATH — fichier source (défaut data/database2025/Database2025.pgn)
  *   PGN_CHUNK_OUT_DIR — dossier sortie (défaut data/database2025/parts)
  *   PGN_CHUNK_MAX_MB — taille max par fichier (défaut 95, marge sous la limite Vercel 100 Mo)
+ *   PGN_CHUNK_DELETE_SOURCE — si "1" / "true" / "yes", supprime le fichier source après succès complet (après écriture des parts)
  */
 
 import { createReadStream } from "node:fs";
-import { mkdir, writeFile } from "node:fs/promises";
+import { access, mkdir, unlink, writeFile } from "node:fs/promises";
 import { createInterface } from "node:readline";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -49,6 +50,10 @@ const outDir = argvOut
       : path.join(root, process.env.PGN_CHUNK_OUT_DIR)
     : DEFAULT_OUT;
 
+const DELETE_SOURCE_AFTER = /^1|true|yes$/i.test(
+  process.env.PGN_CHUNK_DELETE_SOURCE?.trim() ?? "",
+);
+
 /** Début de partie PGN — tag [Event presque toujours en tête (après espaces éventuels). */
 function isNewGameStart(line) {
   const s = line.replace(/^\uFEFF/, "").trimStart();
@@ -61,6 +66,8 @@ function byteLen(str) {
 
 /** Représente une partie complète (lignes sans normaliser les \n finaux). */
 async function main() {
+  await access(inputPath);
+
   await mkdir(outDir, { recursive: true });
 
   let currentLines = [];
@@ -136,6 +143,11 @@ async function main() {
   await flushChunk();
 
   console.log(`Done. Output directory: ${outDir}`);
+
+  if (DELETE_SOURCE_AFTER) {
+    await unlink(inputPath);
+    console.log(`Removed source file: ${inputPath}`);
+  }
 }
 
 main().catch((err) => {

@@ -267,11 +267,13 @@ export const translations = {
         lessonsTab: "Leçons",
         openingsTab: "Toutes les ouvertures",
         intro:
-          "Liste complète des lignes répertoriées dans l’application (noyau + extensions JSON). Les lignes sans leçon détaillée sont indiquées ; les super-abonnés peuvent en publier via l’admin Learn lorsque Supabase est configuré.",
+          "Liste complète des lignes répertoriées dans l’application (noyau + extensions JSON). Chaque ligne a au minimum une fiche Apprendre dérivée du répertoire ; les leçons détaillées « guidées » sont repérées à part. Les super-abonnés peuvent publier des fiches cloud via l’admin Learn lorsque Supabase est configuré.",
         searchPlaceholder: "Rechercher (nom, code ECO, identifiant, tag)…",
         countListed: "{count} ouvertures répertoriées",
-        hasLessonBadge: "Leçon",
-        noLessonBadge: "Pas encore de leçon",
+        hasLessonBadge: "Guidée",
+        repertoireAutoBadge: "Répertoire",
+        customLessonBadge: "Publiée",
+        noLessonBadge: "Pas encore de fiche",
       },
       filters: {
         allColors: "Toutes couleurs",
@@ -317,6 +319,8 @@ export const translations = {
         useInRepertoire: "Créer / configurer un bot",
         useInRepertoireHint:
           "Sur la page d’accueil, ajoutez cette ouverture au répertoire de votre avatar après analyse.",
+        repertoireAutoNotice:
+          "Fiche auto à partir du répertoire : textes courts et ligne modèle ; les parties historiques et défis du dépôt s’affichent ci-dessous lorsqu’ils sont disponibles pour cet identifiant.",
         notFound: "Cette leçon n’existe pas ou n’est pas encore publiée.",
       },
       commentary: {
@@ -353,6 +357,7 @@ export const translations = {
         tableTitle: "Titre",
         tableSource: "Source",
         sourceBuiltin: "Intégré",
+        sourceRepertoireAuto: "Répertoire (auto)",
         sourceCloudOverride: "Cloud (remplace l’intégré)",
         sourceCloudOnly: "Cloud uniquement",
         cloudBadge: "Cloud",
@@ -1499,11 +1504,13 @@ export const translations = {
         lessonsTab: "Lessons",
         openingsTab: "All openings",
         intro:
-          "Full list of lines tracked in the app (core library + JSON partitions). Lines without a full lesson are labeled; super subscribers can publish content via Learn admin when Supabase is configured.",
+          "Full list of lines tracked in the app (core library + JSON partitions). Each line has at least a Learn page derived from the repertoire; fully guided lessons are called out separately. Super subscribers can publish cloud lessons via Learn admin when Supabase is configured.",
         searchPlaceholder: "Search (name, ECO code, id, tag)…",
         countListed: "{count} openings listed",
-        hasLessonBadge: "Lesson",
-        noLessonBadge: "No lesson yet",
+        hasLessonBadge: "Guided",
+        repertoireAutoBadge: "Repertoire",
+        customLessonBadge: "Published",
+        noLessonBadge: "No page yet",
       },
       filters: {
         allColors: "All colors",
@@ -1548,6 +1555,8 @@ export const translations = {
         challengesInGame: "Challenges in this game",
         useInRepertoire: "Build / configure a bot",
         useInRepertoireHint: "On the homepage, add this opening to your avatar’s repertoire after analysis.",
+        repertoireAutoNotice:
+          "Auto-generated from the repertoire card: short text and model line; historic games and challenges from the repo appear below when available for this id.",
         notFound: "This lesson does not exist or is not published yet.",
       },
       commentary: {
@@ -1584,6 +1593,7 @@ export const translations = {
         tableTitle: "Title",
         tableSource: "Source",
         sourceBuiltin: "Built-in",
+        sourceRepertoireAuto: "Repertoire (auto)",
         sourceCloudOverride: "Cloud (overrides built-in)",
         sourceCloudOnly: "Cloud-only",
         cloudBadge: "Cloud",

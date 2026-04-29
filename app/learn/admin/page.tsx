@@ -88,9 +88,11 @@ export default function LearnAdminHubPage() {
                   const { title } = lessonWithMergedOpening(lesson, catalog.openingById, lang);
                   const cloud = catalog.cloudOpeningIds.has(lesson.openingId);
                   const builtin = BUILTIN_IDS.has(lesson.openingId);
+                  const repertoireAuto = catalog.syntheticOpeningIds.has(lesson.openingId);
                   let source = t.learn.admin.sourceBuiltin;
                   if (cloud && builtin) source = t.learn.admin.sourceCloudOverride;
                   else if (cloud && !builtin) source = t.learn.admin.sourceCloudOnly;
+                  else if (repertoireAuto) source = t.learn.admin.sourceRepertoireAuto;
 
                   return (
                     <tr key={lesson.openingId} className="border-b border-slate-800/80">

@@ -5,6 +5,7 @@
  */
 
 import e4Extended from "./data/openings/partitions/e4-extended.json";
+import lichessNamed from "./data/openings/partitions/lichess-named-openings.json";
 
 export interface Opening {
   id: string;
@@ -537,7 +538,10 @@ export const REPERTOIRE_PRESETS: OpeningRepertoire[] = [
  * Utilitaires
  */
 
-const EXTRA_OPENING_LINES: Opening[] = e4Extended as Opening[];
+const EXTRA_OPENING_LINES: Opening[] = [
+  ...(e4Extended as Opening[]),
+  ...(lichessNamed as Opening[]),
+];
 
 // Trouver une ouverture par ID (noyau + partitions JSON)
 export function getOpeningById(id: string): Opening | undefined {
@@ -549,7 +553,8 @@ export function getOpeningById(id: string): Opening | undefined {
 
 // Filtrer par couleur
 export function getOpeningsByColor(color: 'white' | 'black' | 'both'): Opening[] {
-  return OPENINGS_DATABASE.filter(o => o.color === color || o.color === 'both');
+  const pool = [...OPENINGS_DATABASE, ...EXTRA_OPENING_LINES];
+  return pool.filter((o) => o.color === color || o.color === 'both');
 }
 
 // Filtrer par caractère

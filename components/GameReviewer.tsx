@@ -1182,8 +1182,8 @@ function OpeningExplorerPanel({ fen }: { fen: string }) {
         <p className="mt-2 text-red-300">{t.review.opening.explorerError}</p>
       )}
       {expanded && body?.moves && body.moves.length > 0 && (
-        <ul className="mt-2 space-y-1 max-h-40 overflow-y-auto">
-          {body.moves.slice(0, 10).map((m, i) => (
+        <ul className="mt-2 space-y-1 max-h-56 overflow-y-auto">
+          {body.moves.map((m, i) => (
             <li
               key={`${m.uci ?? m.san}-${i}`}
               className="flex justify-between gap-2 font-mono text-[10px] text-slate-200"
