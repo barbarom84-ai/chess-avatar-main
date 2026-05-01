@@ -29,6 +29,7 @@ const NAV_ITEMS: NavItemDef[] = [
   { href: "/analyze", piece: "Q", label: { fr: "Analyser", en: "Analyze" } },
   { href: "/play", piece: "N", label: { fr: "Jouer", en: "Play" } },
   { href: "/learn", piece: "Q", label: { fr: "Apprentissage", en: "Learn" } },
+  { href: "/puzzles", piece: "P", label: { fr: "Puzzles", en: "Puzzles" } },
   { href: "/profile", piece: "B", label: { fr: "Profil", en: "Profile" } },
   { href: "/games", piece: "R", label: { fr: "Parties", en: "Games" } },
   { href: "/guide", piece: "P", label: { fr: "UCI creator guide", en: "UCI creator guide" } },
@@ -37,7 +38,11 @@ const NAV_ITEMS: NavItemDef[] = [
 type Translations = (typeof translations)[Language];
 
 function isNavItemActive(pathname: string, href: string): boolean {
-  return pathname === href || (href === "/learn" && pathname.startsWith("/learn"));
+  return (
+    pathname === href ||
+    (href === "/learn" && pathname.startsWith("/learn")) ||
+    (href === "/puzzles" && pathname.startsWith("/puzzles"))
+  );
 }
 
 function navItemLabel(
@@ -47,6 +52,7 @@ function navItemLabel(
 ): string {
   if (item.href === "/learn") return t.header.learn;
   if (item.href === "/games") return t.header.games;
+  if (item.href === "/puzzles") return t.header.puzzles;
   return item.label[lang];
 }
 

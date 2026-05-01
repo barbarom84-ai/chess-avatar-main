@@ -578,8 +578,65 @@ export const translations = {
       profiles: "Profils",
       games: "Parties",
       learn: "Apprentissage",
+      puzzles: "Puzzles",
       guide: "Guide",
       boardSettingsTitle: "Paramètres de l'échiquier"
+    },
+
+    puzzlesPage: {
+      title: "Puzzles",
+      subtitle:
+        "Retrouvez d’abord les défis pensés pour ChessAvatar — positions tirées de parties historiques du catalogue (comme dans les leçons d’ouverture). En complément, des puzzles quotidiens et aléatoires via Lichess.",
+      chessAvatarBadge: "Catalogue ChessAvatar",
+      featuredSectionTitle: "Parties & défis ChessAvatar",
+      featuredSectionDesc:
+        "Ces positions viennent des parties historiques intégrées à l’application : même matière que la section Apprentissage, format quiz avec indices.",
+      avatarGamesIntro:
+        "Les parties contre les avatars (page Jouer) peuvent être sauvegardées sur votre compte : retrouvez les récentes ci-dessous ou dans Parties.",
+      openLearn: "Ouvrir le catalogue Apprentissage",
+      avatarGamesTitle: "Vos parties contre des avatars",
+      avatarGamesDesc:
+        "Chaque partie contre un profil ChessAvatar sur la page Jouer peut être sauvegardée dans le cloud. Ouvrez-la dans Parties pour revoir le PGN et lancer une analyse.",
+      avatarGamesCta: "Ouvrir mes parties",
+      avatarGamesLoading: "Chargement de vos parties…",
+      avatarGamesGuest:
+        "Connectez-vous pour voir les parties sauvegardées contre vos avatars (après une partie sur Jouer).",
+      avatarGamesEmpty:
+        "Aucune partie enregistrée pour l’instant. Lancez une partie contre un avatar sur la page Jouer : elle pourra être sauvegardée automatiquement à la fin.",
+      playVsAvatar: "Jouer contre un avatar",
+      emptyFeatured:
+        "Aucune partie historique avec défis n’est disponible ici pour l’instant. Parcourez le catalogue Apprentissage pour les leçons complètes.",
+      lichessSectionTitle: "Complément : puzzles Lichess",
+      lichessSectionDesc:
+        "Entraînement additionnel avec la base tactique Lichess (parties réelles et récentes sur leur plateforme).",
+      dailyTitle: "Puzzle du jour",
+      dailyDesc: "Le même puzzle que sur Lichess pour tous les joueurs, renouvelé chaque nuit (UTC).",
+      dailyLoading: "Chargement du puzzle du jour…",
+      dailyError: "Impossible de charger le puzzle du jour. Réessayez plus tard.",
+      retry: "Réessayer",
+      randomTitle: "Puzzle aléatoire",
+      randomDesc: "Un puzzle tiré au hasard dans la base Lichess.",
+      newRandom: "Nouveau puzzle",
+      randomLoading: "Chargement…",
+      randomError: "Impossible de charger un puzzle aléatoire.",
+      historicalTitle: "Choisissez une partie",
+      historicalDesc:
+        "Chaque partie propose un ou plusieurs défis — retrouvez les coups marquants étudiés dans nos fiches.",
+      pickGame: "Partie",
+      sourceLichess:
+        "Les puzzles Lichess sont générés à partir de parties réelles et récentes sur leur plateforme.",
+      lichess: {
+        reset: "Recommencer",
+        solved: "Puzzle résolu.",
+        wrong: "Ce n’est pas le bon coup. Réessayez.",
+        themes: "Thèmes",
+        rating: "Classement puzzle",
+        plays: "Tentatives",
+        openOnLichess: "Ouvrir sur Lichess",
+        sideToMove: "Trait",
+        white: "Blancs",
+        black: "Noirs",
+      },
     },
 
     // Evaluation bar
@@ -1815,8 +1872,64 @@ export const translations = {
       profiles: "Profiles",
       games: "Games",
       learn: "Learn",
+      puzzles: "Puzzles",
       guide: "Guide",
       boardSettingsTitle: "Board settings"
+    },
+
+    puzzlesPage: {
+      title: "Puzzles",
+      subtitle:
+        "Start with ChessAvatar challenges — positions from historic games in our catalog (same material as opening lessons). Plus daily and random puzzles via Lichess.",
+      chessAvatarBadge: "ChessAvatar catalog",
+      featuredSectionTitle: "ChessAvatar games & challenges",
+      featuredSectionDesc:
+        "These positions come from historic games built into the app — the same content as Learn, in quiz format with hints.",
+      avatarGamesIntro:
+        "Games vs avatars (Play page) can be saved to your account — recent ones are listed below; full history is under Games.",
+      openLearn: "Open the Learn catalog",
+      avatarGamesTitle: "Your games vs avatars",
+      avatarGamesDesc:
+        "Each game against a Chess Avatar profile on the Play page can be saved to the cloud. Open Games to review the PGN and run analysis.",
+      avatarGamesCta: "Open my games",
+      avatarGamesLoading: "Loading your games…",
+      avatarGamesGuest:
+        "Sign in to see games saved against your avatars (after a game on Play).",
+      avatarGamesEmpty:
+        "No saved games yet. Play against an avatar on the Play page — it can be saved automatically when the game ends.",
+      playVsAvatar: "Play vs avatar",
+      emptyFeatured:
+        "No historic games with challenges are available here yet. Browse the Learn catalog for full lessons.",
+      lichessSectionTitle: "Extra: Lichess puzzles",
+      lichessSectionDesc:
+        "Additional training from the Lichess tactics database (real, recent games on their platform).",
+      dailyTitle: "Daily puzzle",
+      dailyDesc: "The same Lichess daily puzzle for everyone, refreshed at midnight UTC.",
+      dailyLoading: "Loading daily puzzle…",
+      dailyError: "Could not load the daily puzzle. Try again later.",
+      retry: "Retry",
+      randomTitle: "Random puzzle",
+      randomDesc: "A random puzzle from the Lichess database.",
+      newRandom: "New puzzle",
+      randomLoading: "Loading…",
+      randomError: "Could not load a random puzzle.",
+      historicalTitle: "Choose a game",
+      historicalDesc:
+        "Each game includes one or more challenges — find the key moves from our lesson material.",
+      pickGame: "Game",
+      sourceLichess: "Lichess puzzles are generated from real, recent games on their platform.",
+      lichess: {
+        reset: "Reset",
+        solved: "Puzzle solved.",
+        wrong: "That’s not the right move. Try again.",
+        themes: "Themes",
+        rating: "Puzzle rating",
+        plays: "Attempts",
+        openOnLichess: "Open on Lichess",
+        sideToMove: "Side to move",
+        white: "White",
+        black: "Black",
+      },
     },
 
     // Evaluation bar
