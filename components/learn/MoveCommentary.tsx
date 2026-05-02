@@ -55,6 +55,9 @@ export default function MoveCommentary({
           <SanNotation
             verboseMove={currentVerboseMove ?? null}
             fallbackSan={currentSan ?? ""}
+            movingColor={
+              moveIndex > 0 ? (moveIndex % 2 === 1 ? "w" : "b") : "w"
+            }
             pieceSet={settings.pieceSet}
             size="md"
           />

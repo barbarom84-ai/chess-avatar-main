@@ -1,12 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Chess } from "chess.js";
 import { useStockfish } from "./useStockfish";
 import {
-  aggregateReview,
-  buildReviewedMove,
-  uciToSan,
+  analyzeParsedGameForReview,
+  ReviewCancelledError,
   type GameReviewResult,
   type ParsedGameForReview,
   type ReviewedMove,
@@ -134,156 +132,25 @@ export function useGameReview({
     void runReview();
 
     async function runReview() {
-      const collected: ReviewedMove[] = [];
       try {
-        for (let ply = 0; ply < totalPlies; ply++) {
-          if (cancelRef.current) {
-            runningRef.current = false;
-            setStatus("cancelled");
-            return;
-          }
-
-          const fenBefore = parsed!.fenBefore[ply];
-          const fenAfter = parsed!.fenAfter[ply];
-          const san = parsed!.san[ply];
-          const uci = parsed!.uci[ply];
-          const sideToMove = parsed!.sideToMove[ply];
-
-          // 1) Best move + best eval at the position before the move.
-          const best = await getBestMoveAndEval(fenBefore, depth);
-          if (cancelRef.current) {
-            runningRef.current = false;
-            setStatus("cancelled");
-            return;
-          }
-
-          // 2) Player eval: if the played move is the engine's best move,
-          //    the eval after the player's move equals best.evalPawns.
-          //    Otherwise we must evaluate the position after the played move.
-          let playerEvalPawns = best.evalPawns;
-          let isMatePlayer: boolean | undefined = best.isMate;
-          // Mate distance for the played move's resulting position (white POV).
-          let playerMateInMovesWhite: number | undefined =
-            best.mateInMoves !== undefined
-              ? mateToWhitePov(best.mateInMoves, sideToMove)
-              : undefined;
-          const playerIsBest = best.move && best.move === uci;
-          if (!playerIsBest) {
-            // Short-circuit terminal positions BEFORE asking Stockfish to
-            // search them. Several Stockfish.wasm builds either silently
-            // ignore `go` on a position with no legal moves, or emit
-            // `bestmove (none)` after a long delay — in practice the worker
-            // ends up never resolving for the very last ply of a checkmate
-            // game, freezing the whole review on the final move. chess.js
-            // can tell us instantly whether the side to move has any legal
-            // reply, so we synthesize the eval/mate distance ourselves and
-            // skip the engine call entirely.
-            const terminal = classifyTerminalPosition(fenAfter);
-            if (terminal === "checkmate") {
-              // The side that just moved delivered mate — eval is +∞ in
-              // their favor (white POV: + when white mates, − when black).
-              playerEvalPawns = sideToMove === "white" ? 10 : -10;
-              isMatePlayer = true;
-              // Mate has already been delivered; the conventional notation
-              // is "mate in 0" but most UIs render that awkwardly, so we
-              // surface "mate in 1" (the move that was just played) signed
-              // by the mating side.
-              playerMateInMovesWhite = sideToMove === "white" ? 1 : -1;
-            } else if (terminal !== null) {
-              // Stalemate, insufficient material, threefold, 50-move => draw.
-              playerEvalPawns = 0;
-              isMatePlayer = false;
-              playerMateInMovesWhite = undefined;
-            } else {
-              const afterPlayer = await getBestMoveAndEval(fenAfter, depth);
-              if (cancelRef.current) {
-                runningRef.current = false;
-                setStatus("cancelled");
-                return;
-              }
-              // Eval after player's move: we just searched the position from
-              // the opponent's POV. Stockfish's `score cp` is from the side
-              // to move, but `getBestMoveAndEval` already returns it in
-              // white POV pawns (it parses raw `score cp` which is
-              // side-to-move; see note below).
-              //
-              // Stockfish reports `score cp` from the side to move. To
-              // convert to white POV we'd need to negate when it's black to
-              // move. The existing `getBestMoveAndEval` does NOT negate, so
-              // the value is side-to-move POV. For our CPL math we only
-              // need consistency, so we normalize both `bestEval` and
-              // `playerEval` to white POV here.
-              playerEvalPawns = normalizeToWhitePov(
-                afterPlayer.evalPawns,
-                // The side to move in fenAfter is the opponent of `sideToMove`.
-                opposite(sideToMove)
-              );
-              isMatePlayer = afterPlayer.isMate;
-              playerMateInMovesWhite =
-                afterPlayer.mateInMoves !== undefined
-                  ? mateToWhitePov(
-                      afterPlayer.mateInMoves,
-                      opposite(sideToMove)
-                    )
-                  : undefined;
-            }
-          }
-
-          // Stockfish's eval at fenBefore is from `sideToMove` POV (the side to move).
-          // Normalize to white POV so analysis-engine math is consistent.
-          const evalBeforeWhite = normalizeToWhitePov(best.evalPawns, sideToMove);
-          // best.evalPawns is the eval AFTER the engine plays its best move,
-          // i.e. now it's the opponent's turn. The score reported is
-          // side-to-move POV at the moment of the search root, which is the
-          // position before any move. So bestEval == evalBeforeWhite (engine
-          // best line). We use that for the "best line eval".
-          const bestEvalWhite = evalBeforeWhite;
-
-          const rawBestUci = best.move ?? "";
-          // Validate the engine response against the actual position. If the
-          // returned UCI is not legal in `fenBefore`, it almost certainly
-          // belongs to a different (stale) search root — discard it so we
-          // never paint a wrong arrow or claim "Best was: <illegal move>".
-          const bestSan = rawBestUci ? uciToSan(fenBefore, rawBestUci) : "";
-          const bestUci = bestSan ? rawBestUci : "";
-
-          // For the engine's best line we report `mate in N` from the white
-          // POV. `best` was searched at `fenBefore` (whose side-to-move is
-          // `sideToMove`), so we normalize the same way as evals.
-          const bestMateInMovesWhite =
-            best.mateInMoves !== undefined
-              ? mateToWhitePov(best.mateInMoves, sideToMove)
-              : undefined;
-
-          const reviewed = buildReviewedMove(
-            {
-              ply,
-              san,
-              uci,
-              sideToMove,
-              evalBefore: evalBeforeWhite,
-              bestMove: bestUci,
-              bestSan,
-              bestEval: bestEvalWhite,
-              playerEval: playerIsBest ? bestEvalWhite : playerEvalPawns,
-              isMateBest: best.isMate,
-              isMatePlayer,
-              bestMateInMoves: bestMateInMovesWhite,
-              playerMateInMoves: playerIsBest
-                ? bestMateInMovesWhite
-                : playerMateInMovesWhite,
-            },
-            analysisStrictness
-          );
-
-          collected.push(reviewed);
-          setMoves((prev) => [...prev, reviewed]);
-        }
-
-        const aggregated = aggregateReview(collected, analysisStrictness);
+        const aggregated = await analyzeParsedGameForReview({
+          parsed: parsed!,
+          getBestMoveAndEval,
+          depth,
+          maxPlies: totalPlies,
+          analysisStrictness,
+          isCancelled: () => cancelRef.current,
+          onPartialMove: (reviewed) =>
+            setMoves((prev) => [...prev, reviewed]),
+        });
         setResult(aggregated);
         setStatus("done");
       } catch (err) {
+        if (err instanceof ReviewCancelledError) {
+          runningRef.current = false;
+          setStatus("cancelled");
+          return;
+        }
         setError(err instanceof Error ? err.message : String(err));
         setStatus("error");
       } finally {
@@ -318,58 +185,4 @@ export function useGameReview({
     cancel,
     reset,
   };
-}
-
-function opposite(side: "white" | "black"): "white" | "black" {
-  return side === "white" ? "black" : "white";
-}
-
-/**
- * Stockfish's `score cp` is reported from the side-to-move's perspective.
- * We convert to white POV so all CPL math stays consistent.
- */
-function normalizeToWhitePov(
-  evalPawnsStmPov: number,
-  sideToMove: "white" | "black"
-): number {
-  return sideToMove === "white" ? evalPawnsStmPov : -evalPawnsStmPov;
-}
-
-/**
- * Convert a signed `mate in N` (side-to-move POV, as Stockfish reports it)
- * to a signed value in white POV. Positive => white mates in N, negative =>
- * black mates in N.
- */
-function mateToWhitePov(
-  mateInMovesStmPov: number,
-  sideToMove: "white" | "black"
-): number {
-  return sideToMove === "white" ? mateInMovesStmPov : -mateInMovesStmPov;
-}
-
-type TerminalKind = "checkmate" | "stalemate" | "draw" | null;
-
-/**
- * Returns the terminal classification of `fen` according to chess.js, or
- * null when the side to move still has legal options. Used to bypass
- * Stockfish for positions where there is nothing to search.
- */
-function classifyTerminalPosition(fen: string): TerminalKind {
-  try {
-    const c = new Chess(fen);
-    if (c.isCheckmate()) return "checkmate";
-    if (c.isStalemate()) return "stalemate";
-    if (
-      c.isInsufficientMaterial() ||
-      c.isThreefoldRepetition() ||
-      c.isDraw()
-    ) {
-      return "draw";
-    }
-    return null;
-  } catch {
-    // Defensive: if chess.js can't parse the FEN we fall back to letting
-    // the engine try (it would presumably also fail, but that's fine).
-    return null;
-  }
 }

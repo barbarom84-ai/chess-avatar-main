@@ -261,6 +261,7 @@ export default function AdvancedGameViewer({ pgn, playerColor = 'white' }: Advan
                     <SanNotation
                       verboseMove={movesVerbose?.[idx * 2] ?? null}
                       fallbackSan={movesData[idx * 2]}
+                      movingColor="w"
                       pieceSet={boardUiSettings.pieceSet}
                       size="sm"
                     />
@@ -279,6 +280,7 @@ export default function AdvancedGameViewer({ pgn, playerColor = 'white' }: Advan
                       <SanNotation
                         verboseMove={movesVerbose?.[idx * 2 + 1] ?? null}
                         fallbackSan={movesData[idx * 2 + 1] ?? ""}
+                        movingColor="b"
                         pieceSet={boardUiSettings.pieceSet}
                         size="sm"
                       />

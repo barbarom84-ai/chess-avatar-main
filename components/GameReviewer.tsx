@@ -21,7 +21,7 @@ import {
   Lock,
   LogOut,
 } from "lucide-react";
-import { Chess } from "chess.js";
+import { Chess, type Move } from "chess.js";
 import {
   LineChart,
   Line,
@@ -65,6 +65,10 @@ import {
   describeTheoryHitsForUi,
   getOpeningTheorySans,
 } from "@/lib/opening-theory";
+import { buildVerboseHistoryFromSan } from "@/lib/move-history-verbose";
+import { uciToVerboseMoveFromFen } from "@/lib/learn-chess-utils";
+import SanNotation from "@/components/SanNotation";
+import { useChessboardSettings } from "@/contexts/ChessboardSettingsContext";
 
 const FREE_ENGINE_DEPTH = 12;
 const PREMIUM_DEPTH_OPTIONS = [14, 18, 22] as const;
@@ -350,6 +354,11 @@ export default function GameReviewer({
     };
   }, [parsed, currentIndex, lang]);
 
+  const verboseMainline = useMemo(
+    () => (parsed ? buildVerboseHistoryFromSan(parsed.san) : null),
+    [parsed]
+  );
+
   // Per-ply tactical flags computed entirely from the FEN snapshots that
   // chess.js already produced. No engine round-trips, runs once when the
   // game changes and is then memoized.
@@ -572,6 +581,7 @@ export default function GameReviewer({
               <MovesList
                 parsed={parsed}
                 moves={effectiveMoves}
+                verboseMainline={verboseMainline}
                 currentIndex={currentIndex}
                 openingByPly={openingByPly}
                 moveFlagsByPly={moveFlagsByPly}
@@ -910,6 +920,7 @@ interface MoveFlags {
 function MovesList({
   parsed,
   moves,
+  verboseMainline,
   currentIndex,
   openingByPly,
   moveFlagsByPly,
@@ -918,6 +929,7 @@ function MovesList({
 }: {
   parsed: ParsedGameForReview;
   moves: ReviewedMove[];
+  verboseMainline: ReturnType<typeof buildVerboseHistoryFromSan>;
   currentIndex: number;
   openingByPly: Array<Opening | null>;
   moveFlagsByPly: MoveFlags[];
@@ -984,6 +996,7 @@ function MovesList({
           </span>
           <MoveCell
             sanPly={row.white}
+            verboseMove={verboseMainline?.[row.white.ply] ?? null}
             isActive={currentIndex === row.white.ply + 1}
             t={t}
             onSelect={onSelect}
@@ -991,6 +1004,7 @@ function MovesList({
           {row.black ? (
             <MoveCell
               sanPly={row.black}
+              verboseMove={verboseMainline?.[row.black.ply] ?? null}
               isActive={currentIndex === row.black.ply + 1}
               t={t}
               onSelect={onSelect}
@@ -1006,6 +1020,7 @@ function MovesList({
 
 function MoveCell({
   sanPly,
+  verboseMove,
   isActive,
   t,
   onSelect,
@@ -1018,10 +1033,12 @@ function MoveCell({
     flags: MoveFlags | null;
     isExitTheory: boolean;
   };
+  verboseMove: Move | null;
   isActive: boolean;
   t: ReturnType<typeof useLanguage>["t"];
   onSelect: (idx: number) => void;
 }) {
+  const { settings } = useChessboardSettings();
   const r = sanPly.reviewed;
   const colors = r ? CLASSIFICATION_COLORS[r.classification] : null;
   const isBook = sanPly.opening !== null;
@@ -1036,7 +1053,13 @@ function MoveCell({
           : "text-slate-200 hover:bg-slate-800/60"
       }`}
     >
-      <span>{sanPly.san}</span>
+      <SanNotation
+        verboseMove={verboseMove}
+        fallbackSan={sanPly.san}
+        movingColor={sanPly.ply % 2 === 0 ? "w" : "b"}
+        pieceSet={settings.pieceSet}
+        size="sm"
+      />
       {isBook && (
         <BookOpen
           className="h-3 w-3 text-amber-300/80 shrink-0"
@@ -1093,6 +1116,14 @@ interface MastersExplorerBody {
 
 function OpeningExplorerPanel({ fen }: { fen: string }) {
   const { t } = useLanguage();
+  const { settings } = useChessboardSettings();
+  const sideToMove = useMemo(() => {
+    try {
+      return fen.split(" ")[1] === "b" ? "b" : "w";
+    } catch {
+      return "w";
+    }
+  }, [fen]);
   const [expanded, setExpanded] = useState(false);
   const [pool, setPool] = useState<"masters" | "lichess">("lichess");
   const [body, setBody] = useState<MastersExplorerBody | null>(null);
@@ -1186,9 +1217,19 @@ function OpeningExplorerPanel({ fen }: { fen: string }) {
           {body.moves.map((m, i) => (
             <li
               key={`${m.uci ?? m.san}-${i}`}
-              className="flex justify-between gap-2 font-mono text-[10px] text-slate-200"
+              className="flex justify-between gap-2 font-mono text-[10px] text-slate-200 items-center"
             >
-              <span>{m.san ?? m.uci}</span>
+              <span className="inline-flex items-center min-w-0">
+                <SanNotation
+                  verboseMove={
+                    m.uci ? uciToVerboseMoveFromFen(fen, m.uci) : null
+                  }
+                  fallbackSan={m.san ?? m.uci ?? ""}
+                  movingColor={sideToMove}
+                  pieceSet={settings.pieceSet}
+                  size="sm"
+                />
+              </span>
               <span className="text-slate-500 shrink-0">
                 W{m.white ?? 0} · D{m.draws ?? 0} · B{m.black ?? 0}
               </span>
@@ -1238,6 +1279,13 @@ function CurrentMoveDetail({
     | null;
 }) {
   const { t, lang } = useLanguage();
+  const { settings: boardSettings } = useChessboardSettings();
+
+  const theoryVerbose = useMemo(() => {
+    if (!theorySnapshot?.sans?.length) return null;
+    return buildVerboseHistoryFromSan(theorySnapshot.sans);
+  }, [theorySnapshot]);
+
   if (!move) {
     return (
       <Card className="bg-slate-900/60 border-cyan-500/20">
@@ -1273,8 +1321,18 @@ function CurrentMoveDetail({
             <Badge className={`${colors.bg} ${colors.text} ${colors.border} border font-bold`}>
               {colors.emoji} {labels[move.classification]}
             </Badge>
-            <span className="text-sm font-mono text-slate-100">
-              {move.sideToMove === "white" ? "♔" : "♚"} {move.san}
+            <span className="text-sm font-mono text-slate-100 inline-flex items-center gap-1">
+              <SanNotation
+                verboseMove={
+                  fenBefore && move.uci
+                    ? uciToVerboseMoveFromFen(fenBefore, move.uci)
+                    : null
+                }
+                fallbackSan={move.san}
+                movingColor={move.sideToMove === "white" ? "w" : "b"}
+                pieceSet={boardSettings.pieceSet}
+                size="md"
+              />
             </span>
           </div>
           <div className="text-right text-xs text-slate-400 space-y-0.5">
@@ -1334,18 +1392,23 @@ function CurrentMoveDetail({
             {!theorySnapshot.aligned && (
               <p className="text-orange-300/95">{t.review.opening.divergedFromBook}</p>
             )}
-            <p className="text-slate-300 leading-relaxed break-words font-mono text-[10px]">
+            <p className="text-slate-300 leading-relaxed break-words font-mono text-[10px] inline-flex flex-wrap items-center gap-x-1 gap-y-0.5">
               {theorySnapshot.sans.map((san, i) => (
                 <span
                   key={`${san}-${i}`}
                   className={
                     i < theorySnapshot.matchedPlies
-                      ? "text-amber-100 font-semibold"
-                      : "text-slate-500"
+                      ? "text-amber-100 font-semibold inline-flex items-center"
+                      : "text-slate-500 inline-flex items-center"
                   }
                 >
-                  {san}
-                  {i < theorySnapshot.sans.length - 1 ? " " : ""}
+                  <SanNotation
+                    verboseMove={theoryVerbose?.[i] ?? null}
+                    fallbackSan={san}
+                    movingColor={i % 2 === 0 ? "w" : "b"}
+                    pieceSet={boardSettings.pieceSet}
+                    size="sm"
+                  />
                 </span>
               ))}
             </p>
@@ -1415,19 +1478,31 @@ function CurrentMoveDetail({
             <span className="font-mono">{formatEval(move.playerEval)}</span>
           </div>
           {isSubOptimal && move.bestMove && (
-            <div className="flex items-center gap-1 text-emerald-300">
-              <AlertTriangle className="h-3 w-3" />
-              <span>
+            <div className="flex items-start gap-1 text-emerald-300 flex-wrap">
+              <AlertTriangle className="h-3 w-3 shrink-0 mt-0.5" />
+              <span className="inline-flex flex-wrap items-center gap-x-1 gap-y-0.5">
                 {t.review.bestWas}{" "}
-                <strong className="font-mono">
-                  {move.bestSan || move.bestMove}
+                <strong className="inline-flex items-center font-mono font-semibold">
+                  <SanNotation
+                    verboseMove={
+                      fenBefore && move.bestMove
+                        ? uciToVerboseMoveFromFen(fenBefore, move.bestMove)
+                        : null
+                    }
+                    fallbackSan={move.bestSan || move.bestMove}
+                    movingColor={
+                      move.sideToMove === "white" ? "w" : "b"
+                    }
+                    pieceSet={boardSettings.pieceSet}
+                    size="sm"
+                  />
                 </strong>
                 {move.bestSan && (
-                  <span className="text-[10px] text-emerald-400/60 font-mono ml-1">
+                  <span className="text-[10px] text-emerald-400/60 font-mono">
                     ({move.bestMove})
                   </span>
-                )}{" "}
-                ({formatEval(move.bestEval)})
+                )}
+                <span className="font-mono">({formatEval(move.bestEval)})</span>
               </span>
             </div>
           )}

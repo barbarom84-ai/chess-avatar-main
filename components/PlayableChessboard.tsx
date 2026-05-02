@@ -33,11 +33,39 @@ import {
   chessWithExplorationStack,
   mainlineMoveTargetSquare,
 } from "@/lib/review-chess";
+import {
+  analyzeParsedGameForReview,
+  buildParsedGameFromSanHistory,
+  ReviewCancelledError,
+} from "@/lib/game-review";
+import { DEFAULT_ANALYSIS_STRICTNESS } from "@/lib/analysis-profiles";
 import { buildVerboseHistoryFromSan } from "@/lib/move-history-verbose";
 import { Input } from "@/components/ui/input";
 import SanNotation from "./SanNotation";
 
 const REVIEW_EMOJI_CHOICES = ["💡", "🔥", "❓", "!!", "!?", "⭐", "👍", "📌"];
+
+/** Depth for post-game CAPS-style accuracy (balance speed vs stability). */
+const POST_GAME_REVIEW_DEPTH = 14;
+
+/**
+ * Heuristic display ELO: performance rating plus accuracy vs baseline (~70 from analysis curve).
+ * Not a Glicko/Lichess official rating.
+ */
+function hybridEstimatedElo(
+  perfElo: number,
+  accuracyPercent: number | null,
+  baseline = 70,
+  k = 3,
+  clampAmt = 80
+): number {
+  if (accuracyPercent == null || !Number.isFinite(accuracyPercent)) return perfElo;
+  const delta = Math.min(
+    clampAmt,
+    Math.max(-clampAmt, k * (accuracyPercent - baseline))
+  );
+  return Math.round(perfElo + delta);
+}
 
 interface PlayableChessboardProps {
   config: EngineConfig;
@@ -142,8 +170,23 @@ export default function PlayableChessboard({
   const [startTime, setStartTime] = useState<Date>(new Date());
   const [forcedLineArrows, setForcedLineArrows] = useState<Array<{ from: string; to: string; color: string }>>([]);
   const [archiveLoadError, setArchiveLoadError] = useState(false);
+  /** Post-game CAPS analysis: null when idle or finished. */
+  const [postGamePrecisionProgress, setPostGamePrecisionProgress] = useState<
+    null | { current: number; total: number }
+  >(null);
 
-  const { isReady, isThinking, getBestMove, getBestMoveForFen, resetForcedLine, remainingForcedMoves } = useStockfish();
+  /** Incremented on reset so in-flight post-game analysis does not apply stale state. */
+  const postGameStatsCancelRef = useRef(0);
+
+  const {
+    isReady,
+    isThinking,
+    getBestMove,
+    getBestMoveAndEval,
+    resetForcedLine,
+    remainingForcedMoves,
+    stopThinking,
+  } = useStockfish();
   const { t, lang } = useLanguage();
   const { settings: boardUiSettings } = useChessboardSettings();
 
@@ -642,31 +685,55 @@ export default function PlayableChessboard({
       eloBlack,
     });
 
-    const computePrecision = async () => {
-      if (!getBestMoveForFen || verboseMoves.length === 0) return;
-      const replayForPrecision = new Chess();
-      let whiteMatch = 0, whiteTotal = 0, blackMatch = 0, blackTotal = 0;
-      for (let i = 0; i < verboseMoves.length; i++) {
-        const fen = replayForPrecision.fen();
-        const m = replayForPrecision.move(currentMoveHistory[i]);
-        if (!m) continue;
-        const uciPlayed = (m.from + m.to + (m.promotion ?? '')).toLowerCase();
-        try {
-          const best = (await getBestMoveForFen(fen, 10)).toLowerCase();
-          if (best && uciPlayed.length >= 4) {
-            const isMatch = best.slice(0, 4) === uciPlayed.slice(0, 4);
-            if (i % 2 === 0) { whiteTotal++; if (isMatch) whiteMatch++; }
-            else { blackTotal++; if (isMatch) blackMatch++; }
-          }
-        } catch { /* skip on error */ }
+    const statsRunToken = postGameStatsCancelRef.current;
+    void (async () => {
+      const parsed = buildParsedGameFromSanHistory(currentMoveHistory);
+      if (
+        !parsed ||
+        verboseMoves.length === 0 ||
+        !getBestMoveAndEval ||
+        statsRunToken !== postGameStatsCancelRef.current
+      ) {
+        return;
       }
-      setGameStats(prev => ({
-        ...prev,
-        precisionWhite: whiteTotal > 0 ? Math.round((whiteMatch / whiteTotal) * 100) : null,
-        precisionBlack: blackTotal > 0 ? Math.round((blackMatch / blackTotal) * 100) : null,
-      }));
-    };
-    computePrecision();
+      const totalPliesCount = parsed.san.length;
+      setPostGamePrecisionProgress({ current: 0, total: totalPliesCount });
+      try {
+        const review = await analyzeParsedGameForReview({
+          parsed,
+          getBestMoveAndEval,
+          depth: POST_GAME_REVIEW_DEPTH,
+          analysisStrictness: DEFAULT_ANALYSIS_STRICTNESS,
+          isCancelled: () => statsRunToken !== postGameStatsCancelRef.current,
+          onProgress: (completed, total) => {
+            if (statsRunToken !== postGameStatsCancelRef.current) return;
+            setPostGamePrecisionProgress({ current: completed, total });
+          },
+        });
+        if (statsRunToken !== postGameStatsCancelRef.current) return;
+
+        const precW = Math.round(review.white.accuracy * 10) / 10;
+        const precB = Math.round(review.black.accuracy * 10) / 10;
+        const humanAccuracy =
+          playerColor === 'white' ? review.white.accuracy : review.black.accuracy;
+        const eloHumanHybrid = hybridEstimatedElo(playerPerfElo, humanAccuracy);
+
+        setGameStats((prev) => ({
+          ...prev,
+          precisionWhite: precW,
+          precisionBlack: precB,
+          eloWhite:
+            playerColor === 'white' ? eloHumanHybrid : botElo,
+          eloBlack:
+            playerColor === 'black' ? eloHumanHybrid : botElo,
+        }));
+      } catch (err) {
+        if (err instanceof ReviewCancelledError) return;
+        console.error('Post-game CAPS analysis failed:', err);
+      } finally {
+        setPostGamePrecisionProgress(null);
+      }
+    })();
 
     // Générer un PGN complet avec tous les headers
     const generateCompletePGN = () => {
@@ -780,6 +847,13 @@ export default function PlayableChessboard({
     setLastMove(null);
     setMoveCount50(0);
     setShowResultModal(false);
+    postGameStatsCancelRef.current += 1;
+    setPostGamePrecisionProgress(null);
+    try {
+      stopThinking();
+    } catch {
+      /* best-effort: interrupt post-game engine work */
+    }
     setStartTime(new Date());
     setGameStats({
       totalMoves: 0,
@@ -1146,6 +1220,7 @@ export default function PlayableChessboard({
         result={gameResultType}
         resultMessage={gameResult}
         stats={gameStats}
+        precisionAnalysisProgress={postGamePrecisionProgress}
         playerColor={playerColor}
         configName={currentConfig.name}
         onRematch={handleRematch}
@@ -1519,6 +1594,7 @@ export default function PlayableChessboard({
                                   moveHistoryVerbose?.[whiteIndex] ?? null
                                 }
                                 fallbackSan={moveHistory[whiteIndex] || ""}
+                                movingColor="w"
                                 pieceSet={boardUiSettings.pieceSet}
                                 size="sm"
                               />
@@ -1558,6 +1634,7 @@ export default function PlayableChessboard({
                                     moveHistoryVerbose?.[blackIndex] ?? null
                                   }
                                   fallbackSan={moveHistory[blackIndex] ?? ""}
+                                  movingColor="b"
                                   pieceSet={boardUiSettings.pieceSet}
                                   size="sm"
                                 />

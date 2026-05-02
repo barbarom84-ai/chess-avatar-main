@@ -3,6 +3,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import { 
   Trophy, 
   Swords, 
@@ -16,7 +17,8 @@ import {
   Crown,
   Flag,
   ChevronRight,
-  BarChart3
+  BarChart3,
+  Loader2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/language-context";
@@ -40,6 +42,8 @@ interface GameResultModalProps {
   result: 'win' | 'loss' | 'draw';
   resultMessage: string;
   stats: GameStats;
+  /** Stockfish CAPS analysis in progress after game end (ply counts). */
+  precisionAnalysisProgress?: null | { current: number; total: number };
   playerColor: 'white' | 'black';
   configName: string;
   onRematch: () => void;
@@ -53,6 +57,7 @@ export default function GameResultModal({
   result,
   resultMessage,
   stats,
+  precisionAnalysisProgress = null,
   onRematch,
   onSwitchColor,
   onConfigure,
@@ -90,6 +95,22 @@ export default function GameResultModal({
 
   const config = resultConfig[result];
   const ResultIcon = config.icon;
+
+  const analysisPercent =
+    precisionAnalysisProgress && precisionAnalysisProgress.total > 0
+      ? Math.min(
+          100,
+          Math.round(
+            (precisionAnalysisProgress.current / precisionAnalysisProgress.total) *
+              100
+          )
+        )
+      : 0;
+  const plyProgressLabel = precisionAnalysisProgress
+    ? t.gameResult.precisionAnalysisPlyCount
+        .replace("{{current}}", String(precisionAnalysisProgress.current))
+        .replace("{{total}}", String(precisionAnalysisProgress.total))
+    : "";
 
   return (
     <Dialog open={open} onOpenChange={(newOpen) => {
@@ -141,18 +162,50 @@ export default function GameResultModal({
                 </div>
               </div>
 
-              <div className="space-y-2 pt-2 border-t border-slate-800">
+              <div
+                className="space-y-2 pt-2 border-t border-slate-800"
+                aria-busy={Boolean(precisionAnalysisProgress)}
+              >
                 <h4 className="text-xs font-semibold text-slate-400 flex items-center gap-1">
                   <BarChart3 className="h-3 w-3" />
                   {t.gameResult.precisionAndElo}
                 </h4>
+                {precisionAnalysisProgress && (
+                  <div
+                    className="rounded-md border border-cyan-500/25 bg-slate-900/90 px-3 py-2.5 space-y-2"
+                    aria-live="polite"
+                    aria-label={t.gameResult.precisionAnalyzing}
+                  >
+                    <div className="flex items-center justify-between gap-2 text-xs">
+                      <span className="flex items-center gap-1.5 text-slate-400">
+                        <Loader2
+                          className="h-3.5 w-3.5 shrink-0 animate-spin text-cyan-400"
+                          aria-hidden
+                        />
+                        {t.gameResult.precisionAnalyzing}
+                      </span>
+                      <span className="font-mono tabular-nums font-semibold text-cyan-300">
+                        {analysisPercent}%
+                      </span>
+                    </div>
+                    <Progress
+                      value={analysisPercent}
+                      className="h-2 bg-slate-800 [&>*]:bg-gradient-to-r [&>*]:from-cyan-600 [&>*]:to-teal-500"
+                    />
+                    <p className="text-[10px] text-center text-slate-500 tabular-nums">
+                      {plyProgressLabel}
+                    </p>
+                  </div>
+                )}
                 <div className="grid grid-cols-2 gap-2">
                   <div className="bg-slate-900 p-2 rounded border border-slate-800">
                     <p className="text-[10px] text-slate-500 mb-1">⚪ {t.gameResult.whiteSide}</p>
                     <div className="flex justify-between text-xs">
                       <span className="text-slate-400">{t.gameResult.precision}</span>
                       <span className="font-bold text-cyan-400">
-                        {stats.precisionWhite != null ? `${stats.precisionWhite}%` : '…'}
+                        {stats.precisionWhite != null
+                          ? `${stats.precisionWhite.toFixed(1)}%`
+                          : '…'}
                       </span>
                     </div>
                     <div className="flex justify-between text-xs mt-0.5">
@@ -167,7 +220,9 @@ export default function GameResultModal({
                     <div className="flex justify-between text-xs">
                       <span className="text-slate-400">{t.gameResult.precision}</span>
                       <span className="font-bold text-cyan-400">
-                        {stats.precisionBlack != null ? `${stats.precisionBlack}%` : '…'}
+                        {stats.precisionBlack != null
+                          ? `${stats.precisionBlack.toFixed(1)}%`
+                          : '…'}
                       </span>
                     </div>
                     <div className="flex justify-between text-xs mt-0.5">

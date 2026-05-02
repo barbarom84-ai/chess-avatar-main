@@ -196,6 +196,232 @@ export function aggregateReview(
 }
 
 // ---------------------------------------------------------------------------
+// Full-game analysis (shared by useGameReview + PlayableChessboard)
+// ---------------------------------------------------------------------------
+
+/** Same return shape as `useStockfish` → `getBestMoveAndEval`. */
+export type GetBestMoveAndEvalFn = (
+  fen: string,
+  depth?: number
+) => Promise<{
+  move: string;
+  evalPawns: number;
+  isMate?: boolean;
+  mateInMoves?: number;
+}>;
+
+export class ReviewCancelledError extends Error {
+  constructor() {
+    super("Review cancelled");
+    this.name = "ReviewCancelledError";
+  }
+}
+
+function opposite(side: "white" | "black"): "white" | "black" {
+  return side === "white" ? "black" : "white";
+}
+
+/**
+ * Stockfish's `score cp` is reported from the side-to-move's perspective.
+ * We convert to white POV so all CPL math stays consistent.
+ */
+function normalizeToWhitePov(
+  evalPawnsStmPov: number,
+  sideToMove: "white" | "black"
+): number {
+  return sideToMove === "white" ? evalPawnsStmPov : -evalPawnsStmPov;
+}
+
+/**
+ * Convert a signed `mate in N` (side-to-move POV, as Stockfish reports it)
+ * to a signed value in white POV.
+ */
+function mateToWhitePov(
+  mateInMovesStmPov: number,
+  sideToMove: "white" | "black"
+): number {
+  return sideToMove === "white" ? mateInMovesStmPov : -mateInMovesStmPov;
+}
+
+type TerminalKind = "checkmate" | "stalemate" | "draw" | null;
+
+function classifyTerminalPosition(fen: string): TerminalKind {
+  try {
+    const c = new Chess(fen);
+    if (c.isCheckmate()) return "checkmate";
+    if (c.isStalemate()) return "stalemate";
+    if (
+      c.isInsufficientMaterial() ||
+      c.isThreefoldRepetition() ||
+      c.isDraw()
+    ) {
+      return "draw";
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export interface AnalyzeParsedGameForReviewOptions {
+  parsed: ParsedGameForReview;
+  getBestMoveAndEval: GetBestMoveAndEvalFn;
+  depth: number;
+  /** Maximum plies to analyze (default: all plies in `parsed`). */
+  maxPlies?: number;
+  analysisStrictness?: AnalysisStrictnessId;
+  /** Cooperative cancellation between engine awaits. */
+  signal?: AbortSignal;
+  isCancelled?: () => boolean;
+  /** Stream each reviewed move (e.g. for live progress UI). */
+  onPartialMove?: (move: ReviewedMove, ply: number) => void;
+  /** After each ply is fully analyzed: completed count (1…total), total plies. */
+  onProgress?: (completed: number, total: number) => void;
+}
+
+function throwIfCancelled(
+  signal: AbortSignal | undefined,
+  isCancelled: (() => boolean) | undefined
+): void {
+  if (signal?.aborted) throw new ReviewCancelledError();
+  if (isCancelled?.()) throw new ReviewCancelledError();
+}
+
+/**
+ * Ply-by-ply Stockfish review: same logic as the Game Reviewer UI.
+ */
+export async function analyzeParsedGameForReview(
+  options: AnalyzeParsedGameForReviewOptions
+): Promise<GameReviewResult> {
+  const {
+    parsed,
+    getBestMoveAndEval,
+    depth,
+    maxPlies = Infinity,
+    analysisStrictness = DEFAULT_ANALYSIS_STRICTNESS,
+    signal,
+    isCancelled,
+    onPartialMove,
+    onProgress,
+  } = options;
+
+  const totalPlies = Math.min(parsed.san.length, Math.max(0, maxPlies));
+  const collected: ReviewedMove[] = [];
+
+  for (let ply = 0; ply < totalPlies; ply++) {
+    throwIfCancelled(signal, isCancelled);
+
+    const fenBefore = parsed.fenBefore[ply];
+    const fenAfter = parsed.fenAfter[ply];
+    const san = parsed.san[ply];
+    const uci = parsed.uci[ply];
+    const sideToMove = parsed.sideToMove[ply];
+
+    const best = await getBestMoveAndEval(fenBefore, depth);
+    throwIfCancelled(signal, isCancelled);
+
+    let playerEvalPawns = best.evalPawns;
+    let isMatePlayer: boolean | undefined = best.isMate;
+    let playerMateInMovesWhite: number | undefined =
+      best.mateInMoves !== undefined
+        ? mateToWhitePov(best.mateInMoves, sideToMove)
+        : undefined;
+    const playerIsBest = best.move && best.move === uci;
+    if (!playerIsBest) {
+      const terminal = classifyTerminalPosition(fenAfter);
+      if (terminal === "checkmate") {
+        playerEvalPawns = sideToMove === "white" ? 10 : -10;
+        isMatePlayer = true;
+        playerMateInMovesWhite = sideToMove === "white" ? 1 : -1;
+      } else if (terminal !== null) {
+        playerEvalPawns = 0;
+        isMatePlayer = false;
+        playerMateInMovesWhite = undefined;
+      } else {
+        const afterPlayer = await getBestMoveAndEval(fenAfter, depth);
+        throwIfCancelled(signal, isCancelled);
+        playerEvalPawns = normalizeToWhitePov(
+          afterPlayer.evalPawns,
+          opposite(sideToMove)
+        );
+        isMatePlayer = afterPlayer.isMate;
+        playerMateInMovesWhite =
+          afterPlayer.mateInMoves !== undefined
+            ? mateToWhitePov(afterPlayer.mateInMoves, opposite(sideToMove))
+            : undefined;
+      }
+    }
+
+    const evalBeforeWhite = normalizeToWhitePov(best.evalPawns, sideToMove);
+    const bestEvalWhite = evalBeforeWhite;
+
+    const rawBestUci = best.move ?? "";
+    const bestSan = rawBestUci ? uciToSan(fenBefore, rawBestUci) : "";
+    const bestUci = bestSan ? rawBestUci : "";
+
+    const bestMateInMovesWhite =
+      best.mateInMoves !== undefined
+        ? mateToWhitePov(best.mateInMoves, sideToMove)
+        : undefined;
+
+    const reviewed = buildReviewedMove(
+      {
+        ply,
+        san,
+        uci,
+        sideToMove,
+        evalBefore: evalBeforeWhite,
+        bestMove: bestUci,
+        bestSan,
+        bestEval: bestEvalWhite,
+        playerEval: playerIsBest ? bestEvalWhite : playerEvalPawns,
+        isMateBest: best.isMate,
+        isMatePlayer,
+        bestMateInMoves: bestMateInMovesWhite,
+        playerMateInMoves: playerIsBest
+          ? bestMateInMovesWhite
+          : playerMateInMovesWhite,
+      },
+      analysisStrictness
+    );
+
+    collected.push(reviewed);
+    onPartialMove?.(reviewed, ply);
+    onProgress?.(ply + 1, totalPlies);
+  }
+
+  return aggregateReview(collected, analysisStrictness);
+}
+
+/**
+ * Build {@link ParsedGameForReview} from a list of SAN moves (main line).
+ * Returns null if any move is illegal or empty.
+ */
+export function buildParsedGameFromSanHistory(
+  sanMoves: string[]
+): ParsedGameForReview | null {
+  if (!sanMoves.length) return null;
+  const replay = new Chess();
+  const fenBefore: string[] = [];
+  const fenAfter: string[] = [];
+  const san: string[] = [];
+  const uci: string[] = [];
+  const sideToMove: ("white" | "black")[] = [];
+
+  for (const sanMove of sanMoves) {
+    fenBefore.push(replay.fen());
+    sideToMove.push(replay.turn() === "w" ? "white" : "black");
+    const applied = replay.move(sanMove);
+    if (!applied) return null;
+    san.push(applied.san);
+    uci.push(`${applied.from}${applied.to}${applied.promotion ?? ""}`);
+    fenAfter.push(replay.fen());
+  }
+
+  return { fenBefore, fenAfter, san, uci, sideToMove, headers: {} };
+}
+
+// ---------------------------------------------------------------------------
 // Per-move classification helper
 // ---------------------------------------------------------------------------
 
