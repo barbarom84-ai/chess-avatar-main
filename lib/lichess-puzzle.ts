@@ -70,6 +70,7 @@ export function uciMovesFromLichessGamePgn(rawPgn: string): string[] | null {
 
 /**
  * Replay `initialPly` half-moves from the start position using `game.pgn` movetext.
+ * Prefer {@link fenFromLichessPuzzle} when the API sends `puzzle.fen` — replay from PGN can be off by one ply.
  */
 export function fenAfterInitialPly(rawPgn: string, initialPly: number): string | null {
   if (initialPly < 0) return null;
@@ -77,6 +78,23 @@ export function fenAfterInitialPly(rawPgn: string, initialPly: number): string |
   if (!uciMoves || uciMoves.length < initialPly) return null;
   const chess = chessAtPly(uciMoves, initialPly);
   return chess?.fen() ?? null;
+}
+
+/**
+ * Lichess includes an authoritative `puzzle.fen` in API responses; always prefer it when valid.
+ */
+export function fenFromLichessPuzzle(puzzle: Record<string, unknown>, rawPgn: string, initialPly: number): string | null {
+  const apiFen = asString(puzzle.fen);
+  if (apiFen) {
+    try {
+      const c = new Chess();
+      c.load(apiFen.trim());
+      return c.fen();
+    } catch {
+      /* fall through to PGN replay */
+    }
+  }
+  return fenAfterInitialPly(rawPgn, initialPly);
 }
 
 function parsePlayers(game: Record<string, unknown>): NormalizedLichessPuzzle["players"] {
@@ -116,7 +134,7 @@ export function normalizeLichessPuzzlePayload(raw: unknown): NormalizedLichessPu
     return null;
   }
 
-  const fen = fenAfterInitialPly(rawPgn, initialPly);
+  const fen = fenFromLichessPuzzle(puzzle, rawPgn, initialPly);
   if (!fen) return null;
 
   const solutionUci = solutionRaw.map((u) => u.trim().toLowerCase());

@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { rateLimit } from "@/lib/rate-limit";
-import { firstPuzzleFromBatchResponse } from "@/lib/lichess-puzzle";
+import {
+  firstPuzzleFromBatchResponse,
+  normalizeLichessPuzzlePayload,
+} from "@/lib/lichess-puzzle";
 
 export async function GET(request: NextRequest) {
   const limited = rateLimit(request, { windowMs: 60_000, max: 40 });
@@ -43,9 +46,29 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Invalid response from Lichess" }, { status: 502 });
     }
 
-    const puzzle = firstPuzzleFromBatchResponse(raw);
-    if (!puzzle) {
+    const first = firstPuzzleFromBatchResponse(raw);
+    if (!first) {
       return NextResponse.json({ error: "Could not parse puzzle batch" }, { status: 502 });
+    }
+
+    /** Batch/mix omits `puzzle.fen`; detail endpoint matches daily shape and includes FEN. */
+    const detailRes = await fetch(
+      `https://lichess.org/api/puzzle/${encodeURIComponent(first.puzzleId)}`,
+      {
+        headers: { Accept: "application/json" },
+        cache: "no-store",
+      }
+    );
+    if (!detailRes.ok) {
+      return NextResponse.json(
+        { error: `Lichess puzzle detail returned ${detailRes.status}` },
+        { status: 502 }
+      );
+    }
+    const detailRaw: unknown = await detailRes.json().catch(() => null);
+    const puzzle = normalizeLichessPuzzlePayload(detailRaw);
+    if (!puzzle) {
+      return NextResponse.json({ error: "Could not parse puzzle detail" }, { status: 502 });
     }
 
     return NextResponse.json(puzzle);

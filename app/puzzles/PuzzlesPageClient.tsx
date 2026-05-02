@@ -11,6 +11,7 @@ import { useLanguage } from "@/lib/language-context";
 import type { NormalizedLichessPuzzle } from "@/lib/lichess-puzzle";
 import type { HistoricalGame } from "@/lib/opening-lessons";
 import { pickLocalized } from "@/lib/opening-lessons";
+import type { CloudPuzzlePayload } from "@/lib/cloud-puzzle";
 import { getUserGames, type DbGame } from "@/lib/supabase-storage";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase";
 
@@ -60,6 +61,10 @@ export default function PuzzlesPageClient({
   const [avatarGames, setAvatarGames] = useState<DbGame[]>([]);
   const [avatarGamesLoading, setAvatarGamesLoading] = useState(false);
   const [hasSession, setHasSession] = useState<boolean | null>(null);
+
+  const [cloudPuzzle, setCloudPuzzle] = useState<CloudPuzzlePayload | null>(null);
+  const [cloudLoading, setCloudLoading] = useState(false);
+  const [cloudError, setCloudError] = useState<string | null>(null);
 
   const selectedGame = useMemo(
     () => historicalGames.find((g) => g.id === selectedGameId) ?? null,
@@ -127,6 +132,46 @@ export default function PuzzlesPageClient({
     return () => subscription.unsubscribe();
   }, []);
 
+  const fetchCloudPuzzle = useCallback(async () => {
+    if (!supabase) return;
+    setCloudLoading(true);
+    setCloudError(null);
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const headers: HeadersInit = {};
+      if (session?.access_token) {
+        headers.Authorization = `Bearer ${session.access_token}`;
+      }
+      const res = await fetch("/api/puzzles/cloud-random", { headers, cache: "no-store" });
+      if (res.status === 401) {
+        setCloudError(p.cloudPuzzleAuth);
+        setCloudPuzzle(null);
+        return;
+      }
+      if (!res.ok) {
+        let msg = p.cloudPuzzleError;
+        try {
+          const j = (await res.json()) as { error?: string };
+          if (typeof j.error === "string") msg = j.error;
+        } catch {
+          /* keep default */
+        }
+        setCloudError(msg);
+        setCloudPuzzle(null);
+        return;
+      }
+      const data: unknown = await res.json();
+      setCloudPuzzle(data as CloudPuzzlePayload);
+    } catch {
+      setCloudError(p.cloudPuzzleError);
+      setCloudPuzzle(null);
+    } finally {
+      setCloudLoading(false);
+    }
+  }, [p.cloudPuzzleAuth, p.cloudPuzzleError]);
+
   const fetchRandom = useCallback(async () => {
     setRandomLoading(true);
     setRandomError(null);
@@ -179,6 +224,14 @@ export default function PuzzlesPageClient({
     sideToMove: p.lichess.sideToMove,
     white: p.lichess.white,
     black: p.lichess.black,
+  };
+
+  const moveChallengeLichessLike = {
+    sideToMove: p.lichess.sideToMove,
+    white: p.lichess.white,
+    black: p.lichess.black,
+    reset: p.lichess.reset,
+    choicesAid: p.lichessChoicesAid,
   };
 
   return (
@@ -264,12 +317,56 @@ export default function PuzzlesPageClient({
                           uciMoves={selectedGame.uciMoves}
                           lang={lang}
                           labels={challengeLabels}
+                          presentation="lichess"
+                          lichessLike={moveChallengeLichessLike}
                         />
                       ))}
                     </div>
                   </>
                 )}
               </>
+            )}
+
+            {isSupabaseConfigured && (
+              <div className="pt-8 mt-2 border-t border-slate-700/80 space-y-4">
+                <div className="space-y-1">
+                  <h2 className="text-sm font-semibold text-cyan-100/90">{p.cloudPuzzleTitle}</h2>
+                  <p className="text-xs text-slate-500 leading-relaxed">{p.cloudPuzzleDesc}</p>
+                </div>
+
+                {!avatarGamesLoading && hasSession === false && (
+                  <p className="text-sm text-slate-500">{p.cloudPuzzleAuth}</p>
+                )}
+
+                {!avatarGamesLoading && hasSession === true && (
+                  <div className="space-y-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={cloudLoading}
+                      onClick={() => fetchCloudPuzzle()}
+                      className="border-cyan-700/50 text-cyan-200 hover:bg-cyan-950/40"
+                    >
+                      {cloudLoading ? p.cloudPuzzleLoading : p.cloudPuzzleNew}
+                    </Button>
+                    {cloudError && (
+                      <p className="text-sm text-rose-300/95">{cloudError}</p>
+                    )}
+                    {cloudPuzzle && (
+                      <MoveChallengeCard
+                        key={cloudPuzzle.challenge.id}
+                        challenge={cloudPuzzle.challenge}
+                        uciMoves={cloudPuzzle.uciMoves}
+                        lang={lang}
+                        labels={challengeLabels}
+                        presentation="lichess"
+                        lichessLike={moveChallengeLichessLike}
+                      />
+                    )}
+                  </div>
+                )}
+              </div>
             )}
 
             {isSupabaseConfigured && (

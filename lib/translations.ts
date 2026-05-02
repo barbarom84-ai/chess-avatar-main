@@ -604,6 +604,13 @@ export const translations = {
       avatarGamesEmpty:
         "Aucune partie enregistrée pour l’instant. Lancez une partie contre un avatar sur la page Jouer : elle pourra être sauvegardée automatiquement à la fin.",
       playVsAvatar: "Jouer contre un avatar",
+      cloudPuzzleTitle: "Puzzle communautaire",
+      cloudPuzzleDesc:
+        "Devinez un coup réellement joué — uniquement des sacrifices typiques ou des combinaisons de mat (mat au coup ou dans la ligne enregistrée). Parties cloud de la communauté.",
+      cloudPuzzleNew: "Nouveau puzzle communautaire",
+      cloudPuzzleLoading: "Chargement…",
+      cloudPuzzleError: "Impossible de charger un puzzle pour le moment.",
+      cloudPuzzleAuth: "Connectez-vous pour accéder aux puzzles issus des parties enregistrées.",
       emptyFeatured:
         "Aucune partie historique avec défis n’est disponible ici pour l’instant. Parcourez le catalogue Apprentissage pour les leçons complètes.",
       lichessSectionTitle: "Complément : puzzles Lichess",
@@ -637,6 +644,8 @@ export const translations = {
         white: "Blancs",
         black: "Noirs",
       },
+      /** Défis ChessAvatar style puzzle Lichess : aide boutons dépliable */
+      lichessChoicesAid: "Aide : choix multiples (SAN)",
     },
 
     // Evaluation bar
@@ -1898,6 +1907,13 @@ export const translations = {
       avatarGamesEmpty:
         "No saved games yet. Play against an avatar on the Play page — it can be saved automatically when the game ends.",
       playVsAvatar: "Play vs avatar",
+      cloudPuzzleTitle: "Community puzzle",
+      cloudPuzzleDesc:
+        "Guess a move that was actually played — only typical sacrifices or mating combinations (mate on the move or later on the recorded line). From community cloud games.",
+      cloudPuzzleNew: "New community puzzle",
+      cloudPuzzleLoading: "Loading…",
+      cloudPuzzleError: "Could not load a puzzle right now.",
+      cloudPuzzleAuth: "Sign in to access puzzles from saved games.",
       emptyFeatured:
         "No historic games with challenges are available here yet. Browse the Learn catalog for full lessons.",
       lichessSectionTitle: "Extra: Lichess puzzles",
@@ -1930,6 +1946,7 @@ export const translations = {
         white: "White",
         black: "Black",
       },
+      lichessChoicesAid: "Help: multiple-choice (SAN)",
     },
 
     // Evaluation bar

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import SimpleChessboard from "@/components/SimpleChessboard";
 import SanNotation from "@/components/SanNotation";
 import PromotionDialog from "@/components/PromotionDialog";
@@ -17,20 +17,35 @@ import {
 } from "@/lib/learn-chess-utils";
 import { useChessboardSettings } from "@/contexts/ChessboardSettingsContext";
 
+interface MoveChallengeCardLabels {
+  hint: string;
+  nextHint: string;
+  correct: string;
+  wrong: string;
+  reveal: string;
+  tryAgain: string;
+  positionLabel: string;
+  playOnBoard?: string;
+}
+
+/** Optional copy for presentation inspired by Lichess (trait, reset). */
+export interface LichessLikeLabels {
+  sideToMove: string;
+  white: string;
+  black: string;
+  reset: string;
+  /** Summary line for collapsed multiple-choice aid (e.g. “Multiple choice”). */
+  choicesAid?: string;
+}
+
 interface MoveChallengeCardProps {
   challenge: MoveChallenge;
   uciMoves: string[];
   lang: "fr" | "en";
-  labels: {
-    hint: string;
-    nextHint: string;
-    correct: string;
-    wrong: string;
-    reveal: string;
-    tryAgain: string;
-    positionLabel: string;
-    playOnBoard?: string;
-  };
+  labels: MoveChallengeCardLabels;
+  /** `lichess`: board-first layout, multiple-choice hidden under details (puzzles page). */
+  presentation?: "classic" | "lichess";
+  lichessLike?: LichessLikeLabels;
 }
 
 export default function MoveChallengeCard({
@@ -38,8 +53,17 @@ export default function MoveChallengeCard({
   uciMoves,
   lang,
   labels,
+  presentation = "classic",
+  lichessLike,
 }: MoveChallengeCardProps) {
   const { settings } = useChessboardSettings();
+  const lichessMode = presentation === "lichess" && !!lichessLike;
+
+  const [picked, setPicked] = useState<string | null>(null);
+  const [hintIdx, setHintIdx] = useState(-1);
+  const [promotionOpen, setPromotionOpen] = useState(false);
+  const [promotionOptions, setPromotionOptions] = useState<string[]>([]);
+  const [wrongFlash, setWrongFlash] = useState(false);
 
   const fen = useMemo(() => {
     try {
@@ -48,6 +72,25 @@ export default function MoveChallengeCard({
       return "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     }
   }, [uciMoves, challenge.afterMoveCount]);
+
+  const pickedNorm = picked?.trim().toLowerCase() ?? null;
+  const correctNorm = challenge.correctUci.trim().toLowerCase();
+  const isCorrectPick = pickedNorm !== null && pickedNorm === correctNorm;
+
+  /** Après un coup correct, afficher la position résultante (sinon l’échiquier « reprend » le coup). */
+  const displayFen = useMemo(() => {
+    if (!isCorrectPick) return fen;
+    try {
+      return fenAfterUciMoves(uciMoves, challenge.afterMoveCount + 1);
+    } catch {
+      return fen;
+    }
+  }, [isCorrectPick, fen, uciMoves, challenge.afterMoveCount]);
+
+  const lastMoveHighlight = useMemo(() => {
+    if (!isCorrectPick || !pickedNorm || pickedNorm.length < 4) return null;
+    return { from: pickedNorm.slice(0, 2), to: pickedNorm.slice(2, 4) };
+  }, [isCorrectPick, pickedNorm]);
 
   const choices = useMemo(() => {
     const all = [challenge.correctUci, ...challenge.wrongChoices];
@@ -62,14 +105,9 @@ export default function MoveChallengeCard({
     return map;
   }, [choices, fen]);
 
-  const [picked, setPicked] = useState<string | null>(null);
-  const [hintIdx, setHintIdx] = useState(-1);
-  const [promotionOpen, setPromotionOpen] = useState(false);
-  const [promotionOptions, setPromotionOptions] = useState<string[]>([]);
-
-  const orientation = useMemo(() => {
-    const parts = fen.split(" ");
-    const stm = parts[1];
+  /** Toujours depuis la position du défi (trait avant coup), pour ne pas retourner l’échiquier après coup correct. */
+  const boardOrientation = useMemo(() => {
+    const stm = fen.split(" ")[1];
     return stm === "b" ? "black" : "white";
   }, [fen]);
 
@@ -78,7 +116,30 @@ export default function MoveChallengeCard({
     return stm === "b" ? "b" : "w";
   }, [fen]);
 
-  const showInsight = picked === challenge.correctUci;
+  const showInsight = isCorrectPick;
+
+  useEffect(() => {
+    if (!pickedNorm || isCorrectPick) return;
+    setWrongFlash(true);
+    const t = window.setTimeout(() => setWrongFlash(false), 450);
+    return () => window.clearTimeout(t);
+  }, [pickedNorm, isCorrectPick]);
+
+  const stmBeforePuzzle = fen.split(" ")[1];
+  const stmLabel =
+    stmBeforePuzzle === "w"
+      ? lichessLike?.white ?? "White"
+      : stmBeforePuzzle === "b"
+        ? lichessLike?.black ?? "Black"
+        : "";
+
+  const resetChallenge = useCallback(() => {
+    setPicked(null);
+    setHintIdx(-1);
+    setPromotionOpen(false);
+    setPromotionOptions([]);
+    setWrongFlash(false);
+  }, []);
 
   const applyResolution = useCallback(
     (res: ReturnType<typeof resolveDropToQuizChoice>) => {
@@ -127,35 +188,21 @@ export default function MoveChallengeCard({
     [promotionOptions]
   );
 
-  return (
-    <Card className="theme-bg-secondary theme-border border-amber-900/30">
-      <PromotionDialog
-        open={promotionOpen}
-        pieceColor={sideToMove}
-        onSelect={handlePromotionSelect}
-      />
-      <CardHeader className="pb-2">
-        <CardTitle className="text-base text-amber-200/90">{pickLocalized(challenge.prompt, lang)}</CardTitle>
-        <p className="text-xs text-slate-500">{labels.positionLabel}</p>
-        {!picked && labels.playOnBoard && (
-          <p className="text-xs text-slate-500 pt-0.5">{labels.playOnBoard}</p>
-        )}
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex justify-center max-w-[min(100%,360px)] mx-auto">
-          <SimpleChessboard
-            position={fen}
-            orientation={orientation}
-            onDrop={picked ? undefined : handleBoardDrop}
-          />
-        </div>
+  const cardBorder = lichessMode
+    ? "theme-bg-secondary theme-border border-cyan-900/35"
+    : "theme-bg-secondary theme-border border-amber-900/30";
+  const titleClass = lichessMode
+    ? "text-base text-cyan-100/95"
+    : "text-base text-amber-200/90";
+  const boardMax = lichessMode ? "max-w-[min(100%,400px)]" : "max-w-[min(100%,360px)]";
 
-        <div className="flex flex-wrap gap-2 justify-center">
+  const choicesButtons = (
+    <div className="flex flex-wrap gap-2 justify-center">
           {choices.map((uci) => {
             const san = uciToSanFromFen(fen, uci);
             const verbose = choiceVerboseByUci.get(uci) ?? null;
-            const isSel = picked === uci;
-            const isCorrect = uci === challenge.correctUci;
+            const isSel = pickedNorm === uci.trim().toLowerCase();
+            const isCorrect = uci.trim().toLowerCase() === correctNorm;
             let variant: "default" | "outline" | "destructive" | "secondary" = "outline";
             if (picked) {
               if (isCorrect && isSel) variant = "default";
@@ -182,9 +229,55 @@ export default function MoveChallengeCard({
               </Button>
             );
           })}
+    </div>
+  );
+
+  return (
+    <Card className={cardBorder}>
+      <PromotionDialog
+        open={promotionOpen}
+        pieceColor={sideToMove}
+        onSelect={handlePromotionSelect}
+      />
+      <CardHeader className="pb-2">
+        <CardTitle className={titleClass}>{pickLocalized(challenge.prompt, lang)}</CardTitle>
+        <p className="text-xs text-slate-500">{labels.positionLabel}</p>
+        {!picked && labels.playOnBoard && (
+          <p className="text-xs text-slate-500 pt-0.5">{labels.playOnBoard}</p>
+        )}
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {lichessMode && lichessLike && !isCorrectPick && stmLabel && (
+          <p className="text-xs text-center text-slate-400">
+            {lichessLike.sideToMove}: {stmLabel}
+          </p>
+        )}
+
+        <div
+          className={`flex justify-center ${boardMax} mx-auto transition-opacity ${
+            wrongFlash ? "opacity-70 ring-2 ring-rose-600/50 rounded-sm" : ""
+          }`}
+        >
+          <SimpleChessboard
+            position={displayFen}
+            orientation={boardOrientation}
+            onDrop={picked ? undefined : handleBoardDrop}
+            lastMove={lastMoveHighlight}
+          />
         </div>
 
-        {picked && picked !== challenge.correctUci && (
+        {lichessMode && lichessLike?.choicesAid ? (
+          <details className="rounded-md border border-slate-700/60 bg-slate-900/25 px-3 py-2 text-sm">
+            <summary className="cursor-pointer text-cyan-400/90 hover:text-cyan-300 select-none">
+              {lichessLike.choicesAid}
+            </summary>
+            <div className="pt-3">{choicesButtons}</div>
+          </details>
+        ) : (
+          choicesButtons
+        )}
+
+        {picked && !isCorrectPick && (
           <p className="text-sm text-rose-300 text-center">{labels.wrong}</p>
         )}
 
@@ -207,10 +300,16 @@ export default function MoveChallengeCard({
             {hintIdx < 0 ? labels.hint : labels.nextHint}
           </Button>
           )}
-          {picked && (
-            <Button type="button" variant="ghost" size="sm" onClick={() => { setPicked(null); setHintIdx(-1); setPromotionOpen(false); setPromotionOptions([]); }}>
-              {labels.tryAgain}
+          {lichessMode && lichessLike ? (
+            <Button type="button" variant="secondary" size="sm" onClick={resetChallenge}>
+              {lichessLike.reset}
             </Button>
+          ) : (
+            picked && (
+              <Button type="button" variant="ghost" size="sm" onClick={resetChallenge}>
+                {labels.tryAgain}
+              </Button>
+            )
           )}
         </div>
 

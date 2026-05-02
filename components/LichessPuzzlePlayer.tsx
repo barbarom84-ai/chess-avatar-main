@@ -2,6 +2,7 @@
 
 import { Chess } from "chess.js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import SimpleChessboard from "@/components/SimpleChessboard";
 import PromotionDialog from "@/components/PromotionDialog";
 import { Button } from "@/components/ui/button";
@@ -53,10 +54,13 @@ export default function LichessPuzzlePlayer({ puzzle, labels }: LichessPuzzlePla
 
   const sync = useCallback(() => {
     const g = chessRef.current;
-    setFen(g.fen());
-    const h = g.history({ verbose: true });
-    const last = h[h.length - 1];
-    setLastMove(last ? { from: last.from, to: last.to } : null);
+    const snap = () => {
+      setFen(g.fen());
+      const h = g.history({ verbose: true });
+      const last = h[h.length - 1];
+      setLastMove(last ? { from: last.from, to: last.to } : null);
+    };
+    flushSync(snap);
   }, []);
 
   const reset = useCallback(() => {
