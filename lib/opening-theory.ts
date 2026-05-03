@@ -86,8 +86,16 @@ export function getOpeningTheorySans(opening: Opening): string[] {
   return sans;
 }
 
+/** Une ouverture du répertoire locale qui atteint la même position (transposition). */
+export interface TheoryTranspositionHit {
+  openingId: string;
+  name: string;
+  theoryStep: number;
+}
+
 /**
- * Libellés lisibles pour les autres lignes du répertoire menant à la même position (transposition).
+ * Autres lignes du répertoire menant à la même position (transposition).
+ * Tri par profondeur décroissante ; un seul libellé par nom (la variation la plus profonde).
  */
 export function describeTheoryHitsForUi(
   fen: string,
@@ -97,10 +105,10 @@ export function describeTheoryHitsForUi(
     skipOpeningId?: string;
     skipTheoryStep?: number;
   }
-): string[] {
+): TheoryTranspositionHit[] {
   const hits = lookupTheoryAtFen(fen);
-  const out: string[] = [];
-  const seen = new Set<string>();
+  const rows: TheoryTranspositionHit[] = [];
+  const seenIdStep = new Set<string>();
   for (const h of hits) {
     if (
       opts?.skipOpeningId &&
@@ -114,9 +122,20 @@ export function describeTheoryHitsForUi(
     if (!op) continue;
     const name = lang === "en" && op.nameEn ? op.nameEn : op.name;
     const key = `${h.openingId}-${h.theoryStep}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    out.push(`${name} · ${lang === "en" ? "move" : "coup"} ${h.theoryStep}`);
+    if (seenIdStep.has(key)) continue;
+    seenIdStep.add(key);
+    rows.push({ openingId: h.openingId, name, theoryStep: h.theoryStep });
   }
-  return out;
+
+  rows.sort((a, b) => b.theoryStep - a.theoryStep);
+
+  const byName = new Map<string, TheoryTranspositionHit>();
+  for (const row of rows) {
+    const prev = byName.get(row.name);
+    if (!prev || row.theoryStep > prev.theoryStep) {
+      byName.set(row.name, row);
+    }
+  }
+
+  return Array.from(byName.values()).sort((a, b) => b.theoryStep - a.theoryStep);
 }

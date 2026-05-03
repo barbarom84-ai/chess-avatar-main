@@ -64,6 +64,7 @@ import { findBestOpeningByPrefix } from "@/lib/openings-registry";
 import {
   describeTheoryHitsForUi,
   getOpeningTheorySans,
+  type TheoryTranspositionHit,
 } from "@/lib/opening-theory";
 import { buildVerboseHistoryFromSan } from "@/lib/move-history-verbose";
 import { uciToVerboseMoveFromFen } from "@/lib/learn-chess-utils";
@@ -142,6 +143,7 @@ export default function GameReviewer({
 
   const [cachedResult, setCachedResult] = useState<GameReviewResult | null>(null);
   const [cacheChecked, setCacheChecked] = useState(false);
+  const [pendingRestart, setPendingRestart] = useState(false);
 
   const pgnHash = useMemo(
     () => hashReviewCacheKey(pgn, analysisStrictness, engineDepth),
@@ -218,6 +220,32 @@ export default function GameReviewer({
     setCachedResult(null);
     resetReview();
   }, [cancelReview, resetReview]);
+
+  const handleRelaunchAnalysis = useCallback(() => {
+    try {
+      cancelReview();
+    } catch {
+      /* best-effort */
+    }
+    setCachedResult(null);
+    resetReview();
+    setPendingRestart(true);
+  }, [cancelReview, resetReview]);
+
+  useEffect(() => {
+    if (!pendingRestart) return;
+    if (cachedResult) return;
+    if (review.status !== "idle") return;
+    if (!review.engineReady) return;
+    review.start();
+    setPendingRestart(false);
+  }, [
+    pendingRestart,
+    cachedResult,
+    review.status,
+    review.engineReady,
+    review.start,
+  ]);
 
   const handleStrictnessChange = useCallback(
     (next: AnalysisStrictnessId) => {
@@ -605,6 +633,7 @@ export default function GameReviewer({
           total={effectiveTotal}
           onCancel={review.cancel}
           onStartAnalysis={() => review.start()}
+          onRelaunch={handleRelaunchAnalysis}
         />
 
         <EvaluationBar evaluation={evalForBar} />
@@ -806,6 +835,7 @@ function ProgressHeader({
   total,
   onCancel,
   onStartAnalysis,
+  onRelaunch,
 }: {
   effectiveStatus: ReviewStatus;
   reviewStatus: ReviewStatus;
@@ -816,6 +846,7 @@ function ProgressHeader({
   total: number;
   onCancel: () => void;
   onStartAnalysis: () => void;
+  onRelaunch: () => void;
 }) {
   const { t } = useLanguage();
   const pct = total > 0 ? Math.round((progress / total) * 100) : 0;
@@ -826,8 +857,20 @@ function ProgressHeader({
 
   if (effectiveStatus === "done") {
     return (
-      <div className="text-xs text-emerald-300 flex items-center gap-2">
-        <Crown className="h-3 w-3" /> {t.review.done}
+      <div className="flex flex-wrap items-center justify-between gap-2 w-full">
+        <div className="text-xs text-emerald-300 flex items-center gap-2 shrink-0">
+          <Crown className="h-3 w-3" /> {t.review.done}
+        </div>
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          className="h-7 px-2 text-cyan-300 hover:text-cyan-100 hover:bg-cyan-500/10 shrink-0"
+          onClick={onRelaunch}
+        >
+          <RotateCcw className="h-3 w-3 mr-1" />
+          {t.review.relaunch}
+        </Button>
       </div>
     );
   }
@@ -1274,16 +1317,23 @@ function CurrentMoveDetail({
         matchedPlies: number;
         sans: string[];
         aligned: boolean;
-        transpositionHints: string[];
+        transpositionHints: TheoryTranspositionHit[];
       }
     | null;
 }) {
   const { t, lang } = useLanguage();
   const { settings: boardSettings } = useChessboardSettings();
 
+  const MAX_TRANSPOSITIONS_VISIBLE = 6;
+  const [showAllTranspositions, setShowAllTranspositions] = useState(false);
+
   const theoryVerbose = useMemo(() => {
     if (!theorySnapshot?.sans?.length) return null;
     return buildVerboseHistoryFromSan(theorySnapshot.sans);
+  }, [theorySnapshot]);
+
+  useEffect(() => {
+    setShowAllTranspositions(false);
   }, [theorySnapshot]);
 
   if (!move) {
@@ -1413,10 +1463,53 @@ function CurrentMoveDetail({
               ))}
             </p>
             {theorySnapshot.transpositionHints.length > 0 && (
-              <p className="text-slate-400 text-[10px] leading-snug border-t border-amber-500/20 pt-1.5">
-                <span className="text-slate-500">{t.review.opening.transpositions}: </span>
-                {theorySnapshot.transpositionHints.join(" · ")}
-              </p>
+              <div className="border-t border-amber-500/20 pt-1.5 space-y-1.5">
+                <div className="text-slate-500 text-[10px]">
+                  {t.review.opening.transpositions}
+                </div>
+                <div className="inline-flex flex-wrap items-center gap-1">
+                  {(showAllTranspositions
+                    ? theorySnapshot.transpositionHints
+                    : theorySnapshot.transpositionHints.slice(
+                        0,
+                        MAX_TRANSPOSITIONS_VISIBLE
+                      )
+                  ).map((hit) => (
+                    <Badge
+                      key={`${hit.openingId}-${hit.theoryStep}`}
+                      variant="outline"
+                      className="border-slate-700/60 bg-slate-800/60 font-normal text-[10px] px-1.5 py-0 text-slate-300 max-w-[min(100%,14rem)]"
+                    >
+                      <span className="truncate">{hit.name}</span>
+                      <span className="font-mono text-amber-300/70 shrink-0 ml-1">
+                        · {lang === "en" ? "move" : "coup"} {hit.theoryStep}
+                      </span>
+                    </Badge>
+                  ))}
+                  {theorySnapshot.transpositionHints.length >
+                    MAX_TRANSPOSITIONS_VISIBLE && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-[10px] text-slate-400 hover:text-slate-200"
+                      onClick={() =>
+                        setShowAllTranspositions((v) => !v)
+                      }
+                    >
+                      {showAllTranspositions
+                        ? t.review.opening.showLessTranspositions
+                        : t.review.opening.showMoreTranspositions.replace(
+                            "{n}",
+                            String(
+                              theorySnapshot.transpositionHints.length -
+                                MAX_TRANSPOSITIONS_VISIBLE
+                            )
+                          )}
+                    </Button>
+                  )}
+                </div>
+              </div>
             )}
           </div>
         )}

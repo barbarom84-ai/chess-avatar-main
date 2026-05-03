@@ -828,6 +828,7 @@ export const translations = {
       cancelled: "Analyse annulée",
       error: "Erreur lors de l'analyse",
       done: "Analyse terminée",
+      relaunch: "Relancer l'analyse",
       startAnalysis: "Lancer l'analyse",
       computing: "Calcul en cours…",
       notYetAvailable: "Disponible à la fin de l'analyse",
@@ -922,6 +923,8 @@ export const translations = {
         divergedFromBook:
           "La partie ne suit plus ce coup à coup la ligne ci-dessus ; correspondance partielle surlignée.",
         transpositions: "Autres repères menant ici",
+        showMoreTranspositions: "Voir {n} de plus",
+        showLessTranspositions: "Voir moins",
         explorerTitle: "Explorer Lichess",
         explorerLoading: "Chargement des statistiques…",
         explorerError: "Impossible de charger l’explorer (réseau ou limite).",
@@ -2129,6 +2132,7 @@ export const translations = {
       cancelled: "Analysis cancelled",
       error: "Analysis error",
       done: "Analysis complete",
+      relaunch: "Re-run analysis",
       startAnalysis: "Start analysis",
       computing: "Computing…",
       notYetAvailable: "Available once analysis completes",
@@ -2223,6 +2227,8 @@ export const translations = {
         divergedFromBook:
           "The game no longer follows this line move-for-move; highlighted moves match the longest compatible prefix.",
         transpositions: "Also reached via",
+        showMoreTranspositions: "Show {n} more",
+        showLessTranspositions: "Show less",
         explorerTitle: "Lichess explorer",
         explorerLoading: "Loading statistics…",
         explorerError: "Could not load explorer (network or rate limit).",
