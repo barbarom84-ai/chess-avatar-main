@@ -519,7 +519,16 @@ export const translations = {
       createdOn: "Créé le",
       createdBy: "par",
       needsSupabase: "La bibliothèque publique nécessite la configuration de Supabase.",
-      checkDocs: "Consultez SUPABASE_SETUP.md pour les instructions."
+      checkDocs: "Consultez SUPABASE_SETUP.md pour les instructions.",
+      platformFilter: "Plateforme",
+      platformAll: "Toutes",
+      platformLichess: "Lichess",
+      platformChesscom: "Chess.com",
+      dedupeTitle: "Masquer les doublons",
+      dedupeHint:
+        "Une carte par pseudo et plateforme : on garde la version la plus récente (réduit les ré-imports).",
+      pageSize: "Nombre affiché",
+      profilesShown: "{count} affiché(s)",
     },
     
     // Common
@@ -579,6 +588,7 @@ export const translations = {
       games: "Parties",
       learn: "Apprentissage",
       puzzles: "Puzzles",
+      arena: "Arène",
       guide: "Guide",
       boardSettingsTitle: "Paramètres de l'échiquier"
     },
@@ -962,7 +972,61 @@ export const translations = {
         rateLimited: "Trop de requêtes. Patientez un instant.",
         network: "Problème réseau. Vérifiez votre connexion.",
         invalidBody: "Données du coup invalides."
+      },
+      paradox: {
+        title: "Paradoxe clone",
+        subtitle:
+          "Coup simulé avec ton profil moteur (MultiPV + niveau / agressivité) — indicatif, pas une vérité absolue.",
+        button: "Qu’aurait joué mon clone ?",
+        loading: "Le clone réfléchit…",
+        retry: "Réessayer",
+        error: "Impossible de simuler le coup pour l’instant.",
+        busy: "Disponible quand l’analyse du coup est terminée.",
+        noPersona:
+          "Aucun profil récent : analyse un pseudo sur la page Analyser pour activer le paradoxe clone.",
+        openAnalyze: "Ouvrir Analyser",
+        sameAsEngine: "Même ligne que le meilleur coup moteur ici.",
+        sameAsPlayed: "Ton clone aurait joué le même coup que toi sur cet échiquier.",
+        cloneWouldPlay: "Coup « clone » suggéré",
       }
+    },
+
+    arenaPage: {
+      title: "Arène clone vs clone",
+      subtitle:
+        "Deux profils moteur s’affrontent en spectateur. Un seul Stockfish dans l’onglet : profondeur modérée pour rester fluide.",
+      whiteSide: "Blancs",
+      blackSide: "Noirs",
+      selectWhite: "Avatar des blancs",
+      selectBlack: "Avatar des noirs",
+      savedProfiles: "Profils sauvegardés",
+      recentProfiles: "Récents",
+      start: "Lancer la partie",
+      pause: "Pause",
+      resume: "Reprendre",
+      reset: "Réinitialiser",
+      step: "Un coup",
+      statusThinking: "Réflexion…",
+      statusIdle: "Prêt",
+      gameOver: "Partie terminée",
+      maxPliesLabel: "Limite de coups (sécurité)",
+      depthLabel: "Profondeur moteur (arène)",
+      needEngine: "Chargement du moteur…",
+      loadingProfiles: "Chargement des profils…",
+      pickBoth: "Choisis deux avatars différents pour lancer l’arène.",
+      resultStalemate: "Pat",
+      resultDraw: "Nulle",
+      resultCheckmate: "Échec et mat",
+      movesPlayed: "Coups joués",
+      pickSearchPlaceholder: "Tapez pour filtrer les profils…",
+      pickNoMatches: "Aucun profil ne correspond.",
+      pickListHint:
+        "Liste courte : affinez avec la recherche ou les filtres ci-dessus.",
+      pickSelectedLabel: "Sélection",
+      refreshList: "Rafraîchir les profils",
+      cloudLibrary: "Cloud (public)",
+      emptyHint:
+        "Si vous aviez analysé Lichess puis Chess.com, l’ancien bug ne gardait qu’un « Bot_pseudo » : relancez une analyse Lichess. Les bots publics du compte sont aussi chargés depuis le cloud.",
     },
 
     // Forced line editor
@@ -1825,7 +1889,16 @@ export const translations = {
       createdOn: "Created on",
       createdBy: "by",
       needsSupabase: "The public library requires Supabase configuration.",
-      checkDocs: "Check SUPABASE_SETUP.md for instructions."
+      checkDocs: "Check SUPABASE_SETUP.md for instructions.",
+      platformFilter: "Platform",
+      platformAll: "All",
+      platformLichess: "Lichess",
+      platformChesscom: "Chess.com",
+      dedupeTitle: "Hide duplicates",
+      dedupeHint:
+        "One card per username and platform: keep the latest version (fewer re-upload duplicates).",
+      pageSize: "Rows shown",
+      profilesShown: "{count} shown",
     },
     
     // Common
@@ -1885,6 +1958,7 @@ export const translations = {
       games: "Games",
       learn: "Learn",
       puzzles: "Puzzles",
+      arena: "Arena",
       guide: "Guide",
       boardSettingsTitle: "Board settings"
     },
@@ -2266,7 +2340,60 @@ export const translations = {
         rateLimited: "Too many requests. Please wait a moment.",
         network: "Network problem. Check your connection.",
         invalidBody: "Invalid move data."
+      },
+      paradox: {
+        title: "Clone paradox",
+        subtitle:
+          "Move simulated with your engine profile (MultiPV + level / aggressiveness) — indicative, not ground truth.",
+        button: "What would my clone play?",
+        loading: "Clone is thinking…",
+        retry: "Retry",
+        error: "Could not simulate the move right now.",
+        busy: "Available once analysis has finished for this move.",
+        noPersona:
+          "No recent profile: analyze a username on Analyze to enable clone paradox.",
+        openAnalyze: "Open Analyze",
+        sameAsEngine: "Same as the engine best move here.",
+        sameAsPlayed: "Your clone would have played the same move you played.",
+        cloneWouldPlay: "Suggested “clone” move",
       }
+    },
+
+    arenaPage: {
+      title: "Clone vs clone arena",
+      subtitle:
+        "Two engine profiles face off in spectator mode. One Stockfish tab — moderate depth to stay responsive.",
+      whiteSide: "White",
+      blackSide: "Black",
+      selectWhite: "White avatar",
+      selectBlack: "Black avatar",
+      savedProfiles: "Saved profiles",
+      recentProfiles: "Recent",
+      start: "Start game",
+      pause: "Pause",
+      resume: "Resume",
+      reset: "Reset",
+      step: "One move",
+      statusThinking: "Thinking…",
+      statusIdle: "Ready",
+      gameOver: "Game over",
+      maxPliesLabel: "Move limit (safety)",
+      depthLabel: "Engine depth (arena)",
+      needEngine: "Loading engine…",
+      loadingProfiles: "Loading profiles…",
+      pickBoth: "Pick two different avatars to start the arena.",
+      resultStalemate: "Stalemate",
+      resultDraw: "Draw",
+      resultCheckmate: "Checkmate",
+      movesPlayed: "Moves played",
+      pickSearchPlaceholder: "Type to filter profiles…",
+      pickNoMatches: "No profiles match.",
+      pickListHint: "Short list — narrow with search or filters above.",
+      pickSelectedLabel: "Selected",
+      refreshList: "Refresh profiles",
+      cloudLibrary: "Cloud (public)",
+      emptyHint:
+        "If you analyzed Lichess then Chess.com, an old bug kept only one “Bot_username”: run Lichess analysis again. Public bots from the library are also loaded from the cloud.",
     },
 
     // Forced line editor

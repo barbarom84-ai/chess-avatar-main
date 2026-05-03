@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import {
   ChevronLeft,
   ChevronRight,
@@ -20,6 +21,7 @@ import {
   Skull,
   Lock,
   LogOut,
+  Bot,
 } from "lucide-react";
 import { Chess, type Move } from "chess.js";
 import {
@@ -70,6 +72,8 @@ import { buildVerboseHistoryFromSan } from "@/lib/move-history-verbose";
 import { uciToVerboseMoveFromFen } from "@/lib/learn-chess-utils";
 import SanNotation from "@/components/SanNotation";
 import { useChessboardSettings } from "@/contexts/ChessboardSettingsContext";
+import type { EngineConfig } from "@/lib/analysis";
+import { getRecentConfigs } from "@/lib/storage";
 
 const FREE_ENGINE_DEPTH = 12;
 const PREMIUM_DEPTH_OPTIONS = [14, 18, 22] as const;
@@ -117,6 +121,11 @@ interface GameReviewerProps {
   cacheUserId?: string | null;
   /** Triggered when the Coach UI asks the user to upgrade (e.g. quota reached). */
   onRequestUpgrade?: () => void;
+  /**
+   * Profil moteur pour le paradoxe clone. Si absent, le dernier profil « récent »
+   * du stockage local est utilisé.
+   */
+  paradoxAvatarConfig?: EngineConfig;
 }
 
 export default function GameReviewer({
@@ -126,6 +135,7 @@ export default function GameReviewer({
   showAllBestArrows,
   cacheUserId,
   onRequestUpgrade,
+  paradoxAvatarConfig,
 }: GameReviewerProps) {
   const { t, lang } = useLanguage();
 
@@ -135,6 +145,30 @@ export default function GameReviewer({
   const [coachTone, setCoachTone] = useState<CoachToneId>(readStoredCoachTone);
 
   const engineDepth = isPremium ? premiumDepth : FREE_ENGINE_DEPTH;
+
+  const [storedPersona, setStoredPersona] = useState<EngineConfig | null>(null);
+  useEffect(() => {
+    const sync = () => {
+      try {
+        setStoredPersona(getRecentConfigs()[0]?.config ?? null);
+      } catch {
+        setStoredPersona(null);
+      }
+    };
+    sync();
+    window.addEventListener("focus", sync);
+    return () => window.removeEventListener("focus", sync);
+  }, []);
+
+  useEffect(() => {
+    try {
+      setStoredPersona(getRecentConfigs()[0]?.config ?? null);
+    } catch {
+      setStoredPersona(null);
+    }
+  }, [pgn]);
+
+  const effectivePersona = paradoxAvatarConfig ?? storedPersona;
 
   const parsed = useMemo<ParsedGameForReview | null>(
     () => parsePgnForReview(pgn),
@@ -763,6 +797,9 @@ export default function GameReviewer({
           onRequestUpgrade={onRequestUpgrade}
           coachTone={coachTone}
           theorySnapshot={openingTheorySnapshot}
+          personaConfig={effectivePersona}
+          getPersonaStyleMove={review.getPersonaStyleMove}
+          reviewBlocked={effectiveStatus === "running"}
         />
 
         {evalSeries.length > 1 && (
@@ -1299,6 +1336,9 @@ function CurrentMoveDetail({
   onRequestUpgrade,
   coachTone,
   theorySnapshot,
+  personaConfig,
+  getPersonaStyleMove,
+  reviewBlocked,
 }: {
   move?: ReviewedMove;
   /** Position affichée (explorer Lichess : stats depuis cette position). */
@@ -1320,6 +1360,13 @@ function CurrentMoveDetail({
         transpositionHints: TheoryTranspositionHit[];
       }
     | null;
+  personaConfig: EngineConfig | null;
+  getPersonaStyleMove: (
+    fen: string,
+    config: EngineConfig,
+    opts?: { depth?: number; movetime?: number }
+  ) => Promise<string>;
+  reviewBlocked: boolean;
 }) {
   const { t, lang } = useLanguage();
   const { settings: boardSettings } = useChessboardSettings();
@@ -1611,8 +1658,143 @@ function CurrentMoveDetail({
             onRequestUpgrade={onRequestUpgrade}
           />
         )}
+        {showCoach && (
+          <CloneParadoxCard
+            move={move}
+            fenBefore={fenBefore!}
+            personaConfig={personaConfig}
+            getPersonaStyleMove={getPersonaStyleMove}
+            reviewBlocked={reviewBlocked}
+          />
+        )}
       </CardContent>
     </Card>
+  );
+}
+
+/**
+ * Coup « style clone » (Stockfish + MultiPV + profil) pour les coups sous-optimaux.
+ */
+function CloneParadoxCard({
+  move,
+  fenBefore,
+  personaConfig,
+  getPersonaStyleMove,
+  reviewBlocked,
+}: {
+  move: ReviewedMove;
+  fenBefore: string;
+  personaConfig: EngineConfig | null;
+  getPersonaStyleMove: (
+    fen: string,
+    config: EngineConfig,
+    opts?: { depth?: number; movetime?: number }
+  ) => Promise<string>;
+  reviewBlocked: boolean;
+}) {
+  const { t } = useLanguage();
+  const { settings: boardSettings } = useChessboardSettings();
+  const [status, setStatus] = useState<"idle" | "loading" | "ready" | "error">(
+    "idle"
+  );
+  const [cloneUci, setCloneUci] = useState<string | null>(null);
+
+  useEffect(() => {
+    setStatus("idle");
+    setCloneUci(null);
+  }, [move.ply, move.uci]);
+
+  const handleClick = useCallback(() => {
+    if (!personaConfig || reviewBlocked) return;
+    setStatus("loading");
+    void getPersonaStyleMove(fenBefore, personaConfig, {
+      depth: Math.min(14, personaConfig.depth),
+      movetime: Math.min(800, personaConfig.timeControl),
+    })
+      .then((uci) => {
+        setCloneUci(uci);
+        setStatus("ready");
+      })
+      .catch(() => setStatus("error"));
+  }, [personaConfig, reviewBlocked, fenBefore, getPersonaStyleMove]);
+
+  const cloneSan =
+    cloneUci && fenBefore ? uciToSan(fenBefore, cloneUci) : null;
+
+  return (
+    <div className="pt-2 border-t border-cyan-500/25 mt-2 space-y-2">
+      <div className="flex items-center gap-2 text-[11px] font-semibold text-cyan-200/90 uppercase tracking-wide">
+        <Bot className="h-3.5 w-3.5 shrink-0" />
+        {t.review.paradox.title}
+      </div>
+      <p className="text-[10px] text-slate-500 leading-snug">
+        {t.review.paradox.subtitle}
+      </p>
+      {!personaConfig ? (
+        <p className="text-xs text-slate-400">
+          {t.review.paradox.noPersona}{" "}
+          <Link href="/analyze" className="text-cyan-400 hover:underline">
+            {t.review.paradox.openAnalyze}
+          </Link>
+        </p>
+      ) : reviewBlocked ? (
+        <p className="text-xs text-amber-200/80">{t.review.paradox.busy}</p>
+      ) : status === "idle" ? (
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={handleClick}
+          className="border-cyan-500/40 bg-cyan-500/10 text-cyan-100 hover:bg-cyan-500/20"
+        >
+          <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+          {t.review.paradox.button}
+        </Button>
+      ) : status === "loading" ? (
+        <div className="rounded border border-cyan-500/30 bg-cyan-500/10 px-3 py-2 text-xs text-cyan-100 flex items-center gap-2">
+          <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
+          {t.review.paradox.loading}
+        </div>
+      ) : status === "error" ? (
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs text-red-300">{t.review.paradox.error}</span>
+          <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={handleClick}>
+            {t.review.paradox.retry}
+          </Button>
+        </div>
+      ) : (
+        <div className="rounded border border-cyan-500/25 bg-slate-950/50 px-3 py-2 text-xs space-y-1.5">
+          <div className="text-cyan-200/90 font-medium">
+            {t.review.paradox.cloneWouldPlay}
+          </div>
+          {cloneUci && move.bestMove && cloneUci === move.bestMove && (
+            <p className="text-emerald-300/90">{t.review.paradox.sameAsEngine}</p>
+          )}
+          {cloneUci && cloneUci === move.uci && cloneUci !== move.bestMove && (
+            <p className="text-amber-200/90">{t.review.paradox.sameAsPlayed}</p>
+          )}
+          {cloneSan && (
+            <div className="inline-flex items-center gap-1 font-mono text-slate-100">
+              <SanNotation
+                verboseMove={uciToVerboseMoveFromFen(fenBefore, cloneUci!)}
+                fallbackSan={cloneSan}
+                movingColor={move.sideToMove === "white" ? "w" : "b"}
+                pieceSet={boardSettings.pieceSet}
+                size="sm"
+              />
+              <span className="text-[10px] text-slate-500">({cloneUci})</span>
+            </div>
+          )}
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-7 text-[11px] text-slate-400"
+            onClick={handleClick}
+          >
+            {t.review.paradox.retry}
+          </Button>
+        </div>
+      )}
+    </div>
   );
 }
 

@@ -13,6 +13,7 @@ import {
   type AnalysisStrictnessId,
   DEFAULT_ANALYSIS_STRICTNESS,
 } from "@/lib/analysis-profiles";
+import type { EngineConfig } from "@/lib/analysis";
 
 export type ReviewStatus =
   | "idle"
@@ -49,6 +50,15 @@ export interface UseGameReviewState {
   start: () => void;
   cancel: () => void;
   reset: () => void;
+  /**
+   * Coup « style clone » pour une FEN (MultiPV + profil). Partage le même worker
+   * que l’analyse — n’appeler qu’à l’arrêt de la recherche principale.
+   */
+  getPersonaStyleMove: (
+    fen: string,
+    config: EngineConfig,
+    opts?: { depth?: number; movetime?: number }
+  ) => Promise<string>;
 }
 
 /**
@@ -65,7 +75,8 @@ export function useGameReview({
   maxPlies,
   analysisStrictness = DEFAULT_ANALYSIS_STRICTNESS,
 }: UseGameReviewOptions): UseGameReviewState {
-  const { isReady, getBestMoveAndEval, stopThinking } = useStockfish();
+  const { isReady, getBestMoveAndEval, stopThinking, getPersonaStyleMove } =
+    useStockfish();
 
   const [status, setStatus] = useState<ReviewStatus>("idle");
   const [moves, setMoves] = useState<ReviewedMove[]>([]);
@@ -184,5 +195,6 @@ export function useGameReview({
     start,
     cancel,
     reset,
+    getPersonaStyleMove,
   };
 }

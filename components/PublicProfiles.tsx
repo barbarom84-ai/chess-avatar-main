@@ -7,14 +7,43 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Library, Search, Play, Download, Loader2, Globe, Database, Settings, Filter, ArrowUpDown, Lock, Unlock, Users, User } from "lucide-react";
-import { getFilteredProfiles, updateProfile, type ProfileFilter, type ProfileSort } from "@/lib/supabase-storage";
+import {
+  Library,
+  Search,
+  Play,
+  Download,
+  Loader2,
+  Globe,
+  Database,
+  Settings,
+  Filter,
+  ArrowUpDown,
+  Lock,
+  Unlock,
+  Users,
+  User,
+  CopyMinus,
+} from "lucide-react";
+import {
+  getFilteredProfiles,
+  updateProfile,
+  type ProfileFilter,
+  type ProfilePlatformFilter,
+  type ProfileSort,
+} from "@/lib/supabase-storage";
 import { isSupabaseConfigured, supabase, type DbProfile } from "@/lib/supabase";
 import { prepareConfigForExport } from "@/lib/forced-line-utils";
 import { OPENINGS_DATABASE } from "@/lib/openings-library";
 import { useRouter } from "next/navigation";
 import ProfileDetailsModal from "./ProfileDetailsModal";
 import { toast } from "sonner";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+
+const LIBRARY_STORAGE_PLATFORM = "chess-avatar.library.platform";
+const LIBRARY_STORAGE_DEDUPE = "chess-avatar.library.dedupe";
+const LIBRARY_STORAGE_LIMIT = "chess-avatar.library.limit";
+const PAGE_SIZE_OPTIONS = [25, 50, 100, 150] as const;
 
 export default function PublicProfiles() {
   const { lang, t } = useLanguage();
@@ -24,6 +53,12 @@ export default function PublicProfiles() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filter, setFilter] = useState<ProfileFilter>('all');
   const [sort, setSort] = useState<ProfileSort>('date');
+  const [platformFilter, setPlatformFilter] =
+    useState<ProfilePlatformFilter>('all');
+  /** Réduit les doublons (même pseudo + plateforme). Activé par défaut. */
+  const [dedupeByIdentity, setDedupeByIdentity] = useState(true);
+  const [pageLimit, setPageLimit] =
+    useState<number>(50);
   const [selectedProfile, setSelectedProfile] = useState<DbProfile | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -33,17 +68,56 @@ export default function PublicProfiles() {
     searchQueryRef.current = searchQuery;
   }, [searchQuery]);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const p = localStorage.getItem(LIBRARY_STORAGE_PLATFORM);
+      if (p === 'lichess' || p === 'chesscom' || p === 'all') {
+        setPlatformFilter(p);
+      }
+      const d = localStorage.getItem(LIBRARY_STORAGE_DEDUPE);
+      if (d === '1') setDedupeByIdentity(true);
+      else if (d === '0') setDedupeByIdentity(false);
+      const l = localStorage.getItem(LIBRARY_STORAGE_LIMIT);
+      const n = l ? parseInt(l, 10) : NaN;
+      if (PAGE_SIZE_OPTIONS.includes(n as (typeof PAGE_SIZE_OPTIONS)[number])) {
+        setPageLimit(n);
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem(LIBRARY_STORAGE_PLATFORM, platformFilter);
+  }, [platformFilter]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem(LIBRARY_STORAGE_DEDUPE, dedupeByIdentity ? '1' : '0');
+  }, [dedupeByIdentity]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem(LIBRARY_STORAGE_LIMIT, String(pageLimit));
+  }, [pageLimit]);
+
   const loadProfiles = useCallback(async () => {
     setLoading(true);
     const data = await getFilteredProfiles(
       filter,
       sort,
-      50,
-      searchQueryRef.current
+      pageLimit,
+      searchQueryRef.current,
+      {
+        platform: platformFilter,
+        dedupeByUsernamePlatform: dedupeByIdentity,
+      }
     );
     setProfiles(data);
     setLoading(false);
-  }, [filter, sort]);
+  }, [filter, sort, pageLimit, platformFilter, dedupeByIdentity]);
 
   useEffect(() => {
     if (isSupabaseConfigured && supabase) {
@@ -124,7 +198,7 @@ export default function PublicProfiles() {
             {t.library.title}
           </CardTitle>
           <Badge variant="outline" className="text-purple-400 border-purple-400">
-            {profiles.length} {t.library.profiles}
+            {t.library.profilesShown.replace('{count}', String(profiles.length))}
           </Badge>
         </div>
       </CardHeader>
@@ -265,6 +339,93 @@ export default function PublicProfiles() {
               >
                 {t.library.difficulty}
               </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Plateforme + dédoublonnage + taille de page */}
+        <div className="flex flex-col lg:flex-row gap-4 pt-1 border-t border-slate-800">
+          <div className="flex-1 space-y-2">
+            <div className="flex items-center gap-1 mb-1">
+              <Globe className="h-3 w-3 text-slate-400" />
+              <span className="text-xs text-slate-400">
+                {t.library.platformFilter}
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-1">
+              <Button
+                size="sm"
+                variant={platformFilter === 'all' ? 'default' : 'outline'}
+                onClick={() => setPlatformFilter('all')}
+                className={
+                  platformFilter === 'all'
+                    ? 'bg-indigo-600 text-white border-indigo-700'
+                    : 'bg-slate-950 border-slate-700 text-slate-300 hover:border-indigo-500'
+                }
+              >
+                {t.library.platformAll}
+              </Button>
+              <Button
+                size="sm"
+                variant={platformFilter === 'lichess' ? 'default' : 'outline'}
+                onClick={() => setPlatformFilter('lichess')}
+                className={
+                  platformFilter === 'lichess'
+                    ? 'bg-blue-600 text-white border-blue-700'
+                    : 'bg-slate-950 border-slate-700 text-slate-300 hover:border-blue-500'
+                }
+              >
+                {t.library.platformLichess}
+              </Button>
+              <Button
+                size="sm"
+                variant={platformFilter === 'chesscom' ? 'default' : 'outline'}
+                onClick={() => setPlatformFilter('chesscom')}
+                className={
+                  platformFilter === 'chesscom'
+                    ? 'bg-green-700 text-white border-green-600'
+                    : 'bg-slate-950 border-slate-700 text-slate-300 hover:border-green-500'
+                }
+              >
+                {t.library.platformChesscom}
+              </Button>
+            </div>
+          </div>
+
+          <div className="flex-1 flex flex-col sm:flex-row sm:items-end gap-4">
+            <div className="flex-1 space-y-2 rounded-lg border border-slate-800 bg-slate-950/50 p-3">
+              <div className="flex items-center justify-between gap-3">
+                <Label
+                  htmlFor="library-dedupe"
+                  className="text-xs text-slate-300 flex items-center gap-2 cursor-pointer"
+                >
+                  <CopyMinus className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+                  {t.library.dedupeTitle}
+                </Label>
+                <Switch
+                  id="library-dedupe"
+                  checked={dedupeByIdentity}
+                  onCheckedChange={setDedupeByIdentity}
+                />
+              </div>
+              <p className="text-[10px] text-slate-500 leading-snug">
+                {t.library.dedupeHint}
+              </p>
+            </div>
+            <div className="sm:w-40 space-y-1">
+              <Label className="text-xs text-slate-400">{t.library.pageSize}</Label>
+              <select
+                id="library-page-limit"
+                className="w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-2 text-sm text-slate-100"
+                value={pageLimit}
+                onChange={(e) => setPageLimit(Number(e.target.value))}
+              >
+                {PAGE_SIZE_OPTIONS.map((n) => (
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
         </div>

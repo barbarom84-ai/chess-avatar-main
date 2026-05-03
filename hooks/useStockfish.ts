@@ -14,63 +14,14 @@ import {
   pickForcedHumanBlunder,
   shouldPlayHumanBlunderMove,
 } from "@/lib/bot-move-count";
+import {
+  multiPvCountForDifficulty,
+  pickPersonaBiasedMove,
+  skillLevelFromDifficulty,
+  uciEloFromConfig,
+} from "@/lib/persona-engine-params";
 
 const DEBUG = typeof window !== "undefined" && (window as unknown as { __CHESS_DEBUG?: boolean }).__CHESS_DEBUG;
-
-/** Skill 0–20 : courbe plus basse pour les niveaux 1–3 (jouabilité débutant / intermédiaire). */
-function skillLevelFromDifficulty(d: number): number {
-  const clamped = Math.min(5, Math.max(1, Math.round(d)));
-  const map: Record<number, number> = { 1: 2, 2: 5, 3: 9, 4: 15, 5: 20 };
-  return map[clamped] ?? 10;
-}
-
-/** Elo UCI Stockfish (1320–3190) à partir du profil. */
-function uciEloFromConfig(elo: number): number {
-  return Math.min(3190, Math.max(1320, Math.round(elo)));
-}
-
-/**
- * MultiPV pour tirer parfois un coup sous-optimal (2e, 3e ligne…).
- * 0 = désactivé (niveaux élevés).
- */
-function multiPvCountForDifficulty(d: number): number {
-  if (d <= 1) return 4;
-  if (d === 2) return 3;
-  if (d === 3) return 2;
-  return 1;
-}
-
-/** Choisit un coup parmi les lignes MultiPV (plus le rang est haut, plus le coup est souvent mauvais). */
-function pickMoveWithSuboptimalNoise(
-  bestFromEngine: string,
-  lineMoves: Map<number, string>,
-  difficulty: number
-): string {
-  const n = lineMoves.size;
-  if (n < 2 || !bestFromEngine) return bestFromEngine;
-
-  const r = Math.random();
-  let pickRank = 1;
-
-  if (difficulty <= 1) {
-    if (r < 0.12) pickRank = 4;
-    else if (r < 0.28) pickRank = 3;
-    else if (r < 0.48) pickRank = 2;
-  } else if (difficulty === 2) {
-    if (r < 0.1) pickRank = 3;
-    else if (r < 0.3) pickRank = 2;
-  } else if (difficulty === 3) {
-    if (r < 0.14) pickRank = 2;
-  }
-
-  if (pickRank === 1) return bestFromEngine;
-
-  for (let rank = pickRank; rank >= 2; rank--) {
-    const alt = lineMoves.get(rank);
-    if (alt && alt !== bestFromEngine) return alt;
-  }
-  return bestFromEngine;
-}
 
 export function useStockfish() {
   const engineRef = useRef<Worker | null>(null);
@@ -254,7 +205,7 @@ export function useStockfish() {
         if (multiPv > 1 && move) {
           move = humanBlunder
             ? pickForcedHumanBlunder(move, lineMoves)
-            : pickMoveWithSuboptimalNoise(move, lineMoves, config.difficulty);
+            : pickPersonaBiasedMove(move, lineMoves, config);
         }
         resetEngineOptions();
         setIsThinking(false);
@@ -265,6 +216,91 @@ export function useStockfish() {
 
     engineRef.current?.addEventListener("message", handleMessage);
   };
+
+  /**
+   * Un coup « style avatar » pour une position isolée (MultiPV + biais difficulté/agressivité).
+   * Pas de lignes forcées — utilisé par le paradoxe clone en revue de partie.
+   */
+  const getPersonaStyleMove = useCallback(
+    (
+      fen: string,
+      config: EngineConfig,
+      opts?: { depth?: number; movetime?: number }
+    ): Promise<string> => {
+      return new Promise((resolve, reject) => {
+        if (!isReady || !engineRef.current) {
+          reject(new Error("Stockfish not ready"));
+          return;
+        }
+        const depth = Math.min(opts?.depth ?? Math.min(config.depth, 14), 18);
+        const movetime = Math.min(opts?.movetime ?? config.timeControl, 1200);
+        const threads = Math.max(2, config.threads);
+        const skill = skillLevelFromDifficulty(config.difficulty);
+        const baseMulti = multiPvCountForDifficulty(config.difficulty);
+        const multiPv = Math.max(2, baseMulti);
+        const lineMoves = new Map<number, string>();
+        let settled = false;
+
+        const resetEngineOptions = () => {
+          sendCommand("setoption name MultiPV value 1");
+          sendCommand("setoption name UCI_LimitStrength value false");
+        };
+
+        const finish = (move: string) => {
+          if (settled) return;
+          settled = true;
+          engineRef.current?.removeEventListener("message", handleMessage);
+          resetEngineOptions();
+          resolve(move || "");
+        };
+
+        const handleMessage = (e: MessageEvent) => {
+          const message = e.data;
+          if (typeof message !== "string") return;
+
+          if (multiPv > 1 && message.startsWith("info ") && message.includes(" pv ")) {
+            const mp = message.match(/\bmultipv\s+(\d+)/i);
+            const pvMatch = message.match(/\bpv\s+(\S+)/);
+            if (mp && pvMatch) {
+              const idx = parseInt(mp[1], 10);
+              const first = pvMatch[1];
+              if (first && /^[a-h][1-8][a-h][1-8]/.test(first)) {
+                lineMoves.set(idx, first);
+              }
+            }
+          }
+
+          if (message.startsWith("bestmove")) {
+            const raw = message.split(/\s+/)[1];
+            let move = raw && raw !== "(none)" ? raw : "";
+            if (multiPv > 1 && move) {
+              move = pickPersonaBiasedMove(move, lineMoves, config);
+            }
+            finish(move);
+          }
+        };
+
+        sendCommand("stop");
+        engineRef.current.addEventListener("message", handleMessage);
+        sendCommand(`setoption name Skill Level value ${skill}`);
+        sendCommand(`setoption name Threads value ${threads}`);
+        if (config.difficulty <= 3) {
+          sendCommand("setoption name UCI_LimitStrength value true");
+          sendCommand(`setoption name UCI_Elo value ${uciEloFromConfig(config.elo)}`);
+        } else {
+          sendCommand("setoption name UCI_LimitStrength value false");
+        }
+        sendCommand(`setoption name MultiPV value ${multiPv}`);
+        sendCommand(`position fen ${fen}`);
+        sendCommand(`go depth ${depth} movetime ${movetime}`);
+
+        setTimeout(() => {
+          if (!settled) sendCommand("stop");
+        }, 35_000);
+      });
+    },
+    [isReady, sendCommand]
+  );
 
   const getBestMoveForFen = (fen: string, depth = 12): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -458,6 +494,7 @@ export function useStockfish() {
     isThinking,
     currentEval,
     getBestMove,
+    getPersonaStyleMove,
     getBestMoveForFen,
     getBestMoveAndEval,
     getPositionEvaluation,

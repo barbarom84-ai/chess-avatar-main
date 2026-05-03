@@ -336,6 +336,67 @@ export async function searchPublicProfiles(query: string): Promise<DbProfile[]> 
  */
 export type ProfileFilter = 'all' | 'public' | 'private' | 'my';
 export type ProfileSort = 'date' | 'elo' | 'name' | 'difficulty';
+/** Filtre source Lichess / Chess.com dans la bibliothèque */
+export type ProfilePlatformFilter = 'all' | 'lichess' | 'chesscom';
+
+const DEDUPE_FETCH_CAP = 400;
+const DEDUPE_MULTIPLIER = 6;
+
+/**
+ * Garde une entrée par couple (pseudo normalisé + plateforme), la plus récemment mise à jour.
+ */
+export function dedupeProfilesByUsernamePlatform(profiles: DbProfile[]): DbProfile[] {
+  const best = new Map<string, DbProfile>();
+  for (const p of profiles) {
+    const key = `${p.username.trim().toLowerCase()}|${p.platform}`;
+    const cur = best.get(key);
+    const pTime = new Date(p.updated_at || p.created_at).getTime();
+    if (!cur || pTime > new Date(cur.updated_at || cur.created_at).getTime()) {
+      best.set(key, p);
+    }
+  }
+  return Array.from(best.values());
+}
+
+export function sortProfilesClient(
+  profiles: DbProfile[],
+  sort: ProfileSort
+): DbProfile[] {
+  const out = [...profiles];
+  switch (sort) {
+    case 'date':
+      out.sort(
+        (a, b) =>
+          new Date(b.updated_at || b.created_at).getTime() -
+          new Date(a.updated_at || a.created_at).getTime()
+      );
+      break;
+    case 'elo':
+      out.sort((a, b) => (b.config?.elo ?? 0) - (a.config?.elo ?? 0));
+      break;
+    case 'name':
+      out.sort((a, b) =>
+        a.username.localeCompare(b.username, undefined, { sensitivity: 'base' })
+      );
+      break;
+    case 'difficulty':
+      out.sort(
+        (a, b) => (b.config?.difficulty ?? 0) - (a.config?.difficulty ?? 0)
+      );
+      break;
+  }
+  return out;
+}
+
+export interface GetFilteredProfilesOptions {
+  /** Lichess uniquement, Chess.com uniquement, ou les deux */
+  platform?: ProfilePlatformFilter;
+  /**
+   * Une seule carte par pseudo + plateforme (entrée la plus récente).
+   * Demande un échantillon plus large côté API puis réduit en mémoire.
+   */
+  dedupeByUsernamePlatform?: boolean;
+}
 
 /**
  * Récupérer et filtrer les profils avec options de tri
@@ -344,9 +405,17 @@ export async function getFilteredProfiles(
   filter: ProfileFilter = 'public',
   sort: ProfileSort = 'date',
   limit: number = 50,
-  searchQuery?: string
+  searchQuery?: string,
+  options?: GetFilteredProfilesOptions
 ): Promise<DbProfile[]> {
   if (!isSupabaseConfigured || !supabase) return [];
+
+  const platform = options?.platform ?? 'all';
+  const dedupe = options?.dedupeByUsernamePlatform === true;
+  const effectiveLimit = Math.min(Math.max(5, limit), 200);
+  const fetchLimit = dedupe
+    ? Math.min(DEDUPE_FETCH_CAP, effectiveLimit * DEDUPE_MULTIPLIER)
+    : effectiveLimit;
 
   try {
     const { data: { user } } = await supabase.auth.getUser();
@@ -381,6 +450,10 @@ export async function getFilteredProfiles(
         break;
     }
 
+    if (platform !== 'all') {
+      query = query.eq('platform', platform);
+    }
+
     // Appliquer la recherche si fournie
     if (searchQuery && searchQuery.trim()) {
       query = query.ilike('username', `%${searchQuery.trim()}%`);
@@ -404,13 +477,20 @@ export async function getFilteredProfiles(
         break;
     }
 
-    query = query.limit(limit);
+    query = query.limit(fetchLimit);
 
     const { data, error } = await query;
 
     if (error) throw error;
 
-    return data || [];
+    let rows = data || [];
+    if (dedupe) {
+      rows = dedupeProfilesByUsernamePlatform(rows);
+      rows = sortProfilesClient(rows, sort);
+      rows = rows.slice(0, effectiveLimit);
+    }
+
+    return rows;
   } catch (error) {
     console.error('Erreur lors de la récupération filtrée:', error);
     return [];
