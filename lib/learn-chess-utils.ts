@@ -61,6 +61,30 @@ export function uciToVerboseMoveFromFen(fen: string, uci: string): Move | null {
   }
 }
 
+/**
+ * Joue une suite de coups UCI depuis une FEN et renvoie les `Move` verbose (pour SanNotation / icônes).
+ */
+export function verboseMovesFromUciLine(startFen: string, uciPlies: string[]): Move[] {
+  const out: Move[] = [];
+  try {
+    const g = new Chess(startFen);
+    for (const raw of uciPlies) {
+      const uci = raw.trim().toLowerCase();
+      if (uci.length < 4) break;
+      const from = uci.slice(0, 2) as Square;
+      const to = uci.slice(2, 4) as Square;
+      const promotion =
+        uci.length > 4 ? (uci[4] as "q" | "r" | "b" | "n") : undefined;
+      const m = g.move({ from, to, promotion });
+      if (!m) break;
+      out.push(m);
+    }
+  } catch {
+    /* */
+  }
+  return out;
+}
+
 export type QuizDropResolution =
   | { type: "none" }
   | { type: "match"; uci: string }

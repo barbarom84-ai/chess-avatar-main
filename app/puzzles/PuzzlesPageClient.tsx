@@ -12,6 +12,7 @@ import type { NormalizedLichessPuzzle } from "@/lib/lichess-puzzle";
 import type { HistoricalGame } from "@/lib/opening-lessons";
 import { pickLocalized } from "@/lib/opening-lessons";
 import type { CloudPuzzlePayload } from "@/lib/cloud-puzzle";
+import { fenAfterUciMoves, verboseMovesFromUciLine } from "@/lib/learn-chess-utils";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase";
 import { useSuperUser } from "@/hooks/useSuperUser";
 
@@ -70,6 +71,24 @@ export default function PuzzlesPageClient({
     () => historicalGames.find((g) => g.id === selectedGameId) ?? null,
     [historicalGames, selectedGameId]
   );
+
+  const cloudCuratorLineMoves = useMemo(() => {
+    if (!cloudPuzzle) return undefined;
+    const hasStoredContinuation =
+      Array.isArray(cloudPuzzle.solutionLineUci) &&
+      cloudPuzzle.solutionLineUci.length > 0;
+    if (cloudPuzzle.source !== "manual" && !hasStoredContinuation) return undefined;
+    const uciLine = [
+      cloudPuzzle.challenge.correctUci,
+      ...(cloudPuzzle.solutionLineUci ?? []),
+    ];
+    const fen = fenAfterUciMoves(
+      cloudPuzzle.uciMoves,
+      cloudPuzzle.challenge.afterMoveCount
+    );
+    const moves = verboseMovesFromUciLine(fen, uciLine);
+    return moves.length > 0 ? moves : undefined;
+  }, [cloudPuzzle]);
 
   const loadDaily = useCallback(async () => {
     setDailyLoading(true);
@@ -346,6 +365,8 @@ export default function PuzzlesPageClient({
                         labels={challengeLabels}
                         presentation="lichess"
                         lichessLike={moveChallengeLichessLike}
+                        curatorLineVerboseMoves={cloudCuratorLineMoves}
+                        curatorLinePrefix={p.curatorInsightPrefix}
                       />
                     )}
                   </div>

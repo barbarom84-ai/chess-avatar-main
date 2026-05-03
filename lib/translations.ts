@@ -631,11 +631,15 @@ export const translations = {
       cloudPuzzleLoading: "Chargement…",
       cloudPuzzleError: "Impossible de charger un puzzle pour le moment.",
       cloudPuzzleAuth: "Connectez-vous pour accéder aux puzzles issus des parties enregistrées.",
+      curatorInsightPrefix: {
+        fr: "Ligne proposée par l’organisateur :",
+        en: "Curator line:",
+      },
       communityManual: {
         link: "Publier un puzzle manuel (admin)",
         title: "Puzzle communautaire — publication manuelle",
         subtitle:
-          "Choisissez une partie cloud, la position (indice de coup), le coup à deviner et la suite jusqu’au mat. Réservé aux comptes Super ou aux UUID listés dans COMMUNITY_PUZZLE_ADMIN_USER_IDS.",
+          "Choisissez une partie cloud, la position (indice de coup), le coup à deviner et la suite de coups souhaitée. Réservé aux comptes Super ou aux UUID listés dans COMMUNITY_PUZZLE_ADMIN_USER_IDS.",
         back: "Retour aux puzzles",
         loadGamesError: "Impossible de charger la liste des parties.",
         gameLabel: "Partie",
@@ -645,7 +649,7 @@ export const translations = {
           "Nombre de demi-coups déjà joués dans la partie avant la position du puzzle (0 = début). Le trait doit être au camp qui joue le coup à deviner.",
         correctLabel: "Coup à deviner (UCI)",
         correctPlaceholder: "ex. e2e4 ou e7e8q",
-        solutionLabel: "Suite jusqu’au mat (UCI, après le coup à deviner)",
+        solutionLabel: "Suite de coups (UCI, après le coup à deviner)",
         solutionPlaceholder: "Un ou plusieurs coups séparés par des espaces : e7e5 f1c4 …",
         promptFrLabel: "Question (FR, optionnel)",
         promptEnLabel: "Question (EN, optionnel)",
@@ -666,7 +670,7 @@ export const translations = {
           "Clavier : ← → pour naviguer, Origine / Fin pour le début ou la fin de la partie.",
         composeTitle: "Composer la solution sur l'échiquier",
         composeHint:
-          "Jouez depuis la position du puzzle : le 1ᵉʳ coup remplit « coup à deviner », les suivants la suite jusqu'au mat. L'UCI à droite est mis à jour ; vous pouvez aussi le corriger à la main.",
+          "Jouez depuis la position du puzzle : le 1ᵉʳ coup remplit « coup à deviner », les suivants la suite. L'UCI à droite est mis à jour ; vous pouvez aussi le corriger à la main.",
         clearPlayedMoves: "Effacer les coups joués",
         navStart: "Premier coup (Origine)",
         navPrev: "Demi-coup précédent (←)",
@@ -687,8 +691,8 @@ export const translations = {
           invalid_uci: "UCI invalide dans la ligne.",
           illegal_correct: "Le coup à deviner est illégal à cette position.",
           illegal_solution: "Un coup de la suite est illégal.",
-          not_checkmate: "La ligne doit se terminer par un mat.",
-          mate_too_short: "Au moins deux demi-coups du camp attaquant sont requis (mat au premier coup seul interdit).",
+          mate_too_short:
+            "Au moins deux demi-coups du camp attaquant au total sont requis (le coup à deviner compte dans ce total).",
           wrong_choices: "Pas assez de coups piège possibles sur l’échiquier (minimum 3 choix incorrects).",
         },
       },
@@ -2077,11 +2081,15 @@ export const translations = {
       cloudPuzzleLoading: "Loading…",
       cloudPuzzleError: "Could not load a puzzle right now.",
       cloudPuzzleAuth: "Sign in to access puzzles from saved games.",
+      curatorInsightPrefix: {
+        fr: "Ligne proposée par l’organisateur :",
+        en: "Curator line:",
+      },
       communityManual: {
         link: "Publish manual puzzle (admin)",
         title: "Community puzzle — manual publish",
         subtitle:
-          "Pick a cloud game, position (move index), the move to guess, and the continuation through checkmate. Super accounts only, or user IDs listed in COMMUNITY_PUZZLE_ADMIN_USER_IDS.",
+          "Pick a cloud game, position (move index), the move to guess, and the continuation line you want. Super accounts only, or user IDs listed in COMMUNITY_PUZZLE_ADMIN_USER_IDS.",
         back: "Back to puzzles",
         loadGamesError: "Could not load games list.",
         gameLabel: "Game",
@@ -2091,7 +2099,7 @@ export const translations = {
           "Half-moves already played before the puzzle position (0 = start). The side to move must be the attacker playing the guess-move.",
         correctLabel: "Move to guess (UCI)",
         correctPlaceholder: "e.g. e2e4 or e7e8q",
-        solutionLabel: "Continuation to mate (UCI, after the guess-move)",
+        solutionLabel: "Continuation (UCI, after the guess-move)",
         solutionPlaceholder: "Space-separated moves: e7e5 Bc4 …",
         promptFrLabel: "Prompt (French, optional)",
         promptEnLabel: "Prompt (English, optional)",
@@ -2112,7 +2120,7 @@ export const translations = {
           "Keyboard: ← → to step, Home / End for start or end of the game.",
         composeTitle: "Build the solution on the board",
         composeHint:
-          "Play from the puzzle position: the first move fills “move to guess”, further moves the mate line. UCI fields on the right update; you can edit them manually.",
+          "Play from the puzzle position: the first move fills “move to guess”, further moves build the continuation. UCI fields on the right update; you can edit them manually.",
         clearPlayedMoves: "Clear played moves",
         navStart: "First half-move (Home)",
         navPrev: "Previous half-move (←)",
@@ -2133,8 +2141,8 @@ export const translations = {
           invalid_uci: "Invalid UCI in the line.",
           illegal_correct: "The guess-move is illegal from that position.",
           illegal_solution: "A continuation move is illegal.",
-          not_checkmate: "The line must end in checkmate.",
-          mate_too_short: "At least two attacker half-moves are required (immediate-only mate not allowed).",
+          mate_too_short:
+            "At least two attacker half-moves are required in total (the guess-move counts toward this).",
           wrong_choices: "Not enough legal decoys (need 3 wrong choices).",
         },
       },

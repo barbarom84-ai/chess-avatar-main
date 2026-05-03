@@ -137,7 +137,7 @@ export interface CloudPuzzlePayload {
   challenge: MoveChallenge;
   /** Curated puzzle with organizer-provided mating line */
   source?: "manual";
-  /** UCI half-moves after `challenge.correctUci` that lead to checkmate */
+  /** UCI half-moves after `challenge.correctUci` (organizer-defined continuation; may or may not end in mate). */
   solutionLineUci?: string[];
 }
 
@@ -146,7 +146,7 @@ export type ManualCommunityPuzzleBuildResult =
   | { ok: false; errorKey: string };
 
 /**
- * Build a community puzzle from an organizer-defined position and mating continuation.
+ * Build a community puzzle from an organizer-defined position and continuation line.
  * The puzzle move may differ from the move stored in the game PGN at that ply.
  */
 export function tryBuildManualCommunityPuzzlePayload(input: {
@@ -193,7 +193,6 @@ export function tryBuildManualCommunityPuzzlePayload(input: {
   if (played.color !== attackerColor) return { ok: false, errorKey: "illegal_correct" };
 
   let attackerHalfMoves = 1;
-  const sanParts: string[] = [played.san];
 
   const solution = input.solutionLineUci
     .map((u) => u.trim().toLowerCase())
@@ -205,14 +204,12 @@ export function tryBuildManualCommunityPuzzlePayload(input: {
     try {
       const m = trial.move(p);
       if (!m) return { ok: false, errorKey: "illegal_solution" };
-      sanParts.push(m.san);
       if (m.color === attackerColor) attackerHalfMoves += 1;
     } catch {
       return { ok: false, errorKey: "illegal_solution" };
     }
   }
 
-  if (!trial.isCheckmate()) return { ok: false, errorKey: "not_checkmate" };
   if (attackerHalfMoves < 2) return { ok: false, errorKey: "mate_too_short" };
 
   const wrongChoices = collectWrongChoices(uciMoves, afterMoveCount, correct);
@@ -221,7 +218,6 @@ export function tryBuildManualCommunityPuzzlePayload(input: {
   }
 
   const label = input.opponentName.trim() || "?";
-  const sanSummary = sanParts.join(" ");
 
   const promptFr =
     input.promptFr?.trim() ||
@@ -238,8 +234,8 @@ export function tryBuildManualCommunityPuzzlePayload(input: {
     wrongChoices: wrongChoices.slice(0, WRONG_CHOICE_COUNT),
     hints: [],
     insight: {
-      fr: `Ligne de mat proposée par l’organisateur : ${sanSummary}`,
-      en: `Curator mating line: ${sanSummary}`,
+      fr: "Ligne proposée par l’organisateur :",
+      en: "Curator continuation:",
     },
   };
 
