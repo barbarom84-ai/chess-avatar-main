@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { createServerClient } from "@supabase/auth-helpers-nextjs";
-import { createClient } from "@supabase/supabase-js";
-import type { User } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { rateLimit } from "@/lib/rate-limit";
-import { buildCloudMoveChallengeFromPgn, canBuildCloudPuzzleFromPgn } from "@/lib/cloud-puzzle";
+import { getAuthedUserFromRequest } from "@/lib/supabase-auth-request";
+import {
+  buildCloudMoveChallengeFromPgn,
+  canBuildCloudPuzzleFromPgn,
+  type CloudPuzzlePayload,
+} from "@/lib/cloud-puzzle";
 
 export const runtime = "nodejs";
 
@@ -12,47 +14,59 @@ const MAX_SAMPLE = 400;
 /** Plus de tentatives car le filtre tactique réduit fortement les plies valides. */
 const MAX_TRIES = 36;
 
-async function getAuthedUser(
-  request: NextRequest,
-  supabaseUrl: string,
-  anonKey: string
-): Promise<User | null> {
-  const bearer = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "").trim();
-  if (bearer) {
-    const sb = createClient(supabaseUrl, anonKey, {
-      global: { headers: { Authorization: `Bearer ${bearer}` } },
-      auth: { persistSession: false, autoRefreshToken: false },
-    });
-    const {
-      data: { user },
-      error,
-    } = await sb.auth.getUser();
-    if (!error && user) return user;
+type GamePuzzleRow = {
+  id: string;
+  pgn: string | null;
+  opponent_name: string | null;
+  moves_count: number;
+};
+
+async function tryLegacyPoolScan(admin: SupabaseClient): Promise<CloudPuzzlePayload | null> {
+  const q1 = await admin
+    .from("games")
+    .select("id, pgn, opponent_name, moves_count")
+    .gte("moves_count", 10)
+    .order("created_at", { ascending: false })
+    .limit(MAX_SAMPLE);
+
+  if (q1.error) {
+    console.error("[puzzles/cloud-random] legacy query", q1.error);
+    return null;
   }
 
-  const cookieStore = await cookies();
-  const authClient = createServerClient(supabaseUrl, anonKey, {
-    cookies: {
-      getAll() {
-        return cookieStore.getAll();
-      },
-      setAll(cookiesToSet) {
-        try {
-          cookiesToSet.forEach(({ name, value, options }) =>
-            cookieStore.set(name, value, options)
-          );
-        } catch {
-          /* ignore */
-        }
-      },
-    },
-  });
+  let rows = q1.data as GamePuzzleRow[] | null;
 
-  const {
-    data: { user },
-    error,
-  } = await authClient.auth.getUser();
-  if (!error && user) return user;
+  if (!rows?.length) {
+    const q2 = await admin
+      .from("games")
+      .select("id, pgn, opponent_name, moves_count")
+      .order("created_at", { ascending: false })
+      .limit(Math.min(200, MAX_SAMPLE));
+
+    if (q2.error || !q2.data?.length) {
+      return null;
+    }
+    rows = q2.data as GamePuzzleRow[];
+  }
+
+  const usable = rows.filter(
+    (r): r is GamePuzzleRow & { pgn: string } =>
+      typeof r.pgn === "string" && r.pgn.length > 0 && canBuildCloudPuzzleFromPgn(r.pgn)
+  );
+  if (usable.length === 0) {
+    return null;
+  }
+
+  for (let t = 0; t < MAX_TRIES; t++) {
+    const row = usable[Math.floor(Math.random() * usable.length)];
+    if (!row) break;
+    const built = buildCloudMoveChallengeFromPgn(row.pgn, {
+      gameId: row.id,
+      opponentName: row.opponent_name ?? "?",
+    });
+    if (built) return built;
+  }
+
   return null;
 }
 
@@ -83,7 +97,7 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const user = await getAuthedUser(request, supabaseUrl, anonKey);
+  const user = await getAuthedUserFromRequest(request, supabaseUrl, anonKey);
   if (!user) {
     return NextResponse.json({ error: "Authentication required" }, { status: 401 });
   }
@@ -92,55 +106,48 @@ export async function GET(request: NextRequest) {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
-  const q1 = await admin
-    .from("games")
-    .select("id, pgn, opponent_name, moves_count")
-    .gte("moves_count", 10)
-    .order("created_at", { ascending: false })
-    .limit(MAX_SAMPLE);
+  const rpcResult = await admin.rpc("random_community_puzzle");
+  if (rpcResult.error) {
+    console.warn("[puzzles/cloud-random] random_community_puzzle:", rpcResult.error.message);
+  } else {
+    const arr = rpcResult.data as { payload?: unknown; game_id?: string }[] | null;
+    const first = arr?.[0];
+    if (first?.payload && typeof first.game_id === "string") {
+      const payload = first.payload as CloudPuzzlePayload;
+      if (payload.kind === "cloud") {
+        const { data: gameRow } = await admin
+          .from("games")
+          .select("opponent_name")
+          .eq("id", first.game_id)
+          .maybeSingle();
 
-  if (q1.error) {
-    console.error("[puzzles/cloud-random] query", q1.error);
-    return NextResponse.json({ error: "Database error" }, { status: 502 });
-  }
+        const name =
+          typeof gameRow?.opponent_name === "string" ? gameRow.opponent_name.trim() : "";
+        if (name) {
+          payload.opponentName = name;
+        }
 
-  let rows = q1.data;
-
-  if (!rows?.length) {
-    const q2 = await admin
-      .from("games")
-      .select("id, pgn, opponent_name, moves_count")
-      .order("created_at", { ascending: false })
-      .limit(Math.min(200, MAX_SAMPLE));
-
-    if (q2.error || !q2.data?.length) {
-      return NextResponse.json(
-        { error: "No saved games in the pool yet" },
-        { status: 404 }
-      );
+        return NextResponse.json(payload);
+      }
     }
-    rows = q2.data;
   }
 
-  const usable = rows.filter((r) => r.pgn && canBuildCloudPuzzleFromPgn(r.pgn));
-  if (usable.length === 0) {
+  if (process.env.CLOUD_PUZZLE_ALLOW_LEGACY_SCAN === "true") {
+    const legacy = await tryLegacyPoolScan(admin);
+    if (legacy) {
+      return NextResponse.json(legacy);
+    }
     return NextResponse.json(
-      { error: "No suitable games for puzzles yet" },
-      { status: 404 }
+      { error: "Could not build a puzzle from the pool (legacy scan)" },
+      { status: 502 }
     );
   }
 
-  for (let t = 0; t < MAX_TRIES; t++) {
-    const row = usable[Math.floor(Math.random() * usable.length)];
-    if (!row) break;
-    const built = buildCloudMoveChallengeFromPgn(row.pgn, {
-      gameId: row.id,
-      opponentName: row.opponent_name ?? "?",
-    });
-    if (built) {
-      return NextResponse.json(built);
-    }
-  }
-
-  return NextResponse.json({ error: "Could not build a puzzle from the pool" }, { status: 502 });
+  return NextResponse.json(
+    {
+      error:
+        "No indexed community puzzles yet. Apply the community_puzzles migration and run npm run index-community-puzzles.",
+    },
+    { status: 404 }
+  );
 }

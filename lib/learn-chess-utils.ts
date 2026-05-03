@@ -1,7 +1,7 @@
 import { Chess, type Move, type Square } from "chess.js";
 
 /** chess.js lève une erreur sur coup illégal (objet {from,to}) — on renvoie false sans propager. */
-function applyUci(game: Chess, uci: string): boolean {
+export function applyUciMove(game: Chess, uci: string): boolean {
   const s = uci.trim().toLowerCase();
   if (s.length < 4) return false;
   const from = s.slice(0, 2);
@@ -21,7 +21,7 @@ export function fenAfterUciMoves(uciMoves: string[], count: number): string {
     const g = new Chess();
     const n = Math.min(count, uciMoves.length);
     for (let i = 0; i < n; i++) {
-      if (!applyUci(g, uciMoves[i])) break;
+      if (!applyUciMove(g, uciMoves[i])) break;
     }
     return g.fen();
   } catch {
@@ -87,11 +87,48 @@ export function resolveDropToQuizChoice(
   const legal: string[] = [];
   for (const uci of matching) {
     const g = new Chess(fen);
-    if (applyUci(g, uci)) legal.push(uci);
+    if (applyUciMove(g, uci)) legal.push(uci);
   }
   if (legal.length === 0) return { type: "none" };
   if (legal.length === 1) return { type: "match", uci: legal[0] };
   return { type: "promotion", options: legal };
+}
+
+export type FreeDropResolution =
+  | { type: "none" }
+  | { type: "uci"; uci: string }
+  | { type: "promotion"; options: string[] };
+
+/**
+ * Résout un glisser-déposer vers un coup UCI légal depuis `fen`.
+ * Plusieurs promotions possibles → le joueur doit choisir la pièce.
+ */
+export function resolveFreeLegalDrop(
+  fen: string,
+  fromSquare: string,
+  toSquare: string
+): FreeDropResolution {
+  const from = fromSquare.toLowerCase() as Square;
+  const to = toSquare.toLowerCase() as Square;
+  try {
+    const g = new Chess(fen);
+    const verbose = g.moves({ square: from, verbose: true });
+    const matching = verbose.filter((m) => m.to === to);
+    if (matching.length === 0) return { type: "none" };
+    if (matching.length === 1) {
+      const m = matching[0];
+      const promo = m.promotion ? String(m.promotion) : "";
+      const uci = `${m.from}${m.to}${promo}`.toLowerCase();
+      return { type: "uci", uci };
+    }
+    const options = matching.map((m) => {
+      const promo = m.promotion ? String(m.promotion) : "";
+      return `${m.from}${m.to}${promo}`.toLowerCase();
+    });
+    return { type: "promotion", options };
+  } catch {
+    return { type: "none" };
+  }
 }
 
 export function shuffleInPlace<T>(arr: T[]): T[] {

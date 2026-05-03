@@ -12,8 +12,8 @@ import type { NormalizedLichessPuzzle } from "@/lib/lichess-puzzle";
 import type { HistoricalGame } from "@/lib/opening-lessons";
 import { pickLocalized } from "@/lib/opening-lessons";
 import type { CloudPuzzlePayload } from "@/lib/cloud-puzzle";
-import { getUserGames, type DbGame } from "@/lib/supabase-storage";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase";
+import { useSuperUser } from "@/hooks/useSuperUser";
 
 function GameSummary({
   game,
@@ -45,6 +45,7 @@ export default function PuzzlesPageClient({
 }) {
   const { lang, t } = useLanguage();
   const p = t.puzzlesPage;
+  const { isSuperUser, loading: superLoading } = useSuperUser();
 
   const [daily, setDaily] = useState<NormalizedLichessPuzzle | null>(null);
   const [dailyLoading, setDailyLoading] = useState(true);
@@ -58,8 +59,7 @@ export default function PuzzlesPageClient({
     historicalGames[0]?.id ?? ""
   );
 
-  const [avatarGames, setAvatarGames] = useState<DbGame[]>([]);
-  const [avatarGamesLoading, setAvatarGamesLoading] = useState(false);
+  const [sessionLoading, setSessionLoading] = useState(false);
   const [hasSession, setHasSession] = useState<boolean | null>(null);
 
   const [cloudPuzzle, setCloudPuzzle] = useState<CloudPuzzlePayload | null>(null);
@@ -98,36 +98,28 @@ export default function PuzzlesPageClient({
   useEffect(() => {
     if (!isSupabaseConfigured || !supabase) {
       setHasSession(false);
-      setAvatarGames([]);
       return;
     }
 
     const sb = supabase;
 
-    const refreshAvatarGames = async () => {
-      setAvatarGamesLoading(true);
+    const refreshSession = async () => {
+      setSessionLoading(true);
       try {
         const {
           data: { session },
         } = await sb.auth.getSession();
-        const signedIn = !!session;
-        setHasSession(signedIn);
-        if (!signedIn) {
-          setAvatarGames([]);
-          return;
-        }
-        const rows = await getUserGames(10);
-        setAvatarGames(rows);
+        setHasSession(!!session);
       } finally {
-        setAvatarGamesLoading(false);
+        setSessionLoading(false);
       }
     };
 
-    refreshAvatarGames();
+    void refreshSession();
     const {
       data: { subscription },
     } = sb.auth.onAuthStateChange(() => {
-      refreshAvatarGames();
+      void refreshSession();
     });
     return () => subscription.unsubscribe();
   }, []);
@@ -203,16 +195,6 @@ export default function PuzzlesPageClient({
     playOnBoard: t.learn.challenge.playOnBoard,
   };
 
-  const formatCloudDate = useCallback(
-    (iso: string) =>
-      new Date(iso).toLocaleDateString(lang === "fr" ? "fr-FR" : "en-US", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      }),
-    [lang]
-  );
-
   const lichessLabels = {
     reset: p.lichess.reset,
     solved: p.lichess.solved,
@@ -261,9 +243,6 @@ export default function PuzzlesPageClient({
             <CardDescription className="text-slate-400 text-base leading-relaxed">
               {p.featuredSectionDesc}
             </CardDescription>
-            {isSupabaseConfigured && (
-              <p className="text-xs text-slate-500 leading-relaxed">{p.avatarGamesIntro}</p>
-            )}
             <div className="pt-1">
               <Button asChild variant="secondary" size="sm" className="gap-1.5">
                 <Link href="/learn">{p.openLearn}</Link>
@@ -332,13 +311,18 @@ export default function PuzzlesPageClient({
                 <div className="space-y-1">
                   <h2 className="text-sm font-semibold text-cyan-100/90">{p.cloudPuzzleTitle}</h2>
                   <p className="text-xs text-slate-500 leading-relaxed">{p.cloudPuzzleDesc}</p>
+                  {isSuperUser && !superLoading && (
+                    <Button asChild variant="link" size="sm" className="h-auto p-0 text-amber-400/95">
+                      <Link href="/puzzles/admin/community">{p.communityManual.link}</Link>
+                    </Button>
+                  )}
                 </div>
 
-                {!avatarGamesLoading && hasSession === false && (
+                {!sessionLoading && hasSession === false && (
                   <p className="text-sm text-slate-500">{p.cloudPuzzleAuth}</p>
                 )}
 
-                {!avatarGamesLoading && hasSession === true && (
+                {!sessionLoading && hasSession === true && (
                   <div className="space-y-4">
                     <Button
                       type="button"
@@ -366,77 +350,6 @@ export default function PuzzlesPageClient({
                     )}
                   </div>
                 )}
-              </div>
-            )}
-
-            {isSupabaseConfigured && (
-              <div className="pt-8 mt-2 border-t border-slate-700/80 space-y-4">
-                <div className="space-y-1">
-                  <h2 className="text-sm font-semibold text-cyan-100/90">{p.avatarGamesTitle}</h2>
-                  <p className="text-xs text-slate-500 leading-relaxed">{p.avatarGamesDesc}</p>
-                </div>
-
-                {avatarGamesLoading && (
-                  <p className="text-sm text-slate-500">{p.avatarGamesLoading}</p>
-                )}
-
-                {!avatarGamesLoading && hasSession === false && (
-                  <div className="rounded-lg border border-dashed border-slate-600/80 bg-slate-900/30 px-4 py-3 space-y-3">
-                    <p className="text-sm text-slate-400">{p.avatarGamesGuest}</p>
-                    <Button asChild variant="outline" size="sm">
-                      <Link href="/profile">{t.profile.signIn}</Link>
-                    </Button>
-                  </div>
-                )}
-
-                {!avatarGamesLoading && hasSession === true && avatarGames.length === 0 && (
-                  <p className="text-sm text-slate-500">{p.avatarGamesEmpty}</p>
-                )}
-
-                {!avatarGamesLoading && hasSession === true && avatarGames.length > 0 && (
-                  <ul className="space-y-2">
-                    {avatarGames.map((g) => (
-                      <li
-                        key={g.id}
-                        className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-slate-700/60 bg-slate-900/50 px-3 py-2 text-sm"
-                      >
-                        <span className="text-slate-200 font-medium truncate max-w-[min(100%,14rem)]">
-                          {g.opponent_name}
-                        </span>
-                        <span className="flex items-center gap-2 shrink-0">
-                          <Badge
-                            variant="outline"
-                            className={
-                              g.result === "win"
-                                ? "border-emerald-700/60 text-emerald-300"
-                                : g.result === "loss"
-                                  ? "border-rose-700/60 text-rose-300"
-                                  : "border-slate-600 text-slate-400"
-                            }
-                          >
-                            {g.result === "win"
-                              ? t.victory
-                              : g.result === "loss"
-                                ? t.defeat
-                                : t.draw}
-                          </Badge>
-                          <span className="text-xs text-slate-500 tabular-nums">
-                            {formatCloudDate(g.created_at)}
-                          </span>
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-
-                <div className="flex flex-wrap gap-2 pt-1">
-                  <Button asChild variant="secondary" size="sm">
-                    <Link href="/games">{p.avatarGamesCta}</Link>
-                  </Button>
-                  <Button asChild variant="ghost" size="sm" className="text-slate-400">
-                    <Link href="/play">{p.playVsAvatar}</Link>
-                  </Button>
-                </div>
               </div>
             )}
           </CardContent>

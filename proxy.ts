@@ -8,7 +8,7 @@ const POST_ONLY = new Set([
   "/api/contact",
 ]);
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   if (!POST_ONLY.has(pathname)) {
     return NextResponse.next();

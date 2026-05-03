@@ -1,4 +1,8 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import type { NextConfig } from "next";
+
+const projectRoot = path.dirname(fileURLToPath(import.meta.url));
 
 /** Defense-in-depth; tuned for Next.js, Supabase, Stripe redirect, Lichess/Chess.com fetches, Stockfish WASM. */
 const CONTENT_SECURITY_POLICY = [
@@ -18,6 +22,8 @@ const CONTENT_SECURITY_POLICY = [
 ].join("; ");
 
 const nextConfig: NextConfig = {
+  /** Avoid inferring workspace root from a parent-folder package-lock.json (e.g. under the user profile). */
+  outputFileTracingRoot: projectRoot,
   webpack(config) {
     config.module.rules.push({
       test: /\.pgn$/i,

@@ -92,7 +92,7 @@ function collectCandidatePlies(uciMoves: string[]): number[] {
   return out;
 }
 
-function collectWrongChoices(
+export function collectWrongChoices(
   uciMoves: string[],
   afterMoveCount: number,
   correctUci: string
@@ -135,6 +135,181 @@ export interface CloudPuzzlePayload {
   opponentName: string;
   uciMoves: string[];
   challenge: MoveChallenge;
+  /** Curated puzzle with organizer-provided mating line */
+  source?: "manual";
+  /** UCI half-moves after `challenge.correctUci` that lead to checkmate */
+  solutionLineUci?: string[];
+}
+
+export type ManualCommunityPuzzleBuildResult =
+  | { ok: true; payload: CloudPuzzlePayload; mateAttackerHalfMoves: number }
+  | { ok: false; errorKey: string };
+
+/**
+ * Build a community puzzle from an organizer-defined position and mating continuation.
+ * The puzzle move may differ from the move stored in the game PGN at that ply.
+ */
+export function tryBuildManualCommunityPuzzlePayload(input: {
+  pgn: string;
+  gameId: string;
+  opponentName: string;
+  afterMoveCount: number;
+  correctUci: string;
+  solutionLineUci: string[];
+  promptFr?: string;
+  promptEn?: string;
+}): ManualCommunityPuzzleBuildResult {
+  const parsed = parsePgnBlock(input.pgn);
+  if (!parsed?.uciMoves?.length) return { ok: false, errorKey: "invalid_pgn" };
+
+  const uciMoves = parsed.uciMoves.map((u) => u.trim().toLowerCase());
+  const { afterMoveCount } = input;
+  if (afterMoveCount < 0 || afterMoveCount >= uciMoves.length) {
+    return { ok: false, errorKey: "ply_out_of_range" };
+  }
+
+  const chessBefore = chessAtPly(uciMoves, afterMoveCount);
+  if (!chessBefore) return { ok: false, errorKey: "invalid_position" };
+
+  const attackerColor = chessBefore.turn();
+  if (attackerColor !== "w" && attackerColor !== "b") {
+    return { ok: false, errorKey: "invalid_position" };
+  }
+
+  const correct = input.correctUci.trim().toLowerCase();
+  const parts = uciToFromTo(correct);
+  if (!parts) return { ok: false, errorKey: "invalid_uci" };
+
+  const trial = new Chess(chessBefore.fen());
+  let played: Move;
+  try {
+    const m = trial.move(parts);
+    if (!m) return { ok: false, errorKey: "illegal_correct" };
+    played = m;
+  } catch {
+    return { ok: false, errorKey: "illegal_correct" };
+  }
+
+  if (played.color !== attackerColor) return { ok: false, errorKey: "illegal_correct" };
+
+  let attackerHalfMoves = 1;
+  const sanParts: string[] = [played.san];
+
+  const solution = input.solutionLineUci
+    .map((u) => u.trim().toLowerCase())
+    .filter((u) => u.length >= 4);
+
+  for (const uci of solution) {
+    const p = uciToFromTo(uci);
+    if (!p) return { ok: false, errorKey: "invalid_uci" };
+    try {
+      const m = trial.move(p);
+      if (!m) return { ok: false, errorKey: "illegal_solution" };
+      sanParts.push(m.san);
+      if (m.color === attackerColor) attackerHalfMoves += 1;
+    } catch {
+      return { ok: false, errorKey: "illegal_solution" };
+    }
+  }
+
+  if (!trial.isCheckmate()) return { ok: false, errorKey: "not_checkmate" };
+  if (attackerHalfMoves < 2) return { ok: false, errorKey: "mate_too_short" };
+
+  const wrongChoices = collectWrongChoices(uciMoves, afterMoveCount, correct);
+  if (wrongChoices.length < WRONG_CHOICE_COUNT) {
+    return { ok: false, errorKey: "wrong_choices" };
+  }
+
+  const label = input.opponentName.trim() || "?";
+  const sanSummary = sanParts.join(" ");
+
+  const promptFr =
+    input.promptFr?.trim() ||
+    `Quel coup amorce la combinaison dans cette partie contre « ${label} » ?`;
+  const promptEn =
+    input.promptEn?.trim() ||
+    `Which move starts the combination in this game vs « ${label} »?`;
+
+  const challenge: MoveChallenge = {
+    id: `cloud-manual-${input.gameId}-${afterMoveCount}`,
+    afterMoveCount,
+    prompt: { fr: promptFr, en: promptEn },
+    correctUci: correct,
+    wrongChoices: wrongChoices.slice(0, WRONG_CHOICE_COUNT),
+    hints: [],
+    insight: {
+      fr: `Ligne de mat proposée par l’organisateur : ${sanSummary}`,
+      en: `Curator mating line: ${sanSummary}`,
+    },
+  };
+
+  const payload: CloudPuzzlePayload = {
+    kind: "cloud",
+    gameId: input.gameId,
+    opponentName: label,
+    uciMoves,
+    challenge,
+    source: "manual",
+    solutionLineUci: solution.length > 0 ? solution : undefined,
+  };
+
+  return { ok: true, payload, mateAttackerHalfMoves: attackerHalfMoves };
+}
+
+function insightForcedMate(mateAttackerMoves: 2 | 3): MoveChallenge["insight"] {
+  return {
+    fr: `Le coup joué amorce un mat forcé en exactement ${mateAttackerMoves} demi-coups du camp attaquant (défense optimale).`,
+    en: `The played move begins a forced checkmate in exactly ${mateAttackerMoves} attacker half-moves (optimal defense).`,
+  };
+}
+
+/**
+ * Build community puzzle payload at a fixed ply (forced mate M2/M3 pool).
+ */
+export function buildCloudPayloadAtPly(
+  pgn: string,
+  meta: { opponentName: string; gameId: string },
+  afterMoveCount: number,
+  mateAttackerMoves: 2 | 3
+): CloudPuzzlePayload | null {
+  const parsed = parsePgnBlock(pgn);
+  if (!parsed?.uciMoves?.length) return null;
+  const uciMoves = parsed.uciMoves.map((u) => u.trim().toLowerCase());
+
+  if (
+    afterMoveCount < MIN_PLIES_BEFORE_GUESS ||
+    afterMoveCount > uciMoves.length - 1
+  ) {
+    return null;
+  }
+
+  const correctUci = uciMoves[afterMoveCount];
+  if (!correctUci || correctUci.length < 4) return null;
+
+  const wrongChoices = collectWrongChoices(uciMoves, afterMoveCount, correctUci);
+  if (wrongChoices.length < WRONG_CHOICE_COUNT) return null;
+
+  const label = meta.opponentName.trim() || "?";
+  const challenge: MoveChallenge = {
+    id: `cloud-${meta.gameId}-${afterMoveCount}`,
+    afterMoveCount,
+    prompt: {
+      fr: `Quel coup amorce un mat forcé en ${mateAttackerMoves} dans cette partie contre « ${label} » ?`,
+      en: `Which move begins a forced mate in ${mateAttackerMoves} in this game vs « ${label} »?`,
+    },
+    correctUci,
+    wrongChoices: wrongChoices.slice(0, WRONG_CHOICE_COUNT),
+    hints: [],
+    insight: insightForcedMate(mateAttackerMoves),
+  };
+
+  return {
+    kind: "cloud",
+    gameId: meta.gameId,
+    opponentName: label,
+    uciMoves,
+    challenge,
+  };
 }
 
 /**
