@@ -12,9 +12,12 @@ import { useStockfish } from "@/hooks/useStockfish";
 import type { EngineConfig } from "@/lib/analysis";
 import { getSavedConfigs, getRecentConfigs } from "@/lib/storage";
 import { normalizeEnginePlatform } from "@/lib/normalize-engine-platform";
-import { getFilteredProfiles } from "@/lib/supabase-storage";
+import { getFilteredProfiles, saveGameToCloud } from "@/lib/supabase-storage";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/language-context";
+import { usePremium } from "@/hooks/usePremium";
+import EvaluationBar from "@/components/EvaluationBar";
+import { toast } from "sonner";
 import {
   Play,
   Pause,
@@ -28,6 +31,7 @@ import {
 
 const ARENA_STORAGE_PLATFORM = "chess-arena.platform";
 const ARENA_STORAGE_DEDUPE = "chess-arena.dedupe";
+const ARENA_STORAGE_SAVE_CLOUD = "chess-arena.saveCloud";
 const MAX_PICKER_ROWS = 36;
 
 type ProfilePlatformFilter = "all" | "lichess" | "chesscom";
@@ -177,6 +181,179 @@ function filterBySearch(options: ProfileOption[], q: string): ProfileOption[] {
   });
 }
 
+/** Stockfish `cp` est du point de vue du camp qui a le trait — conversion POV blancs. */
+function stmEvalToWhitePov(fen: string, evalFromEngine: number): number {
+  try {
+    return new Chess(fen).turn() === "w" ? evalFromEngine : -evalFromEngine;
+  } catch {
+    return evalFromEngine;
+  }
+}
+
+type ArenaOutcome = {
+  result: "win" | "loss" | "draw";
+  resultType: string;
+  resultMessage: string;
+  pgnResult: "1-0" | "0-1" | "1/2-1/2";
+};
+
+function classifyArenaOutcome(
+  game: Chess,
+  maxMovesReached: boolean,
+  lang: "fr" | "en"
+): ArenaOutcome {
+  if (maxMovesReached && !game.isGameOver()) {
+    return {
+      result: "draw",
+      resultType: "arena_move_limit",
+      resultMessage:
+        lang === "fr"
+          ? "Partie arrêtée : limite de coups atteinte."
+          : "Game stopped: move limit reached.",
+      pgnResult: "1/2-1/2",
+    };
+  }
+  if (game.isCheckmate()) {
+    const loser = game.turn();
+    if (loser === "w") {
+      return {
+        result: "loss",
+        resultType: "arena_black_wins",
+        resultMessage:
+          lang === "fr"
+            ? "Échec et mat — victoire des noirs."
+            : "Checkmate — Black wins.",
+        pgnResult: "0-1",
+      };
+    }
+    return {
+      result: "win",
+      resultType: "arena_white_wins",
+      resultMessage:
+        lang === "fr"
+          ? "Échec et mat — victoire des blancs."
+          : "Checkmate — White wins.",
+      pgnResult: "1-0",
+    };
+  }
+  if (game.isStalemate()) {
+    return {
+      result: "draw",
+      resultType: "arena_draw_stalemate",
+      resultMessage: lang === "fr" ? "Pat." : "Stalemate.",
+      pgnResult: "1/2-1/2",
+    };
+  }
+  if (game.isDraw()) {
+    let resultType = "arena_draw_generic";
+    let msg = lang === "fr" ? "Partie nulle." : "Draw.";
+    if (game.isInsufficientMaterial()) {
+      resultType = "arena_draw_insufficient";
+      msg =
+        lang === "fr"
+          ? "Nulle — matériel insuffisant."
+          : "Draw — insufficient material.";
+    } else if (game.isThreefoldRepetition()) {
+      resultType = "arena_draw_threefold";
+      msg =
+        lang === "fr"
+          ? "Nulle — triple répétition."
+          : "Draw — threefold repetition.";
+    } else if (game.isDrawByFiftyMoves()) {
+      resultType = "arena_draw_fifty";
+      msg =
+        lang === "fr"
+          ? "Nulle — règle des 50 coups."
+          : "Draw — fifty-move rule.";
+    }
+    return {
+      result: "draw",
+      resultType,
+      resultMessage: msg,
+      pgnResult: "1/2-1/2",
+    };
+  }
+  return {
+    result: "draw",
+    resultType: "arena_draw_generic",
+    resultMessage: lang === "fr" ? "Partie terminée." : "Game over.",
+    pgnResult: "1/2-1/2",
+  };
+}
+
+function countArenaCapturesChecks(game: Chess): {
+  captures: number;
+  checks: number;
+} {
+  const tmp = new Chess();
+  let captures = 0;
+  let checks = 0;
+  for (const san of game.history()) {
+    const m = tmp.move(san);
+    if (m?.captured) captures++;
+    if (tmp.inCheck()) checks++;
+  }
+  return { captures, checks };
+}
+
+function escapePgnHeader(s: string): string {
+  return s.replace(/\\/g, "\\\\").replace(/"/g, "'");
+}
+
+function buildArenaPgn(params: {
+  whiteName: string;
+  blackName: string;
+  outcome: ArenaOutcome;
+  uciMoves: string[];
+}): string {
+  const { whiteName, blackName, outcome, uciMoves } = params;
+  const date = new Date();
+  const dateStr = `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, "0")}.${String(date.getDate()).padStart(2, "0")}`;
+  const timeStr = `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}:${String(date.getSeconds()).padStart(2, "0")}`;
+
+  const replay = new Chess();
+  const sans: string[] = [];
+  for (const uci of uciMoves) {
+    if (!uci || uci.length < 4) continue;
+    const from = uci.slice(0, 2);
+    const to = uci.slice(2, 4);
+    const promotion =
+      uci.length > 4 ? (uci[4] as "q" | "r" | "b" | "n") : undefined;
+    const m = replay.move(
+      promotion ? { from, to, promotion } : { from, to }
+    );
+    if (!m) break;
+    sans.push(m.san);
+  }
+
+  const headers = [
+    `[Event "Chess Avatar Arena"]`,
+    `[Site "Chess Avatar / Arena"]`,
+    `[Date "${dateStr}"]`,
+    `[Time "${timeStr}"]`,
+    `[Round "1"]`,
+    `[White "${escapePgnHeader(whiteName)}"]`,
+    `[Black "${escapePgnHeader(blackName)}"]`,
+    `[Result "${outcome.pgnResult}"]`,
+    `[TimeControl "-"]`,
+    `[Termination "${escapePgnHeader(outcome.resultMessage)}"]`,
+  ];
+
+  let movesStr = "";
+  if (sans.length === 0) {
+    movesStr = outcome.pgnResult;
+  } else {
+    for (let i = 0; i < sans.length; i++) {
+      if (i % 2 === 0) movesStr += `${Math.floor(i / 2) + 1}. `;
+      movesStr += sans[i] + " ";
+      if (i % 16 === 15 && i < sans.length - 1) movesStr += "\n";
+    }
+    movesStr += outcome.pgnResult;
+  }
+
+  return headers.join("\n") + "\n\n" + movesStr;
+}
+
 function ArenaProfilePicker({
   sideLabel,
   selectedKey,
@@ -254,7 +431,13 @@ function ArenaProfilePicker({
 
 export default function ArenaSpectator() {
   const { t, lang } = useLanguage();
-  const { isReady, getBestMove, stopThinking } = useStockfish();
+  const { userId } = usePremium();
+  const {
+    isReady,
+    getBestMove,
+    stopThinking,
+    getPositionEvaluation,
+  } = useStockfish();
   const [rawOptions, setRawOptions] = useState<ProfileOption[]>([]);
   const [listLoading, setListLoading] = useState(true);
   const [whiteKey, setWhiteKey] = useState("");
@@ -275,6 +458,11 @@ export default function ArenaSpectator() {
   const [autoPlay, setAutoPlay] = useState(false);
   const [statusNote, setStatusNote] = useState<string | null>(null);
   const runningRef = useRef(false);
+  const arenaClockStartRef = useRef<number | null>(null);
+  const arenaSavedRef = useRef(false);
+  const evalSeqRef = useRef(0);
+  const [saveCloudGames, setSaveCloudGames] = useState(false);
+  const [barEval, setBarEval] = useState<number | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -286,10 +474,25 @@ export default function ArenaSpectator() {
       const d = localStorage.getItem(ARENA_STORAGE_DEDUPE);
       if (d === "1") setDedupeIdentity(true);
       else if (d === "0") setDedupeIdentity(false);
+      const sc = localStorage.getItem(ARENA_STORAGE_SAVE_CLOUD);
+      if (sc === "1") setSaveCloudGames(true);
+      else if (sc === "0") setSaveCloudGames(false);
     } catch {
       /* ignore */
     }
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      localStorage.setItem(
+        ARENA_STORAGE_SAVE_CLOUD,
+        saveCloudGames ? "1" : "0"
+      );
+    } catch {
+      /* ignore */
+    }
+  }, [saveCloudGames]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -357,11 +560,82 @@ export default function ArenaSpectator() {
     setAutoPlay(false);
     stopThinking();
     historyRef.current = [];
+    arenaClockStartRef.current = null;
+    arenaSavedRef.current = false;
     setMoveCount(0);
     setLastMove(null);
     setFen(new Chess().fen());
     setStatusNote(null);
   }, [stopThinking]);
+
+  useEffect(() => {
+    if (!isReady) return;
+    const seq = ++evalSeqRef.current;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const raw = await getPositionEvaluation(fen, 10);
+        if (cancelled || seq !== evalSeqRef.current) return;
+        setBarEval(stmEvalToWhitePov(fen, raw));
+      } catch {
+        if (!cancelled && seq === evalSeqRef.current) setBarEval(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [fen, isReady, getPositionEvaluation]);
+
+  const trySaveArenaCloud = useCallback(
+    async (game: Chess, uciHist: string[], outcome: ArenaOutcome) => {
+      if (!whiteConfig || !blackConfig || !userId) return;
+      try {
+        const whiteName = whiteConfig.name || "White";
+        const blackName = blackConfig.name || "Black";
+        const started = arenaClockStartRef.current;
+        const durationSeconds =
+          started != null
+            ? Math.max(0, Math.round((Date.now() - started) / 1000))
+            : undefined;
+        const pgn = buildArenaPgn({
+          whiteName,
+          blackName,
+          outcome,
+          uciMoves: uciHist,
+        });
+        const { captures, checks } = countArenaCapturesChecks(game);
+        await saveGameToCloud({
+          opponentName: `${whiteName} vs ${blackName}`,
+          opponentPlatform: "arena",
+          result: outcome.result,
+          resultType: outcome.resultType,
+          resultMessage: outcome.resultMessage,
+          playerColor: "white",
+          pgn,
+          finalFen: game.fen(),
+          movesCount: uciHist.length,
+          durationSeconds,
+          capturesCount: captures,
+          checksCount: checks,
+          botConfig: blackConfig,
+          gameKind: "arena_bot_vs_bot",
+          arenaConfigs: { white: whiteConfig, black: blackConfig },
+        });
+        toast.success(t.arenaPage.cloudSavedToast);
+      } catch (e) {
+        console.error(e);
+        arenaSavedRef.current = false;
+        toast.error(t.arenaPage.cloudSaveErrorToast);
+      }
+    },
+    [
+      whiteConfig,
+      blackConfig,
+      userId,
+      t.arenaPage.cloudSavedToast,
+      t.arenaPage.cloudSaveErrorToast,
+    ]
+  );
 
   const gameEndMessage = useCallback(
     (game: Chess) => {
@@ -388,6 +662,20 @@ export default function ArenaSpectator() {
     }
     if (hist.length >= maxPlies) {
       setStatusNote(t.arenaPage.gameOver);
+      const gLimit = replayUci(hist);
+      if (
+        saveCloudGames &&
+        userId &&
+        hist.length > 0 &&
+        !arenaSavedRef.current
+      ) {
+        arenaSavedRef.current = true;
+        void trySaveArenaCloud(
+          gLimit,
+          [...hist],
+          classifyArenaOutcome(gLimit, true, lang)
+        );
+      }
       return true;
     }
 
@@ -421,18 +709,44 @@ export default function ArenaSpectator() {
       return true;
     }
 
+    const wasEmpty = hist.length === 0;
     historyRef.current = [...hist, uci];
+    if (wasEmpty) arenaClockStartRef.current = Date.now();
+
     setFen(next.fen());
     setLastMove({ from, to });
     setMoveCount(historyRef.current.length);
     setStatusNote(null);
 
+    const snapshot = [...historyRef.current];
+
     if (next.isGameOver()) {
       setStatusNote(gameEndMessage(next));
+      if (
+        saveCloudGames &&
+        userId &&
+        snapshot.length > 0 &&
+        !arenaSavedRef.current
+      ) {
+        arenaSavedRef.current = true;
+        void trySaveArenaCloud(
+          next,
+          snapshot,
+          classifyArenaOutcome(next, false, lang)
+        );
+      }
       return true;
     }
-    if (historyRef.current.length >= maxPlies) {
+    if (snapshot.length >= maxPlies) {
       setStatusNote(t.arenaPage.gameOver);
+      if (saveCloudGames && userId && !arenaSavedRef.current) {
+        arenaSavedRef.current = true;
+        void trySaveArenaCloud(
+          next,
+          snapshot,
+          classifyArenaOutcome(next, true, lang)
+        );
+      }
       return true;
     }
     return false;
@@ -447,6 +761,10 @@ export default function ArenaSpectator() {
     getBestMove,
     t.arenaPage,
     gameEndMessage,
+    saveCloudGames,
+    userId,
+    trySaveArenaCloud,
+    lang,
   ]);
 
   const handleStartAuto = async () => {
@@ -647,6 +965,32 @@ export default function ArenaSpectator() {
                   </div>
                 </div>
               </div>
+
+              {isSupabaseConfigured && userId ? (
+                <div className="flex items-center justify-between gap-3 rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-2.5">
+                  <div className="space-y-0.5 min-w-0">
+                    <Label
+                      htmlFor="arena-save-cloud"
+                      className="text-sm text-slate-200"
+                    >
+                      {t.arenaPage.saveCloudLabel}
+                    </Label>
+                    <p className="text-[11px] text-slate-500 leading-snug">
+                      {t.arenaPage.saveCloudHint}
+                    </p>
+                  </div>
+                  <Switch
+                    id="arena-save-cloud"
+                    checked={saveCloudGames}
+                    onCheckedChange={setSaveCloudGames}
+                    className="shrink-0"
+                  />
+                </div>
+              ) : isSupabaseConfigured && !userId ? (
+                <p className="text-xs text-slate-500">
+                  {t.arenaPage.saveCloudNeedLogin}
+                </p>
+              ) : null}
             </CardContent>
           </Card>
 
@@ -723,12 +1067,15 @@ export default function ArenaSpectator() {
           </div>
 
           <div className="flex justify-center">
-            <div className="w-full max-w-md aspect-square">
-              <SimpleChessboard
-                position={fen}
-                orientation="white"
-                lastMove={lastMove}
-              />
+            <div className="w-full max-w-md space-y-2">
+              {isReady && <EvaluationBar evaluation={barEval} />}
+              <div className="w-full aspect-square">
+                <SimpleChessboard
+                  position={fen}
+                  orientation="white"
+                  lastMove={lastMove}
+                />
+              </div>
             </div>
           </div>
         </>

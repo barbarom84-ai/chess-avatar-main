@@ -178,7 +178,17 @@ export const translations = {
       quickReviewSection: "Game Review rapide",
       quickReviewSectionHint: "Analysez n'importe quel PGN sans l'enregistrer dans votre bibliothèque.",
       backToHub: "Retour à mes parties",
-      reviewing: "Analyse en cours"
+      reviewing: "Analyse en cours",
+      filterGameKindAll: "Toutes les parties",
+      filterGameKindHuman: "Joueur vs bot",
+      filterGameKindArena: "Arène bot vs bot",
+      statsExcludeArena:
+        "Les statistiques ci-dessus ignorent les parties d’arène (bot vs bot).",
+      badgeArenaBot: "Arène",
+      arenaOutcomeWhite: "1-0 (blancs)",
+      arenaOutcomeBlack: "0-1 (noirs)",
+      arenaOutcomeDraw: "Nulle",
+      colorArenaBots: "Bot vs bot",
     },
     
     // Guide Page (UCI creator guide)
@@ -1027,6 +1037,12 @@ export const translations = {
       cloudLibrary: "Cloud (public)",
       emptyHint:
         "Si vous aviez analysé Lichess puis Chess.com, l’ancien bug ne gardait qu’un « Bot_pseudo » : relancez une analyse Lichess. Les bots publics du compte sont aussi chargés depuis le cloud.",
+      saveCloudLabel: "Enregistrer les parties (cloud)",
+      saveCloudHint:
+        "À la fin de la partie, enregistrement sous « bot vs bot » dans Mes parties — sans impacter vos stats joueur.",
+      saveCloudNeedLogin: "Connectez-vous pour sauvegarder les parties d’arène dans le cloud.",
+      cloudSavedToast: "Partie d’arène enregistrée.",
+      cloudSaveErrorToast: "Impossible d’enregistrer la partie d’arène.",
     },
 
     // Forced line editor
@@ -1550,7 +1566,16 @@ export const translations = {
       quickReviewSection: "Quick Game Review",
       quickReviewSectionHint: "Analyze any PGN without saving it to your library.",
       backToHub: "Back to my games",
-      reviewing: "Reviewing"
+      reviewing: "Reviewing",
+      filterGameKindAll: "All games",
+      filterGameKindHuman: "Human vs bot",
+      filterGameKindArena: "Arena bot vs bot",
+      statsExcludeArena: "Stats above exclude arena (bot vs bot) games.",
+      badgeArenaBot: "Arena",
+      arenaOutcomeWhite: "1-0 (White)",
+      arenaOutcomeBlack: "0-1 (Black)",
+      arenaOutcomeDraw: "Draw",
+      colorArenaBots: "Bot vs bot",
     },
     
     // Guide Page (UCI creator guide)
@@ -2394,6 +2419,12 @@ export const translations = {
       cloudLibrary: "Cloud (public)",
       emptyHint:
         "If you analyzed Lichess then Chess.com, an old bug kept only one “Bot_username”: run Lichess analysis again. Public bots from the library are also loaded from the cloud.",
+      saveCloudLabel: "Save games to cloud",
+      saveCloudHint:
+        "When the game ends, store it as bot vs bot under My games — your player stats stay unchanged.",
+      saveCloudNeedLogin: "Sign in to save arena games to the cloud.",
+      cloudSavedToast: "Arena game saved.",
+      cloudSaveErrorToast: "Could not save the arena game.",
     },
 
     // Forced line editor

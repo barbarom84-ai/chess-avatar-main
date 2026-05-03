@@ -17,6 +17,8 @@ export type { DbProfile } from './supabase';
  * Partie stockée pour l’utilisateur (Supabase). Pour corpus bulk / millions de parties,
  * voir [`game-sources`](./game-sources.ts) — ne pas utiliser cette ligne comme entrepôt analytique.
  */
+export type GameKind = 'human_vs_bot' | 'arena_bot_vs_bot';
+
 export interface DbGame {
   id: string;
   user_id: string;
@@ -39,9 +41,17 @@ export interface DbGame {
   created_at: string;
   updated_at: string;
   bot_config?: EngineConfig;
+  /** Arène : deux profils moteur (blancs / noirs). */
+  arena_configs?: { white: EngineConfig; black: EngineConfig };
+  /** human_vs_bot (défaut) | arena_bot_vs_bot */
+  game_kind?: GameKind;
   /** Optionnel : lien ou ID jeu distant — voir `DbGameExternalRef` dans game-sources.ts */
   external_game_id?: string;
   external_game_url?: string;
+}
+
+export function isArenaBotVsBotGame(game: Pick<DbGame, 'game_kind'>): boolean {
+  return game.game_kind === 'arena_bot_vs_bot';
 }
 
 /**
@@ -589,6 +599,8 @@ export async function saveGameToCloud(gameData: {
   worstEval?: number;
   avgEval?: number;
   botConfig?: EngineConfig;
+  gameKind?: GameKind;
+  arenaConfigs?: { white: EngineConfig; black: EngineConfig };
 }): Promise<DbGame | null> {
   if (!isSupabaseConfigured || !supabase) {
     console.warn('Supabase non configuré');
@@ -626,6 +638,8 @@ export async function saveGameToCloud(gameData: {
         worst_eval: gameData.worstEval,
         avg_eval: gameData.avgEval,
         bot_config: gameData.botConfig,
+        game_kind: gameData.gameKind ?? 'human_vs_bot',
+        arena_configs: gameData.arenaConfigs ?? null,
       })
       .select()
       .single();
@@ -731,17 +745,22 @@ export async function getGamesStats(): Promise<{
 
     const { data, error } = await supabase
       .from('games')
-      .select('result')
+      .select('result, game_kind')
       .eq('user_id', user.id);
 
     if (error || !data) {
       return { total: 0, wins: 0, losses: 0, draws: 0, winRate: 0 };
     }
 
-    const total = data.length;
-    const wins = data.filter(g => g.result === 'win').length;
-    const losses = data.filter(g => g.result === 'loss').length;
-    const draws = data.filter(g => g.result === 'draw').length;
+    const rows = data.filter(
+      (g: { game_kind?: string | null }) =>
+        (g.game_kind ?? 'human_vs_bot') !== 'arena_bot_vs_bot'
+    );
+
+    const total = rows.length;
+    const wins = rows.filter((g: { result: string }) => g.result === 'win').length;
+    const losses = rows.filter((g: { result: string }) => g.result === 'loss').length;
+    const draws = rows.filter((g: { result: string }) => g.result === 'draw').length;
     const winRate = total > 0 ? (wins / total) * 100 : 0;
 
     return { total, wins, losses, draws, winRate };

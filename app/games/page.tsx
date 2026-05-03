@@ -1,6 +1,12 @@
 "use client";
 
-import { useState, useEffect, useRef, type ChangeEvent } from "react";
+import {
+  useState,
+  useEffect,
+  useRef,
+  type ChangeEvent,
+  type ReactNode,
+} from "react";
 import dynamic from "next/dynamic";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,7 +17,14 @@ import {
   Search, TrendingUp, Eye, ChevronLeft, ChevronRight,
   CheckSquare, Square, X, Upload, Loader2, Crown
 } from "lucide-react";
-import { getUserGames, getGamesStats, deleteGame, saveGameToCloud, type DbGame } from "@/lib/supabase-storage";
+import {
+  getUserGames,
+  getGamesStats,
+  deleteGame,
+  saveGameToCloud,
+  type DbGame,
+  isArenaBotVsBotGame,
+} from "@/lib/supabase-storage";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { useLanguage } from "@/lib/language-context";
 import { usePremium } from "@/hooks/usePremium";
@@ -55,6 +68,9 @@ export default function GamesPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterResult, setFilterResult] = useState<'all' | 'win' | 'loss' | 'draw'>('all');
+  const [gameKindFilter, setGameKindFilter] = useState<"all" | "human" | "arena">(
+    "all"
+  );
   const [selectedGame, setSelectedGame] = useState<DbGame | null>(null);
   // Active PGN being reviewed inline (either a saved game or an ad-hoc import).
   const [reviewPgn, setReviewPgn] = useState<string | null>(null);
@@ -103,7 +119,25 @@ export default function GamesPage() {
 
   useEffect(() => {
     applyFilters();
-  }, [games, searchTerm, filterResult]);
+  }, [games, searchTerm, filterResult, gameKindFilter]);
+
+  function matchesArenaAwareResult(
+    game: DbGame,
+    filter: "win" | "loss" | "draw"
+  ): boolean {
+    if (isArenaBotVsBotGame(game)) {
+      if (filter === "win") return game.result_type === "arena_white_wins";
+      if (filter === "loss") return game.result_type === "arena_black_wins";
+      if (filter === "draw") {
+        return (
+          game.result_type === "arena_move_limit" ||
+          game.result_type.startsWith("arena_draw")
+        );
+      }
+      return true;
+    }
+    return game.result === filter;
+  }
 
   const loadGames = async () => {
     setLoading(true);
@@ -217,14 +251,20 @@ export default function GamesPage() {
   const applyFilters = () => {
     let filtered = [...games];
 
-    // Filtre par résultat
-    if (filterResult !== 'all') {
-      filtered = filtered.filter(g => g.result === filterResult);
+    if (gameKindFilter === "human") {
+      filtered = filtered.filter((g) => !isArenaBotVsBotGame(g));
+    } else if (gameKindFilter === "arena") {
+      filtered = filtered.filter(isArenaBotVsBotGame);
     }
 
-    // Filtre par recherche
+    if (filterResult !== "all") {
+      filtered = filtered.filter((g) =>
+        matchesArenaAwareResult(g, filterResult)
+      );
+    }
+
     if (searchTerm) {
-      filtered = filtered.filter(g => 
+      filtered = filtered.filter((g) =>
         g.opponent_name.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
@@ -307,16 +347,54 @@ export default function GamesPage() {
     URL.revokeObjectURL(url);
   };
 
-  const getResultBadge = (result: string) => {
-    switch (result) {
-      case 'win':
+  const getGameResultBadge = (game: DbGame) => {
+    if (isArenaBotVsBotGame(game)) {
+      let outcomeBadge: ReactNode;
+      switch (game.result_type) {
+        case "arena_white_wins":
+          outcomeBadge = (
+            <Badge className="bg-slate-100 text-slate-900">
+              {t.games.arenaOutcomeWhite}
+            </Badge>
+          );
+          break;
+        case "arena_black_wins":
+          outcomeBadge = (
+            <Badge className="bg-slate-800 text-slate-100">
+              {t.games.arenaOutcomeBlack}
+            </Badge>
+          );
+          break;
+        default:
+          outcomeBadge = (
+            <Badge className="bg-amber-700 text-white">
+              {t.games.arenaOutcomeDraw}
+            </Badge>
+          );
+      }
+      return (
+        <div className="flex flex-wrap items-center gap-1">
+          <Badge
+            variant="outline"
+            className="border-violet-500 text-violet-300"
+          >
+            {t.games.badgeArenaBot}
+          </Badge>
+          {outcomeBadge}
+        </div>
+      );
+    }
+    switch (game.result) {
+      case "win":
         return <Badge className="bg-green-600 text-white">{t.games.wins}</Badge>;
-      case 'loss':
+      case "loss":
         return <Badge className="bg-red-600 text-white">{t.games.losses}</Badge>;
-      case 'draw':
-        return <Badge className="bg-amber-600 text-white">{t.games.draws}</Badge>;
+      case "draw":
+        return (
+          <Badge className="bg-amber-600 text-white">{t.games.draws}</Badge>
+        );
       default:
-        return <Badge>{result}</Badge>;
+        return <Badge>{game.result}</Badge>;
     }
   };
 
@@ -388,7 +466,7 @@ export default function GamesPage() {
                   <div className="text-xs text-slate-400 mt-0.5 flex items-center gap-2 flex-wrap">
                     <span>{formatDate(selectedGame.created_at)}</span>
                     <span>•</span>
-                    {getResultBadge(selectedGame.result)}
+                    {getGameResultBadge(selectedGame)}
                   </div>
                 )}
               </div>
@@ -523,6 +601,9 @@ export default function GamesPage() {
             </CardContent>
           </Card>
         </div>
+        <p className="text-xs text-slate-500 text-center -mt-2">
+          {t.games.statsExcludeArena}
+        </p>
 
         {/* Filtres et Recherche */}
         <Card className="bg-slate-900 border-cyan-500/20">
@@ -569,6 +650,47 @@ export default function GamesPage() {
                   {t.games.draws}
                 </Button>
               </div>
+            </div>
+            <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-slate-800">
+              <Button
+                type="button"
+                variant={gameKindFilter === "all" ? "default" : "outline"}
+                onClick={() => setGameKindFilter("all")}
+                size="sm"
+                className={
+                  gameKindFilter === "all"
+                    ? "bg-indigo-600 text-white"
+                    : "border-slate-600"
+                }
+              >
+                {t.games.filterGameKindAll}
+              </Button>
+              <Button
+                type="button"
+                variant={gameKindFilter === "human" ? "default" : "outline"}
+                onClick={() => setGameKindFilter("human")}
+                size="sm"
+                className={
+                  gameKindFilter === "human"
+                    ? "bg-cyan-600 text-white"
+                    : "border-slate-600"
+                }
+              >
+                {t.games.filterGameKindHuman}
+              </Button>
+              <Button
+                type="button"
+                variant={gameKindFilter === "arena" ? "default" : "outline"}
+                onClick={() => setGameKindFilter("arena")}
+                size="sm"
+                className={
+                  gameKindFilter === "arena"
+                    ? "bg-violet-600 text-white"
+                    : "border-slate-600"
+                }
+              >
+                {t.games.filterGameKindArena}
+              </Button>
             </div>
             <div className="flex flex-col sm:flex-row sm:items-end gap-3 mt-4 pt-4 border-t border-slate-800">
               <Button
@@ -675,7 +797,7 @@ export default function GamesPage() {
                           <div className="flex-1 min-w-0">
                             <div className={`flex items-center gap-2 mb-1 ${compactMobile ? "flex-wrap" : ""}`}>
                               <h3 className={`font-semibold text-slate-200 ${compactMobile ? "text-sm truncate max-w-[140px]" : ""}`}>{game.opponent_name}</h3>
-                              {getResultBadge(game.result)}
+                              {getGameResultBadge(game)}
                               {game.opponent_platform && (
                                 <Badge variant="outline" className="text-xs">
                                   {game.opponent_platform}
@@ -693,7 +815,12 @@ export default function GamesPage() {
                               </span>
                               <span>{t.games.moves}: {game.moves_count}</span>
                               <span className="capitalize">
-                                {t.games.color}: {game.player_color === 'white' ? t.games.white : t.games.black}
+                                {t.games.color}:{" "}
+                                {isArenaBotVsBotGame(game)
+                                  ? t.games.colorArenaBots
+                                  : game.player_color === "white"
+                                    ? t.games.white
+                                    : t.games.black}
                               </span>
                             </div>
                           </div>
