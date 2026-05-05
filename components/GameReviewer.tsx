@@ -23,6 +23,7 @@ import {
   Lock,
   LogOut,
   Bot,
+  Check,
 } from "lucide-react";
 import { Chess, type Move } from "chess.js";
 import {
@@ -127,6 +128,8 @@ interface GameReviewerProps {
    * du stockage local est utilisé.
    */
   paradoxAvatarConfig?: EngineConfig;
+  /** Affiche un indicateur "déjà sauvegardée" à côté du téléchargement annoté. */
+  showSavedInGamesList?: boolean;
 }
 
 export default function GameReviewer({
@@ -137,6 +140,7 @@ export default function GameReviewer({
   cacheUserId,
   onRequestUpgrade,
   paradoxAvatarConfig,
+  showSavedInGamesList = false,
 }: GameReviewerProps) {
   const { t, lang } = useLanguage();
 
@@ -711,6 +715,7 @@ export default function GameReviewer({
           onStartAnalysis={() => review.start()}
           onRelaunch={handleRelaunchAnalysis}
           onDownloadAnnotated={handleDownloadAnnotated}
+          showSavedInGamesList={showSavedInGamesList}
         />
 
         <EvaluationBar evaluation={evalForBar} />
@@ -917,6 +922,7 @@ function ProgressHeader({
   onStartAnalysis,
   onRelaunch,
   onDownloadAnnotated,
+  showSavedInGamesList,
 }: {
   effectiveStatus: ReviewStatus;
   reviewStatus: ReviewStatus;
@@ -929,6 +935,7 @@ function ProgressHeader({
   onStartAnalysis: () => void;
   onRelaunch: () => void;
   onDownloadAnnotated: () => void;
+  showSavedInGamesList: boolean;
 }) {
   const { t } = useLanguage();
   const pct = total > 0 ? Math.round((progress / total) * 100) : 0;
@@ -955,6 +962,19 @@ function ProgressHeader({
             <Download className="h-3 w-3 mr-1" />
             {t.review.downloadAnnotated}
           </Button>
+          {showSavedInGamesList && (
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              className="h-7 px-2 text-emerald-300 hover:text-emerald-200 hover:bg-emerald-500/10"
+              title={t.review.savedInGamesList}
+              disabled
+            >
+              <Check className="h-3 w-3 mr-1" />
+              {t.review.savedInGamesList}
+            </Button>
+          )}
           <Button
             type="button"
             size="sm"

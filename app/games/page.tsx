@@ -515,6 +515,7 @@ export default function GamesPage() {
             showAllBestArrows={reviewShowAllArrows}
             cacheUserId={reviewCacheUserId}
             onRequestUpgrade={() => setShowUpgrade(true)}
+            showSavedInGamesList
           />
         </div>
 
