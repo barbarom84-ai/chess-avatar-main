@@ -10,6 +10,7 @@ import {
   Square,
   Crown,
   AlertTriangle,
+  Download,
   Pause,
   Play,
   Sparkles,
@@ -520,15 +521,56 @@ export default function GameReviewer({
       ? 0
       : effectiveMoves[currentIndex - 1]?.playerEval ?? null;
 
-  const goPrev = () => setCurrentIndex((i) => Math.max(0, i - 1));
-  const goNext = () =>
-    setCurrentIndex((i) =>
-      Math.min(i + 1, Math.max(effectiveMoves.length, currentIndex))
-    );
-  const goStart = () => setCurrentIndex(0);
-  const goEnd = () => setCurrentIndex(effectiveMoves.length);
-  const flipBoard = () =>
-    setOrientation((o) => (o === "white" ? "black" : "white"));
+  const goPrev = useCallback(
+    () => setCurrentIndex((i) => Math.max(0, i - 1)),
+    []
+  );
+  const goNext = useCallback(
+    () => setCurrentIndex((i) => Math.min(i + 1, totalPlies)),
+    [totalPlies]
+  );
+  const goStart = useCallback(() => setCurrentIndex(0), []);
+  const goEnd = useCallback(
+    () => setCurrentIndex(totalPlies),
+    [totalPlies]
+  );
+  const flipBoard = useCallback(
+    () => setOrientation((o) => (o === "white" ? "black" : "white")),
+    []
+  );
+
+  // Keyboard navigation: ArrowLeft/ArrowRight to step, Home/End to jump.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement ||
+        e.target instanceof HTMLSelectElement
+      )
+        return;
+      if (e.key === "ArrowLeft") { e.preventDefault(); goPrev(); }
+      if (e.key === "ArrowRight") { e.preventDefault(); goNext(); }
+      if (e.key === "Home") { e.preventDefault(); goStart(); }
+      if (e.key === "End") { e.preventDefault(); goEnd(); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [goPrev, goNext, goStart, goEnd]);
+
+  const handleDownloadAnnotated = useCallback(() => {
+    const annotated = buildAnnotatedPgn(parsed, effectiveMoves);
+    const white = parsed.headers.White ?? "White";
+    const black = parsed.headers.Black ?? "Black";
+    const date = (parsed.headers.Date ?? new Date().toISOString().slice(0, 10)).replace(/\./g, "-");
+    const filename = `${white}_vs_${black}_${date}_annotated.pgn`;
+    const blob = new Blob([annotated], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [parsed, effectiveMoves]);
 
   const goToKeyMoment = (direction: 1 | -1) => {
     if (!effectiveResult) return;
@@ -668,6 +710,7 @@ export default function GameReviewer({
           onCancel={review.cancel}
           onStartAnalysis={() => review.start()}
           onRelaunch={handleRelaunchAnalysis}
+          onDownloadAnnotated={handleDownloadAnnotated}
         />
 
         <EvaluationBar evaluation={evalForBar} />
@@ -720,7 +763,7 @@ export default function GameReviewer({
                     size="sm"
                     variant="secondary"
                     onClick={goNext}
-                    disabled={currentIndex >= effectiveMoves.length}
+                    disabled={currentIndex >= totalPlies}
                     className="flex-1"
                     title={t.review.next}
                   >
@@ -760,7 +803,7 @@ export default function GameReviewer({
                   size="sm"
                   variant="ghost"
                   onClick={goEnd}
-                  disabled={currentIndex >= effectiveMoves.length}
+                  disabled={currentIndex >= totalPlies}
                   className="w-full hover:bg-slate-800"
                   title={t.review.end}
                 >
@@ -873,6 +916,7 @@ function ProgressHeader({
   onCancel,
   onStartAnalysis,
   onRelaunch,
+  onDownloadAnnotated,
 }: {
   effectiveStatus: ReviewStatus;
   reviewStatus: ReviewStatus;
@@ -884,6 +928,7 @@ function ProgressHeader({
   onCancel: () => void;
   onStartAnalysis: () => void;
   onRelaunch: () => void;
+  onDownloadAnnotated: () => void;
 }) {
   const { t } = useLanguage();
   const pct = total > 0 ? Math.round((progress / total) * 100) : 0;
@@ -898,16 +943,29 @@ function ProgressHeader({
         <div className="text-xs text-emerald-300 flex items-center gap-2 shrink-0">
           <Crown className="h-3 w-3" /> {t.review.done}
         </div>
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          className="h-7 px-2 text-cyan-300 hover:text-cyan-100 hover:bg-cyan-500/10 shrink-0"
-          onClick={onRelaunch}
-        >
-          <RotateCcw className="h-3 w-3 mr-1" />
-          {t.review.relaunch}
-        </Button>
+        <div className="flex items-center gap-2 shrink-0">
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            className="h-7 px-2 text-cyan-300 hover:text-cyan-100 hover:bg-cyan-500/10"
+            onClick={onDownloadAnnotated}
+            title={t.review.downloadAnnotated}
+          >
+            <Download className="h-3 w-3 mr-1" />
+            {t.review.downloadAnnotated}
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            className="h-7 px-2 text-cyan-300 hover:text-cyan-100 hover:bg-cyan-500/10"
+            onClick={onRelaunch}
+          >
+            <RotateCcw className="h-3 w-3 mr-1" />
+            {t.review.relaunch}
+          </Button>
+        </div>
       </div>
     );
   }
@@ -2126,6 +2184,40 @@ function KeyMomentsCard({
 
 function clamp(v: number, lo: number, hi: number): number {
   return Math.max(lo, Math.min(hi, v));
+}
+
+/**
+ * Rebuild the original PGN, inserting a `{ [%eval X.XX] <classification> }`
+ * comment after every move that has been analysed. The resulting file is
+ * compatible with Lichess / Chess.com importers.
+ */
+function buildAnnotatedPgn(
+  parsed: ParsedGameForReview,
+  moves: ReviewedMove[]
+): string {
+  const headers = parsed.headers;
+  const headerBlock = Object.entries(headers)
+    .map(([k, v]) => `[${k} "${v}"]`)
+    .join("\n");
+
+  const tokens: string[] = [];
+  for (let i = 0; i < parsed.san.length; i++) {
+    const moveNum = Math.floor(i / 2) + 1;
+    if (i % 2 === 0) tokens.push(`${moveNum}.`);
+    tokens.push(parsed.san[i]);
+    const rm = moves[i];
+    if (rm) {
+      const sign = rm.playerEval >= 0 ? "+" : "";
+      const evalStr = `${sign}${rm.playerEval.toFixed(2)}`;
+      tokens.push(`{ [%eval ${evalStr}] ${rm.classification} }`);
+    }
+  }
+
+  const result = headers.Result ?? "*";
+  tokens.push(result);
+
+  const moveText = tokens.join(" ");
+  return `${headerBlock}\n\n${moveText}\n`;
 }
 
 function formatEval(pawns: number): string {
