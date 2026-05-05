@@ -135,3 +135,17 @@ export function parsePgnFileForGames(
 
   return { games, skippedInvalid, skippedNotPlayer };
 }
+
+/**
+ * Build a single cloud row from raw PGN text when the user identifies which
+ * header name (White/Black) is "them". Returns null if no matching game block.
+ */
+export function tryBuildCloudSavePayloadFromPgn(
+  raw: string,
+  playerNameInPgn: string
+): PgnGameSavePayload | null {
+  const trimmed = playerNameInPgn.trim();
+  if (!trimmed) return null;
+  const { games } = parsePgnFileForGames(raw, trimmed);
+  return games[0] ?? null;
+}

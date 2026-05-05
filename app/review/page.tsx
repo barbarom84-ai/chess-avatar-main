@@ -12,6 +12,11 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import UpgradeModal from "@/components/UpgradeModal";
 import { useLanguage } from "@/lib/language-context";
 import { usePremium } from "@/hooks/usePremium";
+import {
+  REVIEW_PGN_SESSION_KEY,
+  readReviewSessionContext,
+  type ReviewSessionContext,
+} from "@/lib/review-session";
 
 const GameReviewer = dynamic(() => import("@/components/GameReviewer"), {
   ssr: false,
@@ -21,8 +26,6 @@ const GameReviewer = dynamic(() => import("@/components/GameReviewer"), {
     </div>
   ),
 });
-
-const PGN_SESSION_KEY = "chess-avatar.review.pgn";
 
 const FREE_MAX_PLIES = 60;
 
@@ -34,12 +37,14 @@ function ReviewContent() {
   const [pgn, setPgn] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showUpgrade, setShowUpgrade] = useState(false);
+  const [reviewCtx, setReviewCtx] = useState<ReviewSessionContext | null>(null);
 
   useEffect(() => {
     const fromUrl = searchParams.get("pgn");
     if (fromUrl) {
       try {
         setPgn(decodeURIComponent(fromUrl));
+        setReviewCtx(null);
         return;
       } catch {
         setError(t.review.invalidPgn);
@@ -47,7 +52,8 @@ function ReviewContent() {
       }
     }
     if (typeof window !== "undefined") {
-      const stored = sessionStorage.getItem(PGN_SESSION_KEY);
+      setReviewCtx(readReviewSessionContext());
+      const stored = sessionStorage.getItem(REVIEW_PGN_SESSION_KEY);
       if (stored) {
         setPgn(stored);
         return;
@@ -141,6 +147,8 @@ function ReviewContent() {
           showAllBestArrows={showAllBestArrows}
           cacheUserId={isPremium ? userId : null}
           onRequestUpgrade={() => setShowUpgrade(true)}
+          authUserId={userId}
+          reviewCloudSavePlayerHint={reviewCtx?.playerName ?? null}
         />
       </div>
 

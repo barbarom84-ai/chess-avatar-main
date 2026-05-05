@@ -515,7 +515,13 @@ export default function GamesPage() {
             showAllBestArrows={reviewShowAllArrows}
             cacheUserId={reviewCacheUserId}
             onRequestUpgrade={() => setShowUpgrade(true)}
-            showSavedInGamesList
+            showSavedInGamesList={!!selectedGame}
+            authUserId={userId}
+            reviewCloudSavePlayerHint={null}
+            onSavedToGamesCloud={() => {
+              void loadGames();
+              void loadStats();
+            }}
           />
         </div>
 

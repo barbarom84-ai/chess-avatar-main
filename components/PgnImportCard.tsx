@@ -21,8 +21,10 @@ import { usePremium } from "@/hooks/usePremium";
 import { supabase } from "@/lib/supabase";
 import { parsePgnForReview } from "@/lib/game-review";
 import { SAMPLE_GAMES } from "@/lib/sample-games";
-
-const PGN_SESSION_KEY = "chess-avatar.review.pgn";
+import {
+  REVIEW_PGN_SESSION_KEY,
+  clearReviewSessionContext,
+} from "@/lib/review-session";
 /** 200 KB cap on user-supplied PGN to prevent abuse. */
 const MAX_PGN_BYTES = 200 * 1024;
 
@@ -68,12 +70,13 @@ export default function PgnImportCard({ onPgnReady }: PgnImportCardProps = {}) {
         setError(t.review.import.errorInvalid);
         return false;
       }
+      clearReviewSessionContext();
       if (onPgnReady) {
         onPgnReady(trimmed);
         return true;
       }
       try {
-        sessionStorage.setItem(PGN_SESSION_KEY, trimmed);
+        sessionStorage.setItem(REVIEW_PGN_SESSION_KEY, trimmed);
       } catch {
         setError(t.review.import.errorStorage);
         return false;
