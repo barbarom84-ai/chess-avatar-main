@@ -80,7 +80,15 @@ import type { EngineConfig } from "@/lib/analysis";
 import { getRecentConfigs } from "@/lib/storage";
 import { toast } from "sonner";
 import { saveGameToCloud } from "@/lib/supabase-storage";
-import { tryBuildCloudSavePayloadFromPgn } from "@/lib/pgn-import";
+import {
+  tryBuildCloudSavePayloadFromPgn,
+  inferSavePlayerNameFromContext,
+  parsePgnFileForGames,
+} from "@/lib/pgn-import";
+import {
+  buildAnnotatedPgn,
+  sanitizeForPgnFilenameSegment,
+} from "@/lib/pgn-annotated-export";
 import { isSupabaseConfigured } from "@/lib/supabase";
 
 const FREE_ENGINE_DEPTH = 12;
@@ -140,6 +148,14 @@ interface GameReviewerProps {
   authUserId?: string | null;
   /** Préremplit le pseudo pour matcher [White]/[Black] lors de l’enregistrement. */
   reviewCloudSavePlayerHint?: string | null;
+  /**
+   * Aide à déduire le pseudo sans saisie : couleur du compte pour une partie déjà en base,
+   * et/ou partie locale de l’e‑mail si elle correspond à un en-tête du PGN.
+   */
+  cloudSaveContext?: {
+    playerColor?: "white" | "black";
+    emailLocalPart?: string | null;
+  } | null;
   /** Après enregistrement réussi dans `games`. */
   onSavedToGamesCloud?: () => void;
 }
@@ -155,6 +171,7 @@ export default function GameReviewer({
   showSavedInGamesList = false,
   authUserId = null,
   reviewCloudSavePlayerHint = null,
+  cloudSaveContext = null,
   onSavedToGamesCloud,
 }: GameReviewerProps) {
   const { t, lang } = useLanguage();
@@ -198,14 +215,34 @@ export default function GameReviewer({
   );
 
   useEffect(() => {
-    setSavePlayerName("");
-  }, [pgn]);
-
-  useEffect(() => {
-    if (reviewCloudSavePlayerHint) {
-      setSavePlayerName(reviewCloudSavePlayerHint);
+    const inferred = inferSavePlayerNameFromContext({
+      pgn,
+      hint: reviewCloudSavePlayerHint,
+      playerColor: cloudSaveContext?.playerColor ?? null,
+      emailLocalPart: cloudSaveContext?.emailLocalPart ?? null,
+    });
+    let chosen = inferred ?? "";
+    if (!chosen && authUserId) {
+      try {
+        const stored = localStorage
+          .getItem(`chess-avatar.games.savePlayerName.${authUserId}`)
+          ?.trim();
+        if (stored) {
+          const { games } = parsePgnFileForGames(pgn, stored);
+          if (games.length > 0) chosen = stored;
+        }
+      } catch {
+        // ignore
+      }
     }
-  }, [reviewCloudSavePlayerHint, pgn]);
+    setSavePlayerName(chosen);
+  }, [
+    pgn,
+    reviewCloudSavePlayerHint,
+    authUserId,
+    cloudSaveContext?.playerColor,
+    cloudSaveContext?.emailLocalPart,
+  ]);
 
   const [cachedResult, setCachedResult] = useState<GameReviewResult | null>(null);
   const [cacheChecked, setCacheChecked] = useState(false);
@@ -364,7 +401,15 @@ export default function GameReviewer({
       toast.error(t.review.saveToCloudSupabase);
       return;
     }
-    const name = savePlayerName.trim();
+    const name =
+      savePlayerName.trim() ||
+      inferSavePlayerNameFromContext({
+        pgn,
+        hint: reviewCloudSavePlayerHint,
+        playerColor: cloudSaveContext?.playerColor ?? null,
+        emailLocalPart: cloudSaveContext?.emailLocalPart ?? null,
+      })?.trim() ||
+      "";
     if (!name) {
       toast.error(t.review.saveToCloudNeedName);
       return;
@@ -382,6 +427,16 @@ export default function GameReviewer({
         return;
       }
       toast.success(t.review.saveToCloudSuccess);
+      try {
+        if (authUserId) {
+          localStorage.setItem(
+            `chess-avatar.games.savePlayerName.${authUserId}`,
+            name
+          );
+        }
+      } catch {
+        // ignore
+      }
       onSavedToGamesCloud?.();
     } catch {
       toast.error(t.review.saveToCloudFailed);
@@ -393,6 +448,9 @@ export default function GameReviewer({
     onSavedToGamesCloud,
     pgn,
     savePlayerName,
+    cloudSaveContext?.playerColor,
+    cloudSaveContext?.emailLocalPart,
+    reviewCloudSavePlayerHint,
     t.review.saveToCloudFailed,
     t.review.saveToCloudNeedLogin,
     t.review.saveToCloudNeedName,
@@ -636,9 +694,11 @@ export default function GameReviewer({
 
   const handleDownloadAnnotated = useCallback(() => {
     const annotated = buildAnnotatedPgn(parsed, effectiveMoves);
-    const white = parsed.headers.White ?? "White";
-    const black = parsed.headers.Black ?? "Black";
-    const date = (parsed.headers.Date ?? new Date().toISOString().slice(0, 10)).replace(/\./g, "-");
+    const white = sanitizeForPgnFilenameSegment(parsed.headers.White ?? "White");
+    const black = sanitizeForPgnFilenameSegment(parsed.headers.Black ?? "Black");
+    const date = sanitizeForPgnFilenameSegment(
+      (parsed.headers.Date ?? new Date().toISOString().slice(0, 10)).replace(/\./g, "-")
+    );
     const filename = `${white}_vs_${black}_${date}_annotated.pgn`;
     const blob = new Blob([annotated], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
@@ -2329,40 +2389,6 @@ function KeyMomentsCard({
 
 function clamp(v: number, lo: number, hi: number): number {
   return Math.max(lo, Math.min(hi, v));
-}
-
-/**
- * Rebuild the original PGN, inserting a `{ [%eval X.XX] <classification> }`
- * comment after every move that has been analysed. The resulting file is
- * compatible with Lichess / Chess.com importers.
- */
-function buildAnnotatedPgn(
-  parsed: ParsedGameForReview,
-  moves: ReviewedMove[]
-): string {
-  const headers = parsed.headers;
-  const headerBlock = Object.entries(headers)
-    .map(([k, v]) => `[${k} "${v}"]`)
-    .join("\n");
-
-  const tokens: string[] = [];
-  for (let i = 0; i < parsed.san.length; i++) {
-    const moveNum = Math.floor(i / 2) + 1;
-    if (i % 2 === 0) tokens.push(`${moveNum}.`);
-    tokens.push(parsed.san[i]);
-    const rm = moves[i];
-    if (rm) {
-      const sign = rm.playerEval >= 0 ? "+" : "";
-      const evalStr = `${sign}${rm.playerEval.toFixed(2)}`;
-      tokens.push(`{ [%eval ${evalStr}] ${rm.classification} }`);
-    }
-  }
-
-  const result = headers.Result ?? "*";
-  tokens.push(result);
-
-  const moveText = tokens.join(" ");
-  return `${headerBlock}\n\n${moveText}\n`;
 }
 
 function formatEval(pawns: number): string {

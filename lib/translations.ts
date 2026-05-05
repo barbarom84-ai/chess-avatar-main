@@ -179,6 +179,10 @@ export const translations = {
       quickReviewSectionHint: "Analysez n'importe quel PGN sans l'enregistrer dans votre bibliothèque.",
       backToHub: "Retour à mes parties",
       reviewing: "Analyse en cours",
+      /** Badge au tableau des parties et dans l’en-tête de revue : résultat pour votre compte (évite la confusion avec le nom de l’adversaire). */
+      resultBadgeYouWon: "Vous avez gagné",
+      resultBadgeYouLost: "Vous avez perdu",
+      resultBadgeYouDraw: "Nulle",
       filterGameKindAll: "Toutes les parties",
       filterGameKindHuman: "Joueur vs bot",
       filterGameKindArena: "Arène bot vs bot",
@@ -918,7 +922,7 @@ export const translations = {
       savedInGamesList: "Déjà dans Parties",
       saveToCloudTitle: "Partie dans « Parties »",
       saveToCloudHint:
-        "Votre pseudo exactement comme dans [White] / [Black] du PGN (pour lier le résultat à votre camp).",
+        "Le pseudo est rempli automatiquement quand c’est possible (partie enregistrée, session Analyse, ou correspondance avec votre e‑mail). Sinon, indiquez celui des en-têtes [White] / [Black].",
       saveToCloudPlaceholder: "Ex. : DrNykterstein",
       saveToCloudButton: "Enregistrer dans Parties",
       saveToCloudSuccess: "Partie enregistrée. Ouvrez l’onglet Parties pour la retrouver.",
@@ -926,7 +930,8 @@ export const translations = {
       saveToCloudNeedLogin: "Connectez-vous pour enregistrer la partie dans le cloud.",
       saveToCloudNoMatch:
         "Aucun bloc PGN ne correspond à ce pseudo. Vérifiez l’orthographe (y compris majuscules).",
-      saveToCloudNeedName: "Indiquez votre pseudo tel qu’il figure dans le PGN.",
+      saveToCloudNeedName:
+        "Impossible de deviner votre camp : renseignez le pseudo exactement comme dans [White] ou [Black] du PGN.",
       saveToCloudSupabase: "La sauvegarde cloud n’est pas configurée sur cette instance.",
       startAnalysis: "Lancer l'analyse",
       computing: "Calcul en cours…",
@@ -1646,6 +1651,9 @@ export const translations = {
       quickReviewSectionHint: "Analyze any PGN without saving it to your library.",
       backToHub: "Back to my games",
       reviewing: "Reviewing",
+      resultBadgeYouWon: "You won",
+      resultBadgeYouLost: "You lost",
+      resultBadgeYouDraw: "Draw",
       filterGameKindAll: "All games",
       filterGameKindHuman: "Human vs bot",
       filterGameKindArena: "Arena bot vs bot",
@@ -2380,7 +2388,7 @@ export const translations = {
       savedInGamesList: "Already in saved games",
       saveToCloudTitle: "Save to Games list",
       saveToCloudHint:
-        "Your handle exactly as in the PGN [White] / [Black] headers (so we know which side is yours).",
+        "Your handle is filled in automatically when possible (saved game, Analyze session, or match with your email local-part). Otherwise enter the name from the [White] / [Black] headers.",
       saveToCloudPlaceholder: "e.g. Hikaru",
       saveToCloudButton: "Save to Games",
       saveToCloudSuccess: "Game saved. Open Games to find it.",
@@ -2388,7 +2396,8 @@ export const translations = {
       saveToCloudNeedLogin: "Sign in to save the game to the cloud.",
       saveToCloudNoMatch:
         "No PGN game matches that name. Check spelling (case-sensitive match to headers).",
-      saveToCloudNeedName: "Enter your name as it appears in the PGN headers.",
+      saveToCloudNeedName:
+        "We could not infer your side: enter the handle exactly as in the [White] or [Black] header.",
       saveToCloudSupabase: "Cloud save is not configured on this instance.",
       startAnalysis: "Start analysis",
       computing: "Computing…",

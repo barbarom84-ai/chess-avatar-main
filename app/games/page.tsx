@@ -43,12 +43,28 @@ import {
   MAX_PGN_FILE_BYTES,
   listPlayerNamesFromPgn,
   parsePgnFileForGames,
+  splitPgnDatabase,
+  parsePgnTagInBlock,
 } from "@/lib/pgn-import";
 import PgnImportCard from "@/components/PgnImportCard";
 import UpgradeModal from "@/components/UpgradeModal";
 
 /** Same Game Review tiering as /review/page.tsx so behavior stays consistent. */
 const FREE_MAX_PLIES = 60;
+
+/** Revue : titre lisible « Blancs vs Noirs » depuis le PGN (évite d’associer le badge résultat au seul adversaire). */
+function matchupTitleFromStoredGame(game: DbGame): string {
+  const raw = game.pgn?.trim();
+  if (!raw) return game.opponent_name;
+  const block = splitPgnDatabase(raw)[0];
+  if (!block) return game.opponent_name;
+  const w = parsePgnTagInBlock(block, "White")?.trim();
+  const b = parsePgnTagInBlock(block, "Black")?.trim();
+  if (w && b && w !== "?" && b !== "?") {
+    return `${w} vs ${b}`;
+  }
+  return game.opponent_name;
+}
 
 const GameReviewer = dynamic(() => import("@/components/GameReviewer"), {
   ssr: false,
@@ -87,7 +103,7 @@ export default function GamesPage() {
 
   const openReviewForGame = (game: DbGame) => {
     setSelectedGame(game);
-    setReviewSourceLabel(game.opponent_name);
+    setReviewSourceLabel(matchupTitleFromStoredGame(game));
     setReviewPgn(game.pgn);
   };
 
@@ -386,12 +402,22 @@ export default function GamesPage() {
     }
     switch (game.result) {
       case "win":
-        return <Badge className="bg-green-600 text-white">{t.games.wins}</Badge>;
+        return (
+          <Badge className="bg-green-600 text-white">
+            {t.games.resultBadgeYouWon}
+          </Badge>
+        );
       case "loss":
-        return <Badge className="bg-red-600 text-white">{t.games.losses}</Badge>;
+        return (
+          <Badge className="bg-red-600 text-white">
+            {t.games.resultBadgeYouLost}
+          </Badge>
+        );
       case "draw":
         return (
-          <Badge className="bg-amber-600 text-white">{t.games.draws}</Badge>
+          <Badge className="bg-amber-600 text-white">
+            {t.games.resultBadgeYouDraw}
+          </Badge>
         );
       default:
         return <Badge>{game.result}</Badge>;
@@ -518,6 +544,10 @@ export default function GamesPage() {
             showSavedInGamesList={!!selectedGame}
             authUserId={userId}
             reviewCloudSavePlayerHint={null}
+            cloudSaveContext={{
+              playerColor: selectedGame?.player_color,
+              emailLocalPart: email?.split("@")[0] ?? null,
+            }}
             onSavedToGamesCloud={() => {
               void loadGames();
               void loadStats();

@@ -149,3 +149,52 @@ export function tryBuildCloudSavePayloadFromPgn(
   const { games } = parsePgnFileForGames(raw, trimmed);
   return games[0] ?? null;
 }
+
+function isPlaceholderPlayerName(s: string): boolean {
+  const t = s.trim();
+  return !t || t === "?" || t === "-";
+}
+
+/**
+ * Guess which [White]/[Black] name is the account owner for cloud save, without manual entry when possible.
+ * Order: explicit hint → known saved-game color → email local-part match → single named player.
+ */
+export function inferSavePlayerNameFromContext(params: {
+  pgn: string;
+  hint?: string | null;
+  playerColor?: "white" | "black" | null;
+  emailLocalPart?: string | null;
+}): string | null {
+  const raw = params.pgn?.trim();
+  if (!raw) return null;
+  const block = splitPgnDatabase(raw)[0];
+  if (!block) return null;
+  const white = parsePgnTagInBlock(block, "White")?.trim() ?? "";
+  const black = parsePgnTagInBlock(block, "Black")?.trim() ?? "";
+
+  const hintT = params.hint?.trim();
+  if (hintT) {
+    if (!isPlaceholderPlayerName(white) && white.toLowerCase() === hintT.toLowerCase()) {
+      return white;
+    }
+    if (!isPlaceholderPlayerName(black) && black.toLowerCase() === hintT.toLowerCase()) {
+      return black;
+    }
+  }
+
+  const pc = params.playerColor;
+  if (pc === "white" && !isPlaceholderPlayerName(white)) return white;
+  if (pc === "black" && !isPlaceholderPlayerName(black)) return black;
+
+  const emailT = params.emailLocalPart?.trim();
+  if (emailT) {
+    const el = emailT.toLowerCase();
+    if (!isPlaceholderPlayerName(white) && white.toLowerCase() === el) return white;
+    if (!isPlaceholderPlayerName(black) && black.toLowerCase() === el) return black;
+  }
+
+  if (!isPlaceholderPlayerName(white) && isPlaceholderPlayerName(black)) return white;
+  if (!isPlaceholderPlayerName(black) && isPlaceholderPlayerName(white)) return black;
+
+  return null;
+}

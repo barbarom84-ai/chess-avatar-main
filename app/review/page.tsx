@@ -149,6 +149,9 @@ function ReviewContent() {
           onRequestUpgrade={() => setShowUpgrade(true)}
           authUserId={userId}
           reviewCloudSavePlayerHint={reviewCtx?.playerName ?? null}
+          cloudSaveContext={{
+            emailLocalPart: email?.split("@")[0] ?? null,
+          }}
         />
       </div>
 
