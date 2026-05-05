@@ -919,6 +919,8 @@ export const translations = {
       done: "Analyse terminée",
       relaunch: "Relancer l'analyse",
       downloadAnnotated: "Télécharger PGN annoté",
+      downloadAnnotatedFailed:
+        "Impossible de générer ou de télécharger le PGN. Réessayez ou vérifiez les permissions du navigateur.",
       savedInGamesList: "Déjà dans Parties",
       saveToCloudTitle: "Partie dans « Parties »",
       saveToCloudHint:
@@ -2385,6 +2387,8 @@ export const translations = {
       done: "Analysis complete",
       relaunch: "Re-run analysis",
       downloadAnnotated: "Download annotated PGN",
+      downloadAnnotatedFailed:
+        "Could not generate or download the PGN. Try again or check your browser download permissions.",
       savedInGamesList: "Already in saved games",
       saveToCloudTitle: "Save to Games list",
       saveToCloudHint:

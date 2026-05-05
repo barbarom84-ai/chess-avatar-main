@@ -693,21 +693,32 @@ export default function GameReviewer({
   }, [goPrev, goNext, goStart, goEnd]);
 
   const handleDownloadAnnotated = useCallback(() => {
-    const annotated = buildAnnotatedPgn(parsed, effectiveMoves);
-    const white = sanitizeForPgnFilenameSegment(parsed.headers.White ?? "White");
-    const black = sanitizeForPgnFilenameSegment(parsed.headers.Black ?? "Black");
-    const date = sanitizeForPgnFilenameSegment(
-      (parsed.headers.Date ?? new Date().toISOString().slice(0, 10)).replace(/\./g, "-")
-    );
-    const filename = `${white}_vs_${black}_${date}_annotated.pgn`;
-    const blob = new Blob([annotated], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(url);
-  }, [parsed, effectiveMoves]);
+    if (!parsed) {
+      toast.error(t.review.downloadAnnotatedFailed);
+      return;
+    }
+    try {
+      const annotated = buildAnnotatedPgn(parsed, effectiveMoves ?? []);
+      const white = sanitizeForPgnFilenameSegment(parsed.headers.White ?? "White");
+      const black = sanitizeForPgnFilenameSegment(parsed.headers.Black ?? "Black");
+      const date = sanitizeForPgnFilenameSegment(
+        (parsed.headers.Date ?? new Date().toISOString().slice(0, 10)).replace(/\./g, "-")
+      );
+      const filename = `${white}_vs_${black}_${date}_annotated.pgn`;
+      const blob = new Blob([annotated], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.rel = "noopener";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+    } catch {
+      toast.error(t.review.downloadAnnotatedFailed);
+    }
+  }, [parsed, effectiveMoves, t.review.downloadAnnotatedFailed]);
 
   const goToKeyMoment = (direction: 1 | -1) => {
     if (!effectiveResult) return;
