@@ -16,24 +16,24 @@ import { translations, type Language } from "@/lib/translations";
 import ChessboardSettingsModal from "./ChessboardSettingsModal";
 import AuthModal from "./AuthModal";
 
+type NavPieceColor = "w" | "b";
+
 type NavItemDef = {
   href: string;
   piece: string;
+  navPieceColor: NavPieceColor;
   label: { fr: string; en: string };
 };
 
-const NAV_PIECE_COLOR_DEFAULT = "w" as const;
-
 const NAV_ITEMS: NavItemDef[] = [
-  { href: "/", piece: "K", label: { fr: "Accueil", en: "Home" } },
-  { href: "/analyze", piece: "Q", label: { fr: "Analyser", en: "Analyze" } },
-  { href: "/play", piece: "N", label: { fr: "Jouer", en: "Play" } },
-  { href: "/arena", piece: "R", label: { fr: "Arène", en: "Arena" } },
-  { href: "/learn", piece: "Q", label: { fr: "Apprentissage", en: "Learn" } },
-  { href: "/puzzles", piece: "P", label: { fr: "Puzzles", en: "Puzzles" } },
-  { href: "/profile", piece: "B", label: { fr: "Profil", en: "Profile" } },
-  { href: "/games", piece: "R", label: { fr: "Parties", en: "Games" } },
-  { href: "/guide", piece: "P", label: { fr: "UCI creator guide", en: "UCI creator guide" } },
+  { href: "/analyze", piece: "Q", navPieceColor: "w", label: { fr: "Analyser", en: "Analyze" } },
+  { href: "/play", piece: "N", navPieceColor: "w", label: { fr: "Jouer", en: "Play" } },
+  { href: "/arena", piece: "R", navPieceColor: "w", label: { fr: "Arène", en: "Arena" } },
+  { href: "/learn", piece: "B", navPieceColor: "w", label: { fr: "Apprentissage", en: "Learn" } },
+  { href: "/puzzles", piece: "P", navPieceColor: "w", label: { fr: "Puzzles", en: "Puzzles" } },
+  { href: "/profile", piece: "K", navPieceColor: "w", label: { fr: "Profil", en: "Profile" } },
+  { href: "/games", piece: "Q", navPieceColor: "b", label: { fr: "Parties", en: "Games" } },
+  { href: "/guide", piece: "R", navPieceColor: "b", label: { fr: "UCI creator guide", en: "UCI creator guide" } },
 ];
 
 type Translations = (typeof translations)[Language];
@@ -78,9 +78,11 @@ function NavItemLinks({
     <>
       {items.map((item) => {
         const isActive = isNavItemActive(pathname, item.href);
-        const navPieceColor =
-          item.href === "/learn" ? "b" : NAV_PIECE_COLOR_DEFAULT;
-        const pieceSrc = getPieceImagePath(pieceSet, navPieceColor, item.piece);
+        const pieceSrc = getPieceImagePath(
+          pieceSet,
+          item.navPieceColor,
+          item.piece
+        );
         const label = navItemLabel(item, lang, t);
         const inactiveClass = compact
           ? "text-slate-300 hover:text-cyan-300"
@@ -163,17 +165,20 @@ export default function Navigation() {
         <div className="flex items-center justify-between min-h-16">
           <Link
             href="/"
+            aria-label={
+              lang === "fr" ? "Accueil — Chess Avatar" : "Home — Chess Avatar"
+            }
             className="flex items-center gap-2 text-xl font-bold text-cyan-400 hover:text-cyan-300 transition-colors"
           >
             <Image
-              src={getPieceImagePath(settings.pieceSet, "b", "N")}
-              alt="Knight"
+              src="/knight-logo.png"
+              alt=""
               width={28}
               height={28}
               className="inline-block w-7 h-7"
               unoptimized
             />
-            Chess Avatar
+            <span>Chess Avatar</span>
           </Link>
 
           <div className="hidden md:flex flex-wrap items-center gap-x-1 gap-y-1">
