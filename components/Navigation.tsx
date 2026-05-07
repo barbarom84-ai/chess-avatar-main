@@ -29,7 +29,7 @@ const NAV_ITEMS: NavItemDef[] = [
   { href: "/analyze", piece: "Q", navPieceColor: "w", label: { fr: "Analyser", en: "Analyze" } },
   { href: "/play", piece: "N", navPieceColor: "w", label: { fr: "Jouer", en: "Play" } },
   { href: "/arena", piece: "R", navPieceColor: "w", label: { fr: "Arène", en: "Arena" } },
-  { href: "/learn", piece: "B", navPieceColor: "w", label: { fr: "Apprentissage", en: "Learn" } },
+  { href: "/learn", piece: "B", navPieceColor: "w", label: { fr: "Ouvertures", en: "Learn" } },
   { href: "/puzzles", piece: "P", navPieceColor: "w", label: { fr: "Puzzles", en: "Puzzles" } },
   { href: "/profile", piece: "K", navPieceColor: "w", label: { fr: "Profil", en: "Profile" } },
   { href: "/games", piece: "Q", navPieceColor: "b", label: { fr: "Parties", en: "Games" } },

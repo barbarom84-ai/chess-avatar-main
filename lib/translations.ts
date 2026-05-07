@@ -271,10 +271,10 @@ export const translations = {
     },
 
     learn: {
-      title: "Apprentissage des ouvertures",
+      title: "Ouvertures",
       subtitle:
         "Plans, niveaux recommandés, pièges à connaître et parties historiques commentées — pour progresser au-delà de la simple mémorisation.",
-      headerNav: "Apprentissage",
+      headerNav: "Ouvertures",
       hubIntro:
         "Chaque fiche relie l’ouverture à des idées de milieu de partie. Utilisez les filtres pour trouver une ligne adaptée à votre niveau.",
       catalog: {
@@ -356,7 +356,7 @@ export const translations = {
       loadingCatalog: "Chargement du catalogue (y compris les fiches publiées sur le cloud)…",
       admin: {
         hubLink: "Admin Learn",
-        title: "Administration — Apprentissage",
+        title: "Administration — Ouvertures",
         subtitle:
           "Ajoutez, modifiez ou supprimez des fiches (ouverture + leçon). Les entrées cloud remplacent le catalogue intégré pour le même identifiant ; la suppression rétablit la version d’origine.",
         accessDenied: "Accès réservé aux comptes Super User (abonnement plan « super » actif).",
@@ -600,7 +600,7 @@ export const translations = {
       createBot: "Créer Bot",
       profiles: "Profils",
       games: "Parties",
-      learn: "Apprentissage",
+      learn: "Ouvertures",
       puzzles: "Puzzles",
       arena: "Arène",
       guide: "Guide",
@@ -614,10 +614,10 @@ export const translations = {
       chessAvatarBadge: "Catalogue ChessAvatar",
       featuredSectionTitle: "Parties & défis ChessAvatar",
       featuredSectionDesc:
-        "Ces positions viennent des parties historiques intégrées à l’application : même matière que la section Apprentissage, format quiz avec indices.",
+        "Ces positions viennent des parties historiques intégrées à l’application : même matière que la section Ouvertures, format quiz avec indices.",
       avatarGamesIntro:
         "Les parties contre les avatars (page Jouer) peuvent être sauvegardées sur votre compte : retrouvez les récentes ci-dessous ou dans Parties.",
-      openLearn: "Ouvrir le catalogue Apprentissage",
+      openLearn: "Ouvrir le catalogue Ouvertures",
       avatarGamesTitle: "Vos parties contre des avatars",
       avatarGamesDesc:
         "Chaque partie contre un profil ChessAvatar sur la page Jouer peut être sauvegardée dans le cloud. Ouvrez-la dans Parties pour revoir le PGN et lancer une analyse.",
@@ -701,7 +701,7 @@ export const translations = {
         },
       },
       emptyFeatured:
-        "Aucune partie historique avec défis n’est disponible ici pour l’instant. Parcourez le catalogue Apprentissage pour les leçons complètes.",
+        "Aucune partie historique avec défis n’est disponible ici pour l’instant. Parcourez le catalogue Ouvertures pour les leçons complètes.",
       lichessSectionTitle: "Complément : puzzles Lichess",
       lichessSectionDesc:
         "Entraînement additionnel avec la base tactique Lichess (parties réelles et récentes sur leur plateforme).",
