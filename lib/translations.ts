@@ -1343,7 +1343,14 @@ export const translations = {
       turn: "Tour",
       moves: "Coups",
       rule50: "Règle 50",
-      nearDraw: "Proche nulle !"
+      nearDraw: "Proche nulle !",
+      showEvalBar: "Barre d'évaluation",
+      showTheoryArrows: "Flèches théorie",
+      openingHeading: "Ouverture",
+      openingEmpty: "Position initiale",
+      openingUnknown: "Ligne non répertoriée dans la base locale",
+      outOfBookBadge: "Hors livre",
+      transpositionsHeading: "Autres lignes (transpositions)",
     },
 
     // Forced line editor extended
@@ -2810,7 +2817,14 @@ export const translations = {
       turn: "Turn",
       moves: "Moves",
       rule50: "Rule 50",
-      nearDraw: "Near draw!"
+      nearDraw: "Near draw!",
+      showEvalBar: "Evaluation bar",
+      showTheoryArrows: "Theory arrows",
+      openingHeading: "Opening",
+      openingEmpty: "Starting position",
+      openingUnknown: "Line not in local repertoire",
+      outOfBookBadge: "Out of book",
+      transpositionsHeading: "Other lines (transpositions)",
     },
 
     // Forced line editor extended
