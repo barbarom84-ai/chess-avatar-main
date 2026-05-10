@@ -623,6 +623,82 @@ export default function GameReviewer({
     return -1;
   }, [openingByPly]);
 
+  const goPrev = useCallback(
+    () => setCurrentIndex((i) => Math.max(0, i - 1)),
+    []
+  );
+  const goNext = useCallback(
+    () => setCurrentIndex((i) => Math.min(i + 1, totalPlies)),
+    [totalPlies]
+  );
+  const goStart = useCallback(() => setCurrentIndex(0), []);
+  const goEnd = useCallback(
+    () => setCurrentIndex(totalPlies),
+    [totalPlies]
+  );
+  const flipBoard = useCallback(
+    () => setOrientation((o) => (o === "white" ? "black" : "white")),
+    []
+  );
+
+  // Keyboard navigation: ArrowLeft/ArrowRight to step, Home/End to jump.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement ||
+        e.target instanceof HTMLSelectElement
+      )
+        return;
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        goPrev();
+      }
+      if (e.key === "ArrowRight") {
+        e.preventDefault();
+        goNext();
+      }
+      if (e.key === "Home") {
+        e.preventDefault();
+        goStart();
+      }
+      if (e.key === "End") {
+        e.preventDefault();
+        goEnd();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [goPrev, goNext, goStart, goEnd]);
+
+  const handleDownloadAnnotated = useCallback(() => {
+    if (!parsed) {
+      toast.error(t.review.downloadAnnotatedFailed);
+      return;
+    }
+    try {
+      const annotated = buildAnnotatedPgn(parsed, effectiveMoves ?? []);
+      const white = sanitizeForPgnFilenameSegment(parsed.headers.White ?? "White");
+      const black = sanitizeForPgnFilenameSegment(parsed.headers.Black ?? "Black");
+      const date = sanitizeForPgnFilenameSegment(
+        (parsed.headers.Date ?? new Date().toISOString().slice(0, 10)).replace(/\./g, "-")
+      );
+      const filename = `${white}_vs_${black}_${date}_annotated.pgn`;
+      const blob = new Blob([annotated], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.rel = "noopener";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+    } catch {
+      toast.error(t.review.downloadAnnotatedFailed);
+    }
+  }, [parsed, effectiveMoves, t.review.downloadAnnotatedFailed]);
+
   if (!parsed) {
     return (
       <Card className="bg-slate-900/50 border-red-500/30">
@@ -669,70 +745,6 @@ export default function GameReviewer({
     currentIndex === 0
       ? 0
       : effectiveMoves[currentIndex - 1]?.playerEval ?? null;
-
-  const goPrev = useCallback(
-    () => setCurrentIndex((i) => Math.max(0, i - 1)),
-    []
-  );
-  const goNext = useCallback(
-    () => setCurrentIndex((i) => Math.min(i + 1, totalPlies)),
-    [totalPlies]
-  );
-  const goStart = useCallback(() => setCurrentIndex(0), []);
-  const goEnd = useCallback(
-    () => setCurrentIndex(totalPlies),
-    [totalPlies]
-  );
-  const flipBoard = useCallback(
-    () => setOrientation((o) => (o === "white" ? "black" : "white")),
-    []
-  );
-
-  // Keyboard navigation: ArrowLeft/ArrowRight to step, Home/End to jump.
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (
-        e.target instanceof HTMLInputElement ||
-        e.target instanceof HTMLTextAreaElement ||
-        e.target instanceof HTMLSelectElement
-      )
-        return;
-      if (e.key === "ArrowLeft") { e.preventDefault(); goPrev(); }
-      if (e.key === "ArrowRight") { e.preventDefault(); goNext(); }
-      if (e.key === "Home") { e.preventDefault(); goStart(); }
-      if (e.key === "End") { e.preventDefault(); goEnd(); }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [goPrev, goNext, goStart, goEnd]);
-
-  const handleDownloadAnnotated = useCallback(() => {
-    if (!parsed) {
-      toast.error(t.review.downloadAnnotatedFailed);
-      return;
-    }
-    try {
-      const annotated = buildAnnotatedPgn(parsed, effectiveMoves ?? []);
-      const white = sanitizeForPgnFilenameSegment(parsed.headers.White ?? "White");
-      const black = sanitizeForPgnFilenameSegment(parsed.headers.Black ?? "Black");
-      const date = sanitizeForPgnFilenameSegment(
-        (parsed.headers.Date ?? new Date().toISOString().slice(0, 10)).replace(/\./g, "-")
-      );
-      const filename = `${white}_vs_${black}_${date}_annotated.pgn`;
-      const blob = new Blob([annotated], { type: "text/plain;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = filename;
-      a.rel = "noopener";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 1500);
-    } catch {
-      toast.error(t.review.downloadAnnotatedFailed);
-    }
-  }, [parsed, effectiveMoves, t.review.downloadAnnotatedFailed]);
 
   const goToKeyMoment = (direction: 1 | -1) => {
     if (!effectiveResult) return;
