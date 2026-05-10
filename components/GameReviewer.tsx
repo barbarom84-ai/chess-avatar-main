@@ -84,6 +84,7 @@ import {
   tryBuildCloudSavePayloadFromPgn,
   inferSavePlayerNameFromContext,
   parsePgnFileForGames,
+  playerNamesFromPgnHeaders,
 } from "@/lib/pgn-import";
 import {
   buildAnnotatedPgn,
@@ -214,6 +215,11 @@ export default function GameReviewer({
     [pgn]
   );
 
+  const savePlayerOptions = useMemo(
+    () => playerNamesFromPgnHeaders(parsed?.headers ?? {}),
+    [parsed?.headers]
+  );
+
   useEffect(() => {
     const inferred = inferSavePlayerNameFromContext({
       pgn,
@@ -235,6 +241,13 @@ export default function GameReviewer({
         // ignore
       }
     }
+    if (savePlayerOptions.length > 0) {
+      const norm = chosen.trim().toLowerCase();
+      const match = norm
+        ? savePlayerOptions.find((o) => o.toLowerCase() === norm)
+        : undefined;
+      chosen = match ?? "";
+    }
     setSavePlayerName(chosen);
   }, [
     pgn,
@@ -242,6 +255,7 @@ export default function GameReviewer({
     authUserId,
     cloudSaveContext?.playerColor,
     cloudSaveContext?.emailLocalPart,
+    savePlayerOptions,
   ]);
 
   const [cachedResult, setCachedResult] = useState<GameReviewResult | null>(null);
@@ -883,16 +897,39 @@ export default function GameReviewer({
               ) : (
                 <div className="flex flex-col sm:flex-row gap-2 sm:items-end">
                   <div className="flex-1 space-y-1">
-                    <Label className="text-[10px] uppercase tracking-wide text-slate-500">
+                    <Label
+                      htmlFor="review-save-player-select"
+                      className="text-[10px] uppercase tracking-wide text-slate-500"
+                    >
                       {t.review.white} / {t.review.black}
                     </Label>
-                    <Input
-                      value={savePlayerName}
-                      onChange={(e) => setSavePlayerName(e.target.value)}
-                      placeholder={t.review.saveToCloudPlaceholder}
-                      className="h-9 bg-slate-900 border-slate-700 text-slate-100 text-sm"
-                      autoComplete="off"
-                    />
+                    {savePlayerOptions.length > 0 ? (
+                      <select
+                        id="review-save-player-select"
+                        value={savePlayerName}
+                        onChange={(e) => setSavePlayerName(e.target.value)}
+                        disabled={saveBusy}
+                        className="flex h-9 w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/50 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <option value="">
+                          {t.review.saveToCloudSelectPlaceholder}
+                        </option>
+                        {savePlayerOptions.map((n) => (
+                          <option key={n} value={n}>
+                            {n}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <Input
+                        id="review-save-player-select"
+                        value={savePlayerName}
+                        onChange={(e) => setSavePlayerName(e.target.value)}
+                        placeholder={t.review.saveToCloudPlaceholder}
+                        className="h-9 bg-slate-900 border-slate-700 text-slate-100 text-sm"
+                        autoComplete="off"
+                      />
+                    )}
                   </div>
                   <Button
                     type="button"

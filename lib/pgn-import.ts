@@ -59,6 +59,24 @@ export function listPlayerNamesFromPgn(raw: string): string[] {
   );
 }
 
+/**
+ * Noms joueurs depuis les en-têtes d'une partie déjà parsée (ordre Blanc puis Noir).
+ * Exclut les valeurs vides ou « ? » ; déduplique sans casse.
+ */
+export function playerNamesFromPgnHeaders(headers: Record<string, string>): string[] {
+  const out: string[] = [];
+  const seenLower = new Set<string>();
+  for (const tag of ["White", "Black"] as const) {
+    const raw = headers[tag]?.trim();
+    if (!raw || raw === "?") continue;
+    const k = raw.toLowerCase();
+    if (seenLower.has(k)) continue;
+    seenLower.add(k);
+    out.push(raw);
+  }
+  return out;
+}
+
 function outcomeFromResultTag(result: string | undefined): "white" | "black" | null {
   const r = (result ?? "*").trim().replace(/\u2013/g, "-");
   if (r === "1-0") return "white";

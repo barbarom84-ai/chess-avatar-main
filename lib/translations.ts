@@ -926,6 +926,7 @@ export const translations = {
       saveToCloudHint:
         "Le pseudo est rempli automatiquement quand c’est possible (partie enregistrée, session Analyse, ou correspondance avec votre e‑mail). Sinon, indiquez celui des en-têtes [White] / [Black].",
       saveToCloudPlaceholder: "Ex. : DrNykterstein",
+      saveToCloudSelectPlaceholder: "Choisir dans la liste…",
       saveToCloudButton: "Enregistrer dans Parties",
       saveToCloudSuccess: "Partie enregistrée. Ouvrez l’onglet Parties pour la retrouver.",
       saveToCloudFailed: "Impossible d’enregistrer la partie. Réessayez.",
@@ -2401,6 +2402,7 @@ export const translations = {
       saveToCloudHint:
         "Your handle is filled in automatically when possible (saved game, Analyze session, or match with your email local-part). Otherwise enter the name from the [White] / [Black] headers.",
       saveToCloudPlaceholder: "e.g. Hikaru",
+      saveToCloudSelectPlaceholder: "Choose from list…",
       saveToCloudButton: "Save to Games",
       saveToCloudSuccess: "Game saved. Open Games to find it.",
       saveToCloudFailed: "Could not save the game. Try again.",
