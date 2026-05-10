@@ -42,11 +42,21 @@ import { DEFAULT_ANALYSIS_STRICTNESS } from "@/lib/analysis-profiles";
 import { buildVerboseHistoryFromSan } from "@/lib/move-history-verbose";
 import { Input } from "@/components/ui/input";
 import SanNotation from "./SanNotation";
+import EvaluationBar from "./EvaluationBar";
+import { Switch } from "@/components/ui/switch";
+import {
+  computePlayOpeningHints,
+  PLAY_EVAL_BAR_STORAGE_KEY,
+  PLAY_THEORY_ARROWS_STORAGE_KEY,
+} from "@/lib/play-opening-hints";
 
 const REVIEW_EMOJI_CHOICES = ["💡", "🔥", "❓", "!!", "!?", "⭐", "👍", "📌"];
 
 /** Depth for post-game CAPS-style accuracy (balance speed vs stability). */
 const POST_GAME_REVIEW_DEPTH = 14;
+
+/** Live evaluation bar depth during play (single Stockfish worker). */
+const LIVE_EVAL_DEPTH = 12;
 
 /**
  * Heuristic display ELO: performance rating plus accuracy vs baseline (~70 from analysis curve).
@@ -178,11 +188,17 @@ export default function PlayableChessboard({
   /** Incremented on reset so in-flight post-game analysis does not apply stale state. */
   const postGameStatsCancelRef = useRef(0);
 
+  const [liveEval, setLiveEval] = useState<number | null>(null);
+  const [showEvalBar, setShowEvalBar] = useState(false);
+  const [showTheoryHints, setShowTheoryHints] = useState(false);
+  const liveEvalRequestRef = useRef(0);
+
   const {
     isReady,
     isThinking,
     getBestMove,
     getBestMoveAndEval,
+    getPositionEvaluation,
     resetForcedLine,
     remainingForcedMoves,
     stopThinking,
@@ -194,6 +210,80 @@ export default function PlayableChessboard({
     () => buildVerboseHistoryFromSan(moveHistory),
     [moveHistory]
   );
+
+  useEffect(() => {
+    try {
+      if (localStorage.getItem(PLAY_EVAL_BAR_STORAGE_KEY) === "1") {
+        setShowEvalBar(true);
+      }
+      if (localStorage.getItem(PLAY_THEORY_ARROWS_STORAGE_KEY) === "1") {
+        setShowTheoryHints(true);
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const openingHints = useMemo(() => {
+    if (isArchiveMode || reviewMode) return null;
+    return computePlayOpeningHints(moveHistory, game.fen(), lang);
+  }, [moveHistory, game, isArchiveMode, reviewMode, lang]);
+
+  const isHumanTurn = useMemo(() => {
+    if (isArchiveMode || reviewMode || gameOver) return false;
+    const turn = game.turn();
+    return (
+      (turn === "w" && playerColor === "white") ||
+      (turn === "b" && playerColor === "black")
+    );
+  }, [isArchiveMode, reviewMode, gameOver, game, playerColor]);
+
+  const theoryBoardArrows = useMemo(() => {
+    if (!showTheoryHints || !isHumanTurn || isArchiveMode || reviewMode) {
+      return [] as Array<{ from: string; to: string; color: string }>;
+    }
+    const ucis = openingHints?.theoryArrowUcis ?? [];
+    return ucis.map((uci) => ({
+      from: uci.slice(0, 2),
+      to: uci.slice(2, 4),
+      color: LICHESS_ARROW_COLORS.altBlue,
+    }));
+  }, [showTheoryHints, isHumanTurn, isArchiveMode, reviewMode, openingHints]);
+
+  useEffect(() => {
+    if (!showEvalBar) {
+      setLiveEval(null);
+      return;
+    }
+    if (isArchiveMode || reviewMode || gameOver || !isReady || isThinking) {
+      return;
+    }
+    const fen = game.fen();
+    const id = ++liveEvalRequestRef.current;
+    let cancelled = false;
+    getPositionEvaluation(fen, LIVE_EVAL_DEPTH)
+      .then((v) => {
+        if (cancelled || id !== liveEvalRequestRef.current) return;
+        setLiveEval(v);
+      })
+      .catch(() => {
+        if (cancelled || id !== liveEvalRequestRef.current) return;
+        setLiveEval(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    showEvalBar,
+    isArchiveMode,
+    reviewMode,
+    gameOver,
+    isReady,
+    isThinking,
+    game,
+    getPositionEvaluation,
+    moveHistory.length,
+  ]);
 
   const playMoveSoundIfEnabled = () => {
     if (boardUiSettings.soundEnabled) playChessMoveSound();
@@ -848,6 +938,8 @@ export default function PlayableChessboard({
     setMoveCount50(0);
     setShowResultModal(false);
     postGameStatsCancelRef.current += 1;
+    liveEvalRequestRef.current += 1;
+    setLiveEval(null);
     setPostGamePrecisionProgress(null);
     try {
       stopThinking();
@@ -1266,6 +1358,77 @@ export default function PlayableChessboard({
             </Card>
           )}
 
+          {!isArchiveMode && !reviewMode && (
+            <Card className="p-3 bg-slate-900/50 border-slate-800 space-y-3">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs text-slate-300">{t.playableBoard.showEvalBar}</span>
+                <Switch
+                  checked={showEvalBar}
+                  onCheckedChange={(v) => {
+                    setShowEvalBar(v);
+                    try {
+                      localStorage.setItem(PLAY_EVAL_BAR_STORAGE_KEY, v ? "1" : "0");
+                    } catch {
+                      /* ignore */
+                    }
+                  }}
+                  aria-label={t.playableBoard.showEvalBar}
+                />
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs text-slate-300">{t.playableBoard.showTheoryArrows}</span>
+                <Switch
+                  checked={showTheoryHints}
+                  onCheckedChange={(v) => {
+                    setShowTheoryHints(v);
+                    try {
+                      localStorage.setItem(PLAY_THEORY_ARROWS_STORAGE_KEY, v ? "1" : "0");
+                    } catch {
+                      /* ignore */
+                    }
+                  }}
+                  aria-label={t.playableBoard.showTheoryArrows}
+                />
+              </div>
+            </Card>
+          )}
+
+          {!isArchiveMode && !reviewMode && (
+            <Card className="p-3 bg-slate-900/50 border-slate-800">
+              <h4 className="text-xs font-semibold text-slate-300 mb-2">
+                {t.playableBoard.openingHeading}
+              </h4>
+              <div className="space-y-1.5 text-[11px]">
+                {moveHistory.length === 0 ? (
+                  <p className="text-slate-500">{t.playableBoard.openingEmpty}</p>
+                ) : openingHints?.titleLine ? (
+                  <>
+                    <p className="text-slate-200 leading-snug">{openingHints.titleLine}</p>
+                    {openingHints.opening && !openingHints.aligned && (
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] border-amber-500/50 text-amber-300"
+                      >
+                        {t.playableBoard.outOfBookBadge}
+                      </Badge>
+                    )}
+                    {openingHints.subtitleLine ? (
+                      <p className="text-slate-500 text-[10px] pt-1 border-t border-slate-800 leading-snug">
+                        <span className="font-medium text-slate-400">
+                          {t.playableBoard.transpositionsHeading}
+                        </span>
+                        <br />
+                        {openingHints.subtitleLine}
+                      </p>
+                    ) : null}
+                  </>
+                ) : (
+                  <p className="text-slate-500">{t.playableBoard.openingUnknown}</p>
+                )}
+              </div>
+            </Card>
+          )}
+
           {/* Raccourcis des flèches style Lichess */}
           <Card className="p-3 bg-slate-900/50 border-slate-800">
             <h4 className="text-xs font-semibold text-slate-300 mb-2">
@@ -1311,6 +1474,9 @@ export default function PlayableChessboard({
 
         {/* COLONNE CENTRALE : Échiquier (7/12) */}
         <div className="order-1 lg:order-2 lg:col-span-7 space-y-3">
+          {showEvalBar && !isArchiveMode && !reviewMode && (
+            <EvaluationBar evaluation={liveEval} />
+          )}
           {reviewMode && (
             <div
               role="status"
@@ -1356,6 +1522,7 @@ export default function PlayableChessboard({
                           ]
                         : []),
                       ...forcedLineArrows,
+                      ...theoryBoardArrows,
                     ]
                   : []
               }

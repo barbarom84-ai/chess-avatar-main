@@ -3,9 +3,16 @@
  */
 
 import type { EngineConfig } from './analysis';
+import { normalizeEnginePlatform } from './normalize-engine-platform';
 
 const STORAGE_KEY = 'chess_persona_configs';
 const RECENT_KEY = 'chess_persona_recent';
+
+/** Identité stable pour ne pas écraser Lichess avec Chess.com (même Bot_<pseudo>). */
+function engineConfigIdentity(config: EngineConfig): string {
+  const name = (config.name || '').trim().toLowerCase();
+  return `${name}|${normalizeEnginePlatform(config)}`;
+}
 
 export interface SavedConfig {
   id: string;
@@ -93,16 +100,17 @@ export function saveRecentConfig(config: EngineConfig): void {
   
   try {
     const recent = getRecentConfigs();
-    
-    // Ne garder que les 5 plus récentes, éviter les doublons par nom
-    const filtered = recent.filter(c => c.config.name !== config.name);
+    const id = engineConfigIdentity(config);
+
+    // Doublons par nom+plateforme seulement (Lichess vs Chess.com : même Bot_<pseudo>)
+    const filtered = recent.filter((c) => engineConfigIdentity(c.config) !== id);
     filtered.unshift({
       id: `recent_${Date.now()}`,
       config,
       savedAt: Date.now(),
     });
-    
-    const limited = filtered.slice(0, 5);
+
+    const limited = filtered.slice(0, 10);
     localStorage.setItem(RECENT_KEY, JSON.stringify(limited));
   } catch (error) {
     console.error('Erreur lors de la sauvegarde récente:', error);

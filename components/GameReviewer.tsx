@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import {
   ChevronLeft,
   ChevronRight,
@@ -9,6 +10,7 @@ import {
   Square,
   Crown,
   AlertTriangle,
+  Download,
   Pause,
   Play,
   Sparkles,
@@ -20,6 +22,9 @@ import {
   Skull,
   Lock,
   LogOut,
+  Bot,
+  Check,
+  Save,
 } from "lucide-react";
 import { Chess, type Move } from "chess.js";
 import {
@@ -40,6 +45,7 @@ import { Label } from "./ui/label";
 import { Badge } from "./ui/badge";
 import { Progress } from "./ui/progress";
 import { ScrollArea } from "./ui/scroll-area";
+import { Input } from "./ui/input";
 import { useGameReview, type ReviewStatus } from "@/hooks/useGameReview";
 import {
   CLASSIFICATION_COLORS,
@@ -64,11 +70,27 @@ import { findBestOpeningByPrefix } from "@/lib/openings-registry";
 import {
   describeTheoryHitsForUi,
   getOpeningTheorySans,
+  type TheoryTranspositionHit,
 } from "@/lib/opening-theory";
 import { buildVerboseHistoryFromSan } from "@/lib/move-history-verbose";
 import { uciToVerboseMoveFromFen } from "@/lib/learn-chess-utils";
 import SanNotation from "@/components/SanNotation";
 import { useChessboardSettings } from "@/contexts/ChessboardSettingsContext";
+import type { EngineConfig } from "@/lib/analysis";
+import { getRecentConfigs } from "@/lib/storage";
+import { toast } from "sonner";
+import { saveGameToCloud } from "@/lib/supabase-storage";
+import {
+  tryBuildCloudSavePayloadFromPgn,
+  inferSavePlayerNameFromContext,
+  parsePgnFileForGames,
+  playerNamesFromPgnHeaders,
+} from "@/lib/pgn-import";
+import {
+  buildAnnotatedPgn,
+  sanitizeForPgnFilenameSegment,
+} from "@/lib/pgn-annotated-export";
+import { isSupabaseConfigured } from "@/lib/supabase";
 
 const FREE_ENGINE_DEPTH = 12;
 const PREMIUM_DEPTH_OPTIONS = [14, 18, 22] as const;
@@ -116,6 +138,27 @@ interface GameReviewerProps {
   cacheUserId?: string | null;
   /** Triggered when the Coach UI asks the user to upgrade (e.g. quota reached). */
   onRequestUpgrade?: () => void;
+  /**
+   * Profil moteur pour le paradoxe clone. Si absent, le dernier profil « récent »
+   * du stockage local est utilisé.
+   */
+  paradoxAvatarConfig?: EngineConfig;
+  /** Affiche un indicateur "déjà sauvegardée" à côté du téléchargement annoté. */
+  showSavedInGamesList?: boolean;
+  /** Utilisateur connecté : permet d’enregistrer le PGN dans la table cloud `games`. */
+  authUserId?: string | null;
+  /** Préremplit le pseudo pour matcher [White]/[Black] lors de l’enregistrement. */
+  reviewCloudSavePlayerHint?: string | null;
+  /**
+   * Aide à déduire le pseudo sans saisie : couleur du compte pour une partie déjà en base,
+   * et/ou partie locale de l’e‑mail si elle correspond à un en-tête du PGN.
+   */
+  cloudSaveContext?: {
+    playerColor?: "white" | "black";
+    emailLocalPart?: string | null;
+  } | null;
+  /** Après enregistrement réussi dans `games`. */
+  onSavedToGamesCloud?: () => void;
 }
 
 export default function GameReviewer({
@@ -125,6 +168,12 @@ export default function GameReviewer({
   showAllBestArrows,
   cacheUserId,
   onRequestUpgrade,
+  paradoxAvatarConfig,
+  showSavedInGamesList = false,
+  authUserId = null,
+  reviewCloudSavePlayerHint = null,
+  cloudSaveContext = null,
+  onSavedToGamesCloud,
 }: GameReviewerProps) {
   const { t, lang } = useLanguage();
 
@@ -132,16 +181,86 @@ export default function GameReviewer({
     useState<AnalysisStrictnessId>(readStoredStrictness);
   const [premiumDepth, setPremiumDepth] = useState(readStoredPremiumDepth);
   const [coachTone, setCoachTone] = useState<CoachToneId>(readStoredCoachTone);
+  const [savePlayerName, setSavePlayerName] = useState("");
+  const [saveBusy, setSaveBusy] = useState(false);
 
   const engineDepth = isPremium ? premiumDepth : FREE_ENGINE_DEPTH;
+
+  const [storedPersona, setStoredPersona] = useState<EngineConfig | null>(null);
+  useEffect(() => {
+    const sync = () => {
+      try {
+        setStoredPersona(getRecentConfigs()[0]?.config ?? null);
+      } catch {
+        setStoredPersona(null);
+      }
+    };
+    sync();
+    window.addEventListener("focus", sync);
+    return () => window.removeEventListener("focus", sync);
+  }, []);
+
+  useEffect(() => {
+    try {
+      setStoredPersona(getRecentConfigs()[0]?.config ?? null);
+    } catch {
+      setStoredPersona(null);
+    }
+  }, [pgn]);
+
+  const effectivePersona = paradoxAvatarConfig ?? storedPersona;
 
   const parsed = useMemo<ParsedGameForReview | null>(
     () => parsePgnForReview(pgn),
     [pgn]
   );
 
+  const savePlayerOptions = useMemo(
+    () => playerNamesFromPgnHeaders(parsed?.headers ?? {}),
+    [parsed?.headers]
+  );
+
+  useEffect(() => {
+    const inferred = inferSavePlayerNameFromContext({
+      pgn,
+      hint: reviewCloudSavePlayerHint,
+      playerColor: cloudSaveContext?.playerColor ?? null,
+      emailLocalPart: cloudSaveContext?.emailLocalPart ?? null,
+    });
+    let chosen = inferred ?? "";
+    if (!chosen && authUserId) {
+      try {
+        const stored = localStorage
+          .getItem(`chess-avatar.games.savePlayerName.${authUserId}`)
+          ?.trim();
+        if (stored) {
+          const { games } = parsePgnFileForGames(pgn, stored);
+          if (games.length > 0) chosen = stored;
+        }
+      } catch {
+        // ignore
+      }
+    }
+    if (savePlayerOptions.length > 0) {
+      const norm = chosen.trim().toLowerCase();
+      const match = norm
+        ? savePlayerOptions.find((o) => o.toLowerCase() === norm)
+        : undefined;
+      chosen = match ?? "";
+    }
+    setSavePlayerName(chosen);
+  }, [
+    pgn,
+    reviewCloudSavePlayerHint,
+    authUserId,
+    cloudSaveContext?.playerColor,
+    cloudSaveContext?.emailLocalPart,
+    savePlayerOptions,
+  ]);
+
   const [cachedResult, setCachedResult] = useState<GameReviewResult | null>(null);
   const [cacheChecked, setCacheChecked] = useState(false);
+  const [pendingRestart, setPendingRestart] = useState(false);
 
   const pgnHash = useMemo(
     () => hashReviewCacheKey(pgn, analysisStrictness, engineDepth),
@@ -219,6 +338,32 @@ export default function GameReviewer({
     resetReview();
   }, [cancelReview, resetReview]);
 
+  const handleRelaunchAnalysis = useCallback(() => {
+    try {
+      cancelReview();
+    } catch {
+      /* best-effort */
+    }
+    setCachedResult(null);
+    resetReview();
+    setPendingRestart(true);
+  }, [cancelReview, resetReview]);
+
+  useEffect(() => {
+    if (!pendingRestart) return;
+    if (cachedResult) return;
+    if (review.status !== "idle") return;
+    if (!review.engineReady) return;
+    review.start();
+    setPendingRestart(false);
+  }, [
+    pendingRestart,
+    cachedResult,
+    review.status,
+    review.engineReady,
+    review.start,
+  ]);
+
   const handleStrictnessChange = useCallback(
     (next: AnalysisStrictnessId) => {
       setAnalysisStrictness(next);
@@ -260,6 +405,73 @@ export default function GameReviewer({
     ? cachedResult.moves.length
     : review.progress;
   const effectiveTotal = cachedResult ? cachedResult.moves.length : review.total;
+
+  const handleSaveGameToCloud = useCallback(async () => {
+    if (!authUserId) {
+      toast.error(t.review.saveToCloudNeedLogin);
+      return;
+    }
+    if (!isSupabaseConfigured) {
+      toast.error(t.review.saveToCloudSupabase);
+      return;
+    }
+    const name =
+      savePlayerName.trim() ||
+      inferSavePlayerNameFromContext({
+        pgn,
+        hint: reviewCloudSavePlayerHint,
+        playerColor: cloudSaveContext?.playerColor ?? null,
+        emailLocalPart: cloudSaveContext?.emailLocalPart ?? null,
+      })?.trim() ||
+      "";
+    if (!name) {
+      toast.error(t.review.saveToCloudNeedName);
+      return;
+    }
+    const payload = tryBuildCloudSavePayloadFromPgn(pgn, name);
+    if (!payload) {
+      toast.error(t.review.saveToCloudNoMatch);
+      return;
+    }
+    setSaveBusy(true);
+    try {
+      const row = await saveGameToCloud(payload);
+      if (!row) {
+        toast.error(t.review.saveToCloudNeedLogin);
+        return;
+      }
+      toast.success(t.review.saveToCloudSuccess);
+      try {
+        if (authUserId) {
+          localStorage.setItem(
+            `chess-avatar.games.savePlayerName.${authUserId}`,
+            name
+          );
+        }
+      } catch {
+        // ignore
+      }
+      onSavedToGamesCloud?.();
+    } catch {
+      toast.error(t.review.saveToCloudFailed);
+    } finally {
+      setSaveBusy(false);
+    }
+  }, [
+    authUserId,
+    onSavedToGamesCloud,
+    pgn,
+    savePlayerName,
+    cloudSaveContext?.playerColor,
+    cloudSaveContext?.emailLocalPart,
+    reviewCloudSavePlayerHint,
+    t.review.saveToCloudFailed,
+    t.review.saveToCloudNeedLogin,
+    t.review.saveToCloudNeedName,
+    t.review.saveToCloudNoMatch,
+    t.review.saveToCloudSuccess,
+    t.review.saveToCloudSupabase,
+  ]);
 
   const totalPlies = parsed?.san.length ?? 0;
   const [orientation, setOrientation] = useState<"white" | "black">("white");
@@ -458,15 +670,69 @@ export default function GameReviewer({
       ? 0
       : effectiveMoves[currentIndex - 1]?.playerEval ?? null;
 
-  const goPrev = () => setCurrentIndex((i) => Math.max(0, i - 1));
-  const goNext = () =>
-    setCurrentIndex((i) =>
-      Math.min(i + 1, Math.max(effectiveMoves.length, currentIndex))
-    );
-  const goStart = () => setCurrentIndex(0);
-  const goEnd = () => setCurrentIndex(effectiveMoves.length);
-  const flipBoard = () =>
-    setOrientation((o) => (o === "white" ? "black" : "white"));
+  const goPrev = useCallback(
+    () => setCurrentIndex((i) => Math.max(0, i - 1)),
+    []
+  );
+  const goNext = useCallback(
+    () => setCurrentIndex((i) => Math.min(i + 1, totalPlies)),
+    [totalPlies]
+  );
+  const goStart = useCallback(() => setCurrentIndex(0), []);
+  const goEnd = useCallback(
+    () => setCurrentIndex(totalPlies),
+    [totalPlies]
+  );
+  const flipBoard = useCallback(
+    () => setOrientation((o) => (o === "white" ? "black" : "white")),
+    []
+  );
+
+  // Keyboard navigation: ArrowLeft/ArrowRight to step, Home/End to jump.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement ||
+        e.target instanceof HTMLSelectElement
+      )
+        return;
+      if (e.key === "ArrowLeft") { e.preventDefault(); goPrev(); }
+      if (e.key === "ArrowRight") { e.preventDefault(); goNext(); }
+      if (e.key === "Home") { e.preventDefault(); goStart(); }
+      if (e.key === "End") { e.preventDefault(); goEnd(); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [goPrev, goNext, goStart, goEnd]);
+
+  const handleDownloadAnnotated = useCallback(() => {
+    if (!parsed) {
+      toast.error(t.review.downloadAnnotatedFailed);
+      return;
+    }
+    try {
+      const annotated = buildAnnotatedPgn(parsed, effectiveMoves ?? []);
+      const white = sanitizeForPgnFilenameSegment(parsed.headers.White ?? "White");
+      const black = sanitizeForPgnFilenameSegment(parsed.headers.Black ?? "Black");
+      const date = sanitizeForPgnFilenameSegment(
+        (parsed.headers.Date ?? new Date().toISOString().slice(0, 10)).replace(/\./g, "-")
+      );
+      const filename = `${white}_vs_${black}_${date}_annotated.pgn`;
+      const blob = new Blob([annotated], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.rel = "noopener";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+    } catch {
+      toast.error(t.review.downloadAnnotatedFailed);
+    }
+  }, [parsed, effectiveMoves, t.review.downloadAnnotatedFailed]);
 
   const goToKeyMoment = (direction: 1 | -1) => {
     if (!effectiveResult) return;
@@ -605,7 +871,85 @@ export default function GameReviewer({
           total={effectiveTotal}
           onCancel={review.cancel}
           onStartAnalysis={() => review.start()}
+          onRelaunch={handleRelaunchAnalysis}
+          onDownloadAnnotated={handleDownloadAnnotated}
+          showSavedInGamesList={showSavedInGamesList}
         />
+
+        {effectiveStatus === "done" && (
+          <Card className="bg-slate-950/70 border-slate-700/80">
+            <CardContent className="pt-3 pb-3 space-y-2">
+              <div className="flex items-start gap-2 flex-wrap">
+                <Save className="h-4 w-4 text-cyan-400 shrink-0 mt-0.5" />
+                <div className="space-y-1 min-w-0 flex-1">
+                  <p className="text-xs font-semibold text-slate-200">
+                    {t.review.saveToCloudTitle}
+                  </p>
+                  <p className="text-[11px] text-slate-500 leading-snug">
+                    {t.review.saveToCloudHint}
+                  </p>
+                </div>
+              </div>
+              {!authUserId ? (
+                <p className="text-[11px] text-amber-200/90">
+                  {t.review.saveToCloudNeedLogin}
+                </p>
+              ) : (
+                <div className="flex flex-col sm:flex-row gap-2 sm:items-end">
+                  <div className="flex-1 space-y-1">
+                    <Label
+                      htmlFor="review-save-player-select"
+                      className="text-[10px] uppercase tracking-wide text-slate-500"
+                    >
+                      {t.review.white} / {t.review.black}
+                    </Label>
+                    {savePlayerOptions.length > 0 ? (
+                      <select
+                        id="review-save-player-select"
+                        value={savePlayerName}
+                        onChange={(e) => setSavePlayerName(e.target.value)}
+                        disabled={saveBusy}
+                        className="flex h-9 w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/50 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <option value="">
+                          {t.review.saveToCloudSelectPlaceholder}
+                        </option>
+                        {savePlayerOptions.map((n) => (
+                          <option key={n} value={n}>
+                            {n}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <Input
+                        id="review-save-player-select"
+                        value={savePlayerName}
+                        onChange={(e) => setSavePlayerName(e.target.value)}
+                        placeholder={t.review.saveToCloudPlaceholder}
+                        className="h-9 bg-slate-900 border-slate-700 text-slate-100 text-sm"
+                        autoComplete="off"
+                      />
+                    )}
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={saveBusy}
+                    onClick={() => void handleSaveGameToCloud()}
+                    className="bg-cyan-700 hover:bg-cyan-600 text-white shrink-0"
+                  >
+                    {saveBusy ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <Save className="h-4 w-4 mr-2" />
+                    )}
+                    {t.review.saveToCloudButton}
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         <EvaluationBar evaluation={evalForBar} />
 
@@ -657,7 +1001,7 @@ export default function GameReviewer({
                     size="sm"
                     variant="secondary"
                     onClick={goNext}
-                    disabled={currentIndex >= effectiveMoves.length}
+                    disabled={currentIndex >= totalPlies}
                     className="flex-1"
                     title={t.review.next}
                   >
@@ -697,7 +1041,7 @@ export default function GameReviewer({
                   size="sm"
                   variant="ghost"
                   onClick={goEnd}
-                  disabled={currentIndex >= effectiveMoves.length}
+                  disabled={currentIndex >= totalPlies}
                   className="w-full hover:bg-slate-800"
                   title={t.review.end}
                 >
@@ -734,6 +1078,9 @@ export default function GameReviewer({
           onRequestUpgrade={onRequestUpgrade}
           coachTone={coachTone}
           theorySnapshot={openingTheorySnapshot}
+          personaConfig={effectivePersona}
+          getPersonaStyleMove={review.getPersonaStyleMove}
+          reviewBlocked={effectiveStatus === "running"}
         />
 
         {evalSeries.length > 1 && (
@@ -806,6 +1153,9 @@ function ProgressHeader({
   total,
   onCancel,
   onStartAnalysis,
+  onRelaunch,
+  onDownloadAnnotated,
+  showSavedInGamesList,
 }: {
   effectiveStatus: ReviewStatus;
   reviewStatus: ReviewStatus;
@@ -816,6 +1166,9 @@ function ProgressHeader({
   total: number;
   onCancel: () => void;
   onStartAnalysis: () => void;
+  onRelaunch: () => void;
+  onDownloadAnnotated: () => void;
+  showSavedInGamesList: boolean;
 }) {
   const { t } = useLanguage();
   const pct = total > 0 ? Math.round((progress / total) * 100) : 0;
@@ -826,8 +1179,46 @@ function ProgressHeader({
 
   if (effectiveStatus === "done") {
     return (
-      <div className="text-xs text-emerald-300 flex items-center gap-2">
-        <Crown className="h-3 w-3" /> {t.review.done}
+      <div className="flex flex-wrap items-center justify-between gap-2 w-full">
+        <div className="text-xs text-emerald-300 flex items-center gap-2 shrink-0">
+          <Crown className="h-3 w-3" /> {t.review.done}
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            className="h-7 px-2 text-cyan-300 hover:text-cyan-100 hover:bg-cyan-500/10"
+            onClick={onDownloadAnnotated}
+            title={t.review.downloadAnnotated}
+          >
+            <Download className="h-3 w-3 mr-1" />
+            {t.review.downloadAnnotated}
+          </Button>
+          {showSavedInGamesList && (
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              className="h-7 px-2 text-emerald-300 hover:text-emerald-200 hover:bg-emerald-500/10"
+              title={t.review.savedInGamesList}
+              disabled
+            >
+              <Check className="h-3 w-3 mr-1" />
+              {t.review.savedInGamesList}
+            </Button>
+          )}
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            className="h-7 px-2 text-cyan-300 hover:text-cyan-100 hover:bg-cyan-500/10"
+            onClick={onRelaunch}
+          >
+            <RotateCcw className="h-3 w-3 mr-1" />
+            {t.review.relaunch}
+          </Button>
+        </div>
       </div>
     );
   }
@@ -1256,6 +1647,9 @@ function CurrentMoveDetail({
   onRequestUpgrade,
   coachTone,
   theorySnapshot,
+  personaConfig,
+  getPersonaStyleMove,
+  reviewBlocked,
 }: {
   move?: ReviewedMove;
   /** Position affichée (explorer Lichess : stats depuis cette position). */
@@ -1274,16 +1668,30 @@ function CurrentMoveDetail({
         matchedPlies: number;
         sans: string[];
         aligned: boolean;
-        transpositionHints: string[];
+        transpositionHints: TheoryTranspositionHit[];
       }
     | null;
+  personaConfig: EngineConfig | null;
+  getPersonaStyleMove: (
+    fen: string,
+    config: EngineConfig,
+    opts?: { depth?: number; movetime?: number }
+  ) => Promise<string>;
+  reviewBlocked: boolean;
 }) {
   const { t, lang } = useLanguage();
   const { settings: boardSettings } = useChessboardSettings();
 
+  const MAX_TRANSPOSITIONS_VISIBLE = 6;
+  const [showAllTranspositions, setShowAllTranspositions] = useState(false);
+
   const theoryVerbose = useMemo(() => {
     if (!theorySnapshot?.sans?.length) return null;
     return buildVerboseHistoryFromSan(theorySnapshot.sans);
+  }, [theorySnapshot]);
+
+  useEffect(() => {
+    setShowAllTranspositions(false);
   }, [theorySnapshot]);
 
   if (!move) {
@@ -1413,10 +1821,53 @@ function CurrentMoveDetail({
               ))}
             </p>
             {theorySnapshot.transpositionHints.length > 0 && (
-              <p className="text-slate-400 text-[10px] leading-snug border-t border-amber-500/20 pt-1.5">
-                <span className="text-slate-500">{t.review.opening.transpositions}: </span>
-                {theorySnapshot.transpositionHints.join(" · ")}
-              </p>
+              <div className="border-t border-amber-500/20 pt-1.5 space-y-1.5">
+                <div className="text-slate-500 text-[10px]">
+                  {t.review.opening.transpositions}
+                </div>
+                <div className="inline-flex flex-wrap items-center gap-1">
+                  {(showAllTranspositions
+                    ? theorySnapshot.transpositionHints
+                    : theorySnapshot.transpositionHints.slice(
+                        0,
+                        MAX_TRANSPOSITIONS_VISIBLE
+                      )
+                  ).map((hit) => (
+                    <Badge
+                      key={`${hit.openingId}-${hit.theoryStep}`}
+                      variant="outline"
+                      className="border-slate-700/60 bg-slate-800/60 font-normal text-[10px] px-1.5 py-0 text-slate-300 max-w-[min(100%,14rem)]"
+                    >
+                      <span className="truncate">{hit.name}</span>
+                      <span className="font-mono text-amber-300/70 shrink-0 ml-1">
+                        · {lang === "en" ? "move" : "coup"} {hit.theoryStep}
+                      </span>
+                    </Badge>
+                  ))}
+                  {theorySnapshot.transpositionHints.length >
+                    MAX_TRANSPOSITIONS_VISIBLE && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-[10px] text-slate-400 hover:text-slate-200"
+                      onClick={() =>
+                        setShowAllTranspositions((v) => !v)
+                      }
+                    >
+                      {showAllTranspositions
+                        ? t.review.opening.showLessTranspositions
+                        : t.review.opening.showMoreTranspositions.replace(
+                            "{n}",
+                            String(
+                              theorySnapshot.transpositionHints.length -
+                                MAX_TRANSPOSITIONS_VISIBLE
+                            )
+                          )}
+                    </Button>
+                  )}
+                </div>
+              </div>
             )}
           </div>
         )}
@@ -1518,8 +1969,143 @@ function CurrentMoveDetail({
             onRequestUpgrade={onRequestUpgrade}
           />
         )}
+        {showCoach && (
+          <CloneParadoxCard
+            move={move}
+            fenBefore={fenBefore!}
+            personaConfig={personaConfig}
+            getPersonaStyleMove={getPersonaStyleMove}
+            reviewBlocked={reviewBlocked}
+          />
+        )}
       </CardContent>
     </Card>
+  );
+}
+
+/**
+ * Coup « style clone » (Stockfish + MultiPV + profil) pour les coups sous-optimaux.
+ */
+function CloneParadoxCard({
+  move,
+  fenBefore,
+  personaConfig,
+  getPersonaStyleMove,
+  reviewBlocked,
+}: {
+  move: ReviewedMove;
+  fenBefore: string;
+  personaConfig: EngineConfig | null;
+  getPersonaStyleMove: (
+    fen: string,
+    config: EngineConfig,
+    opts?: { depth?: number; movetime?: number }
+  ) => Promise<string>;
+  reviewBlocked: boolean;
+}) {
+  const { t } = useLanguage();
+  const { settings: boardSettings } = useChessboardSettings();
+  const [status, setStatus] = useState<"idle" | "loading" | "ready" | "error">(
+    "idle"
+  );
+  const [cloneUci, setCloneUci] = useState<string | null>(null);
+
+  useEffect(() => {
+    setStatus("idle");
+    setCloneUci(null);
+  }, [move.ply, move.uci]);
+
+  const handleClick = useCallback(() => {
+    if (!personaConfig || reviewBlocked) return;
+    setStatus("loading");
+    void getPersonaStyleMove(fenBefore, personaConfig, {
+      depth: Math.min(14, personaConfig.depth),
+      movetime: Math.min(800, personaConfig.timeControl),
+    })
+      .then((uci) => {
+        setCloneUci(uci);
+        setStatus("ready");
+      })
+      .catch(() => setStatus("error"));
+  }, [personaConfig, reviewBlocked, fenBefore, getPersonaStyleMove]);
+
+  const cloneSan =
+    cloneUci && fenBefore ? uciToSan(fenBefore, cloneUci) : null;
+
+  return (
+    <div className="pt-2 border-t border-cyan-500/25 mt-2 space-y-2">
+      <div className="flex items-center gap-2 text-[11px] font-semibold text-cyan-200/90 uppercase tracking-wide">
+        <Bot className="h-3.5 w-3.5 shrink-0" />
+        {t.review.paradox.title}
+      </div>
+      <p className="text-[10px] text-slate-500 leading-snug">
+        {t.review.paradox.subtitle}
+      </p>
+      {!personaConfig ? (
+        <p className="text-xs text-slate-400">
+          {t.review.paradox.noPersona}{" "}
+          <Link href="/analyze" className="text-cyan-400 hover:underline">
+            {t.review.paradox.openAnalyze}
+          </Link>
+        </p>
+      ) : reviewBlocked ? (
+        <p className="text-xs text-amber-200/80">{t.review.paradox.busy}</p>
+      ) : status === "idle" ? (
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={handleClick}
+          className="border-cyan-500/40 bg-cyan-500/10 text-cyan-100 hover:bg-cyan-500/20"
+        >
+          <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+          {t.review.paradox.button}
+        </Button>
+      ) : status === "loading" ? (
+        <div className="rounded border border-cyan-500/30 bg-cyan-500/10 px-3 py-2 text-xs text-cyan-100 flex items-center gap-2">
+          <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
+          {t.review.paradox.loading}
+        </div>
+      ) : status === "error" ? (
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs text-red-300">{t.review.paradox.error}</span>
+          <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={handleClick}>
+            {t.review.paradox.retry}
+          </Button>
+        </div>
+      ) : (
+        <div className="rounded border border-cyan-500/25 bg-slate-950/50 px-3 py-2 text-xs space-y-1.5">
+          <div className="text-cyan-200/90 font-medium">
+            {t.review.paradox.cloneWouldPlay}
+          </div>
+          {cloneUci && move.bestMove && cloneUci === move.bestMove && (
+            <p className="text-emerald-300/90">{t.review.paradox.sameAsEngine}</p>
+          )}
+          {cloneUci && cloneUci === move.uci && cloneUci !== move.bestMove && (
+            <p className="text-amber-200/90">{t.review.paradox.sameAsPlayed}</p>
+          )}
+          {cloneSan && (
+            <div className="inline-flex items-center gap-1 font-mono text-slate-100">
+              <SanNotation
+                verboseMove={uciToVerboseMoveFromFen(fenBefore, cloneUci!)}
+                fallbackSan={cloneSan}
+                movingColor={move.sideToMove === "white" ? "w" : "b"}
+                pieceSet={boardSettings.pieceSet}
+                size="sm"
+              />
+              <span className="text-[10px] text-slate-500">({cloneUci})</span>
+            </div>
+          )}
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-7 text-[11px] text-slate-400"
+            onClick={handleClick}
+          >
+            {t.review.paradox.retry}
+          </Button>
+        </div>
+      )}
+    </div>
   );
 }
 

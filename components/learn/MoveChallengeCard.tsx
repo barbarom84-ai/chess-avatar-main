@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import type { Move as ChessJsMove } from "chess.js";
 import SimpleChessboard from "@/components/SimpleChessboard";
 import SanNotation from "@/components/SanNotation";
 import PromotionDialog from "@/components/PromotionDialog";
@@ -46,6 +47,9 @@ interface MoveChallengeCardProps {
   /** `lichess`: board-first layout, multiple-choice hidden under details (puzzles page). */
   presentation?: "classic" | "lichess";
   lichessLike?: LichessLikeLabels;
+  /** Suite affichée avec icônes de pièces après succès (ex. puzzles cloud manuels). */
+  curatorLineVerboseMoves?: ChessJsMove[];
+  curatorLinePrefix?: { fr: string; en: string };
 }
 
 export default function MoveChallengeCard({
@@ -55,6 +59,8 @@ export default function MoveChallengeCard({
   labels,
   presentation = "classic",
   lichessLike,
+  curatorLineVerboseMoves,
+  curatorLinePrefix,
 }: MoveChallengeCardProps) {
   const { settings } = useChessboardSettings();
   const lichessMode = presentation === "lichess" && !!lichessLike;
@@ -283,7 +289,29 @@ export default function MoveChallengeCard({
 
         {showInsight && (
           <p className="text-sm text-emerald-200/90 text-center border border-emerald-900/40 rounded-md p-3 bg-emerald-950/20">
-            {labels.correct} — {pickLocalized(challenge.insight, lang)}
+            <span className="inline-block max-w-full">
+              {labels.correct} —{" "}
+              {curatorLineVerboseMoves &&
+              curatorLineVerboseMoves.length > 0 &&
+              curatorLinePrefix ? (
+                <span
+                  className="inline-flex flex-wrap items-center justify-center gap-x-2 gap-y-1.5 align-middle"
+                  aria-label={curatorLineVerboseMoves.map((m) => m.san).join(" ")}
+                >
+                  <span>{pickLocalized(curatorLinePrefix, lang)}</span>
+                  {curatorLineVerboseMoves.map((mv, i) => (
+                    <SanNotation
+                      key={`cur-${i}-${mv.from}-${mv.to}`}
+                      verboseMove={mv}
+                      pieceSet={settings.pieceSet}
+                      size="sm"
+                    />
+                  ))}
+                </span>
+              ) : (
+                pickLocalized(challenge.insight, lang)
+              )}
+            </span>
           </p>
         )}
 

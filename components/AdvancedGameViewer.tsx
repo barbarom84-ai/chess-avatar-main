@@ -12,6 +12,10 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import SimpleChessboard from "./SimpleChessboard";
 import { useLanguage } from "@/lib/language-context";
+import {
+  REVIEW_PGN_SESSION_KEY,
+  clearReviewSessionContext,
+} from "@/lib/review-session";
 
 interface AdvancedGameViewerProps {
   pgn: string;
@@ -25,7 +29,8 @@ export default function AdvancedGameViewer({ pgn, playerColor = 'white' }: Advan
 
   const openReview = useCallback(() => {
     if (!pgn || typeof window === "undefined") return;
-    sessionStorage.setItem("chess-avatar.review.pgn", pgn);
+    clearReviewSessionContext();
+    sessionStorage.setItem(REVIEW_PGN_SESSION_KEY, pgn);
     router.push("/review");
   }, [pgn, router]);
   const [gamePositions, setGamePositions] = useState<string[]>([]);

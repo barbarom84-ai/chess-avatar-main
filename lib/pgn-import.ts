@@ -59,6 +59,24 @@ export function listPlayerNamesFromPgn(raw: string): string[] {
   );
 }
 
+/**
+ * Noms joueurs depuis les en-têtes d'une partie déjà parsée (ordre Blanc puis Noir).
+ * Exclut les valeurs vides ou « ? » ; déduplique sans casse.
+ */
+export function playerNamesFromPgnHeaders(headers: Record<string, string>): string[] {
+  const out: string[] = [];
+  const seenLower = new Set<string>();
+  for (const tag of ["White", "Black"] as const) {
+    const raw = headers[tag]?.trim();
+    if (!raw || raw === "?") continue;
+    const k = raw.toLowerCase();
+    if (seenLower.has(k)) continue;
+    seenLower.add(k);
+    out.push(raw);
+  }
+  return out;
+}
+
 function outcomeFromResultTag(result: string | undefined): "white" | "black" | null {
   const r = (result ?? "*").trim().replace(/\u2013/g, "-");
   if (r === "1-0") return "white";
@@ -134,4 +152,67 @@ export function parsePgnFileForGames(
   }
 
   return { games, skippedInvalid, skippedNotPlayer };
+}
+
+/**
+ * Build a single cloud row from raw PGN text when the user identifies which
+ * header name (White/Black) is "them". Returns null if no matching game block.
+ */
+export function tryBuildCloudSavePayloadFromPgn(
+  raw: string,
+  playerNameInPgn: string
+): PgnGameSavePayload | null {
+  const trimmed = playerNameInPgn.trim();
+  if (!trimmed) return null;
+  const { games } = parsePgnFileForGames(raw, trimmed);
+  return games[0] ?? null;
+}
+
+function isPlaceholderPlayerName(s: string): boolean {
+  const t = s.trim();
+  return !t || t === "?" || t === "-";
+}
+
+/**
+ * Guess which [White]/[Black] name is the account owner for cloud save, without manual entry when possible.
+ * Order: explicit hint → known saved-game color → email local-part match → single named player.
+ */
+export function inferSavePlayerNameFromContext(params: {
+  pgn: string;
+  hint?: string | null;
+  playerColor?: "white" | "black" | null;
+  emailLocalPart?: string | null;
+}): string | null {
+  const raw = params.pgn?.trim();
+  if (!raw) return null;
+  const block = splitPgnDatabase(raw)[0];
+  if (!block) return null;
+  const white = parsePgnTagInBlock(block, "White")?.trim() ?? "";
+  const black = parsePgnTagInBlock(block, "Black")?.trim() ?? "";
+
+  const hintT = params.hint?.trim();
+  if (hintT) {
+    if (!isPlaceholderPlayerName(white) && white.toLowerCase() === hintT.toLowerCase()) {
+      return white;
+    }
+    if (!isPlaceholderPlayerName(black) && black.toLowerCase() === hintT.toLowerCase()) {
+      return black;
+    }
+  }
+
+  const pc = params.playerColor;
+  if (pc === "white" && !isPlaceholderPlayerName(white)) return white;
+  if (pc === "black" && !isPlaceholderPlayerName(black)) return black;
+
+  const emailT = params.emailLocalPart?.trim();
+  if (emailT) {
+    const el = emailT.toLowerCase();
+    if (!isPlaceholderPlayerName(white) && white.toLowerCase() === el) return white;
+    if (!isPlaceholderPlayerName(black) && black.toLowerCase() === el) return black;
+  }
+
+  if (!isPlaceholderPlayerName(white) && isPlaceholderPlayerName(black)) return white;
+  if (!isPlaceholderPlayerName(black) && isPlaceholderPlayerName(white)) return black;
+
+  return null;
 }

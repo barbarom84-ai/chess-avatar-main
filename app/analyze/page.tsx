@@ -25,6 +25,7 @@ import {
   type PersonaGameInput,
 } from "@/lib/analysis";
 import { useLanguage } from "@/lib/language-context";
+import { setReviewSessionFromAnalyze } from "@/lib/review-session";
 
 // Import Dynamique de l'échiquier (pour éviter le bug SSR)
 const GameViewer = dynamic(() => import("@/components/GameViewer"), {
@@ -37,8 +38,8 @@ export default function AnalyzePage() {
   const router = useRouter();
 
   const openReview = (pgn: string | undefined) => {
-    if (!pgn || typeof window === "undefined") return;
-    sessionStorage.setItem("chess-avatar.review.pgn", pgn);
+    if (!pgn || typeof window === "undefined" || !username.trim()) return;
+    setReviewSessionFromAnalyze(username.trim(), pgn);
     router.push("/review");
   };
   

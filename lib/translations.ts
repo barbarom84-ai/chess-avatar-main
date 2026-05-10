@@ -178,7 +178,21 @@ export const translations = {
       quickReviewSection: "Game Review rapide",
       quickReviewSectionHint: "Analysez n'importe quel PGN sans l'enregistrer dans votre bibliothèque.",
       backToHub: "Retour à mes parties",
-      reviewing: "Analyse en cours"
+      reviewing: "Analyse en cours",
+      /** Badge au tableau des parties et dans l’en-tête de revue : résultat pour votre compte (évite la confusion avec le nom de l’adversaire). */
+      resultBadgeYouWon: "Vous avez gagné",
+      resultBadgeYouLost: "Vous avez perdu",
+      resultBadgeYouDraw: "Nulle",
+      filterGameKindAll: "Toutes les parties",
+      filterGameKindHuman: "Joueur vs bot",
+      filterGameKindArena: "Arène bot vs bot",
+      statsExcludeArena:
+        "Les statistiques ci-dessus ignorent les parties d’arène (bot vs bot).",
+      badgeArenaBot: "Arène",
+      arenaOutcomeWhite: "1-0 (blancs)",
+      arenaOutcomeBlack: "0-1 (noirs)",
+      arenaOutcomeDraw: "Nulle",
+      colorArenaBots: "Bot vs bot",
     },
     
     // Guide Page (UCI creator guide)
@@ -257,10 +271,10 @@ export const translations = {
     },
 
     learn: {
-      title: "Apprentissage des ouvertures",
+      title: "Ouvertures",
       subtitle:
         "Plans, niveaux recommandés, pièges à connaître et parties historiques commentées — pour progresser au-delà de la simple mémorisation.",
-      headerNav: "Apprentissage",
+      headerNav: "Ouvertures",
       hubIntro:
         "Chaque fiche relie l’ouverture à des idées de milieu de partie. Utilisez les filtres pour trouver une ligne adaptée à votre niveau.",
       catalog: {
@@ -342,7 +356,7 @@ export const translations = {
       loadingCatalog: "Chargement du catalogue (y compris les fiches publiées sur le cloud)…",
       admin: {
         hubLink: "Admin Learn",
-        title: "Administration — Apprentissage",
+        title: "Administration — Ouvertures",
         subtitle:
           "Ajoutez, modifiez ou supprimez des fiches (ouverture + leçon). Les entrées cloud remplacent le catalogue intégré pour le même identifiant ; la suppression rétablit la version d’origine.",
         accessDenied: "Accès réservé aux comptes Super User (abonnement plan « super » actif).",
@@ -519,7 +533,16 @@ export const translations = {
       createdOn: "Créé le",
       createdBy: "par",
       needsSupabase: "La bibliothèque publique nécessite la configuration de Supabase.",
-      checkDocs: "Consultez SUPABASE_SETUP.md pour les instructions."
+      checkDocs: "Consultez SUPABASE_SETUP.md pour les instructions.",
+      platformFilter: "Plateforme",
+      platformAll: "Toutes",
+      platformLichess: "Lichess",
+      platformChesscom: "Chess.com",
+      dedupeTitle: "Masquer les doublons",
+      dedupeHint:
+        "Une carte par pseudo et plateforme : on garde la version la plus récente (réduit les ré-imports).",
+      pageSize: "Nombre affiché",
+      profilesShown: "{count} affiché(s)",
     },
     
     // Common
@@ -577,8 +600,9 @@ export const translations = {
       createBot: "Créer Bot",
       profiles: "Profils",
       games: "Parties",
-      learn: "Apprentissage",
+      learn: "Ouvertures",
       puzzles: "Puzzles",
+      arena: "Arène",
       guide: "Guide",
       boardSettingsTitle: "Paramètres de l'échiquier"
     },
@@ -590,10 +614,10 @@ export const translations = {
       chessAvatarBadge: "Catalogue ChessAvatar",
       featuredSectionTitle: "Parties & défis ChessAvatar",
       featuredSectionDesc:
-        "Ces positions viennent des parties historiques intégrées à l’application : même matière que la section Apprentissage, format quiz avec indices.",
+        "Ces positions viennent des parties historiques intégrées à l’application : même matière que la section Ouvertures, format quiz avec indices.",
       avatarGamesIntro:
         "Les parties contre les avatars (page Jouer) peuvent être sauvegardées sur votre compte : retrouvez les récentes ci-dessous ou dans Parties.",
-      openLearn: "Ouvrir le catalogue Apprentissage",
+      openLearn: "Ouvrir le catalogue Ouvertures",
       avatarGamesTitle: "Vos parties contre des avatars",
       avatarGamesDesc:
         "Chaque partie contre un profil ChessAvatar sur la page Jouer peut être sauvegardée dans le cloud. Ouvrez-la dans Parties pour revoir le PGN et lancer une analyse.",
@@ -606,13 +630,78 @@ export const translations = {
       playVsAvatar: "Jouer contre un avatar",
       cloudPuzzleTitle: "Puzzle communautaire",
       cloudPuzzleDesc:
-        "Devinez un coup réellement joué — uniquement des sacrifices typiques ou des combinaisons de mat (mat au coup ou dans la ligne enregistrée). Parties cloud de la communauté.",
+        "Devinez un coup réellement joué qui amorce un mat forcé en exactement 2 ou 3 demi-coups du camp attaquant (défense optimale). Puzzles pré-indexés à partir des parties cloud.",
       cloudPuzzleNew: "Nouveau puzzle communautaire",
       cloudPuzzleLoading: "Chargement…",
       cloudPuzzleError: "Impossible de charger un puzzle pour le moment.",
       cloudPuzzleAuth: "Connectez-vous pour accéder aux puzzles issus des parties enregistrées.",
+      curatorInsightPrefix: {
+        fr: "Ligne proposée par l’organisateur :",
+        en: "Curator line:",
+      },
+      communityManual: {
+        link: "Publier un puzzle manuel (admin)",
+        title: "Puzzle communautaire — publication manuelle",
+        subtitle:
+          "Choisissez une partie cloud, la position (indice de coup), le coup à deviner et la suite de coups souhaitée. Réservé aux comptes Super ou aux UUID listés dans COMMUNITY_PUZZLE_ADMIN_USER_IDS.",
+        back: "Retour aux puzzles",
+        loadGamesError: "Impossible de charger la liste des parties.",
+        gameLabel: "Partie",
+        gamePlaceholder: "— Choisir une partie —",
+        plyLabel: "Indice du coup (afterMoveCount)",
+        plyHint:
+          "Nombre de demi-coups déjà joués dans la partie avant la position du puzzle (0 = début). Le trait doit être au camp qui joue le coup à deviner.",
+        correctLabel: "Coup à deviner (UCI)",
+        correctPlaceholder: "ex. e2e4 ou e7e8q",
+        solutionLabel: "Suite de coups (UCI, après le coup à deviner)",
+        solutionPlaceholder: "Un ou plusieurs coups séparés par des espaces : e7e5 f1c4 …",
+        promptFrLabel: "Question (FR, optionnel)",
+        promptEnLabel: "Question (EN, optionnel)",
+        previewTitle: "Aperçu — position du puzzle",
+        previewHint:
+          "La partie est chargée depuis le pool ; l’indice correspond au nombre de demi-coups joués avant la position (trait au camp qui doit trouver le coup).",
+        previewLoading: "Chargement du PGN…",
+        previewPickGame: "Choisissez une partie ou entrez un UUID.",
+        previewNotFound: "Partie introuvable.",
+        previewInvalidPly: "Indice invalide ou hors de la partie.",
+        previewSideBlack: "Noirs",
+        previewSideWhite: "Blancs",
+        previewSideToMove: "Trait : {side}",
+        plyPrev: "−1 demi-coup",
+        plyNext: "+1 demi-coup",
+        flipBoard: "Tourner l'échiquier",
+        keyboardNavHint:
+          "Clavier : ← → pour naviguer, Origine / Fin pour le début ou la fin de la partie.",
+        composeTitle: "Composer la solution sur l'échiquier",
+        composeHint:
+          "Jouez depuis la position du puzzle : le 1ᵉʳ coup remplit « coup à deviner », les suivants la suite. L'UCI à droite est mis à jour ; vous pouvez aussi le corriger à la main.",
+        clearPlayedMoves: "Effacer les coups joués",
+        navStart: "Premier coup (Origine)",
+        navPrev: "Demi-coup précédent (←)",
+        navNext: "Demi-coup suivant (→)",
+        navEnd: "Dernier coup (Fin)",
+        publish: "Publier dans le pool communautaire",
+        publishing: "Publication…",
+        success: "Puzzle enregistré. Il peut être tiré au sort comme les autres puzzles communautaires.",
+        forbidden: "Accès refusé : compte Super ou allowlist admin requis.",
+        errors: {
+          invalid_game_id: "Identifiant de partie invalide.",
+          invalid_ply: "Indice de coup invalide.",
+          missing_correct: "Indiquez le coup en UCI.",
+          game_not_found: "Partie introuvable.",
+          invalid_pgn: "PGN de la partie invalide.",
+          ply_out_of_range: "L’indice dépasse la longueur de la partie.",
+          invalid_position: "Impossible de rejouer la position.",
+          invalid_uci: "UCI invalide dans la ligne.",
+          illegal_correct: "Le coup à deviner est illégal à cette position.",
+          illegal_solution: "Un coup de la suite est illégal.",
+          mate_too_short:
+            "Au moins deux demi-coups du camp attaquant au total sont requis (le coup à deviner compte dans ce total).",
+          wrong_choices: "Pas assez de coups piège possibles sur l’échiquier (minimum 3 choix incorrects).",
+        },
+      },
       emptyFeatured:
-        "Aucune partie historique avec défis n’est disponible ici pour l’instant. Parcourez le catalogue Apprentissage pour les leçons complètes.",
+        "Aucune partie historique avec défis n’est disponible ici pour l’instant. Parcourez le catalogue Ouvertures pour les leçons complètes.",
       lichessSectionTitle: "Complément : puzzles Lichess",
       lichessSectionDesc:
         "Entraînement additionnel avec la base tactique Lichess (parties réelles et récentes sur leur plateforme).",
@@ -828,6 +917,25 @@ export const translations = {
       cancelled: "Analyse annulée",
       error: "Erreur lors de l'analyse",
       done: "Analyse terminée",
+      relaunch: "Relancer l'analyse",
+      downloadAnnotated: "Télécharger PGN annoté",
+      downloadAnnotatedFailed:
+        "Impossible de générer ou de télécharger le PGN. Réessayez ou vérifiez les permissions du navigateur.",
+      savedInGamesList: "Déjà dans Parties",
+      saveToCloudTitle: "Partie dans « Parties »",
+      saveToCloudHint:
+        "Le pseudo est rempli automatiquement quand c’est possible (partie enregistrée, session Analyse, ou correspondance avec votre e‑mail). Sinon, indiquez celui des en-têtes [White] / [Black].",
+      saveToCloudPlaceholder: "Ex. : DrNykterstein",
+      saveToCloudSelectPlaceholder: "Choisir dans la liste…",
+      saveToCloudButton: "Enregistrer dans Parties",
+      saveToCloudSuccess: "Partie enregistrée. Ouvrez l’onglet Parties pour la retrouver.",
+      saveToCloudFailed: "Impossible d’enregistrer la partie. Réessayez.",
+      saveToCloudNeedLogin: "Connectez-vous pour enregistrer la partie dans le cloud.",
+      saveToCloudNoMatch:
+        "Aucun bloc PGN ne correspond à ce pseudo. Vérifiez l’orthographe (y compris majuscules).",
+      saveToCloudNeedName:
+        "Impossible de deviner votre camp : renseignez le pseudo exactement comme dans [White] ou [Black] du PGN.",
+      saveToCloudSupabase: "La sauvegarde cloud n’est pas configurée sur cette instance.",
       startAnalysis: "Lancer l'analyse",
       computing: "Calcul en cours…",
       notYetAvailable: "Disponible à la fin de l'analyse",
@@ -922,6 +1030,8 @@ export const translations = {
         divergedFromBook:
           "La partie ne suit plus ce coup à coup la ligne ci-dessus ; correspondance partielle surlignée.",
         transpositions: "Autres repères menant ici",
+        showMoreTranspositions: "Voir {n} de plus",
+        showLessTranspositions: "Voir moins",
         explorerTitle: "Explorer Lichess",
         explorerLoading: "Chargement des statistiques…",
         explorerError: "Impossible de charger l’explorer (réseau ou limite).",
@@ -959,7 +1069,67 @@ export const translations = {
         rateLimited: "Trop de requêtes. Patientez un instant.",
         network: "Problème réseau. Vérifiez votre connexion.",
         invalidBody: "Données du coup invalides."
+      },
+      paradox: {
+        title: "Paradoxe clone",
+        subtitle:
+          "Coup simulé avec ton profil moteur (MultiPV + niveau / agressivité) — indicatif, pas une vérité absolue.",
+        button: "Qu’aurait joué mon clone ?",
+        loading: "Le clone réfléchit…",
+        retry: "Réessayer",
+        error: "Impossible de simuler le coup pour l’instant.",
+        busy: "Disponible quand l’analyse du coup est terminée.",
+        noPersona:
+          "Aucun profil récent : analyse un pseudo sur la page Analyser pour activer le paradoxe clone.",
+        openAnalyze: "Ouvrir Analyser",
+        sameAsEngine: "Même ligne que le meilleur coup moteur ici.",
+        sameAsPlayed: "Ton clone aurait joué le même coup que toi sur cet échiquier.",
+        cloneWouldPlay: "Coup « clone » suggéré",
       }
+    },
+
+    arenaPage: {
+      title: "Arène clone vs clone",
+      subtitle:
+        "Deux profils moteur s’affrontent en spectateur. Un seul Stockfish dans l’onglet : profondeur modérée pour rester fluide.",
+      whiteSide: "Blancs",
+      blackSide: "Noirs",
+      selectWhite: "Avatar des blancs",
+      selectBlack: "Avatar des noirs",
+      savedProfiles: "Profils sauvegardés",
+      recentProfiles: "Récents",
+      start: "Lancer la partie",
+      pause: "Pause",
+      resume: "Reprendre",
+      reset: "Réinitialiser",
+      step: "Un coup",
+      statusThinking: "Réflexion…",
+      statusIdle: "Prêt",
+      gameOver: "Partie terminée",
+      maxPliesLabel: "Limite de coups (sécurité)",
+      depthLabel: "Profondeur moteur (arène)",
+      needEngine: "Chargement du moteur…",
+      loadingProfiles: "Chargement des profils…",
+      pickBoth: "Choisis deux avatars différents pour lancer l’arène.",
+      resultStalemate: "Pat",
+      resultDraw: "Nulle",
+      resultCheckmate: "Échec et mat",
+      movesPlayed: "Coups joués",
+      pickSearchPlaceholder: "Tapez pour filtrer les profils…",
+      pickNoMatches: "Aucun profil ne correspond.",
+      pickListHint:
+        "Liste courte : affinez avec la recherche ou les filtres ci-dessus.",
+      pickSelectedLabel: "Sélection",
+      refreshList: "Rafraîchir les profils",
+      cloudLibrary: "Cloud (public)",
+      emptyHint:
+        "Si vous aviez analysé Lichess puis Chess.com, l’ancien bug ne gardait qu’un « Bot_pseudo » : relancez une analyse Lichess. Les bots publics du compte sont aussi chargés depuis le cloud.",
+      saveCloudLabel: "Enregistrer les parties (cloud)",
+      saveCloudHint:
+        "À la fin de la partie, enregistrement sous « bot vs bot » dans Mes parties — sans impacter vos stats joueur.",
+      saveCloudNeedLogin: "Connectez-vous pour sauvegarder les parties d’arène dans le cloud.",
+      cloudSavedToast: "Partie d’arène enregistrée.",
+      cloudSaveErrorToast: "Impossible d’enregistrer la partie d’arène.",
     },
 
     // Forced line editor
@@ -1174,7 +1344,14 @@ export const translations = {
       turn: "Tour",
       moves: "Coups",
       rule50: "Règle 50",
-      nearDraw: "Proche nulle !"
+      nearDraw: "Proche nulle !",
+      showEvalBar: "Barre d'évaluation",
+      showTheoryArrows: "Flèches théorie",
+      openingHeading: "Ouverture",
+      openingEmpty: "Position initiale",
+      openingUnknown: "Ligne non répertoriée dans la base locale",
+      outOfBookBadge: "Hors livre",
+      transpositionsHeading: "Autres lignes (transpositions)",
     },
 
     // Forced line editor extended
@@ -1483,7 +1660,19 @@ export const translations = {
       quickReviewSection: "Quick Game Review",
       quickReviewSectionHint: "Analyze any PGN without saving it to your library.",
       backToHub: "Back to my games",
-      reviewing: "Reviewing"
+      reviewing: "Reviewing",
+      resultBadgeYouWon: "You won",
+      resultBadgeYouLost: "You lost",
+      resultBadgeYouDraw: "Draw",
+      filterGameKindAll: "All games",
+      filterGameKindHuman: "Human vs bot",
+      filterGameKindArena: "Arena bot vs bot",
+      statsExcludeArena: "Stats above exclude arena (bot vs bot) games.",
+      badgeArenaBot: "Arena",
+      arenaOutcomeWhite: "1-0 (White)",
+      arenaOutcomeBlack: "0-1 (Black)",
+      arenaOutcomeDraw: "Draw",
+      colorArenaBots: "Bot vs bot",
     },
     
     // Guide Page (UCI creator guide)
@@ -1822,7 +2011,16 @@ export const translations = {
       createdOn: "Created on",
       createdBy: "by",
       needsSupabase: "The public library requires Supabase configuration.",
-      checkDocs: "Check SUPABASE_SETUP.md for instructions."
+      checkDocs: "Check SUPABASE_SETUP.md for instructions.",
+      platformFilter: "Platform",
+      platformAll: "All",
+      platformLichess: "Lichess",
+      platformChesscom: "Chess.com",
+      dedupeTitle: "Hide duplicates",
+      dedupeHint:
+        "One card per username and platform: keep the latest version (fewer re-upload duplicates).",
+      pageSize: "Rows shown",
+      profilesShown: "{count} shown",
     },
     
     // Common
@@ -1882,6 +2080,7 @@ export const translations = {
       games: "Games",
       learn: "Learn",
       puzzles: "Puzzles",
+      arena: "Arena",
       guide: "Guide",
       boardSettingsTitle: "Board settings"
     },
@@ -1909,11 +2108,76 @@ export const translations = {
       playVsAvatar: "Play vs avatar",
       cloudPuzzleTitle: "Community puzzle",
       cloudPuzzleDesc:
-        "Guess a move that was actually played — only typical sacrifices or mating combinations (mate on the move or later on the recorded line). From community cloud games.",
+        "Guess a move that was actually played and begins a forced mate in exactly 2 or 3 attacker half-moves (optimal defense). Pre-indexed from community cloud games.",
       cloudPuzzleNew: "New community puzzle",
       cloudPuzzleLoading: "Loading…",
       cloudPuzzleError: "Could not load a puzzle right now.",
       cloudPuzzleAuth: "Sign in to access puzzles from saved games.",
+      curatorInsightPrefix: {
+        fr: "Ligne proposée par l’organisateur :",
+        en: "Curator line:",
+      },
+      communityManual: {
+        link: "Publish manual puzzle (admin)",
+        title: "Community puzzle — manual publish",
+        subtitle:
+          "Pick a cloud game, position (move index), the move to guess, and the continuation line you want. Super accounts only, or user IDs listed in COMMUNITY_PUZZLE_ADMIN_USER_IDS.",
+        back: "Back to puzzles",
+        loadGamesError: "Could not load games list.",
+        gameLabel: "Game",
+        gamePlaceholder: "— Select a game —",
+        plyLabel: "Move index (afterMoveCount)",
+        plyHint:
+          "Half-moves already played before the puzzle position (0 = start). The side to move must be the attacker playing the guess-move.",
+        correctLabel: "Move to guess (UCI)",
+        correctPlaceholder: "e.g. e2e4 or e7e8q",
+        solutionLabel: "Continuation (UCI, after the guess-move)",
+        solutionPlaceholder: "Space-separated moves: e7e5 Bc4 …",
+        promptFrLabel: "Prompt (French, optional)",
+        promptEnLabel: "Prompt (English, optional)",
+        previewTitle: "Preview — puzzle position",
+        previewHint:
+          "The game is loaded from the pool; the index is half-moves played before this position (side to move is the attacker for the quiz).",
+        previewLoading: "Loading PGN…",
+        previewPickGame: "Pick a game or paste a UUID.",
+        previewNotFound: "Game not found.",
+        previewInvalidPly: "Invalid move index or out of range.",
+        previewSideBlack: "Black",
+        previewSideWhite: "White",
+        previewSideToMove: "Side to move: {side}",
+        plyPrev: "−1 half-move",
+        plyNext: "+1 half-move",
+        flipBoard: "Flip board",
+        keyboardNavHint:
+          "Keyboard: ← → to step, Home / End for start or end of the game.",
+        composeTitle: "Build the solution on the board",
+        composeHint:
+          "Play from the puzzle position: the first move fills “move to guess”, further moves build the continuation. UCI fields on the right update; you can edit them manually.",
+        clearPlayedMoves: "Clear played moves",
+        navStart: "First half-move (Home)",
+        navPrev: "Previous half-move (←)",
+        navNext: "Next half-move (→)",
+        navEnd: "Last half-move (End)",
+        publish: "Publish to community pool",
+        publishing: "Publishing…",
+        success: "Puzzle saved. It will appear in random community puzzles.",
+        forbidden: "Access denied: Super account or admin allowlist required.",
+        errors: {
+          invalid_game_id: "Invalid game id.",
+          invalid_ply: "Invalid move index.",
+          missing_correct: "Provide the guess-move in UCI.",
+          game_not_found: "Game not found.",
+          invalid_pgn: "Invalid game PGN.",
+          ply_out_of_range: "Move index is beyond the game length.",
+          invalid_position: "Could not replay to that position.",
+          invalid_uci: "Invalid UCI in the line.",
+          illegal_correct: "The guess-move is illegal from that position.",
+          illegal_solution: "A continuation move is illegal.",
+          mate_too_short:
+            "At least two attacker half-moves are required in total (the guess-move counts toward this).",
+          wrong_choices: "Not enough legal decoys (need 3 wrong choices).",
+        },
+      },
       emptyFeatured:
         "No historic games with challenges are available here yet. Browse the Learn catalog for full lessons.",
       lichessSectionTitle: "Extra: Lichess puzzles",
@@ -2129,6 +2393,25 @@ export const translations = {
       cancelled: "Analysis cancelled",
       error: "Analysis error",
       done: "Analysis complete",
+      relaunch: "Re-run analysis",
+      downloadAnnotated: "Download annotated PGN",
+      downloadAnnotatedFailed:
+        "Could not generate or download the PGN. Try again or check your browser download permissions.",
+      savedInGamesList: "Already in saved games",
+      saveToCloudTitle: "Save to Games list",
+      saveToCloudHint:
+        "Your handle is filled in automatically when possible (saved game, Analyze session, or match with your email local-part). Otherwise enter the name from the [White] / [Black] headers.",
+      saveToCloudPlaceholder: "e.g. Hikaru",
+      saveToCloudSelectPlaceholder: "Choose from list…",
+      saveToCloudButton: "Save to Games",
+      saveToCloudSuccess: "Game saved. Open Games to find it.",
+      saveToCloudFailed: "Could not save the game. Try again.",
+      saveToCloudNeedLogin: "Sign in to save the game to the cloud.",
+      saveToCloudNoMatch:
+        "No PGN game matches that name. Check spelling (case-sensitive match to headers).",
+      saveToCloudNeedName:
+        "We could not infer your side: enter the handle exactly as in the [White] or [Black] header.",
+      saveToCloudSupabase: "Cloud save is not configured on this instance.",
       startAnalysis: "Start analysis",
       computing: "Computing…",
       notYetAvailable: "Available once analysis completes",
@@ -2223,6 +2506,8 @@ export const translations = {
         divergedFromBook:
           "The game no longer follows this line move-for-move; highlighted moves match the longest compatible prefix.",
         transpositions: "Also reached via",
+        showMoreTranspositions: "Show {n} more",
+        showLessTranspositions: "Show less",
         explorerTitle: "Lichess explorer",
         explorerLoading: "Loading statistics…",
         explorerError: "Could not load explorer (network or rate limit).",
@@ -2260,7 +2545,66 @@ export const translations = {
         rateLimited: "Too many requests. Please wait a moment.",
         network: "Network problem. Check your connection.",
         invalidBody: "Invalid move data."
+      },
+      paradox: {
+        title: "Clone paradox",
+        subtitle:
+          "Move simulated with your engine profile (MultiPV + level / aggressiveness) — indicative, not ground truth.",
+        button: "What would my clone play?",
+        loading: "Clone is thinking…",
+        retry: "Retry",
+        error: "Could not simulate the move right now.",
+        busy: "Available once analysis has finished for this move.",
+        noPersona:
+          "No recent profile: analyze a username on Analyze to enable clone paradox.",
+        openAnalyze: "Open Analyze",
+        sameAsEngine: "Same as the engine best move here.",
+        sameAsPlayed: "Your clone would have played the same move you played.",
+        cloneWouldPlay: "Suggested “clone” move",
       }
+    },
+
+    arenaPage: {
+      title: "Clone vs clone arena",
+      subtitle:
+        "Two engine profiles face off in spectator mode. One Stockfish tab — moderate depth to stay responsive.",
+      whiteSide: "White",
+      blackSide: "Black",
+      selectWhite: "White avatar",
+      selectBlack: "Black avatar",
+      savedProfiles: "Saved profiles",
+      recentProfiles: "Recent",
+      start: "Start game",
+      pause: "Pause",
+      resume: "Resume",
+      reset: "Reset",
+      step: "One move",
+      statusThinking: "Thinking…",
+      statusIdle: "Ready",
+      gameOver: "Game over",
+      maxPliesLabel: "Move limit (safety)",
+      depthLabel: "Engine depth (arena)",
+      needEngine: "Loading engine…",
+      loadingProfiles: "Loading profiles…",
+      pickBoth: "Pick two different avatars to start the arena.",
+      resultStalemate: "Stalemate",
+      resultDraw: "Draw",
+      resultCheckmate: "Checkmate",
+      movesPlayed: "Moves played",
+      pickSearchPlaceholder: "Type to filter profiles…",
+      pickNoMatches: "No profiles match.",
+      pickListHint: "Short list — narrow with search or filters above.",
+      pickSelectedLabel: "Selected",
+      refreshList: "Refresh profiles",
+      cloudLibrary: "Cloud (public)",
+      emptyHint:
+        "If you analyzed Lichess then Chess.com, an old bug kept only one “Bot_username”: run Lichess analysis again. Public bots from the library are also loaded from the cloud.",
+      saveCloudLabel: "Save games to cloud",
+      saveCloudHint:
+        "When the game ends, store it as bot vs bot under My games — your player stats stay unchanged.",
+      saveCloudNeedLogin: "Sign in to save arena games to the cloud.",
+      cloudSavedToast: "Arena game saved.",
+      cloudSaveErrorToast: "Could not save the arena game.",
     },
 
     // Forced line editor
@@ -2475,7 +2819,14 @@ export const translations = {
       turn: "Turn",
       moves: "Moves",
       rule50: "Rule 50",
-      nearDraw: "Near draw!"
+      nearDraw: "Near draw!",
+      showEvalBar: "Evaluation bar",
+      showTheoryArrows: "Theory arrows",
+      openingHeading: "Opening",
+      openingEmpty: "Starting position",
+      openingUnknown: "Line not in local repertoire",
+      outOfBookBadge: "Out of book",
+      transpositionsHeading: "Other lines (transpositions)",
     },
 
     // Forced line editor extended
