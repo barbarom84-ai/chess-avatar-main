@@ -936,6 +936,25 @@ export const translations = {
       saveToCloudNeedName:
         "Impossible de deviner votre camp : renseignez le pseudo exactement comme dans [White] ou [Black] du PGN.",
       saveToCloudSupabase: "La sauvegarde cloud n’est pas configurée sur cette instance.",
+      explorationHint:
+        "Depuis la position affichée, jouez des coups sur l’échiquier pour explorer une variante (indisponible pendant le calcul moteur). Promotion : dame par défaut si plusieurs coups légaux.",
+      explorationUndo: "Annuler le coup",
+      explorationClear: "Effacer la variante",
+      explorationNotePlaceholder: "Annotation sur cette variante…",
+      explorationLineLabel: "Variante",
+      explorationBranchLine: "Suite",
+      explorationBranchLineHint:
+        "Le coup prolonge la ligne depuis la position affichée.",
+      explorationBranchSibling: "Branche",
+      explorationBranchSiblingHint:
+        "Le coup démarre une ligne parallèle au même niveau (sœur / sous-variante).",
+      explorationLeafSelect: "Position dans l’arbre",
+      explorationPathStart: "— Point de branche (aucun coup de variante)",
+      explorationSaveJson: "Enregistrer JSON",
+      explorationSavePgn: "Exporter PGN",
+      explorationLoadJson: "Charger JSON",
+      explorationLoadFailed: "Fichier JSON invalide ou structure non reconnue.",
+      explorationMoveListTitle: "Variantes",
       startAnalysis: "Lancer l'analyse",
       computing: "Calcul en cours…",
       notYetAvailable: "Disponible à la fin de l'analyse",
@@ -2412,6 +2431,25 @@ export const translations = {
       saveToCloudNeedName:
         "We could not infer your side: enter the handle exactly as in the [White] or [Black] header.",
       saveToCloudSupabase: "Cloud save is not configured on this instance.",
+      explorationHint:
+        "From the position shown, play moves on the board to explore a line (disabled while the engine is analyzing). Default promotion is queen when multiple promotions are legal.",
+      explorationUndo: "Undo move",
+      explorationClear: "Clear line",
+      explorationNotePlaceholder: "Note on this line…",
+      explorationLineLabel: "Line",
+      explorationBranchLine: "Continue",
+      explorationBranchLineHint:
+        "The move continues the line from the position shown.",
+      explorationBranchSibling: "Branch",
+      explorationBranchSiblingHint:
+        "The move starts a parallel line at the same level (sibling / sub-variation).",
+      explorationLeafSelect: "Tree position",
+      explorationPathStart: "— Branch point (no variation move yet)",
+      explorationSaveJson: "Save JSON",
+      explorationSavePgn: "Export PGN",
+      explorationLoadJson: "Load JSON",
+      explorationLoadFailed: "Invalid JSON file or unrecognized structure.",
+      explorationMoveListTitle: "Variations",
       startAnalysis: "Start analysis",
       computing: "Computing…",
       notYetAvailable: "Available once analysis completes",

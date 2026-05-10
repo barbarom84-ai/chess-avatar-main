@@ -1,12 +1,20 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  Fragment,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import Link from "next/link";
 import {
   ChevronLeft,
   ChevronRight,
   RotateCcw,
   RotateCw,
+  Undo2,
   Square,
   Crown,
   AlertTriangle,
@@ -26,7 +34,7 @@ import {
   Check,
   Save,
 } from "lucide-react";
-import { Chess, type Move } from "chess.js";
+import { Chess, type Move, type Square as ChessSquare } from "chess.js";
 import {
   LineChart,
   Line,
@@ -91,6 +99,18 @@ import {
   sanitizeForPgnFilenameSegment,
 } from "@/lib/pgn-annotated-export";
 import { isSupabaseConfigured } from "@/lib/supabase";
+import {
+  appendMoveOnPath,
+  enumerateAllPathsInTree,
+  fenAfterPath,
+  newExplorationForest,
+  removeLastNodeOnPath,
+  sanLineFromPath,
+  walkPath,
+  clearForest,
+  type ExplorationForest,
+  type ExplorationVarNode,
+} from "@/lib/review-exploration-tree";
 
 const FREE_ENGINE_DEPTH = 12;
 const PREMIUM_DEPTH_OPTIONS = [14, 18, 22] as const;
@@ -406,7 +426,194 @@ export default function GameReviewer({
     : review.progress;
   const effectiveTotal = cachedResult ? cachedResult.moves.length : review.total;
 
+  const totalPlies = parsed?.san.length ?? 0;
+  const [orientation, setOrientation] = useState<"white" | "black">("white");
+  const [currentIndex, setCurrentIndex] = useState(0); // 0 = initial position; 1..N after move N
+  const [autoPlay, setAutoPlay] = useState(false);
+  /** Variantes par coup de branchement (index sur la ligne principale). */
+  const [explorationByPly, setExplorationByPly] = useState<
+    Record<number, ExplorationForest>
+  >({});
+  /** Chemin courant dans l’arbre par coup de branchement. */
+  const [explorationPathByPly, setExplorationPathByPly] = useState<
+    Record<number, number[]>
+  >({});
+  /** Prochain coup : suite de la ligne, ou branche parallèle (sœur). */
+  const [explorationBranchMode, setExplorationBranchMode] = useState<
+    "line" | "sibling"
+  >("line");
+
+  const explorationForest = useMemo(
+    () => explorationByPly[currentIndex] ?? newExplorationForest(currentIndex),
+    [explorationByPly, currentIndex]
+  );
+
+  const explorationPath = explorationPathByPly[currentIndex] ?? [];
+
+  const patchExplorationForest = useCallback(
+    (
+      patch:
+        | ExplorationForest
+        | ((prev: ExplorationForest) => ExplorationForest)
+    ) => {
+      setExplorationByPly((prev) => {
+        const cur = prev[currentIndex] ?? newExplorationForest(currentIndex);
+        const next = typeof patch === "function" ? patch(cur) : patch;
+        return { ...prev, [currentIndex]: next };
+      });
+    },
+    [currentIndex]
+  );
+
+  const setExplorationPath = useCallback(
+    (next: number[] | ((prev: number[]) => number[])) => {
+      setExplorationPathByPly((prev) => {
+        const cur = prev[currentIndex] ?? [];
+        const out = typeof next === "function" ? next(cur) : next;
+        return { ...prev, [currentIndex]: out };
+      });
+    },
+    [currentIndex]
+  );
+
+  // Reset board when the game changes.
+  useEffect(() => {
+    setCurrentIndex(0);
+    setAutoPlay(false);
+  }, [pgn]);
+
+  useEffect(() => {
+    setExplorationByPly({});
+    setExplorationPathByPly({});
+  }, [pgn]);
+
+  const baseMainlineFenForExplore = useMemo(() => {
+    if (!parsed) return null;
+    return currentIndex === 0
+      ? parsed.fenBefore[0]
+      : parsed.fenAfter[Math.min(currentIndex, parsed.fenAfter.length) - 1];
+  }, [parsed, currentIndex]);
+
+  const displayFen = useMemo(() => {
+    const base = baseMainlineFenForExplore;
+    if (!base) return new Chess().fen();
+    try {
+      return fenAfterPath(base, explorationForest, explorationPath);
+    } catch {
+      return base;
+    }
+  }, [baseMainlineFenForExplore, explorationForest, explorationPath]);
+
+  const explorationSanLine = useMemo(() => {
+    if (!baseMainlineFenForExplore || explorationPath.length === 0) return "";
+    return sanLineFromPath(
+      baseMainlineFenForExplore,
+      explorationForest,
+      explorationPath
+    );
+  }, [baseMainlineFenForExplore, explorationForest, explorationPath]);
+
+  const explorationNavPaths = useMemo(
+    () => enumerateAllPathsInTree(explorationForest),
+    [explorationForest]
+  );
+
+  const explorationPathOptions = useMemo(() => {
+    if (explorationForest.roots.length === 0) return explorationNavPaths;
+    return [[], ...explorationNavPaths] as number[][];
+  }, [explorationForest, explorationNavPaths]);
+
+  const explorationPathInOptions = useMemo(() => {
+    const key = JSON.stringify(explorationPath);
+    return explorationPathOptions.some((p) => JSON.stringify(p) === key);
+  }, [explorationPath, explorationPathOptions]);
+
+  const explorationSelectValue = useMemo(() => {
+    if (explorationPathInOptions) return JSON.stringify(explorationPath);
+    return JSON.stringify(explorationPathOptions[0] ?? []);
+  }, [
+    explorationPath,
+    explorationPathInOptions,
+    explorationPathOptions,
+  ]);
+
+  useEffect(() => {
+    if (explorationPathOptions.length === 0) return;
+    if (explorationPathInOptions) return;
+    setExplorationPath(explorationPathOptions[0] ?? []);
+  }, [explorationPathOptions, explorationPathInOptions]);
+
+  const explorationLastSquares = useMemo(() => {
+    const chain = walkPath(explorationForest, explorationPath);
+    if (chain.length === 0) return null;
+    const last = chain[chain.length - 1];
+    return uciToSquares(last.uci);
+  }, [explorationForest, explorationPath]);
+
+  const hasExplorationTree = explorationForest.roots.length > 0;
+
+  const handleExplorationDrop = useCallback(
+    (from: string, to: string) => {
+      if (effectiveStatus === "running") return false;
+      if (!baseMainlineFenForExplore) return false;
+      try {
+        const g = new Chess(displayFen);
+        const piece = g.get(from as ChessSquare);
+        const isPromotion =
+          piece &&
+          piece.type === "p" &&
+          ((piece.color === "w" && to[1] === "8") ||
+            (piece.color === "b" && to[1] === "1"));
+        const attempt = (promotion?: "q" | "r" | "b" | "n") => {
+          const trial = new Chess(displayFen);
+          return trial.move({
+            from,
+            to,
+            ...(promotion ? { promotion } : {}),
+          });
+        };
+        let m: Move | null = null;
+        if (isPromotion) {
+          for (const p of ["q", "r", "b", "n"] as const) {
+            m = attempt(p);
+            if (m) break;
+          }
+        } else {
+          m = attempt();
+        }
+        if (!m) return false;
+        const uci = `${m.from}${m.to}${m.promotion ?? ""}`;
+        const mode = explorationBranchMode;
+        const { forest, newPath } = appendMoveOnPath(
+          explorationForest,
+          explorationPath,
+          uci,
+          mode
+        );
+        patchExplorationForest(forest);
+        setExplorationPath(newPath);
+        setExplorationBranchMode("line");
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [
+      effectiveStatus,
+      baseMainlineFenForExplore,
+      displayFen,
+      patchExplorationForest,
+      explorationForest,
+      explorationPath,
+      explorationBranchMode,
+    ]
+  );
+
   const handleSaveGameToCloud = useCallback(async () => {
+    if (!parsed) {
+      toast.error(t.review.invalidPgn);
+      return;
+    }
     if (!authUserId) {
       toast.error(t.review.saveToCloudNeedLogin);
       return;
@@ -428,7 +635,10 @@ export default function GameReviewer({
       toast.error(t.review.saveToCloudNeedName);
       return;
     }
-    const payload = tryBuildCloudSavePayloadFromPgn(pgn, name);
+    const exportPgn = buildAnnotatedPgn(parsed, effectiveMoves ?? [], {
+      explorationsByPly: explorationByPly,
+    });
+    const payload = tryBuildCloudSavePayloadFromPgn(exportPgn, name);
     if (!payload) {
       toast.error(t.review.saveToCloudNoMatch);
       return;
@@ -459,8 +669,10 @@ export default function GameReviewer({
     }
   }, [
     authUserId,
+    effectiveMoves,
+    explorationByPly,
     onSavedToGamesCloud,
-    pgn,
+    parsed,
     savePlayerName,
     cloudSaveContext?.playerColor,
     cloudSaveContext?.emailLocalPart,
@@ -472,17 +684,6 @@ export default function GameReviewer({
     t.review.saveToCloudSuccess,
     t.review.saveToCloudSupabase,
   ]);
-
-  const totalPlies = parsed?.san.length ?? 0;
-  const [orientation, setOrientation] = useState<"white" | "black">("white");
-  const [currentIndex, setCurrentIndex] = useState(0); // 0 = initial position; 1..N after move N
-  const [autoPlay, setAutoPlay] = useState(false);
-
-  // Reset board when the game changes.
-  useEffect(() => {
-    setCurrentIndex(0);
-    setAutoPlay(false);
-  }, [pgn]);
 
   // Keep the selected ply in range when analysis resets or move list shrinks.
   useEffect(() => {
@@ -677,7 +878,9 @@ export default function GameReviewer({
       return;
     }
     try {
-      const annotated = buildAnnotatedPgn(parsed, effectiveMoves ?? []);
+      const annotated = buildAnnotatedPgn(parsed, effectiveMoves ?? [], {
+        explorationsByPly: explorationByPly,
+      });
       const white = sanitizeForPgnFilenameSegment(parsed.headers.White ?? "White");
       const black = sanitizeForPgnFilenameSegment(parsed.headers.Black ?? "Black");
       const date = sanitizeForPgnFilenameSegment(
@@ -697,7 +900,12 @@ export default function GameReviewer({
     } catch {
       toast.error(t.review.downloadAnnotatedFailed);
     }
-  }, [parsed, effectiveMoves, t.review.downloadAnnotatedFailed]);
+  }, [
+    parsed,
+    effectiveMoves,
+    explorationByPly,
+    t.review.downloadAnnotatedFailed,
+  ]);
 
   if (!parsed) {
     return (
@@ -709,21 +917,23 @@ export default function GameReviewer({
     );
   }
 
-  const currentFen =
-    currentIndex === 0
-      ? parsed.fenBefore[0]
-      : parsed.fenAfter[Math.min(currentIndex, parsed.fenAfter.length) - 1];
-
-  // The move that just played to reach currentFen (when currentIndex > 0).
+  // The move that just played to reach the mainline position at currentIndex (when currentIndex > 0).
   const currentMove: ReviewedMove | undefined =
     currentIndex > 0 ? effectiveMoves[currentIndex - 1] : undefined;
   const lastMoveSquares =
     currentIndex > 0 ? uciToSquares(parsed.uci[currentIndex - 1]) : null;
 
+  const lastMoveForBoard = explorationLastSquares ?? lastMoveSquares;
+
   // Engine "best move" arrow: shown on the position BEFORE the move that was
   // just played, if the played move was sub-optimal.
   const arrows: Array<{ from: string; to: string; color?: string }> = [];
-  if (currentMove && currentMove.bestMove && currentMove.uci !== currentMove.bestMove) {
+  if (
+    explorationPath.length === 0 &&
+    currentMove &&
+    currentMove.bestMove &&
+    currentMove.uci !== currentMove.bestMove
+  ) {
     const isCritical =
       currentMove.classification === "blunder" ||
       currentMove.classification === "miss";
@@ -865,6 +1075,15 @@ export default function GameReviewer({
                 moveFlagsByPly={moveFlagsByPly}
                 exitTheoryPly={exitTheoryPly}
                 onSelect={(idx) => setCurrentIndex(idx)}
+                explorationByPly={explorationByPly}
+                explorationPathByPly={explorationPathByPly}
+                onExplorationPathSelect={(branchPly, path) => {
+                  setExplorationPathByPly((prev) => ({
+                    ...prev,
+                    [branchPly]: path,
+                  }));
+                  setCurrentIndex(branchPly);
+                }}
               />
             </ScrollArea>
           </CardContent>
@@ -963,16 +1182,147 @@ export default function GameReviewer({
           </Card>
         )}
 
-        <EvaluationBar evaluation={evalForBar} />
+        <EvaluationBar
+          evaluation={explorationPath.length > 0 ? null : evalForBar}
+        />
 
         <div className="flex items-start gap-3">
-          <div className="flex-1">
+          <div className="flex-1 space-y-2">
             <SimpleChessboard
-              position={currentFen}
+              position={displayFen}
               orientation={orientation}
-              lastMove={lastMoveSquares}
+              lastMove={lastMoveForBoard}
               arrows={arrows}
+              onDrop={
+                effectiveStatus === "running" ? undefined : handleExplorationDrop
+              }
             />
+            {effectiveStatus !== "running" && (
+              <Card className="bg-slate-950/70 border-slate-700/80">
+                <CardContent className="pt-2 pb-2 space-y-2">
+                  <p className="text-[11px] text-slate-500 leading-snug">
+                    {t.review.explorationHint}
+                  </p>
+                  <div className="flex flex-wrap gap-1.5 items-center">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={
+                        explorationBranchMode === "line" ? "default" : "outline"
+                      }
+                      className="h-8 border-slate-600 text-xs"
+                      onClick={() => setExplorationBranchMode("line")}
+                      title={t.review.explorationBranchLineHint}
+                    >
+                      {t.review.explorationBranchLine}
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={
+                        explorationBranchMode === "sibling"
+                          ? "default"
+                          : "outline"
+                      }
+                      className="h-8 border-slate-600 text-xs"
+                      onClick={() => setExplorationBranchMode("sibling")}
+                      title={t.review.explorationBranchSiblingHint}
+                    >
+                      {t.review.explorationBranchSibling}
+                    </Button>
+                  </div>
+                  {explorationPathOptions.length > 1 &&
+                    baseMainlineFenForExplore && (
+                    <div className="space-y-1">
+                      <Label className="text-[10px] uppercase tracking-wide text-slate-500">
+                        {t.review.explorationLeafSelect}
+                      </Label>
+                      <select
+                        className="flex h-9 w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-xs text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/50"
+                        value={explorationSelectValue}
+                        onChange={(e) => {
+                          try {
+                            const p = JSON.parse(e.target.value) as number[];
+                            if (Array.isArray(p))
+                              setExplorationPath(p.map(Number));
+                          } catch {
+                            /* ignore */
+                          }
+                        }}
+                      >
+                        {explorationPathOptions.map((p) => (
+                          <option key={JSON.stringify(p)} value={JSON.stringify(p)}>
+                            {p.length === 0
+                              ? t.review.explorationPathStart
+                              : sanLineFromPath(
+                                  baseMainlineFenForExplore,
+                                  explorationForest,
+                                  p
+                                )}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                  <div className="flex flex-wrap gap-2 items-center">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-8 border-slate-600 text-slate-200"
+                      disabled={!hasExplorationTree}
+                      onClick={() => {
+                        const { forest, newPath } = removeLastNodeOnPath(
+                          explorationForest,
+                          explorationPath
+                        );
+                        patchExplorationForest(forest);
+                        setExplorationPath(newPath);
+                      }}
+                      title={t.review.explorationUndo}
+                    >
+                      <Undo2 className="h-3.5 w-3.5 mr-1.5" />
+                      {t.review.explorationUndo}
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-8 border-slate-600 text-slate-200"
+                      disabled={
+                        !hasExplorationTree && !explorationForest.note.trim()
+                      }
+                      onClick={() => {
+                        patchExplorationForest((f) => clearForest(f));
+                        setExplorationPath([]);
+                      }}
+                    >
+                      {t.review.explorationClear}
+                    </Button>
+                    {explorationSanLine ? (
+                      <span className="text-[11px] font-mono text-cyan-300/90 flex-1 min-w-[8rem]">
+                        <span className="text-slate-500 mr-1">
+                          {t.review.explorationLineLabel}:
+                        </span>
+                        {explorationSanLine}
+                      </span>
+                    ) : null}
+                  </div>
+                  <textarea
+                    value={explorationForest.note}
+                    onChange={(e) =>
+                      patchExplorationForest((f) => ({
+                        ...f,
+                        note: e.target.value,
+                      }))
+                    }
+                    placeholder={t.review.explorationNotePlaceholder}
+                    rows={2}
+                    className="w-full rounded-md border border-slate-700 bg-slate-900 px-2 py-1.5 text-xs text-slate-200 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-cyan-500/40 resize-y min-h-[2.5rem]"
+                  />
+                </CardContent>
+              </Card>
+            )}
           </div>
 
           <div className="flex flex-col gap-2 w-32 shrink-0">
@@ -1066,7 +1416,7 @@ export default function GameReviewer({
 
         <CurrentMoveDetail
           move={currentMove}
-          explorerFen={currentFen}
+          explorerFen={displayFen}
           fenBefore={
             currentIndex > 0 ? parsed.fenBefore[currentIndex - 1] : undefined
           }
@@ -1320,6 +1670,165 @@ interface MoveFlags {
   isCheckmate: boolean;
 }
 
+function pathMatchesExplorationPrefix(path: number[], active: number[]): boolean {
+  if (path.length > active.length) return false;
+  return path.every((v, i) => active[i] === v);
+}
+
+function ExplorationMoveListBlock({
+  branchBaseFen,
+  forest,
+  explorationPath,
+  onExplorationPathSelect,
+}: {
+  branchBaseFen: string;
+  forest: ExplorationForest;
+  explorationPath: number[];
+  onExplorationPathSelect: (path: number[]) => void;
+}) {
+  const { t } = useLanguage();
+  if (forest.roots.length === 0) return null;
+  return (
+    <div className="mb-1.5 mt-1.5 rounded border border-violet-500/35 bg-violet-950/25 px-1 py-1.5">
+      <div className="text-[10px] font-semibold uppercase tracking-wide text-violet-300/90 mb-1 px-0.5">
+        {t.review.explorationMoveListTitle}
+      </div>
+      <VariationPlyRows
+        fen={branchBaseFen}
+        nodes={forest.roots}
+        pathPrefix={[]}
+        explorationPath={explorationPath}
+        onExplorationPathSelect={onExplorationPathSelect}
+        depth={0}
+        branchPly={forest.branchMainlinePly}
+        halfMoveOffset={0}
+      />
+    </div>
+  );
+}
+
+function VariationPlyRows({
+  fen,
+  nodes,
+  pathPrefix,
+  explorationPath,
+  onExplorationPathSelect,
+  depth,
+  branchPly,
+  halfMoveOffset,
+}: {
+  fen: string;
+  nodes: ExplorationVarNode[];
+  pathPrefix: number[];
+  explorationPath: number[];
+  onExplorationPathSelect: (path: number[]) => void;
+  depth: number;
+  branchPly: number;
+  halfMoveOffset: number;
+}) {
+  const { settings } = useChessboardSettings();
+
+  return (
+    <>
+      {nodes.map((node, i) => {
+        const path = [...pathPrefix, i];
+        let board: Chess;
+        try {
+          board = new Chess(fen);
+        } catch {
+          return null;
+        }
+        const turnBefore = board.turn();
+        let m = null;
+        try {
+          const from = node.uci.slice(0, 2) as ChessSquare;
+          const to = node.uci.slice(2, 4) as ChessSquare;
+          const promotion =
+            node.uci.length >= 5
+              ? (node.uci[4] as "q" | "r" | "b" | "n")
+              : undefined;
+          m = board.move({
+            from,
+            to,
+            ...(promotion ? { promotion } : {}),
+          });
+        } catch {
+          return null;
+        }
+        if (!m) return null;
+        const fenAfter = board.fen();
+        const absPly = branchPly + halfMoveOffset;
+        const mn = Math.floor(absPly / 2) + 1;
+        const numLabel = absPly % 2 === 0 ? `${mn}.` : `${mn}...`;
+        const verbose = uciToVerboseMoveFromFen(fen, node.uci);
+        const isOnPath = pathMatchesExplorationPrefix(path, explorationPath);
+        const btn = (
+          <button
+            type="button"
+            onClick={() => onExplorationPathSelect(path)}
+            className={`text-left px-1 py-0.5 rounded transition-colors flex items-center gap-1 w-full min-h-[1.5rem] ${
+              isOnPath
+                ? "bg-violet-500/25 text-violet-100 ring-1 ring-violet-400/50"
+                : "text-violet-200/90 hover:bg-violet-900/40"
+            }`}
+          >
+            <SanNotation
+              verboseMove={verbose}
+              fallbackSan={m.san}
+              movingColor={turnBefore === "w" ? "w" : "b"}
+              pieceSet={settings.pieceSet}
+              size="sm"
+            />
+          </button>
+        );
+        return (
+          <Fragment key={node.id}>
+            <div
+              className={`grid grid-cols-[2.2rem_1fr_1fr] gap-1 py-0.5 border-b border-violet-800/30 ${
+                depth > 0 ? "border-l border-violet-500/40 ml-0.5 pl-1" : ""
+              }`}
+            >
+              <span className="text-violet-400/80 text-[10px] text-right pr-1 pt-0.5 font-mono leading-none">
+                {numLabel}
+              </span>
+              {turnBefore === "w" ? btn : <span />}
+              {turnBefore === "b" ? btn : <span />}
+            </div>
+            {node.children.length > 0 ? (
+              <VariationPlyRows
+                fen={fenAfter}
+                nodes={node.children}
+                pathPrefix={path}
+                explorationPath={explorationPath}
+                onExplorationPathSelect={onExplorationPathSelect}
+                depth={depth + 1}
+                branchPly={branchPly}
+                halfMoveOffset={halfMoveOffset + 1}
+              />
+            ) : null}
+          </Fragment>
+        );
+      })}
+    </>
+  );
+}
+
+/** FEN à la position de branchement `branchMainlinePly` sur la ligne principale. */
+function branchBaseFenForMainlinePly(
+  parsed: ParsedGameForReview,
+  branchMainlinePly: number
+): string {
+  if (branchMainlinePly <= 0) return parsed.fenBefore[0];
+  const idx = Math.min(branchMainlinePly - 1, parsed.fenAfter.length - 1);
+  return parsed.fenAfter[idx] ?? parsed.fenBefore[0];
+}
+
+function variationRowIdxForBranch(branchMainlinePly: number): number {
+  return branchMainlinePly > 0
+    ? Math.floor((branchMainlinePly - 1) / 2)
+    : -1;
+}
+
 function MovesList({
   parsed,
   moves,
@@ -1329,6 +1838,9 @@ function MovesList({
   moveFlagsByPly,
   exitTheoryPly,
   onSelect,
+  explorationByPly,
+  explorationPathByPly,
+  onExplorationPathSelect,
 }: {
   parsed: ParsedGameForReview;
   moves: ReviewedMove[];
@@ -1338,8 +1850,27 @@ function MovesList({
   moveFlagsByPly: MoveFlags[];
   exitTheoryPly: number;
   onSelect: (idx: number) => void;
+  explorationByPly: Record<number, ExplorationForest>;
+  explorationPathByPly: Record<number, number[]>;
+  onExplorationPathSelect: (branchMainlinePly: number, path: number[]) => void;
 }) {
   const { t } = useLanguage();
+
+  const branchPliesOrdered = useMemo(() => {
+    return Object.keys(explorationByPly)
+      .map(Number)
+      .filter((ply) => {
+        const f = explorationByPly[ply];
+        return (
+          f &&
+          f.roots.length > 0 &&
+          ply >= 0 &&
+          ply < parsed.san.length
+        );
+      })
+      .sort((a, b) => a - b);
+  }, [explorationByPly, parsed.san.length]);
+
   const rows: Array<{
     moveNumber: number;
     white: {
@@ -1389,33 +1920,55 @@ function MovesList({
 
   return (
     <div className="text-sm font-mono">
-      {rows.map((row) => (
-        <div
-          key={row.moveNumber}
-          className="grid grid-cols-[2.2rem_1fr_1fr] gap-1 py-0.5 border-b border-slate-800/60"
-        >
-          <span className="text-slate-500 text-right pr-1">
-            {row.moveNumber}.
-          </span>
-          <MoveCell
-            sanPly={row.white}
-            verboseMove={verboseMainline?.[row.white.ply] ?? null}
-            isActive={currentIndex === row.white.ply + 1}
-            t={t}
-            onSelect={onSelect}
-          />
-          {row.black ? (
+      {explorationByPly[0]?.roots?.length ? (
+        <ExplorationMoveListBlock
+          branchBaseFen={branchBaseFenForMainlinePly(parsed, 0)}
+          forest={explorationByPly[0]}
+          explorationPath={explorationPathByPly[0] ?? []}
+          onExplorationPathSelect={(path) => onExplorationPathSelect(0, path)}
+        />
+      ) : null}
+      {rows.map((row, rowIdx) => (
+        <Fragment key={row.moveNumber}>
+          <div className="grid grid-cols-[2.2rem_1fr_1fr] gap-1 py-0.5 border-b border-slate-800/60">
+            <span className="text-slate-500 text-right pr-1">
+              {row.moveNumber}.
+            </span>
             <MoveCell
-              sanPly={row.black}
-              verboseMove={verboseMainline?.[row.black.ply] ?? null}
-              isActive={currentIndex === row.black.ply + 1}
+              sanPly={row.white}
+              verboseMove={verboseMainline?.[row.white.ply] ?? null}
+              isActive={currentIndex === row.white.ply + 1}
               t={t}
               onSelect={onSelect}
             />
-          ) : (
-            <span />
-          )}
-        </div>
+            {row.black ? (
+              <MoveCell
+                sanPly={row.black}
+                verboseMove={verboseMainline?.[row.black.ply] ?? null}
+                isActive={currentIndex === row.black.ply + 1}
+                t={t}
+                onSelect={onSelect}
+              />
+            ) : (
+              <span />
+            )}
+          </div>
+          {branchPliesOrdered
+            .filter(
+              (bp) => bp > 0 && variationRowIdxForBranch(bp) === rowIdx
+            )
+            .map((bp) => (
+              <ExplorationMoveListBlock
+                key={`explore-${bp}`}
+                branchBaseFen={branchBaseFenForMainlinePly(parsed, bp)}
+                forest={explorationByPly[bp]}
+                explorationPath={explorationPathByPly[bp] ?? []}
+                onExplorationPathSelect={(path) =>
+                  onExplorationPathSelect(bp, path)
+                }
+              />
+            ))}
+        </Fragment>
       ))}
     </div>
   );

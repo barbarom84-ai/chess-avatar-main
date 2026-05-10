@@ -121,8 +121,10 @@ export default function SanNotation({
     );
   }
 
+  const pieceType = verboseMove?.piece;
+
   /* Pawn moves: algebraic text only (icons are confusing; notation stays universal). */
-  if (verboseMove && verboseMove.piece === "p") {
+  if (verboseMove && pieceType === "p") {
     return (
       <span className={`font-mono ${className}`} aria-label={san}>
         {san}
@@ -140,11 +142,21 @@ export default function SanNotation({
     );
   }
 
+  if (!pieceType) {
+    return sanNotationFromFallbackSan(
+      san,
+      pieceSet,
+      movingColor ?? verboseMove.color ?? "w",
+      size,
+      className
+    );
+  }
+
   const color = verboseMove.color;
-  const typeUpper = verboseMove.piece.toUpperCase();
+  const typeUpper = pieceType.toUpperCase();
   const src = getPieceImagePath(pieceSet, color, typeUpper);
   const px = SIZE_PX[size];
-  const rest = sanRestAfterPieceLetter(san, verboseMove.piece);
+  const rest = sanRestAfterPieceLetter(san, pieceType);
 
   return (
     <span

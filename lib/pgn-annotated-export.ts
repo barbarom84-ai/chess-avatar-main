@@ -1,4 +1,27 @@
 import type { ParsedGameForReview, ReviewedMove } from "./game-review";
+import type { ExplorationForest } from "./review-exploration-tree";
+import { forestToPgnSnippet } from "./review-exploration-tree";
+
+export type BuildAnnotatedPgnOptions = {
+  /** Variantes par index de coup sur la ligne principale où la branche démarre. */
+  explorationsByPly?: Record<number, ExplorationForest> | null;
+};
+
+function explorationInsertionFromForest(
+  baseFen: string,
+  forest: ExplorationForest
+): string {
+  const inner = forestToPgnSnippet(baseFen, forest).trim();
+  if (!inner) return "";
+  const parts: string[] = [];
+  const note = forest.note.trim();
+  if (note) {
+    const safe = note.replace(/\}/g, "›").replace(/\{/g, "(");
+    parts.push(`{${safe}}`);
+  }
+  parts.push(`(${inner})`);
+  return parts.join(" ");
+}
 
 /**
  * PGN seven-tag / header value escaping: backslash and double-quote must be escaped.
@@ -121,7 +144,8 @@ function buildDesktopFriendlyComment(rm: ReviewedMove): string {
  */
 export function buildAnnotatedPgn(
   parsed: ParsedGameForReview,
-  moves: ReviewedMove[]
+  moves: ReviewedMove[],
+  opts?: BuildAnnotatedPgnOptions
 ): string {
   const nl = "\r\n";
   const exportHeaders = finalizeHeadersForExport(parsed.headers);
@@ -130,8 +154,18 @@ export function buildAnnotatedPgn(
   );
   const headerBlock = headerLines.join(nl);
 
+  const byPly = opts?.explorationsByPly;
+
   const tokens: string[] = [];
   for (let i = 0; i < parsed.san.length; i++) {
+    const forestAtPly = byPly?.[i];
+    if (forestAtPly?.roots?.length) {
+      const fen = parsed.fenBefore[i];
+      if (fen) {
+        const block = explorationInsertionFromForest(fen, forestAtPly);
+        if (block) tokens.push(block);
+      }
+    }
     const moveNum = Math.floor(i / 2) + 1;
     if (i % 2 === 0) tokens.push(`${moveNum}.`);
     tokens.push(parsed.san[i]);
