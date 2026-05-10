@@ -135,6 +135,28 @@ export function parsePgnForReview(pgn: string): ParsedGameForReview | null {
   return { fenBefore, fenAfter, san, uci, sideToMove, headers };
 }
 
+/**
+ * Prochain coup UCI de la ligne principale depuis une position alignée avec la partie,
+ * ou `null` si le préfixe ne suit plus la partie ou s'il n'y a plus de coup à jouer.
+ */
+export function nextMainlineUciIfAlignedWithGame(
+  parsed: ParsedGameForReview,
+  branchMainlinePly: number,
+  alignedPrefix: { uci: string }[]
+): string | null {
+  const { uci } = parsed;
+  if (branchMainlinePly < 0) return null;
+  const len = alignedPrefix.length;
+  const nextIdx = branchMainlinePly + len;
+  if (nextIdx >= uci.length) return null;
+  for (let k = 0; k < len; k++) {
+    if (alignedPrefix[k].uci !== uci[branchMainlinePly + k]) {
+      return null;
+    }
+  }
+  return uci[nextIdx];
+}
+
 // ---------------------------------------------------------------------------
 // Aggregation
 // ---------------------------------------------------------------------------

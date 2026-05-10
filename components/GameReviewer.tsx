@@ -58,6 +58,7 @@ import { useGameReview, type ReviewStatus } from "@/hooks/useGameReview";
 import {
   CLASSIFICATION_COLORS,
   hashReviewCacheKey,
+  nextMainlineUciIfAlignedWithGame,
   parsePgnForReview,
   uciToSan,
   uciToSquares,
@@ -584,6 +585,20 @@ export default function GameReviewer({
         if (!m) return false;
         const uci = `${m.from}${m.to}${m.promotion ?? ""}`;
         const mode = explorationBranchMode;
+        if (parsed) {
+          const prefixChain =
+            mode === "sibling"
+              ? walkPath(explorationForest, explorationPath.slice(0, -1))
+              : walkPath(explorationForest, explorationPath);
+          const nextMain = nextMainlineUciIfAlignedWithGame(
+            parsed,
+            currentIndex,
+            prefixChain
+          );
+          if (nextMain !== null && uci === nextMain) {
+            return false;
+          }
+        }
         const { forest, newPath } = appendMoveOnPath(
           explorationForest,
           explorationPath,
@@ -602,6 +617,8 @@ export default function GameReviewer({
       effectiveStatus,
       baseMainlineFenForExplore,
       displayFen,
+      parsed,
+      currentIndex,
       patchExplorationForest,
       explorationForest,
       explorationPath,
