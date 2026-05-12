@@ -24,6 +24,7 @@ import {
   saveGameToCloud,
   type DbGame,
   isArenaBotVsBotGame,
+  isPvpOnlineGame,
 } from "@/lib/supabase-storage";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { useLanguage } from "@/lib/language-context";
@@ -66,6 +67,10 @@ function matchupTitleFromStoredGame(game: DbGame): string {
   return game.opponent_name;
 }
 
+function isHumanVsBotOnly(game: DbGame): boolean {
+  return !isArenaBotVsBotGame(game) && !isPvpOnlineGame(game);
+}
+
 const GameReviewer = dynamic(() => import("@/components/GameReviewer"), {
   ssr: false,
   loading: () => (
@@ -84,9 +89,9 @@ export default function GamesPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterResult, setFilterResult] = useState<'all' | 'win' | 'loss' | 'draw'>('all');
-  const [gameKindFilter, setGameKindFilter] = useState<"all" | "human" | "arena">(
-    "all"
-  );
+  const [gameKindFilter, setGameKindFilter] = useState<
+    "all" | "human" | "arena" | "pvp"
+  >("all");
   const [selectedGame, setSelectedGame] = useState<DbGame | null>(null);
   // Active PGN being reviewed inline (either a saved game or an ad-hoc import).
   const [reviewPgn, setReviewPgn] = useState<string | null>(null);
@@ -268,9 +273,11 @@ export default function GamesPage() {
     let filtered = [...games];
 
     if (gameKindFilter === "human") {
-      filtered = filtered.filter((g) => !isArenaBotVsBotGame(g));
+      filtered = filtered.filter(isHumanVsBotOnly);
     } else if (gameKindFilter === "arena") {
       filtered = filtered.filter(isArenaBotVsBotGame);
+    } else if (gameKindFilter === "pvp") {
+      filtered = filtered.filter(isPvpOnlineGame);
     }
 
     if (filterResult !== "all") {
@@ -727,6 +734,19 @@ export default function GamesPage() {
                 }
               >
                 {t.games.filterGameKindArena}
+              </Button>
+              <Button
+                type="button"
+                variant={gameKindFilter === "pvp" ? "default" : "outline"}
+                onClick={() => setGameKindFilter("pvp")}
+                size="sm"
+                className={
+                  gameKindFilter === "pvp"
+                    ? "bg-emerald-600 text-white"
+                    : "border-slate-600"
+                }
+              >
+                {t.games.filterGameKindPvp}
               </Button>
             </div>
             <div className="flex flex-col sm:flex-row sm:items-end gap-3 mt-4 pt-4 border-t border-slate-800">

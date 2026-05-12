@@ -2,9 +2,11 @@
 
 import { useEffect, useState, Suspense, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import dynamic from "next/dynamic";
 import { Bot, AlertCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import type { EngineConfig } from "@/lib/analysis";
@@ -109,6 +111,11 @@ function PlayContent() {
             <p className="theme-text-secondary">
               {t.play.selectBotDescription}
             </p>
+            <div className="flex justify-center pt-2">
+              <Button asChild variant="outline" className="border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10">
+                <Link href="/online">{t.play.onlinePvpCta}</Link>
+              </Button>
+            </div>
           </div>
           <PublicProfiles />
         </div>

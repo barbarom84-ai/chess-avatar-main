@@ -17,7 +17,7 @@ export type { DbProfile } from './supabase';
  * Partie stockée pour l’utilisateur (Supabase). Pour corpus bulk / millions de parties,
  * voir [`game-sources`](./game-sources.ts) — ne pas utiliser cette ligne comme entrepôt analytique.
  */
-export type GameKind = 'human_vs_bot' | 'arena_bot_vs_bot';
+export type GameKind = 'human_vs_bot' | 'arena_bot_vs_bot' | 'pvp_human_vs_human';
 
 export interface DbGame {
   id: string;
@@ -52,6 +52,10 @@ export interface DbGame {
 
 export function isArenaBotVsBotGame(game: Pick<DbGame, 'game_kind'>): boolean {
   return game.game_kind === 'arena_bot_vs_bot';
+}
+
+export function isPvpOnlineGame(game: Pick<DbGame, 'game_kind'>): boolean {
+  return game.game_kind === 'pvp_human_vs_human';
 }
 
 /**

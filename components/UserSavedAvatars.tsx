@@ -16,7 +16,7 @@ import { useLanguage } from "@/lib/language-context";
 import ProfileDetailsModal from "./ProfileDetailsModal";
 import { toast } from "sonner";
 
-export default function UserProfile() {
+export default function UserSavedAvatars() {
   const router = useRouter();
   const { t, lang } = useLanguage();
   const [user, setUser] = useState<SupabaseUser | null>(null);
@@ -65,7 +65,6 @@ export default function UserProfile() {
     return () => subscription.unsubscribe();
   }, [loadUser, loadProfiles]);
 
-
   const handleDelete = async (id: string) => {
     if (confirm(t.profile.confirmDelete)) {
       const success = await deleteProfile(id);
@@ -80,7 +79,7 @@ export default function UserProfile() {
     if (res.success) {
       loadProfiles();
     } else {
-      toast.error(res.error || 'Erreur lors de la mise à jour.');
+      toast.error(res.error || "Erreur lors de la mise à jour.");
     }
   };
 
@@ -93,8 +92,9 @@ export default function UserProfile() {
     const exportConfig = prepareConfigForExport(profile.config, {
       openingsDatabase: OPENINGS_DATABASE,
     });
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportConfig, null, 2));
-    const downloadAnchorNode = document.createElement('a');
+    const dataStr =
+      "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportConfig, null, 2));
+    const downloadAnchorNode = document.createElement("a");
     downloadAnchorNode.setAttribute("href", dataStr);
     downloadAnchorNode.setAttribute("download", `${profile.config.name}_profile.json`);
     document.body.appendChild(downloadAnchorNode);
@@ -125,7 +125,7 @@ export default function UserProfile() {
       toast.success(t.profile.profileUpdated);
       return true;
     }
-    toast.error(res.error || 'Erreur lors de la sauvegarde du profil.');
+    toast.error(res.error || "Erreur lors de la sauvegarde du profil.");
     return false;
   };
 
@@ -184,22 +184,11 @@ export default function UserProfile() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Save className="h-5 w-5 text-green-400" />
-          {t.profile.myAccount}
+          {t.avatarsPage.cardTitle}
         </CardTitle>
       </CardHeader>
 
       <CardContent className="space-y-4">
-        {/* Info utilisateur */}
-        <div className="bg-slate-950 p-4 rounded-lg border border-slate-800">
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <p className="text-sm text-slate-400">{t.profile.email}</p>
-              <p className="font-semibold text-slate-200">{user.email}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Liste des profils sauvegardés */}
         <div>
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-semibold text-slate-300">{t.profile.savedProfiles}</h3>
@@ -210,29 +199,27 @@ export default function UserProfile() {
 
           {profiles.length === 0 ? (
             <Alert className="bg-slate-950 border-slate-800">
-              <AlertDescription className="text-slate-400 text-sm">
-                {t.profile.noProfiles}
-              </AlertDescription>
+              <AlertDescription className="text-slate-400 text-sm">{t.profile.noProfiles}</AlertDescription>
             </Alert>
           ) : (
             <div className="space-y-2">
               {profiles.map((profile) => (
-                <div 
+                <div
                   key={profile.id}
                   className="bg-slate-950 p-3 rounded border border-slate-800 hover:border-slate-700 transition-colors"
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-semibold text-slate-200">{profile.username}</span>
-                      <Badge 
-                        variant="outline" 
+                      <Badge
+                        variant="outline"
                         className={`text-xs ${
-                          profile.platform === 'chesscom' 
-                            ? 'border-green-500 text-green-300 bg-green-500/10' 
-                            : 'border-blue-500 text-blue-300 bg-blue-500/10'
+                          profile.platform === "chesscom"
+                            ? "border-green-500 text-green-300 bg-green-500/10"
+                            : "border-blue-500 text-blue-300 bg-blue-500/10"
                         }`}
                       >
-                        {profile.platform === 'chesscom' ? 'Chess.com' : 'Lichess'}
+                        {profile.platform === "chesscom" ? "Chess.com" : "Lichess"}
                       </Badge>
                       {profile.is_public && (
                         <Badge variant="outline" className="text-xs text-green-400 border-green-400">
@@ -240,7 +227,7 @@ export default function UserProfile() {
                         </Badge>
                       )}
                     </div>
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 shrink-0">
                       <Button
                         size="icon"
                         variant="ghost"
@@ -267,22 +254,30 @@ export default function UserProfile() {
                       </Button>
                     </div>
                   </div>
-                  
-                  <div className="flex items-center gap-4 text-xs text-slate-500 mb-2">
-                    <span>{t.profile.elo}: {profile.config.elo}</span>
-                    <span>{t.profile.level}: {profile.config.difficulty}/5</span>
-                    <span>{t.profile.style}: {
-                      ({
-                        'agressif': t.engineConfig.playStyleAggressive,
-                        'solide': t.engineConfig.playStyleSolid,
-                        'équilibré': t.engineConfig.playStyleBalanced,
-                        'positionnel': t.engineConfig.playStylePositional,
-                        'tactique': t.engineConfig.playStyleTactical,
-                      } as Record<string, string>)[profile.config.playStyle] || profile.config.playStyle
-                    }</span>
+
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 mb-2">
+                    <span>
+                      {t.profile.elo}: {profile.config.elo}
+                    </span>
+                    <span>
+                      {t.profile.level}: {profile.config.difficulty}/5
+                    </span>
+                    <span>
+                      {t.profile.style}:{" "}
+                      {
+                        (
+                          {
+                            agressif: t.engineConfig.playStyleAggressive,
+                            solide: t.engineConfig.playStyleSolid,
+                            équilibré: t.engineConfig.playStyleBalanced,
+                            positionnel: t.engineConfig.playStylePositional,
+                            tactique: t.engineConfig.playStyleTactical,
+                          } as Record<string, string>
+                        )[profile.config.playStyle] || profile.config.playStyle
+                      }
+                    </span>
                   </div>
-                  
-                  {/* Boutons d'action */}
+
                   <div className="grid grid-cols-3 gap-2 mt-3">
                     <Button
                       size="sm"
@@ -310,9 +305,10 @@ export default function UserProfile() {
                       <Download className="h-3 w-3" />
                     </Button>
                   </div>
-                  
+
                   <div className="text-xs text-slate-600 mt-2">
-                    {t.profile.createdOn} {new Date(profile.created_at).toLocaleDateString(lang === 'fr' ? 'fr-FR' : 'en-US')}
+                    {t.profile.createdOn}{" "}
+                    {new Date(profile.created_at).toLocaleDateString(lang === "fr" ? "fr-FR" : "en-US")}
                   </div>
                 </div>
               ))}

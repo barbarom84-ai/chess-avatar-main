@@ -249,6 +249,9 @@ export default function HomePage() {
                 <Link href="/profile" className="hover:text-cyan-400 transition-colors">
                   {lang === "fr" ? "Mon Profil" : "My Profile"}
                 </Link>
+                <Link href="/avatars" className="hover:text-cyan-400 transition-colors">
+                  {lang === "fr" ? "Mes avatars" : "My avatars"}
+                </Link>
                 <Link href="/guide" className="hover:text-cyan-400 transition-colors">
                   {lang === "fr" ? "Guide d'installation" : "Installation Guide"}
                 </Link>

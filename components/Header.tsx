@@ -48,7 +48,7 @@ export default function Header() {
                 {t.header.createBot}
               </Link>
               <Link 
-                href="/profile" 
+                href="/avatars" 
                 className="text-sm text-cyan-100/80 hover:text-cyan-400 transition-colors duration-200 hover:drop-shadow-[0_0_5px_rgba(0,255,255,0.5)]"
               >
                 {t.header.profiles}
