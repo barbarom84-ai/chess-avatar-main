@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { Users, Copy, Loader2, Trash2 } from "lucide-react";
+import { Users, Copy, Loader2, Trash2, Mail, UserPlus, UserMinus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -19,10 +19,40 @@ import OnlineChessboard from "@/components/OnlineChessboard";
 import OnlinePvpClockBar from "@/components/OnlinePvpClockBar";
 import OnlinePvpResultModal from "@/components/OnlinePvpResultModal";
 import AuthModal from "@/components/AuthModal";
-import { buildPgnFromUcis } from "@/lib/pvp-chess";
+import { buildPgnFromUcis, type PvpGameRow } from "@/lib/pvp-chess";
+import {
+  addPvpFriend,
+  isPvpFriend,
+  loadPvpFriends,
+  removePvpFriend,
+} from "@/lib/pvp-friends-local";
 import { saveGameToCloud } from "@/lib/supabase-storage";
 import { PVP_TIME_PRESETS } from "@/lib/pvp-time-controls";
 import { pvpGameStatsFromUcis, formatDurationSec } from "@/lib/pvp-result-stats";
+
+function fallbackPlayerLabel(userId: string) {
+  return `Player ${userId.replace(/-/g, "").slice(0, 8)}`;
+}
+
+function whiteBlackDisplayNames(g: PvpGameRow) {
+  const white =
+    g.white_display_name?.trim() || fallbackPlayerLabel(g.white_user_id);
+  const black = g.black_user_id
+    ? g.black_display_name?.trim() || fallbackPlayerLabel(g.black_user_id)
+    : "…";
+  return { white, black };
+}
+
+function opponentFromGame(g: PvpGameRow, myUserId: string | null) {
+  if (!myUserId || !g.black_user_id) return null;
+  const imWhite = g.white_user_id === myUserId;
+  const oppId = imWhite ? g.black_user_id : g.white_user_id;
+  const oppLabel = imWhite
+    ? g.black_display_name?.trim() || fallbackPlayerLabel(oppId)
+    : g.white_display_name?.trim() || fallbackPlayerLabel(oppId);
+  const oppColor: "white" | "black" = imWhite ? "black" : "white";
+  return { oppId, oppLabel, oppColor };
+}
 
 function pvpResultForPlayer(
   result: string | null,
@@ -44,8 +74,18 @@ export default function OnlinePvpPage() {
   const gameId = searchParams.get("game");
   const { userId, loading: authLoading } = useSuperUser();
   const online = useOnlineGame(gameId, userId);
-  const openLobbies = useOpenPvpLobbies(gameId ? null : userId);
+  const {
+    lobbies: openLobbiesList,
+    activeGames,
+    loading: lobbiesLoading,
+    error: lobbiesError,
+    refresh: refreshOpenLobbies,
+    cancelLobby,
+  } = useOpenPvpLobbies(gameId ? null : userId);
   const [authOpen, setAuthOpen] = useState(false);
+  const [friendsVersion, setFriendsVersion] = useState(0);
+  const friends = useMemo(() => loadPvpFriends(), [friendsVersion]);
+  const bumpFriends = useCallback(() => setFriendsVersion((v) => v + 1), []);
   const [timePreset, setTimePreset] = useState("blitz_10_0");
   const [creating, setCreating] = useState(false);
   const [joining, setJoining] = useState(false);
@@ -121,6 +161,30 @@ export default function OnlinePvpPage() {
     }
   };
 
+  const handleInviteFriend = async () => {
+    if (!userId) {
+      setAuthOpen(true);
+      return;
+    }
+    setCreating(true);
+    try {
+      const id = await online.createLobby(timePreset);
+      if (!id) return;
+      const base =
+        typeof window !== "undefined" && window.location?.origin
+          ? window.location.origin
+          : "";
+      const url = `${base}/online?game=${id}`;
+      await navigator.clipboard.writeText(url);
+      toast.success(o.inviteFriendCreated);
+      router.push(`/online?game=${id}`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : o.createFailed);
+    } finally {
+      setCreating(false);
+    }
+  };
+
   const copyInvite = async () => {
     if (!inviteUrl) return;
     try {
@@ -137,17 +201,21 @@ export default function OnlinePvpPage() {
     if (!r) return;
     setSaving(true);
     try {
-      const pgn = buildPgnFromUcis(
-        online.moves.map((m) => m.uci),
-        {
-          white: "White",
-          black: "Black",
-          result: r,
-        }
-      );
+      const { white, black } = whiteBlackDisplayNames(online.game);
+      const pgn = buildPgnFromUcis(online.moves.map((m) => m.uci), {
+        white,
+        black,
+        result: r,
+      });
       const playerResult = pvpResultForPlayer(r, online.role);
+      const oppName =
+        online.role === "white"
+          ? black === "…"
+            ? o.opponentName
+            : black
+          : white;
       await saveGameToCloud({
-        opponentName: o.opponentName,
+        opponentName: oppName,
         result: playerResult,
         resultType: online.game.result_reason ?? "pvp_online",
         resultMessage: online.game.result_reason ?? undefined,
@@ -195,15 +263,13 @@ export default function OnlinePvpPage() {
 
   const pgnStringForDownload = useMemo(() => {
     if (!online.game?.result) return "";
-    return buildPgnFromUcis(
-      online.moves.map((m) => m.uci),
-      {
-        white: "White",
-        black: "Black",
-        result: online.game.result,
-      }
-    );
-  }, [online.game?.result, online.moves]);
+    const { white, black } = whiteBlackDisplayNames(online.game);
+    return buildPgnFromUcis(online.moves.map((m) => m.uci), {
+      white,
+      black,
+      result: online.game.result,
+    });
+  }, [online.game, online.moves]);
 
   const boardStats = useMemo(
     () => pvpGameStatsFromUcis(online.moves.map((m) => m.uci)),
@@ -362,6 +428,118 @@ export default function OnlinePvpPage() {
           </Card>
 
           {userId && (
+            <Card className="theme-bg-secondary border-cyan-500/30">
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between gap-2">
+                  <CardTitle className="text-lg text-cyan-100">{o.activeGamesTitle}</CardTitle>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="text-cyan-300 shrink-0"
+                    onClick={() => void refreshOpenLobbies()}
+                  >
+                    {lobbiesLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                    ) : (
+                      "↻"
+                    )}
+                  </Button>
+                </div>
+                <p className="text-xs text-slate-400 font-normal pt-1">{o.activeGamesHint}</p>
+              </CardHeader>
+              <CardContent>
+                {activeGames.length === 0 ? (
+                  <p className="text-sm text-slate-500">{o.activeGamesEmpty}</p>
+                ) : (
+                  <ul className="divide-y divide-slate-800 rounded-md border border-slate-800/80 overflow-hidden">
+                    {activeGames.map((ag) => (
+                      <li
+                        key={ag.id}
+                        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-3 py-2.5 bg-slate-900/40"
+                      >
+                        <div className="min-w-0 space-y-0.5">
+                          <p className="text-sm text-slate-200 font-medium truncate">
+                            {o.resumeGameOpponent.replace(
+                              "{name}",
+                              ag.opponent_display_name ?? o.anonymousPlayer
+                            )}
+                          </p>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Badge variant="secondary" className="text-[10px] font-normal">
+                              {presetLabels[ag.time_preset] ?? ag.time_preset}
+                            </Badge>
+                            <Badge variant="outline" className="text-[10px] border-slate-600">
+                              {ag.role === "white" ? o.youAreWhite : o.youAreBlack}
+                            </Badge>
+                          </div>
+                        </div>
+                        <Button asChild size="sm" className="shrink-0">
+                          <Link href={`/online?game=${ag.id}`}>{o.resumeGame}</Link>
+                        </Button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {userId && (
+            <Card className="theme-bg-secondary border-violet-500/25">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg text-violet-100">{o.friendsTitle}</CardTitle>
+                <p className="text-xs text-slate-400 font-normal pt-1">{o.friendsHint}</p>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {friends.length === 0 ? (
+                  <p className="text-sm text-slate-500">{o.friendsEmpty}</p>
+                ) : (
+                  <ul className="space-y-2">
+                    {friends.map((f) => (
+                      <li
+                        key={f.userId}
+                        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-md border border-slate-800 bg-slate-900/40 px-3 py-2"
+                      >
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-slate-100 truncate">{f.label}</p>
+                          <p className="text-[10px] font-mono text-slate-500 truncate">{f.userId}</p>
+                        </div>
+                        <div className="flex flex-wrap gap-2 shrink-0">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="secondary"
+                            disabled={creating}
+                            onClick={() => void handleInviteFriend()}
+                          >
+                            {o.inviteFriend}
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            className="text-red-400 hover:text-red-300"
+                            onClick={() => {
+                              removePvpFriend(f.userId);
+                              bumpFriends();
+                              toast.success(o.friendRemoved);
+                            }}
+                          >
+                            <UserMinus className="h-4 w-4 sm:mr-1" />
+                            <span className="hidden sm:inline">{o.removeFriend}</span>
+                          </Button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <p className="text-[11px] text-slate-500">{o.inviteFriendHint}</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {userId && (
             <Card className="theme-bg-secondary border-emerald-500/25">
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between gap-2">
@@ -371,9 +549,9 @@ export default function OnlinePvpPage() {
                     variant="ghost"
                     size="sm"
                     className="text-emerald-300 shrink-0"
-                    onClick={() => void openLobbies.refresh()}
+                    onClick={() => void refreshOpenLobbies()}
                   >
-                    {openLobbies.loading ? (
+                    {lobbiesLoading ? (
                       <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
                     ) : (
                       "↻"
@@ -383,16 +561,16 @@ export default function OnlinePvpPage() {
                 <p className="text-xs text-slate-400 font-normal pt-1">{o.openLobbiesHint}</p>
               </CardHeader>
               <CardContent className="space-y-2">
-                {openLobbies.error && (
+                {lobbiesError && (
                   <p className="text-sm text-amber-200/90">{o.openLobbiesError}</p>
                 )}
-                {openLobbies.loading && openLobbies.lobbies.length === 0 && !openLobbies.error ? (
+                {lobbiesLoading && openLobbiesList.length === 0 && !lobbiesError ? (
                   <p className="text-sm text-slate-500">{o.openLobbiesLoading}</p>
-                ) : openLobbies.lobbies.length === 0 ? (
+                ) : openLobbiesList.length === 0 ? (
                   <p className="text-sm text-slate-500">{o.openLobbiesEmpty}</p>
                 ) : (
                   <ul className="divide-y divide-slate-800 rounded-md border border-slate-800/80 overflow-hidden">
-                    {openLobbies.lobbies.map((lobby) => (
+                    {openLobbiesList.map((lobby) => (
                       <li
                         key={lobby.id}
                         className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-3 py-2.5 bg-slate-900/40"
@@ -409,13 +587,26 @@ export default function OnlinePvpPage() {
                             >
                               {lobby.isHost ? o.yourLobby : o.strangerLobby}
                             </Badge>
-                          <Badge variant="secondary" className="text-[10px] font-normal">
-                            {presetLabels[lobby.time_preset] ?? lobby.time_preset}
-                          </Badge>
-                          <span className="font-mono text-xs text-slate-500 truncate">
-                            {lobby.id.slice(0, 8)}…
-                          </span>
+                            <Badge variant="secondary" className="text-[10px] font-normal">
+                              {presetLabels[lobby.time_preset] ?? lobby.time_preset}
+                            </Badge>
+                            <span className="font-mono text-xs text-slate-500 truncate">
+                              {lobby.id.slice(0, 8)}…
+                            </span>
                           </div>
+                          {!lobby.isHost && (
+                            <p className="text-xs text-slate-300">
+                              {o.canJoinHostLabel.replace(
+                                "{name}",
+                                lobby.host_display_name ?? o.anonymousHost
+                              )}
+                            </p>
+                          )}
+                          {lobby.isHost && lobby.host_display_name && (
+                            <p className="text-xs text-slate-500">
+                              {o.waitingHostYou.replace("{name}", lobby.host_display_name)}
+                            </p>
+                          )}
                           <p className="text-xs text-slate-500">
                             {new Date(lobby.created_at).toLocaleString(locale, {
                               dateStyle: "short",
@@ -432,7 +623,7 @@ export default function OnlinePvpPage() {
                               className="text-red-400 hover:text-red-300 hover:bg-red-950/40"
                               title={o.removeLobby}
                               onClick={() =>
-                                void openLobbies.cancelLobby(lobby.id).then(() => toast.success(o.lobbyRemoved))
+                                void cancelLobby(lobby.id).then(() => toast.success(o.lobbyRemoved))
                               }
                             >
                               <Trash2 className="h-4 w-4" />
@@ -481,6 +672,8 @@ export default function OnlinePvpPage() {
   }
 
   const g = online.game;
+  const wb = whiteBlackDisplayNames(g);
+  const oppInfo = opponentFromGame(g, userId);
   const waitingOpponent = g.status === "waiting" && !g.black_user_id;
   const canMove =
     g.status === "playing" &&
@@ -513,11 +706,26 @@ export default function OnlinePvpPage() {
           <Card className="theme-bg-secondary border-cyan-500/20">
             <CardContent className="pt-4 space-y-3">
               <p className="text-sm text-slate-300">{o.waitingOpponent}</p>
+              {g.white_display_name?.trim() && (
+                <p className="text-xs text-slate-400">
+                  {o.waitingHostYou.replace("{name}", g.white_display_name.trim())}
+                </p>
+              )}
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <Input readOnly value={inviteUrl} className="font-mono text-xs flex-1" />
-                <div className="flex gap-2 shrink-0">
+                <div className="flex gap-2 shrink-0 flex-wrap">
                   <Button type="button" variant="secondary" size="icon" onClick={() => void copyInvite()}>
                     <Copy className="h-4 w-4" />
+                  </Button>
+                  <Button type="button" variant="outline" size="sm" asChild className="border-slate-600">
+                    <a
+                      href={`mailto:?subject=${encodeURIComponent(o.emailInviteSubject)}&body=${encodeURIComponent(
+                        o.emailInviteBody.replace("{url}", inviteUrl)
+                      )}`}
+                    >
+                      <Mail className="h-4 w-4 sm:mr-1 inline" />
+                      <span className="hidden sm:inline">{o.shareEmail}</span>
+                    </a>
                   </Button>
                   <Button
                     type="button"
@@ -535,8 +743,16 @@ export default function OnlinePvpPage() {
 
         {online.canJoin && !online.role && (
           <Card className="theme-bg-secondary border-emerald-500/30">
-            <CardContent className="pt-4 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
-              <p className="text-sm text-slate-200">{o.canJoinPrompt}</p>
+            <CardContent className="pt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="space-y-1 min-w-0">
+                <p className="text-sm text-slate-200">{o.canJoinPrompt}</p>
+                <p className="text-xs text-emerald-200/90">
+                  {o.canJoinHostLabel.replace(
+                    "{name}",
+                    g.white_display_name?.trim() ?? o.anonymousHost
+                  )}
+                </p>
+              </div>
               <Button
                 type="button"
                 onClick={() => void handleJoin()}
@@ -567,11 +783,63 @@ export default function OnlinePvpPage() {
           </p>
         )}
 
+        {oppInfo && userId && (
+          <Card className="theme-bg-secondary border-slate-600/50">
+            <CardHeader className="py-3 pb-0">
+              <CardTitle className="text-base text-slate-100">{o.opponentCardTitle}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 pt-2">
+              <div>
+                <p className="text-lg font-semibold text-cyan-100">{oppInfo.oppLabel}</p>
+                <p className="text-xs text-slate-500">
+                  {oppInfo.oppColor === "white" ? o.opponentAsWhite : o.opponentAsBlack}
+                </p>
+                <p className="text-[10px] font-mono text-slate-600 mt-1 break-all">
+                  {o.playerIdShort.replace("{id}", oppInfo.oppId)}
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {!isPvpFriend(oppInfo.oppId) ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => {
+                      addPvpFriend({ userId: oppInfo.oppId, label: oppInfo.oppLabel });
+                      bumpFriends();
+                      toast.success(o.friendAdded);
+                    }}
+                  >
+                    <UserPlus className="h-4 w-4 mr-1 inline" />
+                    {o.addFriend}
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    className="text-red-400"
+                    onClick={() => {
+                      removePvpFriend(oppInfo.oppId);
+                      bumpFriends();
+                      toast.success(o.friendRemoved);
+                    }}
+                  >
+                    <UserMinus className="h-4 w-4 mr-1 inline" />
+                    {o.removeFriend}
+                  </Button>
+                )}
+              </div>
+              <p className="text-[11px] text-slate-500">{o.opponentProfileHint}</p>
+            </CardContent>
+          </Card>
+        )}
+
         <OnlinePvpClockBar
           game={g}
           chess={online.chess}
-          whiteLabel={o.whiteClock}
-          blackLabel={o.blackClock}
+          whiteLabel={`${wb.white} · ${o.whiteClock}`}
+          blackLabel={`${wb.black} · ${o.blackClock}`}
         />
 
         <div className="w-full max-w-[min(100%,480px)] mx-auto aspect-square max-h-[70dvh]">

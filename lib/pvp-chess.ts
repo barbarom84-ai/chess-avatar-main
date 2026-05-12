@@ -22,6 +22,10 @@ export interface PvpGameRow {
   white_remaining_ms?: number | null;
   black_remaining_ms?: number | null;
   clock_turn_started_at?: string | null;
+  /** Libellé public enregistré à la création du salon. */
+  white_display_name?: string | null;
+  /** Libellé public enregistré quand les noirs rejoignent. */
+  black_display_name?: string | null;
 }
 
 export interface PvpMoveRow {

@@ -7,6 +7,20 @@ export type OpenPvpLobby = {
   id: string;
   created_at: string;
   isHost: boolean;
+  host_display_name: string | null;
+  time_preset: string;
+  clock_mode: string;
+  clock_initial_sec: number;
+  clock_increment_sec: number;
+};
+
+export type ActivePvpGame = {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  role: "white" | "black";
+  opponent_user_id: string;
+  opponent_display_name: string | null;
   time_preset: string;
   clock_mode: string;
   clock_initial_sec: number;
@@ -40,18 +54,20 @@ async function fetchWithAuth(path: string, init?: RequestInit) {
         : res.statusText;
     throw new Error(err);
   }
-  return json as { games: OpenPvpLobby[] };
+  return json as { games: OpenPvpLobby[]; activeGames?: ActivePvpGame[] };
 }
 
-/** Liste des parties PvP en attente d’un second joueur (rafraîchissement auto). */
+/** Liste des salons ouverts + parties en cours (rafraîchissement auto). */
 export function useOpenPvpLobbies(userId: string | null, pollMs = 12_000) {
   const [lobbies, setLobbies] = useState<OpenPvpLobby[]>([]);
+  const [activeGames, setActiveGames] = useState<ActivePvpGame[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     if (!userId || !isSupabaseConfigured || !supabase) {
       setLobbies([]);
+      setActiveGames([]);
       setError(null);
       return;
     }
@@ -60,9 +76,11 @@ export function useOpenPvpLobbies(userId: string | null, pollMs = 12_000) {
     try {
       const data = await fetchWithAuth("/api/pvp/games");
       setLobbies(data.games ?? []);
+      setActiveGames(Array.isArray(data.activeGames) ? data.activeGames : []);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error");
       setLobbies([]);
+      setActiveGames([]);
     } finally {
       setLoading(false);
     }
@@ -79,6 +97,7 @@ export function useOpenPvpLobbies(userId: string | null, pollMs = 12_000) {
   useEffect(() => {
     if (!userId) {
       setLobbies([]);
+      setActiveGames([]);
       return;
     }
     void refresh();
@@ -86,5 +105,5 @@ export function useOpenPvpLobbies(userId: string | null, pollMs = 12_000) {
     return () => window.clearInterval(id);
   }, [userId, pollMs, refresh]);
 
-  return { lobbies, loading, error, refresh, cancelLobby };
+  return { lobbies, activeGames, loading, error, refresh, cancelLobby };
 }

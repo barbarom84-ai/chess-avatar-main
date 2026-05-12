@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAuthedUserFromRequest } from "@/lib/supabase-auth-request";
 import { createServiceSupabase } from "@/lib/supabase-service";
 import type { PvpGameRow } from "@/lib/pvp-chess";
+import { displayNameFromAuthUser } from "@/lib/pvp-display-name";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
@@ -39,6 +40,7 @@ export async function POST(
   const patch: Record<string, unknown> = {
     black_user_id: user.id,
     status: "playing",
+    black_display_name: displayNameFromAuthUser(user),
   };
 
   if (game.clock_mode === "timed") {
@@ -59,7 +61,9 @@ export async function POST(
     .eq("status", "waiting")
     .is("black_user_id", null)
     .neq("white_user_id", user.id)
-    .select("id,status,white_user_id,black_user_id,time_preset,clock_mode,white_remaining_ms,black_remaining_ms,clock_turn_started_at")
+    .select(
+      "id,status,white_user_id,black_user_id,time_preset,clock_mode,white_remaining_ms,black_remaining_ms,clock_turn_started_at,white_display_name,black_display_name"
+    )
     .maybeSingle();
 
   if (error) return jsonError(error.message ?? "Join failed", 500);
