@@ -26,16 +26,16 @@ type NavItemDef = {
 };
 
 const NAV_ITEMS: NavItemDef[] = [
-  { href: "/analyze", piece: "Q", navPieceColor: "w", label: { fr: "Analyser", en: "Analyze" } },
+  { href: "/analyze", piece: "Q", navPieceColor: "w", label: { fr: "Créer", en: "Build" } },
   { href: "/play", piece: "N", navPieceColor: "w", label: { fr: "Jouer", en: "Play" } },
-  { href: "/online", piece: "P", navPieceColor: "b", label: { fr: "En ligne PvP", en: "Online PvP" } },
+  { href: "/online", piece: "P", navPieceColor: "b", label: { fr: "PvP", en: "PvP" } },
   { href: "/arena", piece: "R", navPieceColor: "w", label: { fr: "Arène", en: "Arena" } },
-  { href: "/learn", piece: "B", navPieceColor: "w", label: { fr: "Ouvertures", en: "Learn" } },
+  { href: "/learn", piece: "B", navPieceColor: "w", label: { fr: "Ouvertures", en: "Openings" } },
   { href: "/puzzles", piece: "P", navPieceColor: "w", label: { fr: "Puzzles", en: "Puzzles" } },
-  { href: "/profile", piece: "K", navPieceColor: "w", label: { fr: "Profil", en: "Profile" } },
-  { href: "/avatars", piece: "B", navPieceColor: "b", label: { fr: "Mes avatars", en: "My avatars" } },
+  { href: "/profile", piece: "K", navPieceColor: "w", label: { fr: "Compte", en: "Account" } },
+  { href: "/avatars", piece: "B", navPieceColor: "b", label: { fr: "Avatars", en: "Avatars" } },
   { href: "/games", piece: "Q", navPieceColor: "b", label: { fr: "Parties", en: "Games" } },
-  { href: "/guide", piece: "R", navPieceColor: "b", label: { fr: "UCI creator guide", en: "UCI creator guide" } },
+  { href: "/guide", piece: "R", navPieceColor: "b", label: { fr: "Guide", en: "Guide" } },
 ];
 
 type Translations = (typeof translations)[Language];
@@ -56,11 +56,16 @@ function navItemLabel(
   lang: Language,
   t: Translations
 ): string {
-  if (item.href === "/learn") return t.header.learn;
-  if (item.href === "/games") return t.header.games;
-  if (item.href === "/puzzles") return t.header.puzzles;
-  if (item.href === "/arena") return t.header.arena;
-  if (item.href === "/online") return t.header.onlinePvp;
+  if (item.href === "/analyze") return t.pages.analyze.nav;
+  if (item.href === "/play") return t.pages.play.nav;
+  if (item.href === "/online") return t.pages.online.nav;
+  if (item.href === "/arena") return t.pages.arena.nav;
+  if (item.href === "/learn") return t.pages.learn.nav;
+  if (item.href === "/puzzles") return t.pages.puzzles.nav;
+  if (item.href === "/profile") return t.pages.profile.nav;
+  if (item.href === "/avatars") return t.pages.avatars.nav;
+  if (item.href === "/games") return t.pages.games.nav;
+  if (item.href === "/guide") return t.pages.guide.nav;
   return item.label[lang];
 }
 
@@ -229,7 +234,7 @@ export default function Navigation() {
                           className="flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 transition-colors"
                         >
                           <User className="h-4 w-4" />
-                          {lang === "fr" ? "Mon Profil" : "My Profile"}
+                          {t.pages.profile.title}
                         </Link>
                         <Link
                           href="/avatars"
@@ -237,7 +242,7 @@ export default function Navigation() {
                           className="flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 transition-colors"
                         >
                           <Bot className="h-4 w-4" />
-                          {t.avatarsPage.title}
+                          {t.pages.avatars.title}
                         </Link>
                         <button
                           type="button"
@@ -314,7 +319,7 @@ export default function Navigation() {
                       size="sm"
                       variant="ghost"
                       className="h-8 px-2 text-slate-200 hover:text-cyan-300"
-                      title={t.avatarsPage.title}
+                      title={t.pages.avatars.nav}
                     >
                       <Bot className="h-3.5 w-3.5" />
                     </Button>
@@ -327,7 +332,7 @@ export default function Navigation() {
                     >
                       <User className="h-3.5 w-3.5 mr-1" />
                       <span className="text-xs">
-                        {lang === "fr" ? "Profil" : "Profile"}
+                        {t.pages.profile.nav}
                       </span>
                       {isPremium && (
                         <Crown className="h-3.5 w-3.5 text-amber-400 ml-1" />

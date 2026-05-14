@@ -241,19 +241,19 @@ export default function HomePage() {
               <h4 className="font-semibold text-slate-300 mb-3">{lang === "fr" ? "Navigation" : "Navigation"}</h4>
               <div className="flex flex-col gap-2 text-slate-500">
                 <Link href="/analyze" className="hover:text-cyan-400 transition-colors">
-                  {lang === "fr" ? "Analyser" : "Analyze"}
+                  {t.pages.analyze.nav}
                 </Link>
                 <Link href="/play" className="hover:text-cyan-400 transition-colors">
-                  {lang === "fr" ? "Jouer" : "Play"}
+                  {t.pages.play.nav}
                 </Link>
                 <Link href="/profile" className="hover:text-cyan-400 transition-colors">
-                  {lang === "fr" ? "Mon Profil" : "My Profile"}
+                  {t.pages.profile.title}
                 </Link>
                 <Link href="/avatars" className="hover:text-cyan-400 transition-colors">
-                  {lang === "fr" ? "Mes avatars" : "My avatars"}
+                  {t.pages.avatars.nav}
                 </Link>
                 <Link href="/guide" className="hover:text-cyan-400 transition-colors">
-                  {lang === "fr" ? "Guide d'installation" : "Installation Guide"}
+                  {t.pages.guide.nav}
                 </Link>
               </div>
             </div>

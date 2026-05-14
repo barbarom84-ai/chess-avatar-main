@@ -3,11 +3,74 @@ export const translations = {
     // Header / Navigation
     title: "Chess Avatar Creator",
     subtitle: "Créez une IA qui joue exactement comme vous. Compatible avec Fritz, ChessBase et Arena.",
-    myProfile: "Mon Profil",
-    installGuide: "UCI creator guide",
+    myProfile: "Mon compte",
+    installGuide: "Guide d'installation",
+
+    pages: {
+      analyze: {
+        nav: "Créer",
+        title: "Créer un avatar depuis Lichess ou Chess.com",
+        subtitle: "Analyse des parties, réglage du bot, export ou sauvegarde",
+        metaTitle: "Créer un avatar",
+      },
+      play: {
+        nav: "Jouer",
+        title: "Jouer contre un avatar",
+        subtitle: "Bibliothèque publique et partie sur le site",
+        metaTitle: "Jouer contre un avatar",
+      },
+      online: {
+        nav: "PvP",
+        title: "Jouer contre un ami en ligne",
+        subtitle: "Salon, lien d'invitation, parties en cours",
+        metaTitle: "Jouer contre un ami",
+      },
+      arena: {
+        nav: "Arène",
+        title: "Arène : avatar contre avatar",
+        subtitle: "Deux bots s'affrontent en spectateur",
+        metaTitle: "Arène avatar vs avatar",
+      },
+      learn: {
+        nav: "Ouvertures",
+        title: "Leçons d'ouvertures",
+        metaTitle: "Leçons d'ouvertures",
+      },
+      puzzles: {
+        nav: "Puzzles",
+        title: "Puzzles tactiques",
+        metaTitle: "Puzzles tactiques",
+      },
+      profile: {
+        nav: "Compte",
+        title: "Mon compte",
+        metaTitle: "Mon compte",
+      },
+      avatars: {
+        nav: "Avatars",
+        title: "Mes avatars sauvegardés",
+        metaTitle: "Mes avatars",
+      },
+      games: {
+        nav: "Parties",
+        title: "Mes parties et analyses",
+        subtitle: "Archive cloud, statistiques et import PGN rapide",
+        metaTitle: "Mes parties",
+      },
+      review: {
+        title: "Analyse coup par coup",
+        subtitle: "Classification des coups, évaluations et lignes suggérées",
+        metaTitle: "Analyse de partie",
+      },
+      guide: {
+        nav: "Guide",
+        title: "Installer votre moteur sur PC",
+        metaTitle: "Guide d'installation",
+      },
+    },
     
     // Analyze Page
-    analyzeProfile: "Analyser un Profil",
+    analyzeProfile: "Créer un avatar depuis Lichess ou Chess.com",
     backToHome: "Retour à l'accueil",
     loadingChessboard: "Chargement de l'échiquier...",
     
@@ -67,7 +130,7 @@ export const translations = {
     
     // Profile Page
     profile: {
-      title: "Mon profil",
+      title: "Mon compte",
       myAccount: "Mon Compte",
       myBots: "Mes Bots",
       publicLibrary: "Bibliothèque Publique",
@@ -115,15 +178,15 @@ export const translations = {
     },
 
     avatarsPage: {
-      title: "Mes avatars",
+      title: "Mes avatars sauvegardés",
       subtitle: "Gérez vos bots sauvegardés dans le cloud : jouer, modifier, partager ou exporter.",
       cardTitle: "Avatars cloud",
     },
     
     // Games Page
     games: {
-      title: "Mes Parties",
-      subtitle: "Historique de toutes vos parties jouées",
+      title: "Mes parties et analyses",
+      subtitle: "Archive cloud, statistiques et import PGN rapide",
       stats: "Statistiques",
       totalGames: "Total Parties",
       total: "Total",
@@ -218,7 +281,7 @@ export const translations = {
     
     // Guide Page (UCI creator guide)
     guide: {
-      title: "UCI creator guide",
+      title: "Installer votre moteur sur PC",
       subtitle: "Créez votre moteur UCI et jouez contre votre clone dans Fritz, ChessBase ou Arena.",
       download: "Télécharger",
       ctaGeneratePack: "Générer mon pack moteur",
@@ -292,7 +355,7 @@ export const translations = {
     },
 
     learn: {
-      title: "Ouvertures",
+      title: "Leçons d'ouvertures",
       subtitle:
         "Plans, niveaux recommandés, pièges à connaître et parties historiques commentées — pour progresser au-delà de la simple mémorisation.",
       headerNav: "Ouvertures",
@@ -475,8 +538,8 @@ export const translations = {
 
     // Play Page
     play: {
-      title: "Jouer en Ligne",
-      subtitle: "Affrontez votre clone IA ou d'autres bots",
+      title: "Jouer contre un avatar",
+      subtitle: "Bibliothèque publique et partie sur le site",
       selectBot: "Sélectionner un bot",
       selectOpponent: "Choisissez votre adversaire",
       selectBotDescription: "Sélectionnez un bot public pour commencer une partie",
@@ -527,7 +590,7 @@ export const translations = {
     },
 
     playOnline: {
-      title: "Joueur contre joueur en ligne",
+      title: "Jouer contre un ami en ligne",
       subtitle: "Créez une partie, partagez le lien : vous jouez les blancs, votre ami rejoint comme noirs.",
       createLobby: "Créer une partie",
       joinHint:
@@ -647,7 +710,7 @@ export const translations = {
 
     // Library / Profiles
     library: {
-      title: "Bibliothèque de Profils",
+      title: "Catalogue d'avatars publics",
       publicLibrary: "Bibliothèque Publique",
       searchPlaceholder: "Rechercher un joueur...",
       search: "Rechercher",
@@ -738,19 +801,19 @@ export const translations = {
 
     // Header / nav
     header: {
-      createBot: "Créer Bot",
-      profiles: "Mes avatars",
+      createBot: "Créer",
+      profiles: "Avatars",
       games: "Parties",
       learn: "Ouvertures",
       puzzles: "Puzzles",
       arena: "Arène",
-      onlinePvp: "En ligne PvP",
+      onlinePvp: "PvP",
       guide: "Guide",
       boardSettingsTitle: "Paramètres de l'échiquier"
     },
 
     puzzlesPage: {
-      title: "Puzzles",
+      title: "Puzzles tactiques",
       subtitle:
         "Retrouvez d’abord les défis pensés pour ChessAvatar — positions tirées de parties historiques du catalogue (comme dans les leçons d’ouverture). En complément, des puzzles quotidiens et aléatoires via Lichess.",
       chessAvatarBadge: "Catalogue ChessAvatar",
@@ -1049,7 +1112,8 @@ export const translations = {
 
     // Game review (post-game analysis)
     review: {
-      pageTitle: "Analyse de la partie",
+      pageTitle: "Analyse coup par coup",
+      pageSubtitle: "Classification des coups, évaluations et lignes suggérées",
       reviewThisGame: "Analyser cette partie",
       noPgn: "Aucune partie à analyser",
       invalidPgn: "PGN invalide ou vide",
@@ -1250,7 +1314,7 @@ export const translations = {
     },
 
     arenaPage: {
-      title: "Arène clone vs clone",
+      title: "Arène : avatar contre avatar",
       subtitle:
         "Deux profils moteur s’affrontent en spectateur. Un seul Stockfish dans l’onglet : profondeur modérée pour rester fluide.",
       whiteSide: "Blancs",
@@ -1646,11 +1710,74 @@ export const translations = {
     // Header / Navigation
     title: "Chess Avatar Creator",
     subtitle: "Create an AI that plays exactly like you. Compatible with Fritz, ChessBase and Arena.",
-    myProfile: "My Profile",
-    installGuide: "UCI creator guide",
+    myProfile: "My account",
+    installGuide: "Installation guide",
+
+    pages: {
+      analyze: {
+        nav: "Build",
+        title: "Build an avatar from Lichess or Chess.com",
+        subtitle: "Analyze games, tune your bot, export or save",
+        metaTitle: "Build an avatar",
+      },
+      play: {
+        nav: "Play",
+        title: "Play against an avatar",
+        subtitle: "Public library and play on the site",
+        metaTitle: "Play against an avatar",
+      },
+      online: {
+        nav: "PvP",
+        title: "Play a friend online",
+        subtitle: "Lobby, invite link, games in progress",
+        metaTitle: "Play a friend online",
+      },
+      arena: {
+        nav: "Arena",
+        title: "Arena: avatar vs avatar",
+        subtitle: "Two bots face off as a spectator",
+        metaTitle: "Avatar vs avatar arena",
+      },
+      learn: {
+        nav: "Openings",
+        title: "Opening lessons",
+        metaTitle: "Opening lessons",
+      },
+      puzzles: {
+        nav: "Puzzles",
+        title: "Tactical puzzles",
+        metaTitle: "Tactical puzzles",
+      },
+      profile: {
+        nav: "Account",
+        title: "My account",
+        metaTitle: "My account",
+      },
+      avatars: {
+        nav: "Avatars",
+        title: "My saved avatars",
+        metaTitle: "My avatars",
+      },
+      games: {
+        nav: "Games",
+        title: "My games and reviews",
+        subtitle: "Cloud archive, stats, and quick PGN import",
+        metaTitle: "My games",
+      },
+      review: {
+        title: "Move-by-move review",
+        subtitle: "Move classification, evaluations, and suggested lines",
+        metaTitle: "Game review",
+      },
+      guide: {
+        nav: "Guide",
+        title: "Install your engine on desktop",
+        metaTitle: "Installation guide",
+      },
+    },
     
     // Analyze Page
-    analyzeProfile: "Analyze a Profile",
+    analyzeProfile: "Build an avatar from Lichess or Chess.com",
     backToHome: "Back to home",
     loadingChessboard: "Loading chessboard...",
     
@@ -1710,7 +1837,7 @@ export const translations = {
     
     // Profile Page
     profile: {
-      title: "My profile",
+      title: "My account",
       myAccount: "My Account",
       myBots: "My Bots",
       publicLibrary: "Public Library",
@@ -1758,15 +1885,15 @@ export const translations = {
     },
 
     avatarsPage: {
-      title: "My avatars",
+      title: "My saved avatars",
       subtitle: "Manage your cloud-saved bots: play, edit, share, or export.",
       cardTitle: "Cloud avatars",
     },
     
     // Games Page
     games: {
-      title: "My Games",
-      subtitle: "History of all your played games",
+      title: "My games and reviews",
+      subtitle: "Cloud archive, stats, and quick PGN import",
       stats: "Statistics",
       totalGames: "Total Games",
       total: "Total",
@@ -1859,7 +1986,7 @@ export const translations = {
     
     // Guide Page (UCI creator guide)
     guide: {
-      title: "UCI creator guide",
+      title: "Installer votre moteur sur PC",
       subtitle: "Create your UCI engine and play against your clone in Fritz, ChessBase or Arena.",
       download: "Download",
       ctaGeneratePack: "Generate my engine pack",
@@ -2114,8 +2241,8 @@ export const translations = {
 
     // Play Page
     play: {
-      title: "Play Online",
-      subtitle: "Challenge your AI clone or other bots",
+      title: "Play against an avatar",
+      subtitle: "Public library and play on the site",
       selectBot: "Select a bot",
       selectOpponent: "Choose your opponent",
       selectBotDescription: "Select a public bot to start a game",
@@ -2166,7 +2293,7 @@ export const translations = {
     },
 
     playOnline: {
-      title: "Online player vs player",
+      title: "Play a friend online",
       subtitle: "Create a game and share the link: you play White, your friend joins as Black.",
       createLobby: "Create game",
       joinHint:
@@ -2286,7 +2413,7 @@ export const translations = {
 
     // Library / Profiles
     library: {
-      title: "Profile Library",
+      title: "Public avatar catalog",
       publicLibrary: "Public Library",
       searchPlaceholder: "Search for a player...",
       search: "Search",
@@ -2377,19 +2504,19 @@ export const translations = {
 
     // Header / nav
     header: {
-      createBot: "Create Bot",
-      profiles: "My avatars",
+      createBot: "Build",
+      profiles: "Avatars",
       games: "Games",
-      learn: "Learn",
+      learn: "Openings",
       puzzles: "Puzzles",
       arena: "Arena",
-      onlinePvp: "Online PvP",
+      onlinePvp: "PvP",
       guide: "Guide",
       boardSettingsTitle: "Board settings"
     },
 
     puzzlesPage: {
-      title: "Puzzles",
+      title: "Tactical puzzles",
       subtitle:
         "Start with ChessAvatar challenges — positions from historic games in our catalog (same material as opening lessons). Plus daily and random puzzles via Lichess.",
       chessAvatarBadge: "ChessAvatar catalog",
@@ -2686,7 +2813,8 @@ export const translations = {
 
     // Game review (post-game analysis)
     review: {
-      pageTitle: "Game Review",
+      pageTitle: "Move-by-move review",
+      pageSubtitle: "Move classification, evaluations, and suggested lines",
       reviewThisGame: "Review this game",
       noPgn: "No game to review",
       invalidPgn: "Invalid or empty PGN",
@@ -2887,7 +3015,7 @@ export const translations = {
     },
 
     arenaPage: {
-      title: "Clone vs clone arena",
+      title: "Arena: avatar vs avatar",
       subtitle:
         "Two engine profiles face off in spectator mode. One Stockfish tab — moderate depth to stay responsive.",
       whiteSide: "White",

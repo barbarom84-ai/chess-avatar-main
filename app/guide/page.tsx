@@ -16,7 +16,7 @@ export default function GuidePage() {
         <div className="text-center space-y-4">
           <div className="flex items-center justify-center gap-3 mb-4">
             <BookOpen className="h-12 w-12 text-cyan-400" />
-            <h1 className="text-4xl font-bold neon-cyan">{t.guide.title}</h1>
+            <h1 className="text-4xl font-bold neon-cyan">{t.pages.guide.title}</h1>
           </div>
           <p className="text-cyan-400/70">{t.guide.subtitle}</p>
 

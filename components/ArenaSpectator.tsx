@@ -798,9 +798,9 @@ export default function ArenaSpectator() {
   return (
     <div className="max-w-5xl mx-auto space-y-6 p-4 md:p-6">
       <div className="text-center space-y-2">
-        <h1 className="text-3xl font-bold text-cyan-400">{t.arenaPage.title}</h1>
+        <h1 className="text-3xl font-bold text-cyan-400">{t.pages.arena.title}</h1>
         <p className="text-sm text-slate-400 max-w-2xl mx-auto">
-          {t.arenaPage.subtitle}
+          {t.pages.arena.subtitle}
         </p>
       </div>
 

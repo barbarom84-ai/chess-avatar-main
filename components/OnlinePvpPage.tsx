@@ -68,6 +68,7 @@ function pvpResultForPlayer(
 export default function OnlinePvpPage() {
   const { t, lang } = useLanguage();
   const o = t.playOnline;
+  const onlinePage = t.pages.online;
   const presetLabels = o.presets as Record<string, string>;
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -378,9 +379,9 @@ export default function OnlinePvpPage() {
           <div className="text-center space-y-2">
             <h1 className="text-3xl font-bold text-cyan-400 flex items-center justify-center gap-2">
               <Users className="h-8 w-8" aria-hidden />
-              {o.title}
+              {onlinePage.title}
             </h1>
-            <p className="theme-text-secondary">{o.subtitle}</p>
+            <p className="theme-text-secondary">{onlinePage.subtitle}</p>
           </div>
           <Card className="theme-bg-secondary border-cyan-500/20">
             <CardHeader>
@@ -686,7 +687,7 @@ export default function OnlinePvpPage() {
       <div className="max-w-3xl mx-auto space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
-            <h1 className="text-xl font-semibold text-cyan-100 truncate">{o.title}</h1>
+            <h1 className="text-xl font-semibold text-cyan-100 truncate">{onlinePage.title}</h1>
             <Badge variant="outline" className="shrink-0 border-cyan-500/40">
               {g.status === "waiting"
                 ? o.statusWaiting

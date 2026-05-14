@@ -124,15 +124,15 @@ export default function AnalyzePage() {
       <div className="max-w-7xl mx-auto space-y-8">
         
         {/* HEADER */}
-        <div className="flex items-center justify-between">
-          <Link href="/">
+        <div className="text-center space-y-2">
+          <Link href="/" className="inline-block mb-2">
             <Button variant="ghost" className="text-cyan-300 hover:text-cyan-100">
               <ArrowLeft className="mr-2 h-4 w-4" />
               {t.backToHome}
             </Button>
           </Link>
-          <h1 className="text-3xl font-bold text-cyan-400">{t.analyzeProfile}</h1>
-          <div className="w-32"></div> {/* Spacer for centering */}
+          <h1 className="text-3xl font-bold text-cyan-400">{t.pages.analyze.title}</h1>
+          <p className="text-slate-400 text-sm max-w-2xl mx-auto">{t.pages.analyze.subtitle}</p>
         </div>
 
         {/* BARRE DE RECHERCHE + TABS */}

@@ -106,17 +106,15 @@ function ReviewContent() {
   return (
     <main className="min-h-screen theme-gradient theme-text-primary p-3 md:p-6">
       <div className="max-w-[1500px] mx-auto space-y-4">
-        <div className="flex items-center justify-between gap-2">
-          <Link href="/games">
+        <div className="text-center space-y-2">
+          <Link href="/games" className="inline-block mb-2">
             <Button variant="ghost" className="text-cyan-300 hover:text-cyan-100">
               <ArrowLeft className="mr-2 h-4 w-4" />
-              {t.backToHome}
+              {t.games.backToHub}
             </Button>
           </Link>
-          <h1 className="text-xl md:text-2xl font-bold text-cyan-400">
-            {t.review.pageTitle}
-          </h1>
-          <div className="w-32 hidden md:block"></div>
+          <h1 className="text-xl md:text-2xl font-bold text-cyan-400">{t.pages.review.title}</h1>
+          <p className="text-slate-400 text-sm max-w-xl mx-auto">{t.pages.review.subtitle}</p>
         </div>
 
         {!isPremium && (

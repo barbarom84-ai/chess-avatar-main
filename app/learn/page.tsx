@@ -114,7 +114,7 @@ export default function LearnHubPage() {
         <div className="text-center space-y-3">
           <div className="flex flex-wrap items-center justify-center gap-3">
             <BookOpen className="h-11 w-11 text-cyan-400" />
-            <h1 className="text-3xl md:text-4xl font-bold neon-cyan">{t.learn.title}</h1>
+            <h1 className="text-3xl md:text-4xl font-bold neon-cyan">{t.pages.learn.title}</h1>
             {isSuperUser && !superLoading && (
               <Button asChild variant="outline" size="sm" className="border-amber-600/50 text-amber-200/90 gap-2">
                 <Link href="/learn/admin">

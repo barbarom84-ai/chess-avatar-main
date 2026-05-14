@@ -46,6 +46,7 @@ export default function PuzzlesPageClient({
 }) {
   const { lang, t } = useLanguage();
   const p = t.puzzlesPage;
+  const puzzlesTitle = t.pages.puzzles.title;
   const { isSuperUser, loading: superLoading } = useSuperUser();
 
   const [daily, setDaily] = useState<NormalizedLichessPuzzle | null>(null);
@@ -240,7 +241,7 @@ export default function PuzzlesPageClient({
       <div className="max-w-3xl mx-auto space-y-10">
         <header className="space-y-3 text-center">
           <h1 className="text-3xl md:text-4xl font-semibold text-slate-100 tracking-tight">
-            {p.title}
+            {puzzlesTitle}
           </h1>
           <p className="text-slate-300 text-sm md:text-base max-w-2xl mx-auto leading-relaxed">
             {p.subtitle}

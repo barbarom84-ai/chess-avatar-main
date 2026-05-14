@@ -106,11 +106,10 @@ function PlayContent() {
                   maskPosition: "center",
                 }}
               />
-              {t.play.selectOpponent}
+              {t.pages.play.title}
             </h1>
-            <p className="theme-text-secondary">
-              {t.play.selectBotDescription}
-            </p>
+            <p className="theme-text-secondary">{t.pages.play.subtitle}</p>
+            <p className="text-sm text-slate-500">{t.play.selectBotDescription}</p>
             <div className="flex justify-center pt-2">
               <Button asChild variant="outline" className="border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10">
                 <Link href="/online">{t.play.onlinePvpCta}</Link>

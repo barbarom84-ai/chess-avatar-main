@@ -578,8 +578,8 @@ export default function GamesPage() {
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="text-center">
-          <h1 className="text-3xl font-bold neon-cyan mb-2">{t.games.title}</h1>
-          <p className="text-cyan-400/70">{t.games.subtitle}</p>
+          <h1 className="text-3xl font-bold neon-cyan mb-2">{t.pages.games.title}</h1>
+          <p className="text-cyan-400/70">{t.pages.games.subtitle}</p>
         </div>
 
         {/* Quick Game Review entry — analyse jetable, ne sauvegarde rien */}

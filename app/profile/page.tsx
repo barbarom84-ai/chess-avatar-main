@@ -10,7 +10,7 @@ export default function ProfilePage() {
     <main className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 text-slate-100 p-4 md:p-8">
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="text-center space-y-1">
-          <h1 className="text-3xl font-bold neon-cyan">{t.profile.title}</h1>
+          <h1 className="text-3xl font-bold neon-cyan">{t.pages.profile.title}</h1>
           <p className="text-slate-500 text-sm">{t.profileDashboard.subtitle}</p>
         </div>
 
