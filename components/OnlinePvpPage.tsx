@@ -21,11 +21,13 @@ import OnlinePvpResultModal from "@/components/OnlinePvpResultModal";
 import AuthModal from "@/components/AuthModal";
 import { buildPgnFromUcis, type PvpGameRow } from "@/lib/pvp-chess";
 import {
-  addPvpFriend,
-  isPvpFriend,
-  loadPvpFriends,
-  removePvpFriend,
-} from "@/lib/pvp-friends-local";
+  addAccountFriendRemote,
+  fetchAccountFriends,
+  isAccountFriend,
+  migrateLocalFriendsOnce,
+  removeAccountFriendRemote,
+} from "@/lib/account-friends";
+import type { AccountFriend } from "@/lib/account-types";
 import { saveGameToCloud } from "@/lib/supabase-storage";
 import { PVP_TIME_PRESETS } from "@/lib/pvp-time-controls";
 import { pvpGameStatsFromUcis, formatDurationSec } from "@/lib/pvp-result-stats";
@@ -84,9 +86,22 @@ export default function OnlinePvpPage() {
     cancelLobby,
   } = useOpenPvpLobbies(gameId ? null : userId);
   const [authOpen, setAuthOpen] = useState(false);
-  const [friendsVersion, setFriendsVersion] = useState(0);
-  const friends = useMemo(() => loadPvpFriends(), [friendsVersion]);
-  const bumpFriends = useCallback(() => setFriendsVersion((v) => v + 1), []);
+  const [friends, setFriends] = useState<AccountFriend[]>([]);
+  const [friendsLoading, setFriendsLoading] = useState(false);
+  const refreshFriends = useCallback(async () => {
+    if (!userId) {
+      setFriends([]);
+      return;
+    }
+    setFriendsLoading(true);
+    try {
+      await migrateLocalFriendsOnce();
+      const list = await fetchAccountFriends();
+      setFriends(list);
+    } finally {
+      setFriendsLoading(false);
+    }
+  }, [userId]);
   const [timePreset, setTimePreset] = useState("blitz_10_0");
   const [creating, setCreating] = useState(false);
   const [joining, setJoining] = useState(false);
@@ -96,6 +111,10 @@ export default function OnlinePvpPage() {
   const [endedDurationSec, setEndedDurationSec] = useState<number | null>(null);
   const startMsRef = useRef<number | null>(null);
   const resultModalShownForGameId = useRef<string | null>(null);
+
+  useEffect(() => {
+    void refreshFriends();
+  }, [refreshFriends]);
 
   useEffect(() => {
     setSavedToCloud(false);
@@ -493,18 +512,25 @@ export default function OnlinePvpPage() {
                 <p className="text-xs text-slate-400 font-normal pt-1">{o.friendsHint}</p>
               </CardHeader>
               <CardContent className="space-y-3">
-                {friends.length === 0 ? (
+                {friendsLoading ? (
+                  <p className="text-sm text-slate-500">{o.openLobbiesLoading}</p>
+                ) : friends.length === 0 ? (
                   <p className="text-sm text-slate-500">{o.friendsEmpty}</p>
                 ) : (
                   <ul className="space-y-2">
                     {friends.map((f) => (
                       <li
-                        key={f.userId}
+                        key={f.friendUserId}
                         className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-md border border-slate-800 bg-slate-900/40 px-3 py-2"
                       >
                         <div className="min-w-0">
-                          <p className="text-sm font-medium text-slate-100 truncate">{f.label}</p>
-                          <p className="text-[10px] font-mono text-slate-500 truncate">{f.userId}</p>
+                          <Link
+                            href={`/players/${f.friendUserId}`}
+                            className="text-sm font-medium text-slate-100 truncate hover:text-cyan-300"
+                          >
+                            {f.label || f.displayName}
+                          </Link>
+                          <p className="text-[10px] text-slate-500 truncate">{f.displayName}</p>
                         </div>
                         <div className="flex flex-wrap gap-2 shrink-0">
                           <Button
@@ -522,9 +548,14 @@ export default function OnlinePvpPage() {
                             variant="ghost"
                             className="text-red-400 hover:text-red-300"
                             onClick={() => {
-                              removePvpFriend(f.userId);
-                              bumpFriends();
-                              toast.success(o.friendRemoved);
+                              void removeAccountFriendRemote(f.friendUserId).then((next) => {
+                                if (!next) {
+                                  toast.error(o.openLobbiesError);
+                                  return;
+                                }
+                                setFriends(next);
+                                toast.success(o.friendRemoved);
+                              });
                             }}
                           >
                             <UserMinus className="h-4 w-4 sm:mr-1" />
@@ -800,15 +831,23 @@ export default function OnlinePvpPage() {
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
-                {!isPvpFriend(oppInfo.oppId) ? (
+                <Button asChild type="button" size="sm" variant="outline" className="border-slate-600">
+                  <Link href={`/players/${oppInfo.oppId}`}>{o.viewOpponentProfile}</Link>
+                </Button>
+                {!isAccountFriend(friends, oppInfo.oppId) ? (
                   <Button
                     type="button"
                     size="sm"
                     variant="secondary"
                     onClick={() => {
-                      addPvpFriend({ userId: oppInfo.oppId, label: oppInfo.oppLabel });
-                      bumpFriends();
-                      toast.success(o.friendAdded);
+                      void addAccountFriendRemote(oppInfo.oppId, oppInfo.oppLabel).then((next) => {
+                        if (!next) {
+                          toast.error(o.openLobbiesError);
+                          return;
+                        }
+                        setFriends(next);
+                        toast.success(o.friendAdded);
+                      });
                     }}
                   >
                     <UserPlus className="h-4 w-4 mr-1 inline" />
@@ -821,9 +860,14 @@ export default function OnlinePvpPage() {
                     variant="ghost"
                     className="text-red-400"
                     onClick={() => {
-                      removePvpFriend(oppInfo.oppId);
-                      bumpFriends();
-                      toast.success(o.friendRemoved);
+                      void removeAccountFriendRemote(oppInfo.oppId).then((next) => {
+                        if (!next) {
+                          toast.error(o.openLobbiesError);
+                          return;
+                        }
+                        setFriends(next);
+                        toast.success(o.friendRemoved);
+                      });
                     }}
                   >
                     <UserMinus className="h-4 w-4 mr-1 inline" />
