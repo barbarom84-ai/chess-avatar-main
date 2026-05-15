@@ -18,6 +18,14 @@ function isValidUci(s: string): boolean {
   return UCI_REG.test(s.trim());
 }
 
+/** Plusieurs UCI dans un seul collage (espaces, virgules, points-virgules). */
+function tokenizeUciBulkInput(raw: string): string[] {
+  return raw
+    .split(/[\s,;]+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
 function computeForcedLinePreview(
   movesArray: string[],
   variant: "full" | "bot-only"
@@ -72,13 +80,19 @@ export default function ForcedLineEditor({ forcedLine = [], onLineChange, title,
     if (!newMove.trim()) return;
 
     if (variant === "bot-only") {
-      const u = newMove.trim();
-      if (!isValidUci(u)) {
-        setError(`Format UCI invalide : ${u} (ex. e2e4, g1f3)`);
+      const tokens = tokenizeUciBulkInput(newMove);
+      if (tokens.length === 0) return;
+
+      const invalid = tokens.filter((tok) => !isValidUci(tok));
+      if (invalid.length > 0) {
+        setError(
+          t.forcedLine.invalidUciFormat.replace("{{tokens}}", invalid.join(", "))
+        );
         return;
       }
-      const uciNorm = u.toLowerCase().slice(0, 5);
-      const updatedMoves = [...moves, uciNorm];
+
+      const normalized = tokens.map((tok) => tok.toLowerCase().trim().slice(0, 5));
+      const updatedMoves = [...moves, ...normalized];
       setMoves(updatedMoves);
       onLineChange(updatedMoves);
       setNewMove("");
@@ -200,7 +214,11 @@ export default function ForcedLineEditor({ forcedLine = [], onLineChange, title,
           <p className="text-sm text-slate-400 mb-2">Ajouter un coup</p>
           <div className="flex gap-2">
             <Input
-              placeholder={variant === "bot-only" ? "e2e4, g1f3 (UCI)" : "e2e4 ou e4 (UCI ou SAN)"}
+              placeholder={
+                variant === "bot-only"
+                  ? t.forcedLine.uciInputPlaceholderBotOnly
+                  : "e2e4 ou e4 (UCI ou SAN)"
+              }
               value={newMove}
               onChange={(e) => {
                 setNewMove(e.target.value);

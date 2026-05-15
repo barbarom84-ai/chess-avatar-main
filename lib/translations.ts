@@ -1402,7 +1402,9 @@ export const translations = {
       customTitle: "Ligne Forcée Personnalisée",
       uciSequence: "Séquence UCI",
       sanNotation: "Notation Standard (SAN)",
-      invalidMove: "Coup invalide"
+      invalidMove: "Coup invalide",
+      invalidUciFormat: "Format UCI invalide : {{tokens}}. Ex. e2e4 ou g1f3 ; plusieurs coups : séparez-les par un espace, une virgule ou un point-virgule.",
+      uciInputPlaceholderBotOnly: "e2e4 ou plusieurs UCI (espaces ou virgules)"
     },
 
     // Profile details modal (Statistics, Configuration, Avatar tabs)
@@ -1633,7 +1635,7 @@ export const translations = {
       howItWorksLine1: "Le bot jouera uniquement ces coups dans l'ordre, tant que c'est son tour.",
       howItWorksLine2: "L'adversaire peut jouer n'importe quoi — le bot suivra sa ligne quoi qu'il arrive.",
       howItWorksLine3: "Après avoir joué tous les coups forcés, le bot reprend son jeu normal.",
-      howItWorksLine4: "Exemple : Si vous mettez e2e4 d2d4, le bot jouera e4 puis d4 comme premiers coups."
+      howItWorksLine4: "Vous pouvez saisir un ou plusieurs coups UCI à la fois (séparateurs : espace, virgule ou point-virgule). Exemple : e2e4 d2d4 ou e2e4, d2d4 — le bot jouera e4 puis d4 comme premiers coups."
     },
 
     // AI analysis card
@@ -3147,7 +3149,9 @@ export const translations = {
       customTitle: "Custom Forced Line",
       uciSequence: "UCI Sequence",
       sanNotation: "Standard Notation (SAN)",
-      invalidMove: "Invalid move"
+      invalidMove: "Invalid move",
+      invalidUciFormat: "Invalid UCI format: {{tokens}}. e.g. e2e4 or g1f3; for multiple moves, separate with a space, comma, or semicolon.",
+      uciInputPlaceholderBotOnly: "e2e4 or multiple UCI (spaces or commas)"
     },
 
     // Profile details modal (Statistics, Configuration, Avatar tabs)
@@ -3378,7 +3382,7 @@ export const translations = {
       howItWorksLine1: "The bot will only play these moves in order, as long as it's their turn.",
       howItWorksLine2: "The opponent can play anything — the bot will follow its line regardless.",
       howItWorksLine3: "After playing all forced moves, the bot resumes its normal play.",
-      howItWorksLine4: "Example: If you set e2e4 d2d4, the bot will play e4 then d4 as its first moves."
+      howItWorksLine4: "You can enter one or more UCI moves at once (separate with space, comma, or semicolon). Example: e2e4 d2d4 or e2e4, d2d4 — the bot will play e4 then d4 as its first moves."
     },
 
     // AI analysis card
