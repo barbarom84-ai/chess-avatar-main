@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Crown, Palette, ImageIcon, Users, Loader2, CreditCard, Sparkles } from "lucide-react";
+import { Crown, Palette, ImageIcon, Users, Loader2, CreditCard, Sparkles, BarChart3, Brain } from "lucide-react";
 import { useLanguage } from "@/lib/language-context";
 import { supabase } from "@/lib/supabase";
 
@@ -105,7 +105,7 @@ export default function UpgradeModal({ open, onOpenChange, userId, email, reason
 
         <div className="space-y-6 mt-4">
           {/* Benefits */}
-          <div className="space-y-3">
+          <div className="space-y-3 max-h-[min(22rem,50vh)] overflow-y-auto pr-1">
             <div className={`flex items-center gap-3 p-3 rounded-lg border ${
               reason === 'theme' ? 'bg-amber-500/10 border-amber-500/30' : 'bg-slate-800/50 border-slate-700'
             }`}>
@@ -123,7 +123,7 @@ export default function UpgradeModal({ open, onOpenChange, userId, email, reason
               <ImageIcon className="h-5 w-5 text-amber-400 flex-shrink-0" />
               <div>
                 <p className="text-sm font-semibold text-slate-200">{t.upgrade.exclusivePieceSets}</p>
-                <p className="text-xs text-slate-400">Fire &amp; Ice, Earth &amp; Stone</p>
+                <p className="text-xs text-slate-400">{t.upgrade.pieceSetsDetail}</p>
               </div>
               <Badge className="ml-auto bg-amber-500/20 text-amber-300 border-amber-500/30">Premium</Badge>
             </div>
@@ -135,6 +135,28 @@ export default function UpgradeModal({ open, onOpenChange, userId, email, reason
               <div>
                 <p className="text-sm font-semibold text-slate-200">{t.upgrade.unlimitedProfiles}</p>
                 <p className="text-xs text-slate-400">{t.upgrade.profilesLimit}</p>
+              </div>
+              <Badge className="ml-auto bg-amber-500/20 text-amber-300 border-amber-500/30">Premium</Badge>
+            </div>
+
+            <div className={`flex items-center gap-3 p-3 rounded-lg border ${
+              reason === 'review' ? 'bg-amber-500/10 border-amber-500/30' : 'bg-slate-800/50 border-slate-700'
+            }`}>
+              <BarChart3 className="h-5 w-5 text-amber-400 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-semibold text-slate-200">{t.upgrade.fullGameReview}</p>
+                <p className="text-xs text-slate-400">{t.upgrade.fullGameReviewDetail}</p>
+              </div>
+              <Badge className="ml-auto bg-amber-500/20 text-amber-300 border-amber-500/30">Premium</Badge>
+            </div>
+
+            <div className={`flex items-center gap-3 p-3 rounded-lg border ${
+              reason === 'coach' ? 'bg-amber-500/10 border-amber-500/30' : 'bg-slate-800/50 border-slate-700'
+            }`}>
+              <Brain className="h-5 w-5 text-amber-400 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-semibold text-slate-200">{t.upgrade.unlimitedCoach}</p>
+                <p className="text-xs text-slate-400">{t.upgrade.coachLimit}</p>
               </div>
               <Badge className="ml-auto bg-amber-500/20 text-amber-300 border-amber-500/30">Premium</Badge>
             </div>
