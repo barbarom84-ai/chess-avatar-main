@@ -14,10 +14,8 @@ if errorlevel 1 (
 color 0B
 mode con: cols=104 lines=35 >nul 2>&1
 
-setlocal DisableDelayedExpansion
+setlocal enabledelayedexpansion
 cd /d "%~dp0"
-
-set "SWAP_TMP=%TEMP%\chessavatar_swap_path.tmp"
 
 echo ========================================
 echo   Hot-swap profil avatar
@@ -43,42 +41,38 @@ echo.
 
 echo REMARQUE : Dans une fenetre administrateur, le glisser-depose depuis
 echo            l'Explorateur est souvent bloque par Windows ^(securite UAC^).
-echo            Les options 1 et 2 ci-dessous contournent ce probleme.
+echo            Utilisez l'option 2 ci-dessous, ou collez le chemin ^(option 1^).
 echo.
 
 echo Comment indiquer le nouveau fichier .json ?
-echo   [1] Saisir ou coller le chemin ^(recommande : Shift + clic droit sur le fichier,
-echo        puis "Copier comme chemin d'acces", collez ici avec Ctrl+V^)
-echo   [2] Parcourir ^(boite de dialogue fichier^)
+echo   [1] Taper ou coller le chemin complet
+echo       ^(dans l'Explorateur : Shift + clic droit sur le fichier ^> Copier comme
+echo        chemin d'acces, puis Ctrl+V ici^)
+echo   [2] Parcourir ^(boite de dialogue fichier - recommande en admin^)
 echo.
 set /p SWAP_MODE=Tapez 1 ou 2 puis Entree ^(defaut : 1^) : 
 
-if "%SWAP_MODE%"=="" set "SWAP_MODE=1"
-set "SWAP_MODE=%SWAP_MODE: =%"
-if "%SWAP_MODE%"=="" set "SWAP_MODE=1"
+if "!SWAP_MODE!"=="" set "SWAP_MODE=1"
+set "SWAP_MODE=!SWAP_MODE: =!"
+if "!SWAP_MODE!"=="" set "SWAP_MODE=1"
 
-if "%SWAP_MODE%"=="2" goto pick_dialog
-if not "%SWAP_MODE%"=="1" (
+if "!SWAP_MODE!"=="2" goto pick_dialog
+if not "!SWAP_MODE!"=="1" (
     echo [ERREUR] Choix invalide. Utilisez 1 ou 2.
     pause
     exit /b 1
 )
 
-:path_paste
 echo.
-del /f /q "%SWAP_TMP%" 2>nul
-echo [INFO] Saisie du chemin ^(meme fiable que l'option 2 : pas de glisser-deposer^).
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$p = Read-Host 'Collez le chemin complet du fichier .json puis Entree'; if ([string]::IsNullOrWhiteSpace($p)) { exit 0 }; $p = $p.TrimEnd([char]0x0D).TrimEnd([char]0x0A).Trim(); if ($p.StartsWith([char]34) -and $p.EndsWith([char]34) -and $p.Length -ge 2) { $p = $p.Substring(1, $p.Length - 2).Trim() }; [System.IO.File]::WriteAllText([System.IO.Path]::Combine($env:TEMP, 'chessavatar_swap_path.tmp'), $p)"
-if not exist "%SWAP_TMP%" (
-    echo [ERREUR] Aucun chemin valide saisi ^(ligne vide ou annulation^).
-    pause
-    exit /b 1
-)
-goto read_path_tmp
+echo Collez le chemin complet vers votre fichier .json puis Entree :
+set /p "NEW_PROFILE=> "
+goto after_input
 
 :pick_dialog
 echo.
 echo [INFO] Ouverture du selecteur de fichier...
+set "NEW_PROFILE="
+set "SWAP_TMP=%TEMP%\chessavatar_swap_path.tmp"
 del /f /q "%SWAP_TMP%" 2>nul
 powershell -NoProfile -STA -ExecutionPolicy Bypass -Command "Add-Type -AssemblyName System.Windows.Forms; $d = New-Object System.Windows.Forms.OpenFileDialog; $d.Filter = 'Profil JSON (*.json)|*.json|Tous (*.*)|*.*'; $d.Title = 'Chess Avatar - Choisir le profil'; if ($d.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) { [System.IO.File]::WriteAllText([System.IO.Path]::Combine($env:TEMP, 'chessavatar_swap_path.tmp'), $d.FileName) }"
 if not exist "%SWAP_TMP%" (
@@ -86,47 +80,46 @@ if not exist "%SWAP_TMP%" (
     pause
     exit /b 1
 )
-
-:read_path_tmp
-set "NEW_PROFILE="
 for /f "usebackq delims=" %%a in ("%SWAP_TMP%") do set "NEW_PROFILE=%%a"
 del /f /q "%SWAP_TMP%" 2>nul
 
-:: Supprimer espaces en fin de ligne
+:after_input
+
+:: Supprimer espaces en fin de ligne (frequent avec set /p)
 :trimtrail
-if "%NEW_PROFILE%"=="" goto trimtraildone
-if "%NEW_PROFILE:~-1%"==" " set "NEW_PROFILE=%NEW_PROFILE:~0,-1%" & goto trimtrail
+if "!NEW_PROFILE!"=="" goto trimtraildone
+if "!NEW_PROFILE:~-1!"==" " set "NEW_PROFILE=!NEW_PROFILE:~0,-1!" & goto trimtrail
 :trimtraildone
 
-if "%NEW_PROFILE%"=="" (
+if "!NEW_PROFILE!"=="" (
     echo [ERREUR] Aucun fichier specifie.
     pause
     exit /b 1
 )
 
 :: Chemin absolu, guillemets retires
-for %%I in ("%NEW_PROFILE%") do set "NEW_PROFILE=%%~fI"
+for %%I in ("!NEW_PROFILE!") do set "NEW_PROFILE=%%~fI"
 
-if "%NEW_PROFILE%"=="" (
+if "!NEW_PROFILE!"=="" (
     echo [ERREUR] Chemin vide apres normalisation.
     pause
     exit /b 1
 )
 
-set "_ext=%NEW_PROFILE:~-5%"
-if /i not "%_ext%"==".json" (
+set "_ext=!NEW_PROFILE:~-5!"
+if /i not "!_ext!"==".json" (
     echo [ERREUR] Le fichier doit avoir l'extension .json
-    echo          Chemin : %NEW_PROFILE%
+    echo          Chemin : !NEW_PROFILE!
     pause
     exit /b 1
 )
 
-if not exist "%NEW_PROFILE%" (
+if not exist "!NEW_PROFILE!" (
     echo [ERREUR] Fichier introuvable :
-    echo          %NEW_PROFILE%
+    echo          !NEW_PROFILE!
     echo.
-    echo Astuce : copiez le chemin depuis l'Explorateur ^(Shift + clic droit ^> Copier
-    echo           comme chemin d'acces^) ou utilisez l'option 2 du menu.
+    echo Astuce : en fenetre admin, preferez l'option 2 du menu ou
+    echo           Shift + clic droit sur le fichier ^> Copier comme chemin d'acces.
     pause
     exit /b 1
 )
@@ -136,7 +129,7 @@ echo [INFO] Sauvegarde de l'ancien profil...
 if exist "profile.json" copy /Y "profile.json" "profile.previous.json" >nul
 
 echo [INFO] Copie du nouveau profil sous le nom standard profile.json...
-copy /Y "%NEW_PROFILE%" "profile.json" >nul
+copy /Y "!NEW_PROFILE!" "profile.json" >nul
 if errorlevel 1 (
     echo [ERREUR] Impossible de copier le nouveau profil.
     pause
@@ -146,10 +139,6 @@ if errorlevel 1 (
 echo [INFO] Suppression de engine.ini ^(le moteur prendra le nom du nouveau profil^)...
 if exist "engine.ini" del /Q "engine.ini"
 
-echo [INFO] Suppression des anciens profils en double ^(*.profile.json, Bot_*.profile.json^)...
-for %%F in (*.profile.json) do if exist "%%F" del /q "%%F" 2>nul
-for %%F in (Bot_*.profile.json) do if exist "%%F" del /q "%%F" 2>nul
-
 echo.
 echo ========================================
 echo   Profil change avec succes !
@@ -158,7 +147,6 @@ echo.
 echo [OK] Nouveau profil actif : profile.json
 echo [OK] Ancien profil sauvegarde : profile.previous.json
 echo [OK] engine.ini supprime - sera regenere par AvatarEngine au prochain lancement
-echo [OK] Un seul fichier de profil dans ce dossier : profile.json ^(plus de doublon Bot_*^)
 echo.
 echo IMPORTANT :
 echo   1. Si Fritz / Arena est ouvert, fermez-le completement

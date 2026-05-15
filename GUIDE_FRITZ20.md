@@ -164,8 +164,12 @@ C:\Users\[User]\Documents\ChessBase\Engines\MonAvatar\
 # Méthode 2 : Hot-swap d'avatar (changer de profil sans réinstaller)
 1. Télécharger juste un nouveau profil JSON (bouton "JSON seul")
 2. Aller dans Documents\ChessBase\Engines\<Nom>_Avatar\
-3. Double-cliquer sur swap_profile.bat
-4. Glisser-déposer le nouveau .json, presser Entrée
+3. Double-cliquer sur swap_profile.bat (la fenêtre s'ouvre en administrateur)
+4. Choisir 1 ou 2 :
+   - 1 : coller le chemin complet (Explorateur : Shift + clic droit sur le fichier,
+        "Copier comme chemin d'acces", puis Ctrl+V dans la fenetre)
+   - 2 : parcourir avec la boite de dialogue (recommande en admin : le glisser-deposer
+        vers une console administrateur est souvent bloque par Windows)
 5. Relancer Fritz : le moteur joue avec le nouveau profil
 
 # Méthode 3 : Manuelle (utilisateurs avancés)
@@ -181,8 +185,11 @@ C:\Users\[User]\Documents\ChessBase\Engines\MonAvatar\
 ### ❌ Le moteur ne démarre pas
 **Solution** : Vérifier que les 3 fichiers sont ensemble
 
-### ❌ Erreur "UCI protocol error"
+### ❌ Erreur UCI protocol error
 **Solution** : Télécharger Stockfish v16+ depuis stockfishchess.org
+
+### ❌ Hot-swap : « Fichier introuvable » ou un chemin incomplet
+**Solution** : `swap_profile.bat` s'ouvre en administrateur ; le glisser-déposer depuis l'Explorateur est souvent bloqué. Utilisez l'option **2** (boîte de dialogue) dans le script, ou l'option **1** avec *Shift + clic droit* sur le fichier → **Copier comme chemin d'accès**, puis collez dans la fenêtre.
 
 ### ❌ Jeu trop lent/rapide
 **Solution** : Utiliser `configure_level.bat` pour ajuster
@@ -231,9 +238,10 @@ Le guide complet fournit :
 1. **Aucun Python requis** : `AvatarEngine.exe` est livré pré-compilé dans le pack ZIP. Plus besoin d'installer Python ou PyInstaller chez l'utilisateur.
 2. **Stockfish auto-téléchargé** : Si stockfish.exe est absent, `install_engine.bat` le télécharge automatiquement depuis stockfishchess.org (~30 Mo).
 3. **Droits administrateur** : Requis. `install_engine.bat` doit être lancé via clic droit > « Exécuter en tant qu'administrateur ». Le script s'auto-élève via UAC si vous double-cliquez à la place. Cela évite les blocages liés à SmartScreen, au contrôle de compte ou aux antivirus lors du téléchargement de Stockfish et de la copie des fichiers.
-4. **profile.json** : Embarqué dans le ZIP au moment de la génération côté serveur (route `/api/engine-pack`). Renommé automatiquement `profile.json` lors du hot-swap via `swap_profile.bat`.
-5. **Minimum 15 parties** : Pour un profil précis.
-6. **Recompilation côté dev** : Si vous modifiez `public/AvatarEngine.py`, lancez `npm run build:engine` pour régénérer `public/AvatarEngine.exe` puis commitez-le.
+4. **profile.json** : L'installation copie le profil du ZIP sous le nom unique `profile.json` dans le dossier moteur (le `Bot_*.profile.json` du ZIP sert seulement de source). Le hot-swap met à jour ce même fichier et retire les anciens `Bot_*.profile.json` en doublon dans le dossier moteur.
+5. **Fenêtres noires avec Fritz** : Les versions récentes d'`AvatarEngine.exe` sont compilées sans console et lancent Stockfish sans fenêtre visible ; si vous voyez encore des invites de commandes, remplacez l'exécutable par celui d'un pack récent.
+6. **Minimum 15 parties** : Pour un profil précis.
+7. **Recompilation côté dev** : Si vous modifiez `public/AvatarEngine.py`, lancez `npm run build:engine` pour régénérer `public/AvatarEngine.exe` puis commitez-le.
 
 ## 🔄 Mises à Jour Futures
 

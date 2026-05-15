@@ -373,8 +373,8 @@ export const translations = {
         steps: [
           "Téléchargez juste le nouveau profil JSON depuis le site (bouton « JSON seul » sur la carte avatar)",
           "Allez dans Documents\\ChessBase\\Engines\\<VotreNom>_Avatar\\",
-          "Double-cliquez sur swap_profile.bat",
-          "Glissez-déposez votre nouveau .json dans la fenêtre, puis Entrée",
+          "Double-cliquez sur swap_profile.bat (fenêtre administrateur)",
+          "Choisissez 1 pour coller le chemin complet (Shift + clic droit sur le fichier → « Copier comme chemin d'accès », puis Ctrl+V) ou 2 pour parcourir avec une boîte de dialogue — recommandé en admin, car le glisser-déposer vers une console administrateur est souvent bloqué par Windows",
           "Relancez Fritz / Arena : votre moteur joue avec le nouveau profil"
         ]
       },
@@ -2125,8 +2125,8 @@ export const translations = {
         steps: [
           "Download just the new JSON profile from the site (\"JSON only\" button on the avatar card)",
           "Go to Documents\\ChessBase\\Engines\\<YourName>_Avatar\\",
-          "Double-click swap_profile.bat",
-          "Drag-and-drop your new .json into the window, then press Enter",
+          "Double-click swap_profile.bat (administrator window)",
+          "Choose 1 to paste the full path (Shift + right-click the file → \"Copy as path\", then Ctrl+V) or 2 to browse with a file dialog — recommended when admin, because drag-and-drop into an elevated console is often blocked by Windows",
           "Restart Fritz / Arena: your engine plays with the new profile"
         ]
       },

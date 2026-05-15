@@ -68,13 +68,22 @@ OPTION A - Avatars multiples (recommande)
 OPTION B - Hot-swap dans le meme moteur
   1. Telechargez seulement le nouveau Bot_*.profile.json depuis le site
   2. Allez dans Documents\\ChessBase\\Engines\\${engineName}\\
-  3. Double-cliquez sur "swap_profile.bat"
-  4. Glissez-deposez votre nouveau .json dans la fenetre, Entree
+  3. Double-cliquez sur "swap_profile.bat" (fenetre administrateur)
+  4. Choisissez 1 (coller le chemin) ou 2 (boite de dialogue fichier).
+     En admin, le glisser-depose depuis l'Explorateur est souvent bloque ;
+     preferez 2 ou Shift+clic droit sur le fichier > Copier comme chemin d'acces.
   5. Relancez Fritz - votre moteur joue maintenant avec le nouveau profil
 
 NOTE : Le hot-swap supprime engine.ini pour que le nom UCI du moteur
 suive le nouveau profil. Si vous voulez garder l'ancien nom, restaurez
 engine.ini depuis votre installation initiale.
+
+Apres installation, seul le fichier profile.json est copie dans le dossier
+moteur sous Documents\\ChessBase\\Engines\\ : pas de doublon avec Bot_*.profile.json.
+Le Bot_*.profile.json du ZIP sert de source ; le moteur lit toujours profile.json.
+
+Apres un hot-swap, les anciens Bot_*.profile.json du dossier moteur sont supprimes
+automatiquement pour ne garder que profile.json ^(et profile.previous.json^).
 
 ----------------------------------------
   Contenu du pack
@@ -96,8 +105,12 @@ engine.ini depuis votre installation initiale.
   Puis "Informations complementaires" > "Executer quand meme"
 
 - Le moteur ne reagit pas ?
-  Verifiez que stockfish.exe et le fichier .json sont bien dans le
+  Verifiez que stockfish.exe et profile.json sont bien dans le
   dossier Documents\\ChessBase\\Engines\\${engineName}\\
+
+- Des fenetres noires (invite de commandes) qui s'ouvrent avec Fritz ?
+  Re-telechargez un pack ZIP ou remplacez AvatarEngine.exe : la version recente
+  ne cree plus de console pour le moteur ni pour Stockfish.
 
 - Stockfish n'a pas pu etre telecharge ?
   Telechargez-le manuellement depuis https://stockfishchess.org

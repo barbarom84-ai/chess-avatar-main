@@ -13,7 +13,7 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "build:engine": "cd public && pyinstaller --onefile --console --clean --distpath . --workpath ../.engine-build --specpath ../.engine-build --name AvatarEngine AvatarEngine.py"
+    "build:engine": "cd public && pyinstaller --onefile --noconsole --clean --distpath . --workpath ../.engine-build --specpath ../.engine-build --name AvatarEngine AvatarEngine.py"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",

@@ -388,14 +388,19 @@ class AvatarEngine:
         try:
             print(f"info string Starting Stockfish: {self.engine_path}", file=sys.stderr)
             
-            self.engine_process = subprocess.Popen(
-                [self.engine_path],
+            popen_kw = dict(
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
-                bufsize=1
+                bufsize=1,
             )
+            # Evite une fenetre console noire pour Stockfish quand Fritz lance le moteur (Windows).
+            if sys.platform == "win32":
+                cnw = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+                if cnw:
+                    popen_kw["creationflags"] = cnw
+            self.engine_process = subprocess.Popen([self.engine_path], **popen_kw)
             
             # Start thread to read engine output
             self.output_thread = threading.Thread(target=self.read_engine_output, daemon=True)

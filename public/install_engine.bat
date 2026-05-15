@@ -211,7 +211,7 @@ echo Depth=20
 echo Contempt=0
 echo.
 echo [Personality]
-echo Profile=%PROFILE_FILE%
+echo Profile=profile.json
 ) > "engine.ini"
 
 if exist "engine.ini" (
@@ -235,7 +235,7 @@ echo.
 echo Copie des fichiers...
 copy /Y "AvatarEngine.exe" "!MOTOR_DIR!\" >nul
 copy /Y "!STOCKFISH_FILE!" "!MOTOR_DIR!\" >nul
-copy /Y "%PROFILE_FILE%" "!MOTOR_DIR!\" >nul
+copy /Y "%PROFILE_FILE%" "!MOTOR_DIR!\profile.json" >nul
 copy /Y "engine.ini" "!MOTOR_DIR!\" >nul
 if exist "swap_profile.bat" copy /Y "swap_profile.bat" "!MOTOR_DIR!\" >nul
 
@@ -257,7 +257,7 @@ echo.
 echo Fichiers installes :
 echo - AvatarEngine.exe
 echo - !STOCKFISH_FILE!
-echo - %PROFILE_FILE%
+echo - profile.json ^(profil actif ; copie depuis %PROFILE_FILE%^)
 echo - engine.ini ^(Nom: !ENGINE_NAME!, Auteur: !AUTHOR_NAME!^)
 if exist "swap_profile.bat" echo - swap_profile.bat ^(pour changer d'avatar plus tard^)
 echo.
