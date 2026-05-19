@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isValidChessUsername } from "@/lib/chess-username";
 import { rateLimit } from "@/lib/rate-limit";
+import {
+  getCachedProfileResponse,
+  profileCacheKey,
+  setCachedProfileResponse,
+} from "@/lib/profile-api-cache";
 
 export async function GET(request: NextRequest) {
   const limited = rateLimit(request, { windowMs: 60_000, max: 40 });
@@ -25,10 +30,15 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Invalid username" }, { status: 400 });
   }
 
+  const cacheKey = profileCacheKey("lichess", username);
+  const cached = getCachedProfileResponse(cacheKey);
+  if (cached) {
+    return NextResponse.json(cached);
+  }
+
   try {
-    // 1. Récupérer le profil utilisateur pour l'avatar
     const profileResponse = await fetch(`https://lichess.org/api/user/${encodeURIComponent(username)}`);
-    let avatarUrl = `https://lichess.org/assets/logo/lichess-pad3.svg`; // Avatar par défaut
+    let avatarUrl = `https://lichess.org/assets/logo/lichess-pad3.svg`;
 
     if (profileResponse.ok) {
       const profileData: unknown = await profileResponse.json().catch(() => null);
@@ -40,7 +50,6 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // 2. Récupérer les parties
     const response = await fetch(
       `https://lichess.org/api/games/user/${encodeURIComponent(username)}?max=10&opening=true&pgnInJson=true`,
       {
@@ -76,7 +85,9 @@ export async function GET(request: NextRequest) {
       })
       .filter((game) => game !== null);
 
-    return NextResponse.json({ games, avatarUrl });
+    const payload = { games, avatarUrl };
+    setCachedProfileResponse(cacheKey, payload);
+    return NextResponse.json(payload);
   } catch (error) {
     console.error("Server Error:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });

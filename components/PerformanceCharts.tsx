@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useLanguage } from "@/lib/language-context";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -18,6 +19,7 @@ interface PerformanceChartsProps {
 
 export default function PerformanceCharts({ stats }: PerformanceChartsProps) {
   const { t } = useLanguage();
+  const [activeTab, setActiveTab] = useState("style");
   
   // Translate style name
   const styleMap: Record<string, string> = {
@@ -78,7 +80,7 @@ export default function PerformanceCharts({ stats }: PerformanceChartsProps) {
       </CardHeader>
 
       <CardContent>
-        <Tabs defaultValue="style" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-4 bg-slate-950 border border-slate-800">
             <TabsTrigger value="style" className="data-[state=active]:bg-green-600">
               <Target className="h-4 w-4 mr-1" />
@@ -98,7 +100,7 @@ export default function PerformanceCharts({ stats }: PerformanceChartsProps) {
             </TabsTrigger>
           </TabsList>
 
-          {/* TAB 1: Graphique Radar du Style */}
+          {activeTab === "style" && (
           <TabsContent value="style" className="mt-6">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
@@ -142,7 +144,9 @@ export default function PerformanceCharts({ stats }: PerformanceChartsProps) {
               </div>
             </div>
           </TabsContent>
+          )}
 
+          {activeTab === "results" && (
           <TabsContent value="results" className="mt-6">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
@@ -201,8 +205,9 @@ export default function PerformanceCharts({ stats }: PerformanceChartsProps) {
               </div>
             </div>
           </TabsContent>
+          )}
 
-          {/* TAB 3: Analyse des Ouvertures */}
+          {activeTab === "openings" && (
           <TabsContent value="openings" className="mt-6">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
@@ -267,8 +272,9 @@ export default function PerformanceCharts({ stats }: PerformanceChartsProps) {
               )}
             </div>
           </TabsContent>
+          )}
 
-          {/* TAB 4: Performance par Phase */}
+          {activeTab === "phases" && (
           <TabsContent value="phases" className="mt-6">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
@@ -328,6 +334,7 @@ export default function PerformanceCharts({ stats }: PerformanceChartsProps) {
               </div>
             </div>
           </TabsContent>
+          )}
 
         </Tabs>
       </CardContent>

@@ -22,7 +22,12 @@ import {
   createDefaultPlayingStyle
 } from '@/lib/profile-metadata';
 import { generateAIAnalysis, shouldUpdateAIAnalysis } from '@/lib/ai-analysis';
-import { recommendOpenings, suggestOptimalConfig } from '@/lib/profile-suggestions';
+import {
+  recommendOpenings,
+  suggestOptimalConfig,
+  type SimilarProfile,
+} from '@/lib/profile-suggestions';
+import { getSimilarProfilesForEditor } from '@/lib/supabase-storage';
 import type { AIAnalysis } from '@/lib/ai-analysis';
 import type { PersonaStats } from '@/lib/analysis';
 import type { OpeningRecommendation, ConfigSuggestion } from '@/lib/profile-suggestions';
@@ -92,6 +97,7 @@ export default function ProfileEditor({
   // Suggestions
   const [openingRecommendations, setOpeningRecommendations] = useState<OpeningRecommendation[]>([]);
   const [configSuggestion, setConfigSuggestion] = useState<ConfigSuggestion | null>(null);
+  const [similarProfiles, setSimilarProfiles] = useState<SimilarProfile[]>([]);
 
   // Charger les données au montage
   useEffect(() => {
@@ -127,6 +133,14 @@ export default function ProfileEditor({
             statsInsight: undefined
           });
         }
+
+        const platform = personaStats?.platform ?? "lichess";
+        const similar = await getSimilarProfilesForEditor(
+          profileId,
+          { ...metadata, profileId },
+          platform
+        );
+        setSimilarProfiles(similar);
       }
     } catch (error) {
       console.error('Erreur lors du chargement des métadonnées:', error);
@@ -584,6 +598,7 @@ export default function ProfileEditor({
               <SuggestionsPanel
                 openingRecommendations={openingRecommendations}
                 configSuggestion={configSuggestion || undefined}
+                similarProfiles={similarProfiles}
                 onAddOpening={handleAddRecommendedOpening}
               />
             </TabsContent>

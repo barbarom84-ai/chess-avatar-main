@@ -16,7 +16,10 @@ const PARTITIONS: Opening[][] = [
   lichessNamed as Opening[],
 ];
 
+let aggregatedCache: Opening[] | null = null;
+
 export function getAggregatedOpenings(): Opening[] {
+  if (aggregatedCache) return aggregatedCache;
   const extra = PARTITIONS.flat();
   const merged =
     extra.length === 0 ? [...OPENINGS_DATABASE] : [...OPENINGS_DATABASE, ...extra];
@@ -27,7 +30,13 @@ export function getAggregatedOpenings(): Opening[] {
     seen.add(o.id);
     out.push(o);
   }
+  aggregatedCache = out;
   return out;
+}
+
+/** Test helper — clears memoized opening pool. */
+export function clearAggregatedOpeningsCache(): void {
+  aggregatedCache = null;
 }
 
 /**

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import {
   Fragment,
@@ -24,7 +24,6 @@ import {
   Sparkles,
   Loader2,
   MessageCircleQuestion,
-  BarChart3,
   BookOpen,
   ShieldAlert,
   Skull,
@@ -84,6 +83,7 @@ import {
 import { buildVerboseHistoryFromSan } from "@/lib/move-history-verbose";
 import { uciToVerboseMoveFromFen } from "@/lib/learn-chess-utils";
 import SanNotation from "@/components/SanNotation";
+import { OpeningExplorerPanel } from "@/components/game-reviewer/OpeningExplorerPanel";
 import { useChessboardSettings } from "@/contexts/ChessboardSettingsContext";
 import type { EngineConfig } from "@/lib/analysis";
 import { getRecentConfigs } from "@/lib/storage";
@@ -160,25 +160,25 @@ interface GameReviewerProps {
   /** Triggered when the Coach UI asks the user to upgrade (e.g. quota reached). */
   onRequestUpgrade?: () => void;
   /**
-   * Profil moteur pour le paradoxe clone. Si absent, le dernier profil « récent »
-   * du stockage local est utilisé.
+   * Profil moteur pour le paradoxe clone. Si absent, le dernier profil Â« rÃ©cent Â»
+   * du stockage local est utilisÃ©.
    */
   paradoxAvatarConfig?: EngineConfig;
-  /** Affiche un indicateur "déjà sauvegardée" à côté du téléchargement annoté. */
+  /** Affiche un indicateur "dÃ©jÃ  sauvegardÃ©e" Ã  cÃ´tÃ© du tÃ©lÃ©chargement annotÃ©. */
   showSavedInGamesList?: boolean;
-  /** Utilisateur connecté : permet d’enregistrer le PGN dans la table cloud `games`. */
+  /** Utilisateur connectÃ© : permet dâ€™enregistrer le PGN dans la table cloud `games`. */
   authUserId?: string | null;
-  /** Préremplit le pseudo pour matcher [White]/[Black] lors de l’enregistrement. */
+  /** PrÃ©remplit le pseudo pour matcher [White]/[Black] lors de lâ€™enregistrement. */
   reviewCloudSavePlayerHint?: string | null;
   /**
-   * Aide à déduire le pseudo sans saisie : couleur du compte pour une partie déjà en base,
-   * et/ou partie locale de l’e‑mail si elle correspond à un en-tête du PGN.
+   * Aide Ã  dÃ©duire le pseudo sans saisie : couleur du compte pour une partie dÃ©jÃ  en base,
+   * et/ou partie locale de lâ€™eâ€‘mail si elle correspond Ã  un en-tÃªte du PGN.
    */
   cloudSaveContext?: {
     playerColor?: "white" | "black";
     emailLocalPart?: string | null;
   } | null;
-  /** Après enregistrement réussi dans `games`. */
+  /** AprÃ¨s enregistrement rÃ©ussi dans `games`. */
   onSavedToGamesCloud?: () => void;
 }
 
@@ -307,7 +307,7 @@ export default function GameReviewer({
       // Older cache entries may contain a `bestMove` (UCI) that is illegal in
       // the position it claims to apply to (a stale-search bug fixed in
       // useStockfish). Re-validate against the live FEN and strip bad fields
-      // so we don't draw a wrong arrow or mislabel "Best was: …".
+      // so we don't draw a wrong arrow or mislabel "Best was: â€¦".
       if (cached && parsed) {
         cached.moves = cached.moves.map((m, idx) => {
           const fenBefore = parsed.fenBefore[idx];
@@ -435,11 +435,11 @@ export default function GameReviewer({
   const [explorationByPly, setExplorationByPly] = useState<
     Record<number, ExplorationForest>
   >({});
-  /** Chemin courant dans l’arbre par coup de branchement. */
+  /** Chemin courant dans lâ€™arbre par coup de branchement. */
   const [explorationPathByPly, setExplorationPathByPly] = useState<
     Record<number, number[]>
   >({});
-  /** Prochain coup : suite de la ligne, ou branche parallèle (sœur). */
+  /** Prochain coup : suite de la ligne, ou branche parallÃ¨le (sÅ“ur). */
   const [explorationBranchMode, setExplorationBranchMode] = useState<
     "line" | "sibling"
   >("line");
@@ -761,7 +761,7 @@ export default function GameReviewer({
     return result;
   }, [parsed]);
 
-  /** Ligne théorique + transpositions pour le coup courant (revue). */
+  /** Ligne thÃ©orique + transpositions pour le coup courant (revue). */
   const openingTheorySnapshot = useMemo(() => {
     if (!parsed || currentIndex === 0) return null;
     const slice = parsed.uci.slice(0, currentIndex);
@@ -1073,7 +1073,7 @@ export default function GameReviewer({
       </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-      {/* LEFT — Move list */}
+      {/* LEFT â€” Move list */}
       <div className="lg:col-span-3 order-2 lg:order-1">
         <Card className="bg-slate-900/60 border-cyan-500/20 h-full">
           <CardHeader className="pb-2">
@@ -1107,7 +1107,7 @@ export default function GameReviewer({
         </Card>
       </div>
 
-      {/* CENTER — Board + Eval + Controls + per-move detail */}
+      {/* CENTER â€” Board + Eval + Controls + per-move detail */}
       <div className="lg:col-span-6 order-1 lg:order-2 space-y-3">
         <ProgressHeader
           effectiveStatus={effectiveStatus}
@@ -1499,7 +1499,7 @@ export default function GameReviewer({
         )}
       </div>
 
-      {/* RIGHT — Summary + key moments */}
+      {/* RIGHT â€” Summary + key moments */}
       <div className="lg:col-span-3 order-3 space-y-3">
         <SummaryCard
           parsed={parsed}
@@ -1681,7 +1681,7 @@ function ProgressHeader({
   );
 }
 
-interface MoveFlags {
+export interface MoveFlags {
   isForced: boolean;
   isCheck: boolean;
   isCheckmate: boolean;
@@ -1830,7 +1830,7 @@ function VariationPlyRows({
   );
 }
 
-/** FEN à la position de branchement `branchMainlinePly` sur la ligne principale. */
+/** FEN Ã  la position de branchement `branchMainlinePly` sur la ligne principale. */
 function branchBaseFenForMainlinePly(
   parsed: ParsedGameForReview,
   branchMainlinePly: number
@@ -1888,52 +1888,55 @@ function MovesList({
       .sort((a, b) => a - b);
   }, [explorationByPly, parsed.san.length]);
 
-  const rows: Array<{
-    moveNumber: number;
-    white: {
-      san: string;
-      ply: number;
-      reviewed?: ReviewedMove;
-      opening: Opening | null;
-      flags: MoveFlags | null;
-      isExitTheory: boolean;
-    };
-    black?: {
-      san: string;
-      ply: number;
-      reviewed?: ReviewedMove;
-      opening: Opening | null;
-      flags: MoveFlags | null;
-      isExitTheory: boolean;
-    };
-  }> = [];
-
-  for (let i = 0; i < parsed.san.length; i += 2) {
-    const moveNumber = Math.floor(i / 2) + 1;
-    const whiteSan = parsed.san[i];
-    const blackSan = parsed.san[i + 1];
-    rows.push({
-      moveNumber,
+  const rows = useMemo(() => {
+    const out: Array<{
+      moveNumber: number;
       white: {
-        san: whiteSan,
-        ply: i,
-        reviewed: moves[i],
-        opening: openingByPly[i] ?? null,
-        flags: moveFlagsByPly[i] ?? null,
-        isExitTheory: exitTheoryPly === i,
-      },
-      black: blackSan
-        ? {
-            san: blackSan,
-            ply: i + 1,
-            reviewed: moves[i + 1],
-            opening: openingByPly[i + 1] ?? null,
-            flags: moveFlagsByPly[i + 1] ?? null,
-            isExitTheory: exitTheoryPly === i + 1,
-          }
-        : undefined,
-    });
-  }
+        san: string;
+        ply: number;
+        reviewed?: ReviewedMove;
+        opening: Opening | null;
+        flags: MoveFlags | null;
+        isExitTheory: boolean;
+      };
+      black?: {
+        san: string;
+        ply: number;
+        reviewed?: ReviewedMove;
+        opening: Opening | null;
+        flags: MoveFlags | null;
+        isExitTheory: boolean;
+      };
+    }> = [];
+
+    for (let i = 0; i < parsed.san.length; i += 2) {
+      const moveNumber = Math.floor(i / 2) + 1;
+      const whiteSan = parsed.san[i];
+      const blackSan = parsed.san[i + 1];
+      out.push({
+        moveNumber,
+        white: {
+          san: whiteSan,
+          ply: i,
+          reviewed: moves[i],
+          opening: openingByPly[i] ?? null,
+          flags: moveFlagsByPly[i] ?? null,
+          isExitTheory: exitTheoryPly === i,
+        },
+        black: blackSan
+          ? {
+              san: blackSan,
+              ply: i + 1,
+              reviewed: moves[i + 1],
+              opening: openingByPly[i + 1] ?? null,
+              flags: moveFlagsByPly[i + 1] ?? null,
+              isExitTheory: exitTheoryPly === i + 1,
+            }
+          : undefined,
+      });
+    }
+    return out;
+  }, [parsed.san, moves, openingByPly, moveFlagsByPly, exitTheoryPly]);
 
   return (
     <div className="text-sm font-mono">
@@ -2074,148 +2077,6 @@ function MoveCell({
   );
 }
 
-interface MastersExplorerBody {
-  white?: number;
-  draws?: number;
-  black?: number;
-  moves?: Array<{
-    san?: string;
-    uci?: string;
-    white?: number;
-    draws?: number;
-    black?: number;
-  }>;
-}
-
-function OpeningExplorerPanel({ fen }: { fen: string }) {
-  const { t } = useLanguage();
-  const { settings } = useChessboardSettings();
-  const sideToMove = useMemo(() => {
-    try {
-      return fen.split(" ")[1] === "b" ? "b" : "w";
-    } catch {
-      return "w";
-    }
-  }, [fen]);
-  const [expanded, setExpanded] = useState(false);
-  const [pool, setPool] = useState<"masters" | "lichess">("lichess");
-  const [body, setBody] = useState<MastersExplorerBody | null>(null);
-  const [fromCache, setFromCache] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(false);
-
-  useEffect(() => {
-    if (!expanded || !fen) return;
-    let cancelled = false;
-    setLoading(true);
-    setError(false);
-    void (async () => {
-      try {
-        const res = await fetch(
-          `/api/openings/explorer?fen=${encodeURIComponent(fen)}&pool=${pool}`
-        );
-        const json = (await res.json().catch(() => null)) as {
-          data?: MastersExplorerBody;
-          cached?: boolean;
-        } | null;
-        if (cancelled) return;
-        if (!res.ok || !json?.data) {
-          setError(true);
-          setBody(null);
-          return;
-        }
-        setBody(json.data);
-        setFromCache(Boolean(json.cached));
-      } catch {
-        if (!cancelled) setError(true);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [expanded, fen, pool]);
-
-  return (
-    <div className="rounded border border-sky-500/25 bg-sky-950/30 px-2 py-2 text-[11px]">
-      <button
-        type="button"
-        onClick={() => setExpanded((e) => !e)}
-        className="flex items-center gap-2 w-full text-left font-semibold text-sky-200 hover:text-sky-100"
-      >
-        <BarChart3 className="h-3.5 w-3.5 shrink-0" />
-        {t.review.opening.explorerTitle}
-      </button>
-      {expanded && (
-        <div className="mt-2 space-y-1">
-          <div className="flex flex-wrap items-center gap-1">
-            <button
-              type="button"
-              onClick={() => setPool("masters")}
-              className={`rounded px-2 py-0.5 text-[10px] border transition-colors ${
-                pool === "masters"
-                  ? "border-sky-400 bg-sky-900/80 text-sky-100"
-                  : "border-sky-800/60 text-slate-400 hover:border-sky-600"
-              }`}
-            >
-              {t.review.opening.explorerPoolMasters}
-            </button>
-            <button
-              type="button"
-              onClick={() => setPool("lichess")}
-              className={`rounded px-2 py-0.5 text-[10px] border transition-colors ${
-                pool === "lichess"
-                  ? "border-sky-400 bg-sky-900/80 text-sky-100"
-                  : "border-sky-800/60 text-slate-400 hover:border-sky-600"
-              }`}
-            >
-              {t.review.opening.explorerPoolLichess}
-            </button>
-          </div>
-          <p className="text-[10px] text-slate-500 leading-snug">{t.review.opening.explorerPoolHint}</p>
-        </div>
-      )}
-      {expanded && loading && (
-        <div className="flex items-center gap-2 mt-2 text-sky-300">
-          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          {t.review.opening.explorerLoading}
-        </div>
-      )}
-      {expanded && error && (
-        <p className="mt-2 text-red-300">{t.review.opening.explorerError}</p>
-      )}
-      {expanded && body?.moves && body.moves.length > 0 && (
-        <ul className="mt-2 space-y-1 max-h-56 overflow-y-auto">
-          {body.moves.map((m, i) => (
-            <li
-              key={`${m.uci ?? m.san}-${i}`}
-              className="flex justify-between gap-2 font-mono text-[10px] text-slate-200 items-center"
-            >
-              <span className="inline-flex items-center min-w-0">
-                <SanNotation
-                  verboseMove={
-                    m.uci ? uciToVerboseMoveFromFen(fen, m.uci) : null
-                  }
-                  fallbackSan={m.san ?? m.uci ?? ""}
-                  movingColor={sideToMove}
-                  pieceSet={settings.pieceSet}
-                  size="sm"
-                />
-              </span>
-              <span className="text-slate-500 shrink-0">
-                W{m.white ?? 0} · D{m.draws ?? 0} · B{m.black ?? 0}
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
-      {expanded && fromCache && !loading && (
-        <p className="text-[10px] text-slate-500 mt-1">{t.review.opening.explorerCached}</p>
-      )}
-    </div>
-  );
-}
 
 function CurrentMoveDetail({
   move,
@@ -2234,7 +2095,7 @@ function CurrentMoveDetail({
   reviewBlocked,
 }: {
   move?: ReviewedMove;
-  /** Position affichée (explorer Lichess : stats depuis cette position). */
+  /** Position affichÃ©e (explorer Lichess : stats depuis cette position). */
   explorerFen: string;
   fenBefore?: string;
   moveNumber?: number;
@@ -2358,7 +2219,7 @@ function CurrentMoveDetail({
             <span className="uppercase tracking-wider font-bold text-orange-200">
               {t.review.opening.exitTheoryNow}
             </span>
-            <span className="text-orange-200/70">·</span>
+            <span className="text-orange-200/70">Â·</span>
             <span className="text-orange-100">
               {getOpeningName(previousOpening, lang)}
             </span>
@@ -2422,7 +2283,7 @@ function CurrentMoveDetail({
                     >
                       <span className="truncate">{hit.name}</span>
                       <span className="font-mono text-amber-300/70 shrink-0 ml-1">
-                        · {lang === "en" ? "move" : "coup"} {hit.theoryStep}
+                        Â· {lang === "en" ? "move" : "coup"} {hit.theoryStep}
                       </span>
                     </Badge>
                   ))}
@@ -2566,7 +2427,7 @@ function CurrentMoveDetail({
 }
 
 /**
- * Coup « style clone » (Stockfish + MultiPV + profil) pour les coups sous-optimaux.
+ * Coup Â« style clone Â» (Stockfish + MultiPV + profil) pour les coups sous-optimaux.
  */
 function CloneParadoxCard({
   move,

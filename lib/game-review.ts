@@ -309,6 +309,43 @@ function throwIfCancelled(
   if (isCancelled?.()) throw new ReviewCancelledError();
 }
 
+type BestMoveEvalResult = Awaited<ReturnType<GetBestMoveAndEvalFn>>;
+
+function fenCacheKey(fen: string, searchDepth: number): string {
+  return `${fen}|${searchDepth}`;
+}
+
+/** Wrap engine calls with per-session FEN cache (reuses fenAfter from prior plies). */
+export function createCachedGetBestMoveAndEval(
+  getBestMoveAndEval: GetBestMoveAndEvalFn
+): GetBestMoveAndEvalFn {
+  const fenCache = new Map<string, BestMoveEvalResult>();
+  return (fen: string, searchDepth?: number) => {
+    const d = searchDepth ?? 18;
+    const key = fenCacheKey(fen, d);
+    const hit = fenCache.get(key);
+    if (hit) return Promise.resolve(hit);
+    return getBestMoveAndEval(fen, d).then((result) => {
+      fenCache.set(key, result);
+      return result;
+    });
+  };
+}
+
+/** Lower depth in quiet middlegame positions; full depth in opening, endgame, or after swings. */
+export function adaptiveDepthForPly(
+  ply: number,
+  totalPlies: number,
+  baseDepth: number,
+  lastEvalSwingPawns: number
+): number {
+  const inOpening = ply < 8;
+  const inEndgame = ply >= Math.max(0, totalPlies - 10);
+  const volatile = lastEvalSwingPawns >= 1.5;
+  if (inOpening || inEndgame || volatile) return baseDepth;
+  return Math.max(10, baseDepth - 4);
+}
+
 /**
  * Ply-by-ply Stockfish review: same logic as the Game Reviewer UI.
  */
@@ -329,6 +366,8 @@ export async function analyzeParsedGameForReview(
 
   const totalPlies = Math.min(parsed.san.length, Math.max(0, maxPlies));
   const collected: ReviewedMove[] = [];
+  const cachedGet = createCachedGetBestMoveAndEval(getBestMoveAndEval);
+  let lastEvalSwing = 0;
 
   for (let ply = 0; ply < totalPlies; ply++) {
     throwIfCancelled(signal, isCancelled);
@@ -339,7 +378,8 @@ export async function analyzeParsedGameForReview(
     const uci = parsed.uci[ply];
     const sideToMove = parsed.sideToMove[ply];
 
-    const best = await getBestMoveAndEval(fenBefore, depth);
+    const plyDepth = adaptiveDepthForPly(ply, totalPlies, depth, lastEvalSwing);
+    const best = await cachedGet(fenBefore, plyDepth);
     throwIfCancelled(signal, isCancelled);
 
     let playerEvalPawns = best.evalPawns;
@@ -360,7 +400,8 @@ export async function analyzeParsedGameForReview(
         isMatePlayer = false;
         playerMateInMovesWhite = undefined;
       } else {
-        const afterPlayer = await getBestMoveAndEval(fenAfter, depth);
+        const afterDepth = adaptiveDepthForPly(ply + 1, totalPlies, depth, lastEvalSwing);
+        const afterPlayer = await cachedGet(fenAfter, afterDepth);
         throwIfCancelled(signal, isCancelled);
         playerEvalPawns = normalizeToWhitePov(
           afterPlayer.evalPawns,
@@ -406,6 +447,9 @@ export async function analyzeParsedGameForReview(
       },
       analysisStrictness
     );
+
+    const evalSwing = Math.abs(reviewed.evalBefore - reviewed.playerEval);
+    lastEvalSwing = evalSwing;
 
     collected.push(reviewed);
     onPartialMove?.(reviewed, ply);

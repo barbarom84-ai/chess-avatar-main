@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isValidChessUsername } from "@/lib/chess-username";
 import { rateLimit } from "@/lib/rate-limit";
+import { mapWithConcurrency } from "@/lib/fetch-concurrency";
+import {
+  getCachedProfileResponse,
+  profileCacheKey,
+  setCachedProfileResponse,
+} from "@/lib/profile-api-cache";
 
 interface ChessComArchiveGame {
   uuid?: string;
@@ -9,6 +15,8 @@ interface ChessComArchiveGame {
   white?: { username?: string; result?: string };
   black?: { username?: string; result?: string };
 }
+
+const ARCHIVE_FETCH_CONCURRENCY = 4;
 
 export async function GET(request: NextRequest) {
   const limited = rateLimit(request, { windowMs: 60_000, max: 30 });
@@ -29,6 +37,12 @@ export async function GET(request: NextRequest) {
 
   if (!isValidChessUsername(username)) {
     return NextResponse.json({ error: "Invalid username" }, { status: 400 });
+  }
+
+  const cacheKey = profileCacheKey("chesscom", username);
+  const cached = getCachedProfileResponse(cacheKey);
+  if (cached) {
+    return NextResponse.json(cached);
   }
 
   const encoded = encodeURIComponent(username);
@@ -55,7 +69,6 @@ export async function GET(request: NextRequest) {
         ? (profile as { avatar: string }).avatar
         : undefined;
 
-    // 2. Récupérer les archives mensuelles (et non seulement le mois en cours)
     const archivesRes = await fetch(`https://api.chess.com/pub/player/${encoded}/games/archives`);
     if (!archivesRes.ok) {
       return NextResponse.json({ error: "Chess.com API error", errorKey: "genericError" }, { status: 500 });
@@ -70,29 +83,34 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "No games found for this player", errorKey: "noGamesFound" }, { status: 404 });
     }
 
-    // Parcourt les archives de la plus récente à la plus ancienne (max 12 mois)
     const recentArchiveUrls = archiveUrls.slice(-12).reverse();
-    const collectedGames: ChessComArchiveGame[] = [];
-
-    for (const archiveUrl of recentArchiveUrls) {
-      try {
-        const monthlyRes = await fetch(archiveUrl);
-        if (!monthlyRes.ok) continue;
-        const monthlyData: unknown = await monthlyRes.json().catch(() => null);
-        if (
-          monthlyData &&
-          typeof monthlyData === "object" &&
-          monthlyData !== null &&
-          Array.isArray((monthlyData as { games?: unknown }).games) &&
-          (monthlyData as { games: ChessComArchiveGame[] }).games.length > 0
-        ) {
-          collectedGames.push(...(monthlyData as { games: ChessComArchiveGame[] }).games);
+    const monthlyResults = await mapWithConcurrency(
+      recentArchiveUrls,
+      ARCHIVE_FETCH_CONCURRENCY,
+      async (archiveUrl) => {
+        try {
+          const monthlyRes = await fetch(archiveUrl);
+          if (!monthlyRes.ok) return [] as ChessComArchiveGame[];
+          const monthlyData: unknown = await monthlyRes.json().catch(() => null);
+          if (
+            monthlyData &&
+            typeof monthlyData === "object" &&
+            monthlyData !== null &&
+            Array.isArray((monthlyData as { games?: unknown }).games)
+          ) {
+            return (monthlyData as { games: ChessComArchiveGame[] }).games;
+          }
+          return [];
+        } catch {
+          return [];
         }
-        // On s'arrête tôt dès qu'on a assez de parties pour l'analyse.
-        if (collectedGames.length >= 30) break;
-      } catch {
-        // Ignore un mois en erreur et continue sur le suivant.
       }
+    );
+
+    const collectedGames: ChessComArchiveGame[] = [];
+    for (const games of monthlyResults) {
+      if (games.length > 0) collectedGames.push(...games);
+      if (collectedGames.length >= 30) break;
     }
 
     if (collectedGames.length === 0) {
@@ -101,13 +119,10 @@ export async function GET(request: NextRequest) {
 
     collectedGames.sort((a, b) => (b?.end_time ?? 0) - (a?.end_time ?? 0));
 
-    // 3. Normaliser les données pour qu'elles ressemblent à celles de Lichess
-    // Notre frontend attend : { pgn: string, winner: string, players: ... }
     const normalizedGames = collectedGames.slice(0, 15).map((g, idx: number) => {
         const whiteUsername = g?.white?.username || "White";
         const blackUsername = g?.black?.username || "Black";
 
-        // Déterminer le vainqueur
         let winner: "white" | "black" | null = null;
         if (g?.white?.result === "win") winner = "white";
         if (g?.black?.result === "win") winner = "black";
@@ -121,15 +136,16 @@ export async function GET(request: NextRequest) {
                 white: { user: { name: whiteUsername, title: null } },
                 black: { user: { name: blackUsername, title: null } }
             },
-            // On passe l'avatar dans l'objet game pour l'utiliser plus tard si besoin
             userAvatar: avatar
         };
     });
 
-    return NextResponse.json({ 
-        games: normalizedGames, 
-        avatarUrl: avatar || "https://www.chess.com/bundles/web/images/user-image.svg" 
-    });
+    const payload = {
+        games: normalizedGames,
+        avatarUrl: avatar || "https://www.chess.com/bundles/web/images/user-image.svg"
+    };
+    setCachedProfileResponse(cacheKey, payload);
+    return NextResponse.json(payload);
 
   } catch {
     return NextResponse.json({ error: "Chess.com API error", errorKey: "genericError" }, { status: 500 });

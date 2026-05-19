@@ -59,15 +59,15 @@ function GameViewerInner({ pgn }: GameViewerProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
 
-  const { isReady, currentEval, sendCommand } = useStockfish();
+  const { isReady, currentEval, analyzePosition, stopThinking } = useStockfish();
 
   useEffect(() => {
     if (isReady && gamePositions.length > 0 && currentIndex < gamePositions.length) {
+      stopThinking();
       const currentFen = gamePositions[currentIndex];
-      sendCommand(`position fen ${currentFen}`);
-      sendCommand("go depth 15");
+      analyzePosition(currentFen, 15);
     }
-  }, [currentIndex, gamePositions, isReady, sendCommand]);
+  }, [currentIndex, gamePositions, isReady, analyzePosition, stopThinking]);
 
   useEffect(() => {
     if (!isPlaying || currentIndex >= gamePositions.length - 1) return;

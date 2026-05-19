@@ -12,6 +12,7 @@
 
 # testing
 /coverage
+_swaptest/
 
 # next.js
 /.next/

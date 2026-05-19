@@ -2,7 +2,7 @@
 
 import { Chess, type Square, type Piece } from "chess.js";
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useChessboardSettings, getPieceImagePath } from "@/contexts/ChessboardSettingsContext";
 import {
   LICHESS_ARROW_COLORS,
@@ -39,8 +39,32 @@ export default function SimpleChessboard({
     animationSpeed,
   } = settings;
   
-  const game = new Chess(position === "start" ? undefined : position);
-  const board = game.board();
+  const { game, board, checkedKingColor, checkedKingSquare } = useMemo(() => {
+    const g = new Chess(position === "start" ? undefined : position);
+    const b = g.board();
+    const kingColor = g.inCheck() ? g.turn() : null;
+    let kingSquare: string | null = null;
+    if (kingColor) {
+      const files = ["a", "b", "c", "d", "e", "f", "g", "h"];
+      const ranks = ["8", "7", "6", "5", "4", "3", "2", "1"];
+      for (let r = 0; r < 8; r++) {
+        for (let f = 0; f < 8; f++) {
+          const piece = b[r][f];
+          if (piece && piece.type === "k" && piece.color === kingColor) {
+            kingSquare = `${files[f]}${ranks[r]}`;
+            break;
+          }
+        }
+        if (kingSquare) break;
+      }
+    }
+    return {
+      game: g,
+      board: b,
+      checkedKingColor: kingColor,
+      checkedKingSquare: kingSquare,
+    };
+  }, [position]);
 
   const [draggedSquare, setDraggedSquare] = useState<string | null>(null);
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
@@ -59,21 +83,6 @@ export default function SimpleChessboard({
 
   const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
   const ranks = ['8', '7', '6', '5', '4', '3', '2', '1'];
-  const checkedKingColor = game.inCheck() ? game.turn() : null;
-  const checkedKingSquare = checkedKingColor
-    ? (() => {
-        for (let r = 0; r < 8; r++) {
-          for (let f = 0; f < 8; f++) {
-            const piece = board[r][f];
-            if (piece && piece.type === "k" && piece.color === checkedKingColor) {
-              return `${files[f]}${ranks[r]}`;
-            }
-          }
-        }
-        return null;
-      })()
-    : null;
-
   // Inverser l'échiquier si orientation = black
   const displayFiles = orientation === 'black' ? [...files].reverse() : files;
   const displayRanks = orientation === 'black' ? [...ranks].reverse() : ranks;

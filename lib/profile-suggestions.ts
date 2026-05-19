@@ -282,11 +282,7 @@ export function calculateProfileMatch(
     }
   }
   
-  // 3. Plateforme (10% du score)
-  if (otherProfile.platform === userMetadata.profileId) { // Approximation
-    totalScore += 10;
-    reasons.push("Same platform");
-  }
+  // 3. Plateforme (10% du score) — caller passes userPlatform via rankSimilarProfiles
   
   // 4. Forces/Faiblesses complémentaires (15% du score)
   if (userMetadata.strengths && otherMetadata?.strengths) {
@@ -335,11 +331,33 @@ function calculateStyleSimilarity(style1: PlayingStyle, style2: PlayingStyle): n
 }
 
 /**
- * Trouver les profils similaires
+ * Rank candidate profiles by similarity to the current user's metadata.
  */
-/** Stub : nécessiterait une API backend pour comparer les métadonnées des profils. */
-export function findSimilarProfiles(): SimilarProfile[] {
-  return [];
+export function rankSimilarProfiles(
+  userMetadata: ProfileMetadata,
+  userPlatform: "lichess" | "chesscom",
+  candidates: Array<{ profile: DbProfile; metadata?: ProfileMetadata | null }>,
+  limit = 6
+): SimilarProfile[] {
+  return candidates
+    .filter((c) => c.profile.id !== userMetadata.profileId)
+    .map((c) => {
+      const match = calculateProfileMatch(
+        userMetadata,
+        c.profile,
+        c.metadata ?? undefined
+      );
+      if (c.profile.platform === userPlatform) {
+        match.matchScore = Math.min(100, match.matchScore + 10);
+        if (!match.matchReasons.includes("Same platform")) {
+          match.matchReasons.push("Same platform");
+        }
+      }
+      return match;
+    })
+    .filter((s) => s.matchScore >= 35)
+    .sort((a, b) => b.matchScore - a.matchScore)
+    .slice(0, limit);
 }
 
 // ========================================

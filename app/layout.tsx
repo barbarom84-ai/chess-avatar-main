@@ -38,8 +38,10 @@ export default function RootLayout({
 }: Readonly<{
   children: ReactNode;
 }>) {
-  // Identifiant de build — changez après chaque déploiement important pour vérifier la version en ligne
-  const BUILD_ID = "2025-01-28-v2";
+  const BUILD_ID =
+    process.env.NEXT_PUBLIC_BUILD_ID ??
+    process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ??
+    "dev";
 
   return (
     <html lang="en" className="dark" suppressHydrationWarning data-build={BUILD_ID}>

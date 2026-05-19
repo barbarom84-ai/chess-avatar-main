@@ -2,7 +2,7 @@
 
 > Créez une IA qui joue exactement comme vous. Analysez votre style, configurez votre moteur personnalisé, et jouez contre votre clone !
 
-![Version](https://img.shields.io/badge/version-3.0-green)
+![Version](https://img.shields.io/badge/version-0.1.0-green)
 ![Next.js](https://img.shields.io/badge/Next.js-16-black)
 ![React](https://img.shields.io/badge/React-18-blue)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)
@@ -71,15 +71,12 @@ Ouvrez [http://localhost:3000](http://localhost:3000) pour commencer !
 - **Bibliothèque publique** de profils
 - **Row Level Security** (RLS)
 
-## 📖 Documentation Complète
+## 📖 Documentation
 
-- 📘 [**STOCKFISH_INTEGRATION.md**](./STOCKFISH_INTEGRATION.md) - Intégration du moteur de jeu
-- ⚙️ [**CONFIGURATION_PERSONNALISEE.md**](./CONFIGURATION_PERSONNALISEE.md) - Personnalisation des paramètres
-- 📊 [**GRAPHIQUES_PERFORMANCE.md**](./GRAPHIQUES_PERFORMANCE.md) - Visualisation des données
-- ☁️ [**SUPABASE_CLOUD.md**](./SUPABASE_CLOUD.md) - Sauvegarde cloud et authentification
-- 🛠️ [**SUPABASE_SETUP.md**](./SUPABASE_SETUP.md) - Configuration technique Supabase
-- 🆕 [**NOUVELLES_FONCTIONNALITES.md**](./NOUVELLES_FONCTIONNALITES.md) - Historique des versions
-- 📋 [**spec.md**](./spec.md) - Spécifications techniques
+- ☁️ [**SUPABASE_CLOUD.md**](./SUPABASE_CLOUD.md) — Sauvegarde cloud et authentification
+- 🛠️ [**SUPABASE_SETUP.md**](./SUPABASE_SETUP.md) — Configuration Supabase
+- 🚀 [**DEPLOIEMENT_GUIDE.md**](./DEPLOIEMENT_GUIDE.md) — Déploiement Vercel
+- 📋 [**spec.md**](./spec.md) — Spécifications (MVP historique)
 
 ## 🎯 Guide d'Utilisation
 
@@ -118,29 +115,18 @@ Ouvrez [http://localhost:3000](http://localhost:3000) pour commencer !
 
 ```
 chess-avatar/
-├── app/
-│   ├── page.tsx              # Page principale (analyse)
-│   ├── play/page.tsx         # Page de jeu interactive
-│   └── api/
-│       ├── lichess/route.ts  # API Lichess
-│       └── chesscom/route.ts # API Chess.com
-├── components/
-│   ├── PersonaCard.tsx       # Carte profil moteur
-│   ├── PerformanceCharts.tsx # Graphiques Recharts
-│   ├── GameViewer.tsx        # Replay de parties
-│   ├── PlayableChessboard.tsx# Échiquier interactif
-│   ├── SimpleChessboard.tsx  # Échiquier basique
-│   ├── EngineConfigPanel.tsx # Configuration avancée
-│   └── ui/                   # Composants Shadcn/UI
-├── hooks/
-│   └── useStockfish.ts       # Hook moteur Stockfish
-├── lib/
-│   ├── analysis.ts           # Logique d'analyse
-│   ├── storage.ts            # Persistence locale
-│   └── utils.ts              # Utilitaires
-└── types/
-    └── chess.ts              # Types TypeScript
+├── app/                      # Next.js App Router (pages + API)
+│   ├── analyze/              # Analyse Lichess / Chess.com
+│   ├── play/                 # Jeu vs avatar, PvP
+│   ├── review/               # Revue de partie
+│   └── api/                  # Proxies (lichess, chesscom, stripe, coach…)
+├── components/               # UI + échiquiers + GameReviewer
+├── hooks/                    # useStockfish (worker partagé), useGameReview…
+├── lib/                      # Analyse, PGN, Supabase, moteur Stockfish client
+└── supabase/migrations/      # Schéma PostgreSQL
 ```
+
+Stockfish tourne dans un **Worker WASM singleton** (`lib/stockfish-client.ts`) partagé par tous les écrans.
 
 ## 🔧 Stack Technique
 
@@ -202,16 +188,11 @@ chess-avatar/
 vercel deploy
 ```
 
-### Docker
+### CI locale
 ```bash
-docker build -t chess-avatar .
-docker run -p 3000:3000 chess-avatar
-```
-
-### Build Statique
-```bash
+npm run lint
+npm test
 npm run build
-npm run export
 ```
 
 ## 🔮 Roadmap
@@ -223,17 +204,18 @@ npm run export
 - [x] Profils privés/publics
 - [x] Recherche dans la bibliothèque
 
-### Version 4.1 (Prochainement)
+### Livré récemment
+- [x] Analyse post-partie (revue + coach)
+- [x] Export UCI / pack moteur
+- [x] Profils similaires (bibliothèque)
+- [x] Cache API Lichess/Chess.com + CI GitHub Actions
+
+### Prochainement
 - [ ] Mode hors ligne avec sync
 - [ ] Comparaison de moteurs
 - [ ] Collections de profils
-
-### Version 4.0 (Prévu)
-- [ ] Analyse post-partie détaillée
-- [ ] Mode Training avec hints
 - [ ] Heat maps de l'échiquier
 - [ ] Timeline de progression
-- [ ] Export UCI standalone
 
 ## 🤝 Contribution
 
@@ -265,16 +247,13 @@ Ce projet est sous licence **MIT**. Voir [LICENSE](./LICENSE) pour plus de déta
 
 ## 📊 Stats du Projet
 
-- **Composants** : 20+
-- **Hooks personnalisés** : 3
-- **Routes API** : 2
-- **Pages** : 4
-- **Lignes de code** : ~7000+
+- **Composants** : 60+
+- **Hooks** : 8
+- **Routes API** : 23+
+- **Pages** : 24+
 - **Base de données** : Supabase PostgreSQL
-- **Tests** : À venir
+- **Tests** : Vitest (`npm test`) + CI sur push/PR
 
 ---
 
 **Développé avec ❤️ par la communauté Chess Avatar Creator**
-
-*Version 4.0 - Décembre 2024*
