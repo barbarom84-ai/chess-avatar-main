@@ -8,7 +8,7 @@ import {
 } from "@/lib/profile-api-cache";
 
 export async function GET(request: NextRequest) {
-  const limited = rateLimit(request, { windowMs: 60_000, max: 40 });
+  const limited = await rateLimit(request, { windowMs: 60_000, max: 40 });
   if (!limited.ok) {
     return NextResponse.json(
       { error: "Too many requests" },

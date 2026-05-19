@@ -142,61 +142,59 @@ export function useStockfish() {
 
     void stockfishClient
       .enqueue<string>((ctx) => {
-        return new Promise<string>((resolve) => {
-          const lineMoves = new Map<number, string>();
+        const lineMoves = new Map<number, string>();
 
-          const resetEngineOptions = () => {
-            ctx.send("setoption name MultiPV value 1");
-            ctx.send("setoption name UCI_LimitStrength value false");
-          };
+        const resetEngineOptions = () => {
+          ctx.send("setoption name MultiPV value 1");
+          ctx.send("setoption name UCI_LimitStrength value false");
+        };
 
-          ctx.onLine((line) => {
-            if (multiPv > 1 && line.startsWith("info ") && line.includes(" pv ")) {
-              const mp = line.match(/\bmultipv\s+(\d+)/i);
-              const pvMatch = line.match(/\bpv\s+(\S+)/);
-              if (mp && pvMatch) {
-                const idx = parseInt(mp[1], 10);
-                const first = pvMatch[1];
-                if (first && /^[a-h][1-8][a-h][1-8]/.test(first)) lineMoves.set(idx, first);
-              }
+        ctx.onLine((line) => {
+          if (multiPv > 1 && line.startsWith("info ") && line.includes(" pv ")) {
+            const mp = line.match(/\bmultipv\s+(\d+)/i);
+            const pvMatch = line.match(/\bpv\s+(\S+)/);
+            if (mp && pvMatch) {
+              const idx = parseInt(mp[1], 10);
+              const first = pvMatch[1];
+              if (first && /^[a-h][1-8][a-h][1-8]/.test(first)) lineMoves.set(idx, first);
             }
-
-            if (line.includes("score cp")) {
-              const match = line.match(/score cp (-?\d+)/);
-              if (match) setCurrentEval(parseInt(match[1], 10) / 100);
-            }
-
-            if (line.startsWith("bestmove")) {
-              const raw = line.split(/\s+/)[1];
-              let move = raw && raw !== "(none)" ? raw : "";
-              if (multiPv > 1 && move) {
-                move = humanBlunder
-                  ? pickForcedHumanBlunder(move, lineMoves)
-                  : pickPersonaBiasedMove(move, lineMoves, config);
-              }
-              resetEngineOptions();
-              return move;
-            }
-            return undefined;
-          });
-
-          ctx.stop();
-          ctx.send(`setoption name Skill Level value ${skill}`);
-          ctx.send(`setoption name Threads value ${threads}`);
-          if (config.difficulty <= 3) {
-            ctx.send("setoption name UCI_LimitStrength value true");
-            ctx.send(`setoption name UCI_Elo value ${uciEloFromConfig(config.elo)}`);
-          } else {
-            ctx.send("setoption name UCI_LimitStrength value false");
           }
-          if (multiPv > 1) {
-            ctx.send(`setoption name MultiPV value ${multiPv}`);
-          } else {
-            ctx.send("setoption name MultiPV value 1");
+
+          if (line.includes("score cp")) {
+            const match = line.match(/score cp (-?\d+)/);
+            if (match) setCurrentEval(parseInt(match[1], 10) / 100);
           }
-          ctx.send(`position fen ${fen}`);
-          ctx.send(`go depth ${config.depth} movetime ${config.timeControl}`);
+
+          if (line.startsWith("bestmove")) {
+            const raw = line.split(/\s+/)[1];
+            let move = raw && raw !== "(none)" ? raw : "";
+            if (multiPv > 1 && move) {
+              move = humanBlunder
+                ? pickForcedHumanBlunder(move, lineMoves)
+                : pickPersonaBiasedMove(move, lineMoves, config);
+            }
+            resetEngineOptions();
+            return move;
+          }
+          return undefined;
         });
+
+        ctx.send(`setoption name Skill Level value ${skill}`);
+        ctx.send(`setoption name Threads value ${threads}`);
+        if (config.difficulty <= 3) {
+          ctx.send("setoption name UCI_LimitStrength value true");
+          ctx.send(`setoption name UCI_Elo value ${uciEloFromConfig(config.elo)}`);
+        } else {
+          ctx.send("setoption name UCI_LimitStrength value false");
+        }
+        if (multiPv > 1) {
+          ctx.send(`setoption name MultiPV value ${multiPv}`);
+        } else {
+          ctx.send("setoption name MultiPV value 1");
+        }
+        ctx.send(`position fen ${fen}`);
+        ctx.send(`go depth ${config.depth} movetime ${config.timeControl}`);
+        setTimeout(() => ctx.stop(), 35_000);
       })
       .then((move) => {
         setIsThinking(false);
@@ -219,52 +217,49 @@ export function useStockfish() {
       const multiPv = Math.max(2, baseMulti);
 
       return stockfishClient.enqueue((ctx) => {
-        return new Promise<string>((resolve) => {
-          const lineMoves = new Map<number, string>();
+        const lineMoves = new Map<number, string>();
 
-          const resetEngineOptions = () => {
-            ctx.send("setoption name MultiPV value 1");
-            ctx.send("setoption name UCI_LimitStrength value false");
-          };
+        const resetEngineOptions = () => {
+          ctx.send("setoption name MultiPV value 1");
+          ctx.send("setoption name UCI_LimitStrength value false");
+        };
 
-          ctx.onLine((line) => {
-            if (multiPv > 1 && line.startsWith("info ") && line.includes(" pv ")) {
-              const mp = line.match(/\bmultipv\s+(\d+)/i);
-              const pvMatch = line.match(/\bpv\s+(\S+)/);
-              if (mp && pvMatch) {
-                const idx = parseInt(mp[1], 10);
-                const first = pvMatch[1];
-                if (first && /^[a-h][1-8][a-h][1-8]/.test(first)) {
-                  lineMoves.set(idx, first);
-                }
+        ctx.onLine((line) => {
+          if (multiPv > 1 && line.startsWith("info ") && line.includes(" pv ")) {
+            const mp = line.match(/\bmultipv\s+(\d+)/i);
+            const pvMatch = line.match(/\bpv\s+(\S+)/);
+            if (mp && pvMatch) {
+              const idx = parseInt(mp[1], 10);
+              const first = pvMatch[1];
+              if (first && /^[a-h][1-8][a-h][1-8]/.test(first)) {
+                lineMoves.set(idx, first);
               }
             }
-            if (line.startsWith("bestmove")) {
-              const raw = line.split(/\s+/)[1];
-              let move = raw && raw !== "(none)" ? raw : "";
-              if (multiPv > 1 && move) {
-                move = pickPersonaBiasedMove(move, lineMoves, config);
-              }
-              resetEngineOptions();
-              return move;
-            }
-            return undefined;
-          });
-
-          ctx.stop();
-          ctx.send(`setoption name Skill Level value ${skill}`);
-          ctx.send(`setoption name Threads value ${threads}`);
-          if (config.difficulty <= 3) {
-            ctx.send("setoption name UCI_LimitStrength value true");
-            ctx.send(`setoption name UCI_Elo value ${uciEloFromConfig(config.elo)}`);
-          } else {
-            ctx.send("setoption name UCI_LimitStrength value false");
           }
-          ctx.send(`setoption name MultiPV value ${multiPv}`);
-          ctx.send(`position fen ${fen}`);
-          ctx.send(`go depth ${depth} movetime ${movetime}`);
-          setTimeout(() => ctx.stop(), 35_000);
+          if (line.startsWith("bestmove")) {
+            const raw = line.split(/\s+/)[1];
+            let move = raw && raw !== "(none)" ? raw : "";
+            if (multiPv > 1 && move) {
+              move = pickPersonaBiasedMove(move, lineMoves, config);
+            }
+            resetEngineOptions();
+            return move;
+          }
+          return undefined;
         });
+
+        ctx.send(`setoption name Skill Level value ${skill}`);
+        ctx.send(`setoption name Threads value ${threads}`);
+        if (config.difficulty <= 3) {
+          ctx.send("setoption name UCI_LimitStrength value true");
+          ctx.send(`setoption name UCI_Elo value ${uciEloFromConfig(config.elo)}`);
+        } else {
+          ctx.send("setoption name UCI_LimitStrength value false");
+        }
+        ctx.send(`setoption name MultiPV value ${multiPv}`);
+        ctx.send(`position fen ${fen}`);
+        ctx.send(`go depth ${depth} movetime ${movetime}`);
+        setTimeout(() => ctx.stop(), 35_000);
       });
     },
     [isReady]
@@ -295,25 +290,20 @@ export function useStockfish() {
   );
 
   const analyzePosition = useCallback(
-    (fen: string, depth = 15) => {
+    (fen: string, depth = 12) => {
       if (!isReady) return;
-      void stockfishClient.enqueue((ctx) => {
-        return new Promise<boolean>((resolve) => {
-          ctx.onLine((line) => {
-            if (line.includes("score cp")) {
-              const match = line.match(/score cp (-?\d+)/);
-              if (match) setCurrentEval(parseInt(match[1], 10) / 100);
-            }
-            if (line.startsWith("bestmove")) {
-              return true;
-            }
-            return undefined;
-          });
-          ctx.stop();
-          ctx.send(`position fen ${fen}`);
-          ctx.send(`go depth ${depth}`);
-          setTimeout(() => ctx.stop(), 30_000);
-        });
+      stockfishClient.requestIdleAnalysis(fen, depth, (line) => {
+        if (line.includes("score cp")) {
+          const match = line.match(/score cp (-?\d+)/);
+          if (match) setCurrentEval(parseInt(match[1], 10) / 100);
+        }
+        if (line.includes("score mate")) {
+          const match = line.match(/score mate (-?\d+)/);
+          if (match) {
+            const mateIn = parseInt(match[1], 10);
+            setCurrentEval(mateIn > 0 ? 10 : -10);
+          }
+        }
       });
     },
     [isReady]

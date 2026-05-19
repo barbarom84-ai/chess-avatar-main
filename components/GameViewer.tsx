@@ -59,15 +59,13 @@ function GameViewerInner({ pgn }: GameViewerProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
 
-  const { isReady, currentEval, analyzePosition, stopThinking } = useStockfish();
+  const { isReady, currentEval, analyzePosition } = useStockfish();
 
   useEffect(() => {
     if (isReady && gamePositions.length > 0 && currentIndex < gamePositions.length) {
-      stopThinking();
-      const currentFen = gamePositions[currentIndex];
-      analyzePosition(currentFen, 15);
+      analyzePosition(gamePositions[currentIndex], 12);
     }
-  }, [currentIndex, gamePositions, isReady, analyzePosition, stopThinking]);
+  }, [currentIndex, gamePositions, isReady, analyzePosition]);
 
   useEffect(() => {
     if (!isPlaying || currentIndex >= gamePositions.length - 1) return;

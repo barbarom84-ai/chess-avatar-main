@@ -119,6 +119,7 @@ function orderedHeaderEntries(h: Record<string, string>): [string, string][] {
  * Avoids `%eval`, brackets, and `%` — those commonly crash or confuse legacy PGN scanners.
  */
 function buildDesktopFriendlyComment(rm: ReviewedMove): string {
+  if (rm.isBook) return "{Book}";
   const cls =
     rm.classification.charAt(0).toUpperCase() + rm.classification.slice(1);
   if (

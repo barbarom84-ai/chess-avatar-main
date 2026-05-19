@@ -24,7 +24,7 @@ function isValidFen(fen: unknown): fen is string {
  * GET ?fen=...&pool=masters|lichess
  */
 export async function GET(request: NextRequest) {
-  const limited = rateLimit(request, { windowMs: 60_000, max: 30 });
+  const limited = await rateLimit(request, { windowMs: 60_000, max: 30 });
   if (!limited.ok) {
     return NextResponse.json(
       { error: "RATE_LIMITED" },

@@ -6,6 +6,20 @@ Votre bot peut maintenant jouer des ouvertures spécifiques plutôt que de toujo
 
 ---
 
+## 📚 Base de données locale (théorie / review)
+
+Le projet fusionne le noyau `openings-library`, les partitions JSON (`lib/data/openings/partitions/`) et l’import Lichess (~3 700 lignes nommées, jusqu’à ~29 coups).
+
+Pour régénérer après mise à jour du dépôt Lichess :
+
+```bash
+npm run openings:refresh
+```
+
+(`openings:import-lichess` + `build:opening-index`)
+
+---
+
 ## 📚 Fonctionnement
 
 ### Phase 1 : Ouverture (Coups 1-15)

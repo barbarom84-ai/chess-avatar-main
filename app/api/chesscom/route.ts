@@ -19,7 +19,7 @@ interface ChessComArchiveGame {
 const ARCHIVE_FETCH_CONCURRENCY = 4;
 
 export async function GET(request: NextRequest) {
-  const limited = rateLimit(request, { windowMs: 60_000, max: 30 });
+  const limited = await rateLimit(request, { windowMs: 60_000, max: 30 });
   if (!limited.ok) {
     return NextResponse.json(
       { error: "Too many requests" },

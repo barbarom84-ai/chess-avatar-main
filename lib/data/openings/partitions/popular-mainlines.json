@@ -1,0 +1,130 @@
+[
+  {
+    "id": "ruy-lopez-morphy-closed",
+    "name": "Ruy Lopez : fermée (7...a6 Morphy)",
+    "nameEn": "Ruy Lopez: Closed (7...a6 Morphy)",
+    "eco": "C84",
+    "moves": "1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O Be7 6. Re1 b5 7. Bb3 d6 8. c3 O-O 9. h3",
+    "uciMoves": [
+      "e2e4", "e7e5", "g1f3", "b8c6", "f1b5", "a7a6", "b5a4", "g8f6",
+      "e1g1", "f8e7", "f1e1", "b7b5", "a4b3", "d7d6", "c2c3", "e8g8", "h2h3"
+    ],
+    "character": "classical",
+    "difficulty": 4,
+    "popularity": 5,
+    "color": "both",
+    "tags": ["e4", "ruy-lopez", "mainline", "deep"]
+  },
+  {
+    "id": "sicilian-najdorf-classical",
+    "name": "Sicilienne Najdorf : 6.Bg5 e6 7.f4",
+    "nameEn": "Sicilian Najdorf: 6.Bg5 e6 7.f4",
+    "eco": "B97",
+    "moves": "1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 a6 6. Bg5 e6 7. f4",
+    "uciMoves": [
+      "e2e4", "c7c5", "g1f3", "d7d6", "d2d4", "c5d4", "f3d4", "g8f6",
+      "b1c3", "a7a6", "c1g5", "e7e6", "f2f4"
+    ],
+    "character": "tactical",
+    "difficulty": 5,
+    "popularity": 5,
+    "color": "both",
+    "tags": ["e4", "sicilian", "najdorf", "mainline", "deep"]
+  },
+  {
+    "id": "qgd-exchange-symmetrical",
+    "name": "Gambit Dame refusé : échange (8...Nbd7)",
+    "nameEn": "QGD Exchange: 8...Nbd7",
+    "eco": "D35",
+    "moves": "1. d4 d5 2. c4 e6 3. Nc3 Nf6 4. cxd5 exd5 5. Bg5 Be7 6. e3 O-O 7. Bd3 Nbd7 8. Nge2",
+    "uciMoves": [
+      "d2d4", "d7d5", "c2c4", "e7e6", "b1c3", "g8f6", "c4d5", "e6d5",
+      "c1g5", "f8e7", "e2e3", "e8g8", "f1d3", "b8d7", "g1e2"
+    ],
+    "character": "positional",
+    "difficulty": 3,
+    "popularity": 4,
+    "color": "both",
+    "tags": ["d4", "qgd", "mainline", "deep"]
+  },
+  {
+    "id": "kings-indian-classical-main",
+    "name": "Indienne du Roi : 7...O-O 8.Be2",
+    "nameEn": "King's Indian: 7...O-O 8.Be2",
+    "eco": "E94",
+    "moves": "1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6 5. Nf3 O-O 6. Be2 e5 7. O-O Nc6 8. d5",
+    "uciMoves": [
+      "d2d4", "g8f6", "c2c4", "g7g6", "b1c3", "f8g7", "e2e4", "d7d6",
+      "g1f3", "e8g8", "f1e2", "e7e5", "e1g1", "b8c6", "d4d5"
+    ],
+    "character": "aggressive",
+    "difficulty": 4,
+    "popularity": 4,
+    "color": "both",
+    "tags": ["d4", "kings-indian", "mainline", "deep"]
+  },
+  {
+    "id": "english-symmetrical-four-knights",
+    "name": "Anglaise symétrique : quatre cavaliers",
+    "nameEn": "English Symmetrical: Four Knights",
+    "eco": "A35",
+    "moves": "1. c4 c5 2. Nc3 Nc6 3. Nf3 Nf6 4. g3 g6 5. Bg2 Bg7 6. O-O O-O",
+    "uciMoves": [
+      "c2c4", "c7c5", "b1c3", "b8c6", "g1f3", "g8f6", "g2g3", "g7g6",
+      "f1g2", "f8g7", "e1g1", "e8g8"
+    ],
+    "character": "balanced",
+    "difficulty": 3,
+    "popularity": 3,
+    "color": "both",
+    "tags": ["c4", "english", "mainline", "deep"]
+  },
+  {
+    "id": "caro-kann-classical-main",
+    "name": "Caro-Kann classique : 4...Bf5",
+    "nameEn": "Caro-Kann Classical: 4...Bf5",
+    "eco": "B18",
+    "moves": "1. e4 c6 2. d4 d5 3. Nc3 dxe4 4. Nxe4 Bf5 5. Ng3 Bg6 6. h4 h6 7. Nf3 Nd7",
+    "uciMoves": [
+      "e2e4", "c7c6", "d2d4", "d7d5", "b1c3", "d5e4", "c3e4", "c8f5",
+      "e4g3", "f5g6", "h2h4", "h7h6", "g1f3", "b8d7"
+    ],
+    "character": "defensive",
+    "difficulty": 3,
+    "popularity": 4,
+    "color": "both",
+    "tags": ["e4", "caro-kann", "mainline", "deep"]
+  },
+  {
+    "id": "french-winawer-main",
+    "name": "Française Winawer : 5...cxd4",
+    "nameEn": "French Winawer: 5...cxd4",
+    "eco": "C16",
+    "moves": "1. e4 e6 2. d4 d5 3. Nc3 Bb4 4. e5 c5 5. a3 Bxc3+ 6. bxc3 Ne7 7. Qg4",
+    "uciMoves": [
+      "e2e4", "e7e6", "d2d4", "d7d5", "b1c3", "f8b4", "e4e5", "c7c5",
+      "a2a3", "b4c3", "b2c3", "g8e7", "d1g4"
+    ],
+    "character": "tactical",
+    "difficulty": 4,
+    "popularity": 4,
+    "color": "both",
+    "tags": ["e4", "french", "winawer", "mainline", "deep"]
+  },
+  {
+    "id": "nimzo-indian-rubinstein",
+    "name": "Nimzo-indienne : 4.e3 (Rubinstein)",
+    "nameEn": "Nimzo-Indian: 4.e3 Rubinstein",
+    "eco": "E46",
+    "moves": "1. d4 Nf6 2. c4 e6 3. Nc3 Bb4 4. e3 O-O 5. Bd3 d5 6. Nf3 c5 7. O-O Nc6",
+    "uciMoves": [
+      "d2d4", "g8f6", "c2c4", "e7e6", "b1c3", "f8b4", "e2e3", "e8g8",
+      "f1d3", "d7d5", "g1f3", "c7c5", "e1g1", "b8c6"
+    ],
+    "character": "positional",
+    "difficulty": 4,
+    "popularity": 4,
+    "color": "both",
+    "tags": ["d4", "nimzo", "mainline", "deep"]
+  }
+]

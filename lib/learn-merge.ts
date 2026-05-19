@@ -223,10 +223,10 @@ export function syntheticLessonFromOpening(o: Opening): OpeningLesson {
         ];
 
   const descFr =
-    o.description.trim() ||
+    (o.description ?? "").trim() ||
     `Ouverture « ${o.name} » (${o.eco}) — fiche du répertoire agrégé.`;
   const descEn =
-    (o.descriptionEn ?? o.description).trim() ||
+    (o.descriptionEn ?? o.description ?? "").trim() ||
     `Opening "${o.nameEn ?? o.name}" (${o.eco}) — aggregated repertoire card.`;
 
   return {

@@ -13,16 +13,24 @@ import { Chess } from "chess.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(__dirname, "..");
-const outPath = path.join(root, "lib", "data", "openings", "partitions", "lichess-named-openings.json");
+const outPath = path.join(
+  root,
+  "lib",
+  "data",
+  "openings",
+  "partitions",
+  "lichess-named-openings.json"
+);
 
 const BASE =
   "https://raw.githubusercontent.com/lichess-org/chess-openings/master";
 const FILES = ["a.tsv", "b.tsv", "c.tsv", "d.tsv", "e.tsv"];
 
 const MIN_PLIES = 2;
-const MAX_PLIES = 24;
-/** Garde une ligne par position (UCI) ; au-delà, ignore les doublons. */
-const MAX_UNIQUE_LINES = 900;
+/** Profondeur max par ligne (lignes nommées Lichess). */
+const MAX_PLIES = 32;
+/** 0 = garder toutes les lignes uniques du dépôt. */
+const MAX_UNIQUE_LINES = 0;
 
 function stripPgnNoise(s) {
   return s
@@ -129,7 +137,11 @@ async function main() {
     }
   }
 
-  const rows = Array.from(byUci.values()).slice(0, MAX_UNIQUE_LINES);
+  let rows = Array.from(byUci.values());
+  rows.sort((a, b) => b.uci.length - a.uci.length || a.eco.localeCompare(b.eco));
+  if (MAX_UNIQUE_LINES > 0) {
+    rows = rows.slice(0, MAX_UNIQUE_LINES);
+  }
 
   const usedIds = new Set();
   const openings = [];
@@ -146,16 +158,21 @@ async function main() {
 
   fs.mkdirSync(path.dirname(outPath), { recursive: true });
   fs.writeFileSync(outPath, JSON.stringify(openings, null, 2) + "\n", "utf8");
+
+  const plies = openings.map((o) => o.uciMoves.length);
+  const maxPly = Math.max(...plies);
+  const ge20 = plies.filter((n) => n >= 20).length;
   console.log(
     "Wrote",
     outPath,
-    "unique openings:",
+    "openings:",
     openings.length,
-    "(from",
-    lines.length,
-    "TSV rows,",
-    byUci.size,
-    "unique UCI)",
+    "| max plies:",
+    maxPly,
+    "| lines >= 20 plies:",
+    ge20,
+    "| TSV rows:",
+    lines.length
   );
 }
 

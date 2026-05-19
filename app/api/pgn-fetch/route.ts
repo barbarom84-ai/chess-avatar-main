@@ -197,7 +197,7 @@ async function fetchWithSizeCap(url: string, headers: Record<string, string> | u
 }
 
 export async function POST(req: NextRequest) {
-  const limited = rateLimit(req, { windowMs: 60_000, max: 30 });
+  const limited = await rateLimit(req, { windowMs: 60_000, max: 30 });
   if (!limited.ok) {
     return NextResponse.json(
       { error: "Too many requests" },

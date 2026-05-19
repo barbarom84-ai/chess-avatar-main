@@ -136,7 +136,7 @@ function buildPrompt(req: ExplainRequest): { system: string; user: string } {
 }
 
 export async function POST(req: NextRequest) {
-  const limited = rateLimit(req, { windowMs: 60_000, max: 20 });
+  const limited = await rateLimit(req, { windowMs: 60_000, max: 20 });
   if (!limited.ok) {
     return NextResponse.json(
       { error: "RATE_LIMITED" satisfies ExplainErrorCode },

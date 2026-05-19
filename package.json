@@ -7,6 +7,7 @@
     "build": "next build --webpack",
     "build:opening-index": "node scripts/build-opening-fen-index.mjs",
     "openings:import-lichess": "node scripts/import-lichess-openings.mjs",
+    "openings:refresh": "node scripts/import-lichess-openings.mjs && node scripts/build-opening-fen-index.mjs",
     "pgn:count-games": "node scripts/count-pgn-games.mjs",
     "pgn:split-chunks": "node scripts/split-pgn-chunks.mjs",
     "index-community-puzzles": "tsx scripts/index-community-puzzles.ts",

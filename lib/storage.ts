@@ -3,6 +3,7 @@
  */
 
 import type { EngineConfig } from './analysis';
+import { normalizeEngineConfigForcedLines } from './forced-line-utils';
 import { normalizeEnginePlatform } from './normalize-engine-platform';
 
 const STORAGE_KEY = 'chess_persona_configs';
@@ -33,7 +34,7 @@ export function saveConfig(config: EngineConfig, customName?: string): string {
     
     const savedConfig: SavedConfig = {
       id,
-      config,
+      config: normalizeEngineConfigForcedLines(config),
       savedAt: Date.now(),
       customName: customName || config.name,
     };
@@ -59,8 +60,12 @@ export function getSavedConfigs(): SavedConfig[] {
     if (!stored) return [];
     
     const configs: SavedConfig[] = JSON.parse(stored);
-    // Trier par date (plus récent en premier)
-    return configs.sort((a, b) => b.savedAt - a.savedAt);
+    return configs
+      .map((entry) => ({
+        ...entry,
+        config: normalizeEngineConfigForcedLines(entry.config),
+      }))
+      .sort((a, b) => b.savedAt - a.savedAt);
   } catch (error) {
     console.error('Erreur lors de la récupération:', error);
     return [];
@@ -106,7 +111,7 @@ export function saveRecentConfig(config: EngineConfig): void {
     const filtered = recent.filter((c) => engineConfigIdentity(c.config) !== id);
     filtered.unshift({
       id: `recent_${Date.now()}`,
-      config,
+      config: normalizeEngineConfigForcedLines(config),
       savedAt: Date.now(),
     });
 

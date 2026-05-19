@@ -71,7 +71,7 @@ async function tryLegacyPoolScan(admin: SupabaseClient): Promise<CloudPuzzlePayl
 }
 
 export async function GET(request: NextRequest) {
-  const limited = rateLimit(request, { windowMs: 60_000, max: 30 });
+  const limited = await rateLimit(request, { windowMs: 60_000, max: 30 });
   if (!limited.ok) {
     return NextResponse.json(
       { error: "Too many requests" },

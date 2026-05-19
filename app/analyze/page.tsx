@@ -26,6 +26,7 @@ import {
 } from "@/lib/analysis";
 import { useLanguage } from "@/lib/language-context";
 import { setReviewSessionFromAnalyze } from "@/lib/review-session";
+import { scheduleIdleWork } from "@/lib/schedule-idle";
 
 // Import Dynamique de l'échiquier (pour éviter le bug SSR)
 const GameViewer = dynamic(() => import("@/components/GameViewer"), {
@@ -105,10 +106,17 @@ export default function AnalyzePage() {
       setGames(gamesData);
       setSelectedGame(gamesData[0]);
 
-      // 2. LANCEMENT DE L'INTELLIGENCE
-      const analysis = analyzePersona(gamesData, username, avatarUrl, detectedPlatform);
-      setPersonaStats(analysis.stats);
-      setEngineConfig(analysis.config);
+      // 2. Analyse persona hors chemin critique (évite de bloquer le thread UI)
+      scheduleIdleWork(() => {
+        const analysis = analyzePersona(
+          gamesData,
+          username,
+          avatarUrl,
+          detectedPlatform
+        );
+        setPersonaStats(analysis.stats);
+        setEngineConfig(analysis.config);
+      });
 
     } catch (err: unknown) {
       const message =

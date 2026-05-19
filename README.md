@@ -77,6 +77,7 @@ Ouvrez [http://localhost:3000](http://localhost:3000) pour commencer !
 - 🛠️ [**SUPABASE_SETUP.md**](./SUPABASE_SETUP.md) — Configuration Supabase
 - 🚀 [**DEPLOIEMENT_GUIDE.md**](./DEPLOIEMENT_GUIDE.md) — Déploiement Vercel
 - 📋 [**spec.md**](./spec.md) — Spécifications (MVP historique)
+- 🔒 [**docs/STOCKFISH_SECURITY.md**](./docs/STOCKFISH_SECURITY.md) — Stockfish Worker & CSP
 
 ## 🎯 Guide d'Utilisation
 

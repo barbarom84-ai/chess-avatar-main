@@ -8,7 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import LichessPuzzlePlayer from "@/components/LichessPuzzlePlayer";
 import MoveChallengeCard from "@/components/learn/MoveChallengeCard";
 import { useLanguage } from "@/lib/language-context";
-import type { NormalizedLichessPuzzle } from "@/lib/lichess-puzzle";
+import {
+  normalizeLichessPuzzlePayload,
+  type NormalizedLichessPuzzle,
+} from "@/lib/lichess-puzzle";
 import type { HistoricalGame } from "@/lib/opening-lessons";
 import { pickLocalized } from "@/lib/opening-lessons";
 import type { CloudPuzzlePayload } from "@/lib/cloud-puzzle";
@@ -102,7 +105,13 @@ export default function PuzzlesPageClient({
         return;
       }
       const data: unknown = await res.json();
-      setDaily(data as NormalizedLichessPuzzle);
+      const puzzle = normalizeLichessPuzzlePayload(data);
+      if (!puzzle) {
+        setDailyError(p.dailyError);
+        setDaily(null);
+        return;
+      }
+      setDaily(puzzle);
     } catch {
       setDailyError(p.dailyError);
       setDaily(null);
@@ -195,7 +204,13 @@ export default function PuzzlesPageClient({
         return;
       }
       const data: unknown = await res.json();
-      setRandom(data as NormalizedLichessPuzzle);
+      const puzzle = normalizeLichessPuzzlePayload(data);
+      if (!puzzle) {
+        setRandomError(p.randomError);
+        setRandom(null);
+        return;
+      }
+      setRandom(puzzle);
     } catch {
       setRandomError(p.randomError);
       setRandom(null);

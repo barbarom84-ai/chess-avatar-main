@@ -2,7 +2,7 @@
 
 /**
  * Singleton Stockfish Web Worker with a serialized command queue.
- * All consumers share one WASM instance to reduce memory and avoid listener races.
+ * Each queued task registers onLine, sends position/go, and completes on bestmove.
  */
 
 const DEBUG =
@@ -10,6 +10,12 @@ const DEBUG =
   (window as unknown as { __CHESS_DEBUG?: boolean }).__CHESS_DEBUG;
 
 type QueueTask = () => Promise<void>;
+
+export type StockfishSearchCtx<T> = {
+  send: (cmd: string) => void;
+  stop: () => void;
+  onLine: (handler: (line: string) => T | undefined) => void;
+};
 
 class StockfishClient {
   private worker: Worker | null = null;
@@ -19,6 +25,7 @@ class StockfishClient {
   private running = false;
   private refCount = 0;
   private readyWaiters: Array<(ok: boolean) => void> = [];
+  private idleEvalHandler: ((line: string) => void) | null = null;
 
   acquire(): void {
     this.refCount += 1;
@@ -34,6 +41,10 @@ class StockfishClient {
     return this.ready;
   }
 
+  get isSearchRunning(): boolean {
+    return this.running;
+  }
+
   private initWorker(): void {
     if (this.worker) return;
     try {
@@ -44,6 +55,7 @@ class StockfishClient {
         const message = e.data;
         if (typeof message !== "string") return;
         if (DEBUG) console.log("Stockfish:", message);
+
         if (message.includes("uciok")) worker.postMessage("isready");
         if (message.includes("readyok")) {
           this.ready = true;
@@ -54,6 +66,11 @@ class StockfishClient {
           const waiters = this.readyWaiters.splice(0);
           waiters.forEach((w) => w(true));
           this.drainQueue();
+          return;
+        }
+
+        if (!this.running && this.idleEvalHandler) {
+          this.idleEvalHandler(message);
         }
       };
 
@@ -70,6 +87,7 @@ class StockfishClient {
     this.taskQueue = [];
     this.running = false;
     this.messageQueue = [];
+    this.idleEvalHandler = null;
     this.ready = false;
     if (this.worker) {
       this.worker.terminate();
@@ -104,57 +122,96 @@ class StockfishClient {
     this.sendCommand("stop");
   }
 
+  /** Low-priority eval for UI. Skipped while a queued search runs. */
+  requestIdleAnalysis(
+    fen: string,
+    depth: number,
+    onLine: (line: string) => void
+  ): void {
+    if (!this.ready || this.running) return;
+    if (this.idleEvalHandler) {
+      this.stop();
+    }
+    let goSent = false;
+    this.idleEvalHandler = (line) => {
+      if (!goSent && line.startsWith("bestmove")) return;
+      onLine(line);
+      if (line.startsWith("bestmove")) {
+        this.idleEvalHandler = null;
+      }
+    };
+    this.sendCommand(`position fen ${fen}`);
+    this.sendCommand(`go depth ${depth}`);
+    goSent = true;
+  }
+
   /**
-   * Run one engine interaction at a time. The handler receives each UCI line
-   * and returns a value when the interaction is complete (typically on bestmove).
+   * Run one engine search at a time. `run` must call `onLine` then send `go`;
+   * do not return a Promise from `run` — completion is signaled via `onLine`.
    */
-  enqueue<T>(
-    run: (ctx: {
-      send: (cmd: string) => void;
-      stop: () => void;
-      onLine: (handler: (line: string) => T | undefined) => void;
-    }) => Promise<T>
-  ): Promise<T> {
+  enqueue<T>(run: (ctx: StockfishSearchCtx<T>) => void): Promise<T> {
     return new Promise((resolve, reject) => {
       const task: QueueTask = async () => {
         if (!this.worker || !this.ready) {
           reject(new Error("Stockfish not ready"));
           return;
         }
+
+        this.idleEvalHandler = null;
+        this.sendCommand("stop");
+
         let settled = false;
+        let goSent = false;
         let lineHandler: ((line: string) => T | undefined) | null = null;
+
+        const finish = (result: T) => {
+          if (settled) return;
+          settled = true;
+          this.worker?.removeEventListener("message", listener);
+          resolve(result);
+        };
+
+        const fail = (err: Error) => {
+          if (settled) return;
+          settled = true;
+          this.worker?.removeEventListener("message", listener);
+          reject(err);
+        };
 
         const listener = (e: MessageEvent) => {
           const message = e.data;
           if (typeof message !== "string" || !lineHandler) return;
+
+          if (!goSent && message.startsWith("bestmove")) {
+            return;
+          }
+
           const result = lineHandler(message);
-          if (result !== undefined && !settled) {
-            settled = true;
-            this.worker?.removeEventListener("message", listener);
-            resolve(result);
+          if (result !== undefined) {
+            finish(result);
           }
         };
 
         this.worker.addEventListener("message", listener);
 
+        const ctx: StockfishSearchCtx<T> = {
+          send: (cmd) => {
+            if (cmd.startsWith("go ")) goSent = true;
+            this.sendCommand(cmd);
+          },
+          stop: () => this.stop(),
+          onLine: (handler) => {
+            lineHandler = handler;
+          },
+        };
+
         try {
-          await run({
-            send: (cmd) => this.sendCommand(cmd),
-            stop: () => this.stop(),
-            onLine: (handler) => {
-              lineHandler = handler;
-            },
-          });
-          if (!settled) {
-            this.worker?.removeEventListener("message", listener);
-            reject(new Error("Stockfish search ended without result"));
+          run(ctx);
+          if (!lineHandler) {
+            fail(new Error("Stockfish search missing onLine handler"));
           }
         } catch (err) {
-          if (!settled) {
-            settled = true;
-            this.worker?.removeEventListener("message", listener);
-            reject(err);
-          }
+          fail(err instanceof Error ? err : new Error(String(err)));
         }
       };
 
@@ -188,22 +245,16 @@ export async function stockfishGetBestMoveForFen(
   depth: number
 ): Promise<string> {
   return stockfishClient.enqueue((ctx) => {
-    return new Promise((resolve, reject) => {
-      ctx.onLine((line) => {
-        if (line.startsWith("bestmove")) {
-          const parts = line.split(/\s+/);
-          return parts[1] ?? "";
-        }
-        return undefined;
-      });
-      ctx.stop();
-      ctx.send(`position fen ${fen}`);
-      ctx.send(`go depth ${depth}`);
-      setTimeout(() => {
-        if (!stockfishClient.isReady) reject(new Error("Stockfish not ready"));
-        else ctx.stop();
-      }, 30_000);
+    ctx.onLine((line) => {
+      if (line.startsWith("bestmove")) {
+        const parts = line.split(/\s+/);
+        return parts[1] ?? "";
+      }
+      return undefined;
     });
+    ctx.send(`position fen ${fen}`);
+    ctx.send(`go depth ${depth}`);
+    setTimeout(() => ctx.stop(), 30_000);
   });
 }
 
@@ -212,46 +263,43 @@ export async function stockfishGetBestMoveAndEval(
   depth: number
 ): Promise<BestMoveAndEvalResult> {
   return stockfishClient.enqueue((ctx) => {
-    return new Promise((resolve) => {
-      let lastEvalPawns: number | null = null;
-      let isMate = false;
-      let lastMateInMoves: number | null = null;
+    let lastEvalPawns: number | null = null;
+    let isMate = false;
+    let lastMateInMoves: number | null = null;
 
-      ctx.onLine((line) => {
-        if (line.includes("score cp")) {
-          const match = line.match(/score cp (-?\d+)/);
-          if (match) {
-            lastEvalPawns = parseInt(match[1], 10) / 100;
-            isMate = false;
-            lastMateInMoves = null;
-          }
+    ctx.onLine((line) => {
+      if (line.includes("score cp")) {
+        const match = line.match(/score cp (-?\d+)/);
+        if (match) {
+          lastEvalPawns = parseInt(match[1], 10) / 100;
+          isMate = false;
+          lastMateInMoves = null;
         }
-        if (line.includes("score mate")) {
-          const match = line.match(/score mate (-?\d+)/);
-          if (match) {
-            const mateIn = parseInt(match[1], 10);
-            lastEvalPawns = mateIn > 0 ? 10 : -10;
-            isMate = true;
-            lastMateInMoves = mateIn;
-          }
+      }
+      if (line.includes("score mate")) {
+        const match = line.match(/score mate (-?\d+)/);
+        if (match) {
+          const mateIn = parseInt(match[1], 10);
+          lastEvalPawns = mateIn > 0 ? 10 : -10;
+          isMate = true;
+          lastMateInMoves = mateIn;
         }
-        if (line.startsWith("bestmove")) {
-          const parts = line.split(/\s+/);
-          return {
-            move: parts[1] ?? "",
-            evalPawns: lastEvalPawns ?? 0,
-            isMate: isMate || undefined,
-            mateInMoves: lastMateInMoves ?? undefined,
-          };
-        }
-        return undefined;
-      });
-
-      ctx.stop();
-      ctx.send(`position fen ${fen}`);
-      ctx.send(`go depth ${depth}`);
-      setTimeout(() => ctx.stop(), 30_000);
+      }
+      if (line.startsWith("bestmove")) {
+        const parts = line.split(/\s+/);
+        return {
+          move: parts[1] ?? "",
+          evalPawns: lastEvalPawns ?? 0,
+          isMate: isMate || undefined,
+          mateInMoves: lastMateInMoves ?? undefined,
+        };
+      }
+      return undefined;
     });
+
+    ctx.send(`position fen ${fen}`);
+    ctx.send(`go depth ${depth}`);
+    setTimeout(() => ctx.stop(), 30_000);
   });
 }
 
@@ -260,21 +308,19 @@ export async function stockfishGetPositionEvaluation(
   depth: number
 ): Promise<number> {
   return stockfishClient.enqueue((ctx) => {
-    return new Promise((resolve) => {
-      let lastEval: number | null = null;
-      ctx.onLine((line) => {
-        if (line.includes("score cp")) {
-          const match = line.match(/score cp (-?\d+)/);
-          if (match) lastEval = parseInt(match[1], 10) / 100;
-        }
-        if (line.startsWith("bestmove")) {
-          return lastEval ?? 0;
-        }
-        return undefined;
-      });
-      ctx.send(`position fen ${fen}`);
-      ctx.send(`go depth ${depth}`);
-      setTimeout(() => ctx.stop(), 30_000);
+    let lastEval: number | null = null;
+    ctx.onLine((line) => {
+      if (line.includes("score cp")) {
+        const match = line.match(/score cp (-?\d+)/);
+        if (match) lastEval = parseInt(match[1], 10) / 100;
+      }
+      if (line.startsWith("bestmove")) {
+        return lastEval ?? 0;
+      }
+      return undefined;
     });
+    ctx.send(`position fen ${fen}`);
+    ctx.send(`go depth ${depth}`);
+    setTimeout(() => ctx.stop(), 30_000);
   });
 }

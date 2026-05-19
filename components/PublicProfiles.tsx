@@ -39,6 +39,7 @@ import ProfileDetailsModal from "./ProfileDetailsModal";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { VirtualScroll } from "@/components/ui/virtual-scroll";
 
 const LIBRARY_STORAGE_PLATFORM = "chess-avatar.library.platform";
 const LIBRARY_STORAGE_DEDUPE = "chess-avatar.library.dedupe";
@@ -450,10 +451,15 @@ export default function PublicProfiles() {
             </AlertDescription>
           </Alert>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[600px] overflow-y-auto">
-            {profiles.map((profile) => (
-              <Card 
-                key={profile.id}
+          <VirtualScroll
+            className="space-y-3"
+            items={profiles}
+            itemHeight={220}
+            maxHeight={600}
+            threshold={24}
+            getKey={(profile) => profile.id}
+            renderItem={(profile) => (
+              <Card
                 className="bg-slate-950 border-slate-800 hover:border-purple-700 transition-colors"
               >
                 <CardContent className="p-4 space-y-3">
@@ -556,8 +562,8 @@ export default function PublicProfiles() {
                   </div>
                 </CardContent>
               </Card>
-            ))}
-          </div>
+            )}
+          />
         )}
       </CardContent>
 
