@@ -56,7 +56,7 @@ const REVIEW_EMOJI_CHOICES = ["💡", "🔥", "❓", "!!", "!?", "⭐", "👍", 
 const POST_GAME_REVIEW_DEPTH = 14;
 
 /** Live evaluation bar depth during play (single Stockfish worker). */
-const LIVE_EVAL_DEPTH = 12;
+const LIVE_EVAL_DEPTH = 10;
 
 /**
  * Heuristic display ELO: performance rating plus accuracy vs baseline (~70 from analysis curve).
@@ -261,17 +261,20 @@ export default function PlayableChessboard({
     const fen = game.fen();
     const id = ++liveEvalRequestRef.current;
     let cancelled = false;
-    getPositionEvaluation(fen, LIVE_EVAL_DEPTH)
-      .then((v) => {
-        if (cancelled || id !== liveEvalRequestRef.current) return;
-        setLiveEval(v);
-      })
-      .catch(() => {
-        if (cancelled || id !== liveEvalRequestRef.current) return;
-        setLiveEval(null);
-      });
+    const timer = setTimeout(() => {
+      getPositionEvaluation(fen, LIVE_EVAL_DEPTH)
+        .then((v) => {
+          if (cancelled || id !== liveEvalRequestRef.current) return;
+          setLiveEval(v);
+        })
+        .catch(() => {
+          if (cancelled || id !== liveEvalRequestRef.current) return;
+          setLiveEval(null);
+        });
+    }, 400);
     return () => {
       cancelled = true;
+      clearTimeout(timer);
     };
   }, [
     showEvalBar,

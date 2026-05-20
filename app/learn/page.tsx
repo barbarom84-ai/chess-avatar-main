@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { BookOpen, Filter, LayoutGrid, Library, Shield } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,7 +14,10 @@ import { lessonWithMergedOpening } from "@/lib/learn-merge";
 import { useLearnCatalog } from "@/hooks/useLearnCatalog";
 import { useSuperUser } from "@/hooks/useSuperUser";
 import OpeningLevelBadge from "@/components/learn/OpeningLevelBadge";
-import { getAggregatedOpenings } from "@/lib/openings-registry";
+import {
+  ensureOpeningsPartitionsLoaded,
+  getAggregatedOpenings,
+} from "@/lib/openings-registry";
 import { getOpeningName, type Opening } from "@/lib/openings-library";
 
 type ColorFilter = "all" | "white" | "black" | "both";
@@ -33,6 +36,10 @@ function dedupeOpeningsByFirstId(openings: Opening[]): Opening[] {
 
 export default function LearnHubPage() {
   const { lang, t } = useLanguage();
+
+  useEffect(() => {
+    void ensureOpeningsPartitionsLoaded();
+  }, []);
   const { catalog, loading: catalogLoading } = useLearnCatalog();
   const { isSuperUser, loading: superLoading } = useSuperUser();
   const [search, setSearch] = useState("");

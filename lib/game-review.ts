@@ -6,7 +6,7 @@ import {
   type MoveEvalInput,
   type GameAccuracyResult,
 } from "./analysis-engine";
-import { computeOpeningByPly } from "./openings-registry";
+import { computeOpeningByPly, isStrictBookPly } from "./openings-registry";
 import {
   type AnalysisStrictnessId,
   getAnalysisProfile,
@@ -417,7 +417,8 @@ export async function analyzeParsedGameForReview(
     const uci = parsed.uci[ply];
     const sideToMove = parsed.sideToMove[ply];
 
-    if (openingByPly[ply]) {
+    const bookOpening = openingByPly[ply];
+    if (isStrictBookPly(bookOpening, parsed.uci, ply)) {
       const reviewed = buildBookTheoryReviewedMove(
         { ply, san, uci, sideToMove, evalWhitePawns: evalWhiteCarry },
         analysisStrictness
@@ -450,7 +451,10 @@ export async function analyzeParsedGameForReview(
         isMatePlayer = false;
         playerMateInMovesWhite = undefined;
       } else {
-        const afterDepth = adaptiveDepthForPly(ply + 1, totalPlies, depth, lastEvalSwing);
+        const afterDepth = Math.min(
+          adaptiveDepthForPly(ply + 1, totalPlies, depth, lastEvalSwing),
+          plyDepth
+        );
         const afterPlayer = await cachedGet(fenAfter, afterDepth);
         throwIfCancelled(signal, isCancelled);
         playerEvalPawns = normalizeToWhitePov(

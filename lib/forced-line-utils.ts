@@ -1,4 +1,4 @@
-import { getOpeningById } from "@/lib/openings-library";
+import { getOpeningByIdFromCore as getOpeningById } from "@/lib/openings-library";
 import type { EngineConfig } from "@/lib/analysis";
 import { buildFritzBlackOpeningFallback } from "@/lib/fritz-opening-fallback";
 

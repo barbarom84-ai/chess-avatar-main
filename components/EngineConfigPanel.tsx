@@ -10,7 +10,7 @@ import { Cpu, Zap, Clock, TrendingUp, Swords, Settings, RotateCcw, Sparkles, Boo
 import type { EngineConfig } from "@/lib/analysis";
 import OpeningRepertoireEditor from "./OpeningRepertoireEditor";
 import ForcedLineEditor from "./ForcedLineEditor";
-import { getOpeningById } from "@/lib/openings-library";
+import { getOpeningByIdFromCore as getOpeningById } from "@/lib/openings-library";
 import {
   deriveForcedLinesFromOpenings,
   getEditableForcedLines,

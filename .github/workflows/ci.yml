@@ -17,6 +17,13 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run lint
+      - name: Verify opening data artifacts
+        run: |
+          npm run openings:refresh
+          git diff --exit-code lib/data/openings/partitions/lichess-named-openings.json public/data/openings/fen-index.generated.json || (
+            echo "::error::Opening JSON/FEN index out of date. Run: npm run openings:refresh"
+            exit 1
+          )
       - run: npm test
       - run: npm run build
         env:

@@ -1,6 +1,7 @@
 import { Chess } from "chess.js";
 import { findBestOpeningByPrefix } from "@/lib/openings-registry";
-import { getOpeningById, getOpeningName, type Opening } from "@/lib/openings-library";
+import { getOpeningName, type Opening } from "@/lib/openings-library";
+import { getOpeningById } from "@/lib/openings-registry";
 import { describeTheoryHitsForUi } from "@/lib/opening-theory";
 
 export const PLAY_EVAL_BAR_STORAGE_KEY = "chess-avatar-play-eval-bar-visible";

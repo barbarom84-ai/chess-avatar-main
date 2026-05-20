@@ -1,20 +1,10 @@
 /**
  * Helpers pour afficher les lignes théoriques et détecter les transpositions.
- *
- * Stratégie d’élargissement de la base (sans alourdir le bundle initial) :
- * - Garder un noyau « curated » dans le repo (comme OPENINGS_DATABASE).
- * - Ajouter des fichiers JSON partitionnés (ex. eco-B.ts, eco-E.ts) importés
- *   dynamiquement via import() depuis une page dédiée ou un worker au premier usage.
- * - Pré-calculer en build un trie UCI + Map FEN compactée si la base dépasse ~500 lignes.
- * - Option avancée : charger une extension depuis un CDN (gzip) après consentement,
- *   avec cache IndexedDB — jamais bloquer le premier paint.
- * - Ne pas dupliquer Lichess entier : privilégier les lignes jouées par les utilisateurs
- *   (analytics) ou un sous-ensemble ECO par niveau.
  */
 
 import { Chess } from "chess.js";
-import { type Opening, getOpeningById } from "./openings-library";
-import { getAggregatedOpenings } from "./openings-registry";
+import { type Opening } from "./openings-library";
+import { getAggregatedOpenings, getOpeningById } from "./openings-registry";
 
 /** Partie « positionnelle » du FEN (échiquier + trait + roques + case EP). */
 export function fenPositionKey(fen: string): string {
@@ -28,7 +18,10 @@ export interface TheoryPositionHit {
   theoryStep: number;
 }
 
+const FEN_INDEX_URL = "/data/openings/fen-index.generated.json";
+
 let fenIndexCache: Map<string, TheoryPositionHit[]> | null = null;
+let fenIndexLoadPromise: Promise<void> | null = null;
 
 function buildFenTheoryIndex(): Map<string, TheoryPositionHit[]> {
   const map = new Map<string, TheoryPositionHit[]>();
@@ -59,12 +52,50 @@ function buildFenTheoryIndex(): Map<string, TheoryPositionHit[]> {
   return map;
 }
 
+function mapFromGeneratedJson(
+  raw: Record<string, TheoryPositionHit[]>
+): Map<string, TheoryPositionHit[]> {
+  return new Map(Object.entries(raw));
+}
+
+/**
+ * Précharge l’index FEN généré au build (évite de rejouer toutes les lignes UCI au runtime).
+ */
+export function preloadTheoryFenIndex(): Promise<void> {
+  if (fenIndexCache) return Promise.resolve();
+  if (fenIndexLoadPromise) return fenIndexLoadPromise;
+
+  fenIndexLoadPromise = (async () => {
+    if (typeof window !== "undefined") {
+      try {
+        const res = await fetch(FEN_INDEX_URL, { cache: "force-cache" });
+        if (res.ok) {
+          const data = (await res.json()) as Record<string, TheoryPositionHit[]>;
+          fenIndexCache = mapFromGeneratedJson(data);
+          return;
+        }
+      } catch {
+        /* fallback below */
+      }
+    }
+    fenIndexCache = buildFenTheoryIndex();
+  })();
+
+  return fenIndexLoadPromise;
+}
+
 /** Index position → lignes théoriques (pour transpositions). */
 export function getTheoryFenIndex(): Map<string, TheoryPositionHit[]> {
   if (!fenIndexCache) {
     fenIndexCache = buildFenTheoryIndex();
+    void preloadTheoryFenIndex();
   }
   return fenIndexCache;
+}
+
+export function clearTheoryFenIndexCache(): void {
+  fenIndexCache = null;
+  fenIndexLoadPromise = null;
 }
 
 export function lookupTheoryAtFen(fen: string): TheoryPositionHit[] {

@@ -1,4 +1,5 @@
-import { getOpeningById, type Opening } from "@/lib/openings-library";
+import { type Opening } from "@/lib/openings-library";
+import { getOpeningById } from "@/lib/openings-registry";
 import { attachStaticGames, loadHistoricalGames } from "@/lib/historical-games-loader";
 
 export type LocalizedString = { fr: string; en: string };

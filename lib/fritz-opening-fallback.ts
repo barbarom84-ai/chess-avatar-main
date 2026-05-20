@@ -1,5 +1,5 @@
 import type { EngineConfig, FritzBlackChoice, FritzBlackOpeningFallbackEntry } from "@/lib/analysis";
-import { getOpeningById } from "@/lib/openings-library";
+import { getOpeningById } from "@/lib/openings-registry";
 
 function normUci(uci: string): string {
   if (!uci || typeof uci !== "string") return "";

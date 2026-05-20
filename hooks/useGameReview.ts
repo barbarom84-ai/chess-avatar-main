@@ -140,6 +140,14 @@ export function useGameReview({
     setError(null);
     setStatus("running");
 
+    const pendingPartial: ReviewedMove[] = [];
+    const flushPartialMoves = (force = false) => {
+      if (pendingPartial.length === 0) return;
+      if (!force && pendingPartial.length < 3) return;
+      const batch = pendingPartial.splice(0, pendingPartial.length);
+      setMoves((prev) => [...prev, ...batch]);
+    };
+
     void runReview();
 
     async function runReview() {
@@ -151,9 +159,13 @@ export function useGameReview({
           maxPlies: totalPlies,
           analysisStrictness,
           isCancelled: () => cancelRef.current,
-          onPartialMove: (reviewed) =>
-            setMoves((prev) => [...prev, reviewed]),
+          onPartialMove: (reviewed, ply) => {
+            pendingPartial.push(reviewed);
+            const isLast = ply + 1 >= totalPlies;
+            flushPartialMoves(isLast);
+          },
         });
+        flushPartialMoves(true);
         setResult(aggregated);
         setStatus("done");
       } catch (err) {

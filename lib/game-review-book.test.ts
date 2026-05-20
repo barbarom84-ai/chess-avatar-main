@@ -4,7 +4,26 @@ import {
   buildBookTheoryReviewedMove,
   buildParsedGameFromSanHistory,
 } from "./game-review";
-import { clearAggregatedOpeningsCache, computeOpeningByPly } from "./openings-registry";
+import {
+  clearAggregatedOpeningsCache,
+  computeOpeningByPly,
+  setPartitionOpeningsForTests,
+} from "./openings-registry";
+import type { Opening } from "./openings-library";
+
+const italian: Opening = {
+  id: "book-test-italian",
+  name: "Italian",
+  eco: "C50",
+  moves: "1. e4 e5 2. Nf3 Nc6 3. Bc4",
+  uciMoves: ["e2e4", "e7e5", "g1f3", "b8c6", "f1c4"],
+  character: "classical",
+  difficulty: 2,
+  popularity: 3,
+  color: "white",
+  description: "test",
+  tags: ["test"],
+};
 
 describe("buildBookTheoryReviewedMove", () => {
   it("marks book plies with zero CPL and isBook", () => {
@@ -25,7 +44,8 @@ describe("buildBookTheoryReviewedMove", () => {
 describe("analyzeParsedGameForReview book skip", () => {
   it("does not call the engine for plies still in local theory", async () => {
     clearAggregatedOpeningsCache();
-    const parsed = buildParsedGameFromSanHistory(["e4", "e5", "Nf3"]);
+    setPartitionOpeningsForTests([italian]);
+    const parsed = buildParsedGameFromSanHistory(["e4", "e5", "Nf3", "Nc6", "Bc4"]);
     if (!parsed) {
       expect.fail("expected legal mainline");
     }
@@ -55,13 +75,31 @@ describe("analyzeParsedGameForReview book skip", () => {
     }
   });
 
-  it("returns isBook on reviewed moves in theory", async () => {
+  it("analyzes first out-of-book ply with the engine", async () => {
     clearAggregatedOpeningsCache();
-    const parsed = buildParsedGameFromSanHistory(["e4", "e5"]);
+    setPartitionOpeningsForTests([italian]);
+    const parsed = buildParsedGameFromSanHistory(["e4", "e5", "a4"]);
     if (!parsed) return;
 
-    const openingByPly = computeOpeningByPly(parsed.uci);
-    if (!openingByPly.some(Boolean)) return;
+    const engine = vi.fn(async () => ({
+      move: "a1a1",
+      evalPawns: 0.2,
+    }));
+
+    await analyzeParsedGameForReview({
+      parsed,
+      getBestMoveAndEval: engine,
+      depth: 12,
+    });
+
+    expect(engine.mock.calls.length).toBeGreaterThan(0);
+  });
+
+  it("returns isBook on reviewed moves in theory", async () => {
+    clearAggregatedOpeningsCache();
+    setPartitionOpeningsForTests([italian]);
+    const parsed = buildParsedGameFromSanHistory(["e4", "e5", "Nf3", "Nc6", "Bc4"]);
+    if (!parsed) return;
 
     const result = await analyzeParsedGameForReview({
       parsed,

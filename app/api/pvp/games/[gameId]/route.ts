@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { rateLimit } from "@/lib/rate-limit";
 import { getAuthedUserFromRequest } from "@/lib/supabase-auth-request";
 import { createServiceSupabase } from "@/lib/supabase-service";
 import type { PvpGameRow, PvpMoveRow } from "@/lib/pvp-chess";
@@ -16,6 +17,14 @@ export async function GET(
   request: NextRequest,
   context: { params: Promise<{ gameId: string }> }
 ) {
+  const limited = await rateLimit(request, { windowMs: 60_000, max: 180 });
+  if (!limited.ok) {
+    return NextResponse.json(
+      { error: "Too many requests" },
+      { status: 429, headers: { "Retry-After": String(limited.retryAfterSec) } }
+    );
+  }
+
   const user = await getAuthedUserFromRequest(request, supabaseUrl, supabaseAnonKey);
   if (!user) return jsonError("Unauthorized", 401);
 

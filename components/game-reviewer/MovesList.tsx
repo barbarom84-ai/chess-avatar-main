@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { Fragment, useMemo } from "react";
+import { Fragment, memo, useMemo } from "react";
 import { Chess, type Move, type Square as ChessSquare } from "chess.js";
 import {
   BookOpen,
@@ -184,7 +184,7 @@ function variationRowIdxForBranch(branchMainlinePly: number): number {
     : -1;
 }
 
-export function MovesList({
+function MovesListInner({
   parsed,
   moves,
   verboseMainline,
@@ -421,3 +421,5 @@ function MoveCell({
     </button>
   );
 }
+
+export const MovesList = memo(MovesListInner);

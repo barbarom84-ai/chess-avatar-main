@@ -1,6 +1,6 @@
 /**
  * Registre fusionné : noyau [`OPENINGS_DATABASE`](./openings-library.ts) + partitions JSON.
- * Ajouter de nouvelles lignes dans `lib/data/openings/partitions/` puis `npm run openings:refresh`.
+ * Partitions chargées via `import()` dynamique — `npm run openings:refresh` pour régénérer.
  */
 
 import {
@@ -8,25 +8,51 @@ import {
   type Opening,
 } from "./openings-library";
 import type { PrefixMatchResult } from "./openings-library";
-import e4Extended from "./data/openings/partitions/e4-extended.json";
-import lichessNamed from "./data/openings/partitions/lichess-named-openings.json";
-import popularMainlines from "./data/openings/partitions/popular-mainlines.json";
 
-const PARTITIONS: Opening[][] = [
-  popularMainlines as Opening[],
-  e4Extended as Opening[],
-  lichessNamed as Opening[],
-];
+let partitionOpenings: Opening[] = [];
+let partitionsLoaded = false;
+let partitionsLoadPromise: Promise<void> | null = null;
+/** Vitest: use only injected partitions (no OPENINGS_DATABASE). */
+let testOnlyPartitions = false;
 
 let aggregatedCache: Opening[] | null = null;
-/** UCI prefix key → opening with the longest line through that prefix. */
 let prefixIndexCache: Map<string, Opening> | null = null;
+
+async function loadPartitionFiles(): Promise<void> {
+  const [popular, e4, lichess] = await Promise.all([
+    import("./data/openings/partitions/popular-mainlines.json"),
+    import("./data/openings/partitions/e4-extended.json"),
+    import("./data/openings/partitions/lichess-named-openings.json"),
+  ]);
+  partitionOpenings = [
+    ...(popular.default as Opening[]),
+    ...(e4.default as Opening[]),
+    ...(lichess.default as Opening[]),
+  ];
+  partitionsLoaded = true;
+  aggregatedCache = null;
+  prefixIndexCache = null;
+}
+
+/**
+ * Charge les partitions JSON (client). Sans await, seul le noyau OPENINGS_DATABASE est visible.
+ */
+export function ensureOpeningsPartitionsLoaded(): Promise<void> {
+  if (partitionsLoaded) return Promise.resolve();
+  if (!partitionsLoadPromise) {
+    partitionsLoadPromise = loadPartitionFiles().catch((err) => {
+      partitionsLoadPromise = null;
+      console.warn("Openings partitions failed to load:", err);
+    });
+  }
+  return partitionsLoadPromise;
+}
 
 export function getAggregatedOpenings(): Opening[] {
   if (aggregatedCache) return aggregatedCache;
-  const extra = PARTITIONS.flat();
-  const merged =
-    extra.length === 0 ? [...OPENINGS_DATABASE] : [...OPENINGS_DATABASE, ...extra];
+  const merged = testOnlyPartitions
+    ? [...partitionOpenings]
+    : [...OPENINGS_DATABASE, ...partitionOpenings];
   const seen = new Set<string>();
   const out: Opening[] = [];
   for (const o of merged) {
@@ -63,6 +89,19 @@ function getPrefixIndex(): Map<string, Opening> {
 export function clearAggregatedOpeningsCache(): void {
   aggregatedCache = null;
   prefixIndexCache = null;
+  partitionOpenings = [];
+  partitionsLoaded = false;
+  partitionsLoadPromise = null;
+  testOnlyPartitions = false;
+}
+
+/** Test helper — inject partitions without dynamic import. */
+export function setPartitionOpeningsForTests(openings: Opening[]): void {
+  partitionOpenings = openings;
+  partitionsLoaded = true;
+  testOnlyPartitions = true;
+  aggregatedCache = null;
+  prefixIndexCache = null;
 }
 
 function findBestOpeningByPrefixLinear(uciMoves: string[]): PrefixMatchResult {
@@ -91,9 +130,6 @@ function findBestOpeningByPrefixLinear(uciMoves: string[]): PrefixMatchResult {
   return { opening: best, matchedPlies: bestMatch };
 }
 
-/**
- * Longest opening line matching the UCI prefix (used for book detection & UI).
- */
 export function findBestOpeningByPrefix(uciMoves: string[]): PrefixMatchResult {
   if (uciMoves.length === 0) {
     return { opening: null, matchedPlies: 0 };
@@ -118,9 +154,19 @@ export function findBestOpeningByPrefix(uciMoves: string[]): PrefixMatchResult {
 }
 
 /**
- * Per-ply opening labels for a full game — extends the previous ply’s book line when
- * possible instead of rescanning the whole prefix from scratch every time.
+ * Coup théorique strict : la ligne référence exige ce UCI à ce ply.
  */
+export function isStrictBookPly(
+  openingAtPly: Opening | null | undefined,
+  uciMoves: string[],
+  ply: number
+): boolean {
+  if (!openingAtPly) return false;
+  if (ply < 0 || ply >= uciMoves.length) return false;
+  if (ply >= openingAtPly.uciMoves.length) return false;
+  return openingAtPly.uciMoves[ply] === uciMoves[ply];
+}
+
 export function computeOpeningByPly(uciMoves: string[]): Array<Opening | null> {
   const result: Array<Opening | null> = [];
   let stillInBook = true;
@@ -142,7 +188,7 @@ export function computeOpeningByPly(uciMoves: string[]): Array<Opening | null> {
 
     const slice = uciMoves.slice(0, i + 1);
     const { opening, matchedPlies } = findBestOpeningByPrefix(slice);
-    if (opening && matchedPlies === slice.length) {
+    if (opening && matchedPlies === slice.length && isStrictBookPly(opening, uciMoves, i)) {
       active = opening;
       activeMatched = matchedPlies;
       result.push(opening);
@@ -159,4 +205,9 @@ export function computeOpeningByPly(uciMoves: string[]): Array<Opening | null> {
 
 export function detectOpening(uciMoves: string[]): Opening | null {
   return findBestOpeningByPrefix(uciMoves).opening;
+}
+
+/** Lookup by id across core + loaded partitions. */
+export function getOpeningById(id: string): Opening | undefined {
+  return getAggregatedOpenings().find((o) => o.id === id);
 }

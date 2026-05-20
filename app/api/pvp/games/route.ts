@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { rateLimit } from "@/lib/rate-limit";
 import { getAuthedUserFromRequest } from "@/lib/supabase-auth-request";
 import { createServiceSupabase } from "@/lib/supabase-service";
 import { isValidPvpTimePresetId, resolvePvpTimePreset } from "@/lib/pvp-time-controls";
@@ -13,6 +14,14 @@ function jsonError(message: string, status: number) {
 
 /** Liste des parties en attente d’un adversaire (lobbies ouverts, dernières 24 h). */
 export async function GET(request: NextRequest) {
+  const limited = await rateLimit(request, { windowMs: 60_000, max: 120 });
+  if (!limited.ok) {
+    return NextResponse.json(
+      { error: "Too many requests" },
+      { status: 429, headers: { "Retry-After": String(limited.retryAfterSec) } }
+    );
+  }
+
   const user = await getAuthedUserFromRequest(request, supabaseUrl, supabaseAnonKey);
   if (!user) return jsonError("Unauthorized", 401);
 

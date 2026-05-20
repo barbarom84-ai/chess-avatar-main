@@ -2,7 +2,7 @@
 
 /**
  * Singleton Stockfish Web Worker with a serialized command queue.
- * Each queued task registers onLine, sends position/go, and completes on bestmove.
+ * High-priority tasks (review, bot moves) run before low-priority UI eval.
  */
 
 const DEBUG =
@@ -10,6 +10,12 @@ const DEBUG =
   (window as unknown as { __CHESS_DEBUG?: boolean }).__CHESS_DEBUG;
 
 type QueueTask = () => Promise<void>;
+export type StockfishPriority = "high" | "low";
+
+type QueuedItem = {
+  task: QueueTask;
+  priority: StockfishPriority;
+};
 
 export type StockfishSearchCtx<T> = {
   send: (cmd: string) => void;
@@ -21,7 +27,7 @@ class StockfishClient {
   private worker: Worker | null = null;
   private ready = false;
   private messageQueue: string[] = [];
-  private taskQueue: QueueTask[] = [];
+  private taskQueue: QueuedItem[] = [];
   private running = false;
   private refCount = 0;
   private readyWaiters: Array<(ok: boolean) => void> = [];
@@ -122,13 +128,12 @@ class StockfishClient {
     this.sendCommand("stop");
   }
 
-  /** Low-priority eval for UI. Skipped while a queued search runs. */
   requestIdleAnalysis(
     fen: string,
     depth: number,
     onLine: (line: string) => void
   ): void {
-    if (!this.ready || this.running) return;
+    if (!this.ready || this.running || this.taskQueue.length > 0) return;
     if (this.idleEvalHandler) {
       this.stop();
     }
@@ -145,11 +150,10 @@ class StockfishClient {
     goSent = true;
   }
 
-  /**
-   * Run one engine search at a time. `run` must call `onLine` then send `go`;
-   * do not return a Promise from `run` — completion is signaled via `onLine`.
-   */
-  enqueue<T>(run: (ctx: StockfishSearchCtx<T>) => void): Promise<T> {
+  enqueue<T>(
+    run: (ctx: StockfishSearchCtx<T>) => void,
+    priority: StockfishPriority = "high"
+  ): Promise<T> {
     return new Promise((resolve, reject) => {
       const task: QueueTask = async () => {
         if (!this.worker || !this.ready) {
@@ -215,16 +219,18 @@ class StockfishClient {
         }
       };
 
-      this.taskQueue.push(task);
+      this.taskQueue.push({ task, priority });
       this.drainQueue();
     });
   }
 
   private drainQueue(): void {
     if (this.running || !this.ready || this.taskQueue.length === 0) return;
+    const highIdx = this.taskQueue.findIndex((q) => q.priority === "high");
+    const pick = highIdx >= 0 ? highIdx : 0;
+    const item = this.taskQueue.splice(pick, 1)[0]!;
     this.running = true;
-    const task = this.taskQueue.shift()!;
-    void task().finally(() => {
+    void item.task().finally(() => {
       this.running = false;
       this.drainQueue();
     });
@@ -242,7 +248,8 @@ export type BestMoveAndEvalResult = {
 
 export async function stockfishGetBestMoveForFen(
   fen: string,
-  depth: number
+  depth: number,
+  priority: StockfishPriority = "high"
 ): Promise<string> {
   return stockfishClient.enqueue((ctx) => {
     ctx.onLine((line) => {
@@ -255,12 +262,13 @@ export async function stockfishGetBestMoveForFen(
     ctx.send(`position fen ${fen}`);
     ctx.send(`go depth ${depth}`);
     setTimeout(() => ctx.stop(), 30_000);
-  });
+  }, priority);
 }
 
 export async function stockfishGetBestMoveAndEval(
   fen: string,
-  depth: number
+  depth: number,
+  priority: StockfishPriority = "high"
 ): Promise<BestMoveAndEvalResult> {
   return stockfishClient.enqueue((ctx) => {
     let lastEvalPawns: number | null = null;
@@ -300,7 +308,7 @@ export async function stockfishGetBestMoveAndEval(
     ctx.send(`position fen ${fen}`);
     ctx.send(`go depth ${depth}`);
     setTimeout(() => ctx.stop(), 30_000);
-  });
+  }, priority);
 }
 
 export async function stockfishGetPositionEvaluation(
@@ -322,5 +330,5 @@ export async function stockfishGetPositionEvaluation(
     ctx.send(`position fen ${fen}`);
     ctx.send(`go depth ${depth}`);
     setTimeout(() => ctx.stop(), 30_000);
-  });
+  }, "low");
 }

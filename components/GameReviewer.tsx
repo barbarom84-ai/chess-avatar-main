@@ -76,11 +76,13 @@ import { useCoachExplain } from "@/hooks/useCoachExplain";
 import { getOpeningName, type Opening } from "@/lib/openings-library";
 import {
   computeOpeningByPly,
+  ensureOpeningsPartitionsLoaded,
   findBestOpeningByPrefix,
 } from "@/lib/openings-registry";
 import {
   describeTheoryHitsForUi,
   getOpeningTheorySans,
+  preloadTheoryFenIndex,
   type TheoryTranspositionHit,
 } from "@/lib/opening-theory";
 import { buildVerboseHistoryFromSan } from "@/lib/move-history-verbose";
@@ -201,6 +203,11 @@ export default function GameReviewer({
   onSavedToGamesCloud,
 }: GameReviewerProps) {
   const { t, lang } = useLanguage();
+
+  useEffect(() => {
+    void ensureOpeningsPartitionsLoaded();
+    void preloadTheoryFenIndex();
+  }, []);
 
   const [analysisStrictness, setAnalysisStrictness] =
     useState<AnalysisStrictnessId>(readStoredStrictness);
@@ -749,7 +756,7 @@ export default function GameReviewer({
     return computeOpeningByPly(parsed.uci);
   }, [parsed]);
 
-  /** Ligne thÃ©orique + transpositions pour le coup courant (revue). */
+  /** Ligne théorique + transpositions pour le coup courant (revue). */
   const openingTheorySnapshot = useMemo(() => {
     if (!parsed || currentIndex === 0) return null;
     const slice = parsed.uci.slice(0, currentIndex);

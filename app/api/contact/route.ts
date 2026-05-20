@@ -1,7 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { escapeHtml } from "@/lib/html-escape";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
+  const limited = await rateLimit(req, { windowMs: 60 * 60_000, max: 8 });
+  if (!limited.ok) {
+    return NextResponse.json(
+      { error: "Too many requests" },
+      { status: 429, headers: { "Retry-After": String(limited.retryAfterSec) } }
+    );
+  }
+
   try {
     const { name, email, message } = await req.json();
 

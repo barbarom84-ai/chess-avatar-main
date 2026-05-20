@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/lib/language-context";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { getLesson } from "@/lib/opening-lessons";
-import { getOpeningById } from "@/lib/openings-library";
+import { getOpeningById } from "@/lib/openings-registry";
 import {
   minimalLesson,
   minimalOpening,

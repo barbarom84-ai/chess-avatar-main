@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { promises as fs } from "fs";
 import path from "path";
 import JSZip from "jszip";
+import { rateLimit } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -122,6 +123,14 @@ Pour plus d'infos : https://chessavatar.net/guide
 }
 
 export async function POST(req: NextRequest) {
+  const limited = await rateLimit(req, { windowMs: 60_000, max: 15 });
+  if (!limited.ok) {
+    return NextResponse.json(
+      { error: "Too many requests" },
+      { status: 429, headers: { "Retry-After": String(limited.retryAfterSec) } }
+    );
+  }
+
   try {
     const profile = await req.json();
 

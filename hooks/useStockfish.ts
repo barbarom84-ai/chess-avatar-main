@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Chess } from "chess.js";
 import type { EngineConfig } from "@/lib/analysis";
 import {
@@ -20,6 +20,7 @@ import {
   skillLevelFromDifficulty,
   uciEloFromConfig,
 } from "@/lib/persona-engine-params";
+import { debounce } from "@/lib/debounce";
 import {
   stockfishClient,
   stockfishGetBestMoveAndEval,
@@ -289,9 +290,13 @@ export function useStockfish() {
     [isReady]
   );
 
-  const analyzePosition = useCallback(
-    (fen: string, depth = 12) => {
-      if (!isReady) return;
+  const debouncedIdleEvalRef = useRef<
+    ReturnType<typeof debounce<(fen: string, depth: number) => void>> | null
+  >(null);
+
+  useEffect(() => {
+    if (!isReady) return;
+    debouncedIdleEvalRef.current = debounce((fen: string, depth: number) => {
       stockfishClient.requestIdleAnalysis(fen, depth, (line) => {
         if (line.includes("score cp")) {
           const match = line.match(/score cp (-?\d+)/);
@@ -305,6 +310,14 @@ export function useStockfish() {
           }
         }
       });
+    }, 400);
+    return () => debouncedIdleEvalRef.current?.cancel();
+  }, [isReady]);
+
+  const analyzePosition = useCallback(
+    (fen: string, depth = 10) => {
+      if (!isReady) return;
+      debouncedIdleEvalRef.current?.(fen, depth);
     },
     [isReady]
   );

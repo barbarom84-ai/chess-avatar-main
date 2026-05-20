@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 import {
   REPERTOIRE_PRESETS,
-  getOpeningById,
+  getOpeningByIdFromCore as getOpeningById,
   getOpeningsByColor,
   getOpeningName,
   getOpeningDescription,

@@ -4,6 +4,11 @@ import {
   firstPuzzleFromBatchResponse,
   normalizeLichessPuzzlePayload,
 } from "@/lib/lichess-puzzle";
+import {
+  getCachedRandomPuzzle,
+  puzzleRandomCacheKey,
+  setCachedRandomPuzzle,
+} from "@/lib/puzzle-random-cache";
 
 export async function GET(request: NextRequest) {
   const limited = await rateLimit(request, { windowMs: 60_000, max: 40 });
@@ -19,6 +24,12 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url);
   const difficulty = searchParams.get("difficulty");
+  const cacheKey = puzzleRandomCacheKey(difficulty);
+  const cached = getCachedRandomPuzzle(cacheKey);
+  if (cached) {
+    return NextResponse.json(cached);
+  }
+
   const allowed = new Set(["easiest", "easier", "normal", "harder", "hardest"]);
   const lichessUrl = new URL("https://lichess.org/api/puzzle/batch/mix");
   lichessUrl.searchParams.set("nb", "1");
@@ -71,6 +82,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Could not parse puzzle detail" }, { status: 502 });
     }
 
+    setCachedRandomPuzzle(cacheKey, puzzle);
     return NextResponse.json(puzzle);
   } catch (e) {
     console.error("[puzzles/random]", e);
