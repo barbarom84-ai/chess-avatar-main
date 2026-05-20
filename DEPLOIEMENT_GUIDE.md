@@ -162,7 +162,15 @@ The contact form sends emails via Resend through `/api/contact`.
 
 ---
 
-## 8. Pre-deploy Checklist
+## 8. Monitoring
+
+See **[MONITORING.md](MONITORING.md)** for Vercel Analytics, Sentry, PostHog, Supabase SQL queries, and the live ops dashboard at `/admin/ops` (super users).
+
+Health check endpoint: `GET /api/health` (for uptime monitors).
+
+---
+
+## 9. Pre-deploy Checklist
 
 ```
 [ ] npm run build passes with no errors
@@ -176,7 +184,7 @@ The contact form sends emails via Resend through `/api/contact`.
 
 ---
 
-## 9. Tips & Tricks
+## 10. Tips & Tricks
 
 ### Build errors after editing
 

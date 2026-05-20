@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Crown, Palette, ImageIcon, Users, Loader2, CreditCard, Sparkles, BarChart3, Brain } from "lucide-react";
 import { useLanguage } from "@/lib/language-context";
 import { supabase } from "@/lib/supabase";
+import { track } from "@/lib/track";
 
 interface UpgradeModalProps {
   open: boolean;
@@ -67,6 +68,7 @@ export default function UpgradeModal({ open, onOpenChange, userId, email, reason
       }
 
       if (data.url) {
+        track("checkout_started", { currency: selectedCurrency, reason: reason ?? "general" });
         window.location.href = data.url;
       }
     } catch (err: unknown) {

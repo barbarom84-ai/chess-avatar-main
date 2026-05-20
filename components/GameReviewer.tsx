@@ -95,6 +95,7 @@ import type { EngineConfig } from "@/lib/analysis";
 import { getRecentConfigs } from "@/lib/storage";
 import { toast } from "sonner";
 import { saveGameToCloud } from "@/lib/supabase-storage";
+import { track } from "@/lib/track";
 import {
   tryBuildCloudSavePayloadFromPgn,
   inferSavePlayerNameFromContext,
@@ -679,6 +680,7 @@ export default function GameReviewer({
         return;
       }
       toast.success(t.review.saveToCloudSuccess);
+      track("review_completed", { saved_to_cloud: true });
       try {
         if (authUserId) {
           localStorage.setItem(

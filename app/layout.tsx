@@ -6,6 +6,7 @@ import Navigation from "@/components/Navigation";
 import { ChessboardSettingsProvider } from "@/contexts/ChessboardSettingsContext";
 import { LanguageProvider } from "@/lib/language-context";
 import { Toaster } from "sonner";
+import MonitoringProviders from "@/components/MonitoringProviders";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -52,6 +53,7 @@ export default function RootLayout({
           <ChessboardSettingsProvider>
             <Navigation />
             {children}
+            <MonitoringProviders />
             <Toaster
               theme="dark"
               position="bottom-right"

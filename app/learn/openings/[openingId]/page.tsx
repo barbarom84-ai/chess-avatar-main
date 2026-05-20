@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { ArrowLeft, BookOpen, Shield } from "lucide-react";
@@ -17,6 +17,7 @@ import LessonChessboard from "@/components/learn/LessonChessboard";
 import HistoricGameSection from "@/components/learn/HistoricGameSection";
 import OpeningVariantSection from "@/components/learn/OpeningVariantSection";
 import MoveChallengeCard from "@/components/learn/MoveChallengeCard";
+import { track } from "@/lib/track";
 
 export default function OpeningLessonPage() {
   const params = useParams();
@@ -30,6 +31,12 @@ export default function OpeningLessonPage() {
     [catalog.lessons, openingId],
   );
   const [modelMoveIndex, setModelMoveIndex] = useState(0);
+
+  useEffect(() => {
+    if (lesson?.openingId) {
+      track("lesson_opened", { opening_id: lesson.openingId });
+    }
+  }, [lesson?.openingId]);
 
   const { opening, title } = useMemo(() => {
     if (!lesson) return { opening: undefined, title: "" };

@@ -27,6 +27,7 @@ import {
 import { useLanguage } from "@/lib/language-context";
 import { setReviewSessionFromAnalyze } from "@/lib/review-session";
 import { scheduleIdleWork } from "@/lib/schedule-idle";
+import { track } from "@/lib/track";
 
 // Import Dynamique de l'échiquier (pour éviter le bug SSR)
 const GameViewer = dynamic(() => import("@/components/GameViewer"), {
@@ -105,6 +106,8 @@ export default function AnalyzePage() {
 
       setGames(gamesData);
       setSelectedGame(gamesData[0]);
+      track("analyze_opened", { platform: detectedPlatform, games_count: gamesData.length });
+      track("profile_linked", { platform: detectedPlatform });
 
       // 2. Analyse persona hors chemin critique (évite de bloquer le thread UI)
       scheduleIdleWork(() => {

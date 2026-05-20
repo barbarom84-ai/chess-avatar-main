@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Globe, Palette, Crown, LogIn, LogOut, User, Bot } from "lucide-react";
+import { Globe, Palette, Crown, LogIn, LogOut, User, Bot, Activity } from "lucide-react";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/lib/language-context";
@@ -12,6 +12,7 @@ import type { PieceSet } from "@/contexts/ChessboardSettingsContext";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { usePremium } from "@/hooks/usePremium";
+import { useSuperUser } from "@/hooks/useSuperUser";
 import { translations, type Language } from "@/lib/translations";
 import ChessboardSettingsModal from "./ChessboardSettingsModal";
 import AuthModal from "./AuthModal";
@@ -47,7 +48,8 @@ function isNavItemActive(pathname: string, href: string): boolean {
     (href === "/puzzles" && pathname.startsWith("/puzzles")) ||
     (href === "/arena" && pathname.startsWith("/arena")) ||
     (href === "/play" && pathname.startsWith("/play")) ||
-    (href === "/online" && pathname.startsWith("/online"))
+    (href === "/online" && pathname.startsWith("/online")) ||
+    (href === "/admin/ops" && pathname.startsWith("/admin/ops"))
   );
 }
 
@@ -135,7 +137,9 @@ export default function Navigation() {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const { isPremium } = usePremium();
+  const { isSuperUser, loading: superLoading } = useSuperUser();
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const opsLabel = lang === "fr" ? "Ops" : "Ops";
 
   useEffect(() => {
     if (!isSupabaseConfigured || !supabase) return;
@@ -200,6 +204,27 @@ export default function Navigation() {
               t={t}
               compact={false}
             />
+            {isSuperUser && !superLoading && (
+              <Link href="/admin/ops">
+                <Button
+                  variant={pathname.startsWith("/admin/ops") ? "default" : "ghost"}
+                  size="sm"
+                  className={
+                    pathname.startsWith("/admin/ops")
+                      ? "bg-amber-700 text-white hover:bg-amber-600"
+                      : "text-slate-300 hover:text-amber-300 hover:bg-slate-800"
+                  }
+                  title={
+                    lang === "fr"
+                      ? "Monitoring temps réel"
+                      : "Live operations monitoring"
+                  }
+                >
+                  <Activity className="h-4 w-4" />
+                  <span className="ml-2">{opsLabel}</span>
+                </Button>
+              </Link>
+            )}
           </div>
 
           <div className="flex items-center gap-2">
@@ -244,6 +269,16 @@ export default function Navigation() {
                           <Bot className="h-4 w-4" />
                           {t.pages.avatars.title}
                         </Link>
+                        {isSuperUser && !superLoading && (
+                          <Link
+                            href="/admin/ops"
+                            onClick={() => setShowUserMenu(false)}
+                            className="flex items-center gap-2 px-3 py-2 text-sm text-amber-300 hover:bg-slate-800 transition-colors"
+                          >
+                            <Activity className="h-4 w-4" />
+                            {opsLabel}
+                          </Link>
+                        )}
                         <button
                           type="button"
                           onClick={handleSignOut}
@@ -339,6 +374,23 @@ export default function Navigation() {
                       )}
                     </Button>
                   </Link>
+                  {isSuperUser && !superLoading && (
+                    <Link href="/admin/ops">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-8 px-2 text-amber-300 hover:text-amber-200"
+                        title={
+                          lang === "fr"
+                            ? "Monitoring temps réel"
+                            : "Live operations monitoring"
+                        }
+                      >
+                        <Activity className="h-3.5 w-3.5 mr-1" />
+                        <span className="text-xs">{opsLabel}</span>
+                      </Button>
+                    </Link>
+                  )}
                   <Button
                     size="sm"
                     variant="ghost"
@@ -377,6 +429,22 @@ export default function Navigation() {
             t={t}
             compact
           />
+          {isSuperUser && !superLoading && (
+            <Link href="/admin/ops">
+              <Button
+                variant={pathname.startsWith("/admin/ops") ? "default" : "ghost"}
+                size="sm"
+                className={
+                  pathname.startsWith("/admin/ops")
+                    ? "bg-amber-700 text-white"
+                    : "text-slate-300 hover:text-amber-300"
+                }
+              >
+                <Activity className="h-4 w-4" />
+                <span className="ml-1 text-xs">{opsLabel}</span>
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
 

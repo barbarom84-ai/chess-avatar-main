@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
+import * as Sentry from '@sentry/nextjs';
 import { createClient } from '@supabase/supabase-js';
 import { getStripe } from '@/lib/stripe';
 
@@ -27,6 +28,7 @@ export async function POST(req: NextRequest) {
     );
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
+    Sentry.captureException(err);
     console.error("Webhook signature verification failed:", msg);
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
   }

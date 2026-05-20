@@ -24,6 +24,7 @@ import GameResultModal from "./GameResultModal";
 import PromotionDialog from "./PromotionDialog";
 import { useStockfish } from "@/hooks/useStockfish";
 import { saveGameToCloud } from "@/lib/supabase-storage";
+import { track } from "@/lib/track";
 import { useLanguage } from "@/lib/language-context";
 import type { EngineConfig } from "@/lib/analysis";
 import { LICHESS_ARROW_COLORS } from "@/lib/chess-arrows";
@@ -923,6 +924,10 @@ export default function PlayableChessboard({
         avgEval: undefined,
         botConfig: config
       });
+      track("game_finished", {
+        result: finalResultType,
+        moves_count: currentMoveHistory.length,
+      });
     } catch (error) {
       console.error('Erreur lors de la sauvegarde de la partie:', error);
       // Ne pas bloquer l'affichage des résultats si la sauvegarde échoue
@@ -950,6 +955,7 @@ export default function PlayableChessboard({
       /* best-effort: interrupt post-game engine work */
     }
     setStartTime(new Date());
+    track("game_started", { mode: "arena_bot" });
     setGameStats({
       totalMoves: 0,
       captures: 0,

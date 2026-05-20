@@ -5,6 +5,7 @@ import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import type { PvpGameRow, PvpMoveRow } from "@/lib/pvp-chess";
 import { replayGameFromUcis } from "@/lib/pvp-chess";
+import { track } from "@/lib/track";
 
 type Role = "white" | "black" | null;
 
@@ -160,6 +161,19 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
     };
   }, [gameId, userId, isParticipant]);
 
+  const prevPvpStatusRef = useRef<string | null>(null);
+  useEffect(() => {
+    const status = state.game?.status ?? null;
+    if (
+      status === "finished" &&
+      prevPvpStatusRef.current !== "finished" &&
+      gameId
+    ) {
+      track("pvp_game_ended", { game_id: gameId, result: state.game?.result ?? "" });
+    }
+    prevPvpStatusRef.current = status;
+  }, [state.game?.status, state.game?.result, gameId]);
+
   const chess = useMemo(
     () => replayGameFromUcis(state.moves.map((m) => m.uci)),
     [state.moves]
@@ -180,6 +194,7 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
       body: JSON.stringify({ timePreset }),
     });
     const game = data.game as { id?: string } | undefined;
+    if (game?.id) track("pvp_lobby_created", { time_preset: timePreset });
     return game?.id ?? null;
   }, []);
 
@@ -191,6 +206,7 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
   const joinLobby = useCallback(async () => {
     if (!gameId) return;
     await fetchWithAuth(`/api/pvp/games/${gameId}/join`, { method: "POST" });
+    track("pvp_game_joined", { game_id: gameId });
     await refresh();
   }, [gameId, refresh]);
 
@@ -201,6 +217,7 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
         method: "POST",
         body: JSON.stringify({ uci }),
       });
+      track("pvp_move_played", { game_id: gameId });
       await refresh();
     },
     [gameId, refresh]

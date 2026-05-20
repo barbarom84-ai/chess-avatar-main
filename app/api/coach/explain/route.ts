@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import * as Sentry from "@sentry/nextjs";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { createHash } from "node:crypto";
 import OpenAI from "openai";
@@ -290,6 +291,7 @@ export async function POST(req: NextRequest) {
     promptTokens = completion.usage?.prompt_tokens ?? 0;
     completionTokens = completion.usage?.completion_tokens ?? 0;
   } catch (err) {
+    Sentry.captureException(err);
     const detail =
       err instanceof Error ? `${err.name}: ${err.message}`.slice(0, 200) : "UNKNOWN";
     console.error("OpenAI error:", err);
