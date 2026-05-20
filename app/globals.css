@@ -312,3 +312,29 @@ nextjs-portal {
     color: rgb(148 163 184) !important; /* slate-400 */
   }
 }
+
+@keyframes pvp-clock-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  15% {
+    transform: translateX(-3px);
+  }
+  30% {
+    transform: translateX(3px);
+  }
+  45% {
+    transform: translateX(-2px);
+  }
+  60% {
+    transform: translateX(2px);
+  }
+  75% {
+    transform: translateX(-1px);
+  }
+}
+
+.animate-pvp-clock-shake {
+  animation: pvp-clock-shake 0.45s ease-in-out infinite;
+}

@@ -87,19 +87,28 @@ export function validateAvatarSourceFile(
   return { ok: true };
 }
 
+/** Decode a file to an HTMLImageElement (data URL — reliable on mobile Safari). */
 export function loadImageFromFile(file: File): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file);
-    const img = new Image();
-    img.onload = () => {
-      URL.revokeObjectURL(url);
-      resolve(img);
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result !== "string") {
+        reject(new Error("cannot_decode_image"));
+        return;
+      }
+      const img = new Image();
+      img.onload = () => {
+        if (img.naturalWidth < 1 || img.naturalHeight < 1) {
+          reject(new Error("cannot_decode_image"));
+          return;
+        }
+        resolve(img);
+      };
+      img.onerror = () => reject(new Error("cannot_decode_image"));
+      img.src = reader.result;
     };
-    img.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error("cannot_decode_image"));
-    };
-    img.src = url;
+    reader.onerror = () => reject(new Error("cannot_decode_image"));
+    reader.readAsDataURL(file);
   });
 }
 

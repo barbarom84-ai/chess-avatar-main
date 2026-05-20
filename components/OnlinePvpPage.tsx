@@ -17,6 +17,7 @@ import { useOnlineGame } from "@/hooks/useOnlineGame";
 import { useOpenPvpLobbies } from "@/hooks/useOpenPvpLobbies";
 import OnlineChessboard from "@/components/OnlineChessboard";
 import OnlinePvpClockBar from "@/components/OnlinePvpClockBar";
+import OnlinePvpOpponentCard from "@/components/OnlinePvpOpponentCard";
 import OnlinePvpResultModal from "@/components/OnlinePvpResultModal";
 import AuthModal from "@/components/AuthModal";
 import { buildPgnFromUcis, type PvpGameRow } from "@/lib/pvp-chess";
@@ -33,6 +34,8 @@ import { accountProfileInitials, fetchPublicAccountProfile } from "@/lib/account
 import { saveGameToCloud } from "@/lib/supabase-storage";
 import { PVP_TIME_PRESETS } from "@/lib/pvp-time-controls";
 import { pvpGameStatsFromUcis, formatDurationSec } from "@/lib/pvp-result-stats";
+import { fetchPvpHeadToHead } from "@/lib/pvp-head-to-head-client";
+import type { PvpHeadToHeadRecord } from "@/lib/pvp-head-to-head";
 
 function fallbackPlayerLabel(userId: string) {
   return `Player ${userId.replace(/-/g, "").slice(0, 8)}`;
@@ -112,6 +115,8 @@ export default function OnlinePvpPage() {
   const [showResultModal, setShowResultModal] = useState(false);
   const [endedDurationSec, setEndedDurationSec] = useState<number | null>(null);
   const [opponentProfile, setOpponentProfile] = useState<AccountProfile | null>(null);
+  const [resultHeadToHead, setResultHeadToHead] = useState<PvpHeadToHeadRecord | null>(null);
+  const [resultHeadToHeadLoading, setResultHeadToHeadLoading] = useState(false);
   const startMsRef = useRef<number | null>(null);
   const resultModalShownForGameId = useRef<string | null>(null);
 
@@ -288,6 +293,12 @@ export default function OnlinePvpPage() {
     }
   }, [online.game?.status, online.game?.result]);
 
+  const resultOpponentUserId = useMemo(() => {
+    const g = online.game;
+    if (!g || !userId || !online.role || !g.black_user_id) return null;
+    return online.role === "white" ? g.black_user_id : g.white_user_id;
+  }, [online.game, online.role, userId]);
+
   useEffect(() => {
     if (!gameId || !online.game) return;
     const fin =
@@ -297,6 +308,36 @@ export default function OnlinePvpPage() {
     resultModalShownForGameId.current = gameId;
     setShowResultModal(true);
   }, [gameId, online.game, online.role, userId]);
+
+  useEffect(() => {
+    if (!showResultModal || !resultOpponentUserId) {
+      setResultHeadToHead(null);
+      setResultHeadToHeadLoading(false);
+      return;
+    }
+    setResultHeadToHeadLoading(true);
+    void (async () => {
+      const [h2h, profile] = await Promise.all([
+        fetchPvpHeadToHead(resultOpponentUserId),
+        fetchPublicAccountProfile(resultOpponentUserId),
+      ]);
+      setResultHeadToHead(h2h?.record ?? null);
+      if (profile) {
+        setOpponentProfile(profile);
+      } else if (h2h?.opponent) {
+        setOpponentProfile((prev) =>
+          prev ?? {
+            userId: h2h.opponent.userId,
+            displayName: h2h.opponent.displayName,
+            avatarUrl: h2h.opponent.avatarUrl,
+            bio: null,
+            memberSince: null,
+          }
+        );
+      }
+      setResultHeadToHeadLoading(false);
+    })();
+  }, [showResultModal, resultOpponentUserId]);
 
   const pgnStringForDownload = useMemo(() => {
     if (!online.game?.result) return "";
@@ -762,7 +803,7 @@ export default function OnlinePvpPage() {
 
   return (
     <main className="min-h-screen theme-gradient theme-text-primary p-2 md:p-6">
-      <div className="max-w-3xl mx-auto space-y-4">
+      <div className="max-w-3xl mx-auto space-y-2 sm:space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
             <h1 className="text-xl font-semibold text-cyan-100 truncate">{onlinePage.title}</h1>
@@ -855,7 +896,7 @@ export default function OnlinePvpPage() {
         )}
 
         {online.role && (
-          <p className="text-sm text-slate-400">
+          <p className="text-xs sm:text-sm text-slate-400 px-0.5">
             {online.role === "white" ? o.youAreWhite : o.youAreBlack}
             {g.status === "playing" &&
               (online.isMyTurn ? ` — ${o.yourTurn}` : ` — ${o.opponentTurn}`)}
@@ -863,93 +904,25 @@ export default function OnlinePvpPage() {
         )}
 
         {oppInfo && userId && (
-          <Card className="theme-bg-secondary border-slate-600/50">
-            <CardHeader className="py-3 pb-0">
-              <CardTitle className="text-base text-slate-100">{o.opponentCardTitle}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 pt-2">
-              <div className="flex items-start gap-3">
-                <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full border border-slate-700 bg-gradient-to-br from-cyan-600 to-blue-800">
-                  <AccountAvatar
-                    src={opponentProfile?.avatarUrl}
-                    alt={opponentProfile?.displayName ?? oppInfo.oppLabel}
-                    initials={accountProfileInitials(
-                      opponentProfile?.displayName ?? oppInfo.oppLabel
-                    )}
-                    sizes="56px"
-                    className="text-lg"
-                  />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-lg font-semibold text-cyan-100">
-                    {opponentProfile?.displayName ?? oppInfo.oppLabel}
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    {oppInfo.oppColor === "white" ? o.opponentAsWhite : o.opponentAsBlack}
-                  </p>
-                  {opponentProfile?.bio ? (
-                    <p className="text-xs text-slate-400 mt-1 line-clamp-2">{opponentProfile.bio}</p>
-                  ) : null}
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <Button asChild type="button" size="sm" variant="outline" className="border-slate-600">
-                  <Link href={`/players/${oppInfo.oppId}`}>{o.viewOpponentProfile}</Link>
-                </Button>
-                {!isAccountFriend(friends, oppInfo.oppId) ? (
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="secondary"
-                    onClick={() => {
-                      void addAccountFriendRemote(oppInfo.oppId, oppInfo.oppLabel).then((next) => {
-                        if (!next) {
-                          toast.error(o.openLobbiesError);
-                          return;
-                        }
-                        setFriends(next);
-                        toast.success(o.friendAdded);
-                      });
-                    }}
-                  >
-                    <UserPlus className="h-4 w-4 mr-1 inline" />
-                    {o.addFriend}
-                  </Button>
-                ) : (
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="ghost"
-                    className="text-red-400"
-                    onClick={() => {
-                      void removeAccountFriendRemote(oppInfo.oppId).then((next) => {
-                        if (!next) {
-                          toast.error(o.openLobbiesError);
-                          return;
-                        }
-                        setFriends(next);
-                        toast.success(o.friendRemoved);
-                      });
-                    }}
-                  >
-                    <UserMinus className="h-4 w-4 mr-1 inline" />
-                    {o.removeFriend}
-                  </Button>
-                )}
-              </div>
-              <p className="text-[11px] text-slate-500">{o.opponentProfileHint}</p>
-            </CardContent>
-          </Card>
+          <OnlinePvpOpponentCard
+            oppId={oppInfo.oppId}
+            oppLabel={oppInfo.oppLabel}
+            oppColor={oppInfo.oppColor}
+            opponentProfile={opponentProfile}
+            friends={friends}
+            onFriendsChange={setFriends}
+          />
         )}
 
         <OnlinePvpClockBar
           game={g}
           chess={online.chess}
+          myRole={online.role}
           whiteLabel={`${wb.white} · ${o.whiteClock}`}
           blackLabel={`${wb.black} · ${o.blackClock}`}
         />
 
-        <div className="w-full max-w-[min(100%,480px)] mx-auto aspect-square max-h-[70dvh]">
+        <div className="w-full max-w-[min(100%,480px)] mx-auto aspect-square max-h-[min(72dvh,100vw)] sm:max-h-[70dvh]">
           <OnlineChessboard
             fen={online.chess.fen()}
             orientation={orientation}
@@ -1067,6 +1040,18 @@ export default function OnlinePvpPage() {
           captures={boardStats.captures}
           checks={boardStats.checks}
           durationLabel={durationLabelForModal}
+          opponentUserId={resultOpponentUserId}
+          opponentDisplayName={
+            opponentProfile?.displayName ??
+            (online.role === "white" ? wb.black : wb.white)
+          }
+          opponentAvatarUrl={opponentProfile?.avatarUrl ?? null}
+          opponentBio={opponentProfile?.bio ?? null}
+          timeControlLabel={
+            g.time_preset ? (presetLabels[g.time_preset] ?? g.time_preset) : null
+          }
+          headToHead={resultHeadToHead}
+          headToHeadLoading={resultHeadToHeadLoading}
           onNewGame={() => router.push("/online")}
           onDownloadPgn={handleDownloadPgn}
           onSaveCloud={handleSaveCloud}
