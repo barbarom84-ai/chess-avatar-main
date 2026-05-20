@@ -14,5 +14,15 @@ export function getAvatarCardLabels(t: TranslationKey): AvatarCardLabels {
     morale: ac.morale,
     flipHint: ac.flipHint,
     backEngine: ac.backEngine,
+    backTraits: ac.backTraits,
+    backStyle: ac.backStyle,
+    backRecord: ac.backRecord,
+    backOpening: ac.backOpening,
+    tactical: ac.tactical,
+    positional: ac.positional,
+    endgame: ac.endgame,
+    openingTheory: ac.openingTheory,
+    timeControl: ac.timeControl,
+    threads: ac.threads,
   };
 }

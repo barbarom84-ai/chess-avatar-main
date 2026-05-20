@@ -31,6 +31,13 @@ export type AvatarCardModel = {
   gameCount?: number;
   aggressiveness: number;
   depth: number;
+  timeControl?: number;
+  threads?: number;
+  styleTactical?: number;
+  stylePositional?: number;
+  styleEndgame?: number;
+  styleOpening?: number;
+  styleAggression?: number;
   tags?: string[];
 };
 
@@ -45,6 +52,16 @@ export type AvatarCardLabels = {
   morale: string;
   flipHint: string;
   backEngine: string;
+  backTraits: string;
+  backStyle: string;
+  backRecord: string;
+  backOpening: string;
+  tactical: string;
+  positional: string;
+  endgame: string;
+  openingTheory: string;
+  timeControl: string;
+  threads: string;
 };
 
 export function resolveCardRarity(
@@ -257,6 +274,13 @@ export function buildAvatarCardModel({
     gameCount: stats.gameCount,
     aggressiveness: config.aggressiveness,
     depth: config.depth,
+    timeControl: config.timeControl,
+    threads: config.threads,
+    styleTactical: playingStyle.tactical,
+    stylePositional: playingStyle.positional,
+    styleEndgame: playingStyle.endgame,
+    styleOpening: playingStyle.openingTheory,
+    styleAggression: playingStyle.aggression,
     tags: metadata?.tags?.slice(0, 3),
   };
 }

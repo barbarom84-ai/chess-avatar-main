@@ -16,6 +16,7 @@ import {
   Cpu,
   Clock,
   ImageDown,
+  RotateCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { exportCardAsPng } from "@/lib/export-card-image";
@@ -35,9 +36,9 @@ const ELEMENT_ICONS = {
 } as const;
 
 const FLIP_MIN_HEIGHT: Record<keyof typeof SIZE_CLASSES, number> = {
-  sm: 200,
-  md: 320,
-  lg: 400,
+  sm: 220,
+  md: 360,
+  lg: 440,
 };
 
 const SIZE_CLASSES = {
@@ -51,7 +52,7 @@ const SIZE_CLASSES = {
     hideAbility: true,
   },
   md: {
-    root: "w-full max-w-[220px] min-h-[320px] text-xs",
+    root: "w-full max-w-[220px] min-h-[360px] text-xs",
     portrait: "h-[120px]",
     title: "text-sm",
     cost: "h-9 w-9 text-sm",
@@ -89,10 +90,12 @@ function TraitList({
   title,
   items,
   variant,
+  compact = false,
 }: {
   title: string;
   items: string[];
   variant: "strength" | "weakness";
+  compact?: boolean;
 }) {
   if (!items.length) return null;
   const Icon = variant === "strength" ? Sparkles : Shield;
@@ -100,7 +103,7 @@ function TraitList({
     variant === "strength" ? "text-emerald-400" : "text-rose-400";
 
   return (
-    <div className="space-y-0.5">
+    <div className="space-y-0.5 min-w-0">
       <p className={`text-[10px] font-semibold uppercase tracking-wide ${color}`}>
         {title}
       </p>
@@ -111,7 +114,9 @@ function TraitList({
             className="flex items-start gap-1 text-slate-300 leading-tight"
           >
             <Icon className={`h-3 w-3 shrink-0 mt-0.5 ${color}`} aria-hidden />
-            <span className="line-clamp-2">{item}</span>
+            <span className={compact ? "line-clamp-3" : "line-clamp-2"}>
+              {item}
+            </span>
           </li>
         ))}
       </ul>
@@ -119,14 +124,49 @@ function TraitList({
   );
 }
 
+function StyleMeter({
+  label,
+  value,
+}: {
+  label: string;
+  value: number;
+}) {
+  const v = Math.min(100, Math.max(0, Math.round(value)));
+  return (
+    <div className="space-y-0.5">
+      <div className="flex justify-between gap-1 text-[10px]">
+        <span className="text-slate-500 truncate">{label}</span>
+        <span className="text-slate-200 font-medium tabular-nums">{v}%</span>
+      </div>
+      <div className="h-1.5 rounded-full bg-slate-800 overflow-hidden">
+        <div
+          className="h-full rounded-full bg-gradient-to-r from-cyan-600/90 to-cyan-400/80"
+          style={{ width: `${v}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function FlipAffordance({ hint }: { hint: string }) {
+  return (
+    <p className="mt-auto pt-1 flex items-center justify-center gap-1 text-[9px] text-slate-500">
+      <RotateCw className="h-3 w-3 shrink-0 opacity-70" aria-hidden />
+      <span>{hint}</span>
+    </p>
+  );
+}
+
 function CardFace({
   model,
   labels,
   sizeKey,
+  showFlipHint,
 }: {
   model: AvatarCardModel;
   labels: AvatarCardLabels;
   sizeKey: keyof typeof SIZE_CLASSES;
+  showFlipHint?: boolean;
 }) {
   const sz = SIZE_CLASSES[sizeKey];
   const ElementIcon = ELEMENT_ICONS[model.element];
@@ -135,7 +175,7 @@ function CardFace({
   const elementLabel = labels.elements[model.element];
 
   return (
-    <div className={`avatar-card-face flex flex-col ${sz.pad}`}>
+    <div className={`avatar-card-face flex flex-col min-h-full ${sz.pad}`}>
       <div className="flex items-start justify-between gap-1">
         <Badge
           variant="outline"
@@ -209,7 +249,7 @@ function CardFace({
       </div>
 
       {!sz.hideAbility && (
-        <p className="text-slate-400 leading-snug line-clamp-2 italic">
+        <p className="text-slate-400 leading-snug line-clamp-3 italic flex-1 min-h-0">
           <span className="text-amber-500/80 not-italic font-semibold text-[10px] uppercase mr-1">
             {labels.ability}
           </span>
@@ -217,26 +257,7 @@ function CardFace({
         </p>
       )}
 
-      {sizeKey !== "sm" && (
-        <div className="grid grid-cols-2 gap-2 flex-1 min-h-0">
-          <TraitList
-            title={labels.strengths}
-            items={model.strengths}
-            variant="strength"
-          />
-          <TraitList
-            title={labels.weaknesses}
-            items={model.weaknesses}
-            variant="weakness"
-          />
-        </div>
-      )}
-
-      {model.gameCount != null && model.gameCount > 0 && sizeKey !== "sm" && (
-        <p className="text-[10px] text-slate-500 text-center">
-          {model.gameCount} {labels.games}
-        </p>
-      )}
+      {showFlipHint && <FlipAffordance hint={labels.flipHint} />}
     </div>
   );
 }
@@ -249,45 +270,169 @@ function DefaultCardBack({
   labels: AvatarCardLabels;
 }) {
   const { t } = useLanguage();
+  const classLabel = labels.playStyles[model.classKey] ?? model.classKey;
+  const hasStyleMeters =
+    model.styleTactical != null ||
+    model.stylePositional != null ||
+    model.styleEndgame != null ||
+    model.styleOpening != null;
 
   return (
-    <div className="avatar-card-back flex flex-col gap-2 p-3 text-xs text-slate-300 h-full">
-      <p className="font-semibold text-amber-400/90 uppercase text-[10px] tracking-wide">
-        {labels.backEngine}
-      </p>
-      <div className="grid grid-cols-2 gap-2">
-        <div className="bg-slate-950/80 rounded p-2 border border-slate-800">
-          <Swords className="h-3.5 w-3.5 text-red-400 mb-1" />
-          <span className="text-slate-500 text-[10px]">{t.personaCard.aggressiveness}</span>
-          <p className="font-bold">{model.aggressiveness}%</p>
-        </div>
-        <div className="bg-slate-950/80 rounded p-2 border border-slate-800">
-          <TrendingUp className="h-3.5 w-3.5 text-purple-400 mb-1" />
-          <span className="text-slate-500 text-[10px]">{t.personaCard.depth}</span>
-          <p className="font-bold">
-            {t.personaCard.depthLevel} {model.depth}
+    <div className="avatar-card-back-inner flex flex-col gap-2 p-3 text-xs text-slate-300 min-h-full overflow-y-auto">
+      <div className="flex items-start justify-between gap-2 border-b border-slate-700/60 pb-2">
+        <div className="min-w-0">
+          <p className="font-serif font-bold text-amber-100 truncate text-sm">
+            {model.name}
           </p>
+          <p className="text-[10px] text-slate-500 capitalize">{classLabel}</p>
         </div>
-        <div className="bg-slate-950/80 rounded p-2 border border-slate-800">
-          <Cpu className="h-3.5 w-3.5 text-cyan-400 mb-1" />
-          <span className="text-slate-500 text-[10px]">Niv.</span>
-          <p className="font-bold">{model.difficulty}/5</p>
-        </div>
-        <div className="bg-slate-950/80 rounded p-2 border border-slate-800">
-          <Clock className="h-3.5 w-3.5 text-blue-400 mb-1" />
-          <span className="text-slate-500 text-[10px]">W/D/L</span>
-          <p className="font-bold text-[10px]">
-            {model.winRate ?? 0}/{model.drawRate ?? 0}/{model.lossRate ?? 0}%
-          </p>
+        <div
+          className="h-8 w-8 shrink-0 rounded-full bg-amber-500/90 border-2 border-amber-200 flex items-center justify-center font-bold text-slate-950 text-xs"
+          title="ELO"
+        >
+          {model.elo}
         </div>
       </div>
-      {model.topOpening && (
-        <p className="text-[10px] text-slate-400 line-clamp-2">
-          {model.topOpening}
+
+      <section className="space-y-1.5">
+        <p className="font-semibold text-amber-400/90 uppercase text-[10px] tracking-wide">
+          {labels.backEngine}
         </p>
+        <div className="grid grid-cols-2 gap-1.5">
+          <div className="bg-slate-950/80 rounded p-2 border border-slate-800">
+            <Swords className="h-3.5 w-3.5 text-red-400 mb-0.5" />
+            <span className="text-slate-500 text-[10px] block">
+              {t.personaCard.aggressiveness}
+            </span>
+            <p className="font-bold text-sm">{model.aggressiveness}%</p>
+          </div>
+          <div className="bg-slate-950/80 rounded p-2 border border-slate-800">
+            <TrendingUp className="h-3.5 w-3.5 text-purple-400 mb-0.5" />
+            <span className="text-slate-500 text-[10px] block">
+              {t.personaCard.depth}
+            </span>
+            <p className="font-bold text-sm">
+              {t.personaCard.depthLevel} {model.depth}
+            </p>
+          </div>
+          <div className="bg-slate-950/80 rounded p-2 border border-slate-800">
+            <Cpu className="h-3.5 w-3.5 text-cyan-400 mb-0.5" />
+            <span className="text-slate-500 text-[10px] block">Niv.</span>
+            <p className="font-bold text-sm">{model.difficulty}/5</p>
+          </div>
+          <div className="bg-slate-950/80 rounded p-2 border border-slate-800">
+            <Clock className="h-3.5 w-3.5 text-blue-400 mb-0.5" />
+            <span className="text-slate-500 text-[10px] block">
+              {labels.timeControl}
+            </span>
+            <p className="font-bold text-sm">
+              {model.timeControl != null ? `${model.timeControl} ms` : "—"}
+            </p>
+          </div>
+        </div>
+        {model.threads != null && (
+          <p className="text-[10px] text-slate-500">
+            {labels.threads}:{" "}
+            <span className="text-slate-300 font-medium">{model.threads}</span>
+          </p>
+        )}
+      </section>
+
+      {(model.winRate != null ||
+        (model.gameCount != null && model.gameCount > 0)) && (
+        <section className="space-y-1">
+          <p className="font-semibold text-slate-400 uppercase text-[10px] tracking-wide">
+            {labels.backRecord}
+          </p>
+          {model.winRate != null && (
+            <div className="flex h-2 rounded-full overflow-hidden bg-slate-800">
+              <div
+                className="bg-emerald-500/90"
+                style={{ width: `${model.winRate}%` }}
+                title={`${labels.morale} ${model.winRate}%`}
+              />
+              <div
+                className="bg-slate-500/80"
+                style={{ width: `${model.drawRate ?? 0}%` }}
+              />
+              <div
+                className="bg-rose-500/80"
+                style={{ width: `${model.lossRate ?? 0}%` }}
+              />
+            </div>
+          )}
+          <p className="text-[10px] text-slate-400 tabular-nums">
+            {t.personaCard.winsPercent} {model.winRate ?? 0}% ·{" "}
+            {t.personaCard.drawsPercent} {model.drawRate ?? 0}% ·{" "}
+            {t.personaCard.lossesPercent} {model.lossRate ?? 0}%
+            {model.gameCount != null && model.gameCount > 0
+              ? ` · ${model.gameCount} ${labels.games}`
+              : ""}
+          </p>
+        </section>
       )}
+
+      {hasStyleMeters && (
+        <section className="space-y-1.5">
+          <p className="font-semibold text-slate-400 uppercase text-[10px] tracking-wide">
+            {labels.backStyle}
+          </p>
+          {model.styleTactical != null && (
+            <StyleMeter label={labels.tactical} value={model.styleTactical} />
+          )}
+          {model.stylePositional != null && (
+            <StyleMeter
+              label={labels.positional}
+              value={model.stylePositional}
+            />
+          )}
+          {model.styleEndgame != null && (
+            <StyleMeter label={labels.endgame} value={model.styleEndgame} />
+          )}
+          {model.styleOpening != null && (
+            <StyleMeter
+              label={labels.openingTheory}
+              value={model.styleOpening}
+            />
+          )}
+        </section>
+      )}
+
+      {(model.strengths.length > 0 || model.weaknesses.length > 0) && (
+        <section className="space-y-1.5">
+          <p className="font-semibold text-slate-400 uppercase text-[10px] tracking-wide">
+            {labels.backTraits}
+          </p>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <TraitList
+              title={labels.strengths}
+              items={model.strengths}
+              variant="strength"
+              compact
+            />
+            <TraitList
+              title={labels.weaknesses}
+              items={model.weaknesses}
+              variant="weakness"
+              compact
+            />
+          </div>
+        </section>
+      )}
+
+      {model.topOpening && (
+        <section className="space-y-0.5">
+          <p className="font-semibold text-slate-400 uppercase text-[10px] tracking-wide">
+            {labels.backOpening}
+          </p>
+          <p className="text-[11px] text-slate-300 leading-snug line-clamp-3">
+            {model.topOpening}
+          </p>
+        </section>
+      )}
+
       {model.tags && model.tags.length > 0 && (
-        <div className="flex flex-wrap gap-1">
+        <div className="flex flex-wrap gap-1 pt-0.5">
           {model.tags.map((tag) => (
             <Badge key={tag} variant="secondary" className="text-[9px]">
               {tag}
@@ -295,6 +440,8 @@ function DefaultCardBack({
           ))}
         </div>
       )}
+
+      <FlipAffordance hint={labels.flipHint} />
     </div>
   );
 }
@@ -361,7 +508,12 @@ export default function AvatarTradingCard({
     .join(" ");
 
   const faceBlock = (
-    <CardFace model={model} labels={labels} sizeKey={size} />
+    <CardFace
+      model={model}
+      labels={labels}
+      sizeKey={size}
+      showFlipHint={flippable}
+    />
   );
 
   const inner = (
@@ -372,7 +524,7 @@ export default function AvatarTradingCard({
             className={`avatar-card-flip-inner ${flipped ? "is-flipped" : ""}`}
             style={{ minHeight: FLIP_MIN_HEIGHT[size] }}
           >
-            <div className="avatar-card-face">{faceBlock}</div>
+            {faceBlock}
             <div className="avatar-card-back">
               {backContent ?? (
                 <DefaultCardBack model={model} labels={labels} />

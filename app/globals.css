@@ -364,18 +364,22 @@ nextjs-portal {
 
   .avatar-card-back {
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    inset: 0;
     width: 100%;
-    min-height: 100%;
+    height: 100%;
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
     transform: rotateY(180deg);
     background: linear-gradient(165deg, #1e293b 0%, #0f172a 45%, #020617 100%);
     border-radius: calc(0.75rem - 3px);
-    overflow: auto;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .avatar-card-back-inner {
+    flex: 1;
+    min-height: 0;
   }
 
   @media (prefers-reduced-motion: no-preference) {

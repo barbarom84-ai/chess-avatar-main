@@ -12,7 +12,8 @@ import { useStockfish } from "@/hooks/useStockfish";
 import type { EngineConfig } from "@/lib/analysis";
 import { getSavedConfigs, getRecentConfigs } from "@/lib/storage";
 import { normalizeEnginePlatform } from "@/lib/normalize-engine-platform";
-import { getFilteredProfiles, saveGameToCloud } from "@/lib/supabase-storage";
+import { getFilteredProfiles } from "@/lib/supabase-storage";
+import { saveArenaMatchToCloud } from "@/lib/arena-cloud-save";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/language-context";
 import { usePremium } from "@/hooks/usePremium";
@@ -329,79 +330,6 @@ function classifyArenaOutcome(
     resultMessage: lang === "fr" ? "Partie terminée." : "Game over.",
     pgnResult: "1/2-1/2",
   };
-}
-
-function countArenaCapturesChecks(game: Chess): {
-  captures: number;
-  checks: number;
-} {
-  const tmp = new Chess();
-  let captures = 0;
-  let checks = 0;
-  for (const san of game.history()) {
-    const m = tmp.move(san);
-    if (m?.captured) captures++;
-    if (tmp.inCheck()) checks++;
-  }
-  return { captures, checks };
-}
-
-function escapePgnHeader(s: string): string {
-  return s.replace(/\\/g, "\\\\").replace(/"/g, "'");
-}
-
-function buildArenaPgn(params: {
-  whiteName: string;
-  blackName: string;
-  outcome: ArenaOutcome;
-  uciMoves: string[];
-}): string {
-  const { whiteName, blackName, outcome, uciMoves } = params;
-  const date = new Date();
-  const dateStr = `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, "0")}.${String(date.getDate()).padStart(2, "0")}`;
-  const timeStr = `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}:${String(date.getSeconds()).padStart(2, "0")}`;
-
-  const replay = new Chess();
-  const sans: string[] = [];
-  for (const uci of uciMoves) {
-    if (!uci || uci.length < 4) continue;
-    const from = uci.slice(0, 2);
-    const to = uci.slice(2, 4);
-    const promotion =
-      uci.length > 4 ? (uci[4] as "q" | "r" | "b" | "n") : undefined;
-    const m = replay.move(
-      promotion ? { from, to, promotion } : { from, to }
-    );
-    if (!m) break;
-    sans.push(m.san);
-  }
-
-  const headers = [
-    `[Event "Chess Avatar Arena"]`,
-    `[Site "Chess Avatar / Arena"]`,
-    `[Date "${dateStr}"]`,
-    `[Time "${timeStr}"]`,
-    `[Round "1"]`,
-    `[White "${escapePgnHeader(whiteName)}"]`,
-    `[Black "${escapePgnHeader(blackName)}"]`,
-    `[Result "${outcome.pgnResult}"]`,
-    `[TimeControl "-"]`,
-    `[Termination "${escapePgnHeader(outcome.resultMessage)}"]`,
-  ];
-
-  let movesStr = "";
-  if (sans.length === 0) {
-    movesStr = outcome.pgnResult;
-  } else {
-    for (let i = 0; i < sans.length; i++) {
-      if (i % 2 === 0) movesStr += `${Math.floor(i / 2) + 1}. `;
-      movesStr += sans[i] + " ";
-      if (i % 16 === 15 && i < sans.length - 1) movesStr += "\n";
-    }
-    movesStr += outcome.pgnResult;
-  }
-
-  return headers.join("\n") + "\n\n" + movesStr;
 }
 
 function optionToCardModel(
@@ -723,36 +651,25 @@ export default function ArenaSpectator({ embedded = false }: { embedded?: boolea
     async (game: Chess, uciHist: string[], outcome: ArenaOutcome) => {
       if (!whiteConfig || !blackConfig || !userId) return;
       try {
-        const whiteName = whiteConfig.name || "White";
-        const blackName = blackConfig.name || "Black";
         const started = arenaClockStartRef.current;
         const durationSeconds =
           started != null
             ? Math.max(0, Math.round((Date.now() - started) / 1000))
             : undefined;
-        const pgn = buildArenaPgn({
-          whiteName,
-          blackName,
-          outcome,
-          uciMoves: uciHist,
-        });
-        const { captures, checks } = countArenaCapturesChecks(game);
-        await saveGameToCloud({
-          opponentName: `${whiteName} vs ${blackName}`,
-          opponentPlatform: "arena",
-          result: outcome.result,
-          resultType: outcome.resultType,
-          resultMessage: outcome.resultMessage,
-          playerColor: "white",
-          pgn,
-          finalFen: game.fen(),
-          movesCount: uciHist.length,
+        await saveArenaMatchToCloud({
+          whiteConfig,
+          blackConfig,
+          uciHist,
+          outcome: {
+            ...outcome,
+            winner:
+              outcome.pgnResult === "1-0"
+                ? "white"
+                : outcome.pgnResult === "0-1"
+                  ? "black"
+                  : "draw",
+          },
           durationSeconds,
-          capturesCount: captures,
-          checksCount: checks,
-          botConfig: blackConfig,
-          gameKind: "arena_bot_vs_bot",
-          arenaConfigs: { white: whiteConfig, black: blackConfig },
         });
         toast.success(t.arenaPage.cloudSavedToast);
       } catch (e) {

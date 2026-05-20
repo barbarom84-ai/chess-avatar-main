@@ -9,8 +9,16 @@ import EvaluationBar from "@/components/EvaluationBar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { useStockfish } from "@/hooks/useStockfish";
+import { usePremium } from "@/hooks/usePremium";
 import { useLanguage } from "@/lib/language-context";
+import {
+  playoffOutcomeForSave,
+  saveArenaMatchToCloud,
+} from "@/lib/arena-cloud-save";
+import { isSupabaseConfigured } from "@/lib/supabase";
+import { toast } from "sonner";
 import {
   applyArenaCaps,
   classifyArenaOutcome,
@@ -52,19 +60,16 @@ import {
 
 const PLAYOFF_DEPTH = 10;
 const PLAYOFF_MAX_PLIES = 200;
+const ARENA_PLAYOFF_SAVE_CLOUD = "chess-arena.playoff.saveCloud";
 
-function playoffTiebreakKey(
-  white: { key: string; config: { elo?: number } },
-  black: { key: string; config: { elo?: number } }
-): string {
-  const w = white.config.elo ?? 1500;
-  const b = black.config.elo ?? 1500;
-  if (w !== b) return w > b ? white.key : black.key;
-  return white.key;
+/** En Playoff Arène uniquement : toute nulle est remportée par les noirs. */
+function playoffDrawWinnerKey(blackKey: string): string {
+  return blackKey;
 }
 
 export default function ArenaPlayoffMode() {
   const { t, lang } = useLanguage();
+  const { userId } = usePremium();
   const { isReady, getBestMove, stopThinking, getPositionEvaluation } =
     useStockfish();
 
@@ -91,6 +96,7 @@ export default function ArenaPlayoffMode() {
   const [matchRunning, setMatchRunning] = useState(false);
   const [tournamentRunning, setTournamentRunning] = useState(false);
   const [barEval, setBarEval] = useState<number | null>(null);
+  const [saveCloudGames, setSaveCloudGames] = useState(false);
 
   const historyRef = useRef<string[]>([]);
   const runningRef = useRef(false);
@@ -119,6 +125,28 @@ export default function ArenaPlayoffMode() {
   useEffect(() => {
     void loadOptions();
   }, [loadOptions]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const sc = localStorage.getItem(ARENA_PLAYOFF_SAVE_CLOUD);
+      if (sc === "1") setSaveCloudGames(true);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      localStorage.setItem(
+        ARENA_PLAYOFF_SAVE_CLOUD,
+        saveCloudGames ? "1" : "0"
+      );
+    } catch {
+      /* ignore */
+    }
+  }, [saveCloudGames]);
 
   const poolOptions = useMemo(() => {
     let rows = filterByPlatform(rawOptions, platformFilter);
@@ -219,11 +247,46 @@ export default function ArenaPlayoffMode() {
       setLastMove(null);
       setMoveCount(0);
       setStatusNote(t.arenaPlayoff.matchLive);
+      const matchStartedAt = Date.now();
 
-      const gameEndMessage = (g: Chess) => {
-        if (g.isCheckmate()) return t.arenaPage.resultCheckmate;
-        if (g.isDraw() || g.isStalemate()) return t.arenaPage.resultDraw;
-        return t.arenaPage.gameOver;
+      const complete = async (
+        winnerKey: string | null,
+        note: string,
+        uciHist: string[],
+        maxMovesReached = false
+      ): Promise<{ winnerKey: string | null; note: string }> => {
+        setStatusNote(note);
+        if (winnerKey && saveCloudGames && userId && uciHist.length > 0) {
+          const game = replayUci(uciHist);
+          const base = classifyArenaOutcome(game, maxMovesReached, lang);
+          const outcome = playoffOutcomeForSave(
+            winnerKey,
+            whiteKey,
+            blackKey,
+            note,
+            base
+          );
+          const durationSeconds = Math.max(
+            0,
+            Math.round((Date.now() - matchStartedAt) / 1000)
+          );
+          try {
+            await saveArenaMatchToCloud({
+              whiteConfig,
+              blackConfig,
+              uciHist,
+              outcome,
+              durationSeconds,
+              event: "Chess Avatar Arena Playoff",
+              round: matchId,
+            });
+            toast.success(t.arenaPage.cloudSavedToast);
+          } catch (e) {
+            console.error(e);
+            toast.error(t.arenaPage.cloudSaveErrorToast);
+          }
+        }
+        return { winnerKey, note };
       };
 
       while (runningRef.current) {
@@ -243,8 +306,7 @@ export default function ArenaPlayoffMode() {
           );
           const winnerKey =
             tick.winner === "white" ? whiteKey : blackKey;
-          setStatusNote(outcome.resultMessage);
-          return { winnerKey, note: outcome.resultMessage };
+          return complete(winnerKey, outcome.resultMessage, hist);
         }
         liveClock = tick.clock;
         setClock(liveClock);
@@ -257,10 +319,11 @@ export default function ArenaPlayoffMode() {
         if (!runningRef.current) break;
 
         if (!uci || uci.length < 4) {
-          return {
-            winnerKey: stm === "w" ? blackKey : whiteKey,
-            note: t.arenaPage.gameOver,
-          };
+          return complete(
+            stm === "w" ? blackKey : whiteKey,
+            t.arenaPage.gameOver,
+            hist
+          );
         }
 
         liveClock = commitPlayoffClockTurn(liveClock, stm);
@@ -276,10 +339,11 @@ export default function ArenaPlayoffMode() {
           promotion ? { from, to, promotion } : { from, to }
         );
         if (!ok) {
-          return {
-            winnerKey: stm === "w" ? blackKey : whiteKey,
-            note: t.arenaPage.gameOver,
-          };
+          return complete(
+            stm === "w" ? blackKey : whiteKey,
+            t.arenaPage.gameOver,
+            hist
+          );
         }
 
         historyRef.current = [...hist, uci];
@@ -289,27 +353,40 @@ export default function ArenaPlayoffMode() {
 
         if (next.isGameOver()) {
           const outcome = classifyArenaOutcome(next, false, lang);
-          setStatusNote(gameEndMessage(next));
           let winnerKey: string | null = null;
-          if (outcome.winner === "white") winnerKey = whiteKey;
-          else if (outcome.winner === "black") winnerKey = blackKey;
-          else winnerKey = playoffTiebreakKey(whiteOpt, blackOpt);
-          return { winnerKey, note: outcome.resultMessage };
+          let note: string;
+          if (outcome.winner === "white") {
+            winnerKey = whiteKey;
+            note = outcome.resultMessage;
+          } else if (outcome.winner === "black") {
+            winnerKey = blackKey;
+            note = outcome.resultMessage;
+          } else {
+            winnerKey = playoffDrawWinnerKey(blackKey);
+            note = t.arenaPlayoff.drawBlackWins;
+          }
+          return complete(winnerKey, note, historyRef.current);
         }
 
         if (historyRef.current.length >= PLAYOFF_MAX_PLIES) {
-          const outcome = classifyArenaOutcome(next, true, lang);
-          const winnerKey = playoffTiebreakKey(whiteOpt, blackOpt);
-          setStatusNote(outcome.resultMessage);
-          return { winnerKey, note: outcome.resultMessage };
+          const winnerKey = playoffDrawWinnerKey(blackKey);
+          const note = t.arenaPlayoff.moveLimitBlackWins;
+          return complete(winnerKey, note, historyRef.current, true);
         }
 
         await new Promise((r) => setTimeout(r, 280));
       }
 
-      return { winnerKey: null, note: t.arenaPlayoff.matchPaused };
+      return complete(null, t.arenaPlayoff.matchPaused, historyRef.current);
     },
-    [getBestMove, lang, t.arenaPage, t.arenaPlayoff]
+    [
+      getBestMove,
+      lang,
+      saveCloudGames,
+      userId,
+      t.arenaPage,
+      t.arenaPlayoff,
+    ]
   );
 
   const playMatchById = useCallback(
@@ -415,6 +492,7 @@ export default function ArenaPlayoffMode() {
         <Swords className="h-4 w-4 text-amber-400 shrink-0" />
         <span className="text-xs text-slate-400 hidden sm:inline">
           {t.arenaPlayoff.timeControl}
+          <span className="text-slate-500"> · {t.arenaPlayoff.drawRuleHint}</span>
         </span>
         <div className="flex gap-1">
           <Button
@@ -458,6 +536,32 @@ export default function ArenaPlayoffMode() {
           {filledSeeds}/{bracketSize}
         </span>
       </div>
+
+      {isSupabaseConfigured && userId ? (
+        <div className="flex items-center justify-between gap-3 rounded-lg border border-amber-500/20 bg-slate-900/50 px-3 py-2">
+          <div className="space-y-0.5 min-w-0">
+            <Label
+              htmlFor="playoff-save-cloud"
+              className="text-sm text-slate-200"
+            >
+              {t.arenaPlayoff.saveCloudLabel}
+            </Label>
+            <p className="text-[11px] text-slate-500 leading-snug">
+              {t.arenaPlayoff.saveCloudHint}
+            </p>
+          </div>
+          <Switch
+            id="playoff-save-cloud"
+            checked={saveCloudGames}
+            onCheckedChange={setSaveCloudGames}
+            className="shrink-0"
+          />
+        </div>
+      ) : isSupabaseConfigured && !userId ? (
+        <p className="text-xs text-slate-500 px-1">
+          {t.arenaPlayoff.saveCloudNeedLogin}
+        </p>
+      ) : null}
 
       <div
         className={`arena-playoff-grid grid gap-3 items-start ${
