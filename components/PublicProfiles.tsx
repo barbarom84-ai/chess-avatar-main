@@ -40,6 +40,17 @@ import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { VirtualScroll } from "@/components/ui/virtual-scroll";
+import AvatarLibraryCard from "./AvatarLibraryCard";
+import AvatarCardViewToggle from "./AvatarCardViewToggle";
+import { AvatarTradingCardGrid } from "./AvatarTradingCard";
+import { fetchMetadataForProfiles } from "@/lib/profile-metadata";
+import {
+  readLibraryViewMode,
+  writeLibraryViewMode,
+  type LibraryViewMode,
+} from "@/lib/library-view-mode";
+import type { ProfileMetadata } from "@/types/chess";
+import { GitCompareArrows } from "lucide-react";
 
 const LIBRARY_STORAGE_PLATFORM = "chess-avatar.library.platform";
 const LIBRARY_STORAGE_DEDUPE = "chess-avatar.library.dedupe";
@@ -63,7 +74,27 @@ export default function PublicProfiles() {
   const [selectedProfile, setSelectedProfile] = useState<DbProfile | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<LibraryViewMode>("list");
+  const [metadataMap, setMetadataMap] = useState<
+    Map<string, ProfileMetadata>
+  >(new Map());
+  const [compareMode, setCompareMode] = useState(false);
+  const [compareIds, setCompareIds] = useState<string[]>([]);
   const searchQueryRef = useRef(searchQuery);
+
+  useEffect(() => {
+    setViewMode(readLibraryViewMode());
+  }, []);
+
+  useEffect(() => {
+    if (profiles.length === 0) {
+      setMetadataMap(new Map());
+      return;
+    }
+    void fetchMetadataForProfiles(profiles.map((p) => p.id)).then(
+      setMetadataMap
+    );
+  }, [profiles]);
 
   useEffect(() => {
     searchQueryRef.current = searchQuery;
@@ -190,17 +221,57 @@ export default function PublicProfiles() {
 
   const isOwner = (profile: DbProfile) => currentUserId === profile.user_id;
 
+  const handleCompareSelect = (profile: DbProfile) => {
+    setCompareIds((prev) => {
+      if (prev.includes(profile.id)) {
+        return prev.filter((id) => id !== profile.id);
+      }
+      if (prev.length >= 2) {
+        return [prev[1]!, profile.id];
+      }
+      return [...prev, profile.id];
+    });
+  };
+
+  const compareProfiles = profiles.filter((p) => compareIds.includes(p.id));
+
   return (
     <Card className="bg-slate-900 border-slate-800">
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
           <CardTitle className="flex items-center gap-2">
             <Library className="h-5 w-5 text-purple-400" />
             {t.library.title}
           </CardTitle>
-          <Badge variant="outline" className="text-purple-400 border-purple-400">
-            {t.library.profilesShown.replace('{count}', String(profiles.length))}
-          </Badge>
+          <div className="flex items-center gap-2 flex-wrap">
+            <AvatarCardViewToggle
+              mode={viewMode}
+              onChange={(m) => {
+                setViewMode(m);
+                writeLibraryViewMode(m);
+              }}
+            />
+            <Button
+              type="button"
+              size="sm"
+              variant={compareMode ? "default" : "outline"}
+              className={
+                compareMode
+                  ? "bg-amber-600 hover:bg-amber-500"
+                  : "border-slate-600"
+              }
+              onClick={() => {
+                setCompareMode((c) => !c);
+                setCompareIds([]);
+              }}
+            >
+              <GitCompareArrows className="h-3.5 w-3.5 mr-1" />
+              {compareMode ? t.avatarCard.compareExit : t.avatarCard.compare}
+            </Button>
+            <Badge variant="outline" className="text-purple-400 border-purple-400">
+              {t.library.profilesShown.replace("{count}", String(profiles.length))}
+            </Badge>
+          </div>
         </div>
       </CardHeader>
 
@@ -451,119 +522,179 @@ export default function PublicProfiles() {
             </AlertDescription>
           </Alert>
         ) : (
-          <VirtualScroll
-            className="space-y-3"
-            items={profiles}
-            itemHeight={220}
-            maxHeight={600}
-            threshold={24}
-            getKey={(profile) => profile.id}
-            renderItem={(profile) => (
-              <Card
-                className="bg-slate-950 border-slate-800 hover:border-purple-700 transition-colors"
-              >
-                <CardContent className="p-4 space-y-3">
-                  {/* Header */}
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-bold text-slate-200">{profile.username}</h3>
-                        <Badge 
-                          variant="outline" 
-                          className={`text-xs ${
-                            profile.platform === 'chesscom' 
-                              ? 'border-green-500 text-green-300 bg-green-500/10' 
-                              : 'border-blue-500 text-blue-300 bg-blue-500/10'
-                          }`}
+          <>
+            {compareMode && compareProfiles.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 p-3 rounded-lg border border-amber-500/30 bg-amber-950/20">
+                {compareProfiles.map((profile) => (
+                  <AvatarLibraryCard
+                    key={`compare-${profile.id}`}
+                    profile={profile}
+                    metadata={metadataMap.get(profile.id)}
+                    onPlay={handlePlayAgainst}
+                    onDetails={handleViewDetails}
+                    onDownload={handleDownload}
+                    selected
+                  />
+                ))}
+                {compareProfiles.length < 2 && (
+                  <p className="text-xs text-slate-500 flex items-center justify-center min-h-[200px]">
+                    {t.avatarCard.compare}
+                  </p>
+                )}
+              </div>
+            )}
+            {viewMode === "cards" ? (
+              <AvatarTradingCardGrid className="max-h-[600px] overflow-y-auto pr-1">
+                {profiles.map((profile) => (
+                  <AvatarLibraryCard
+                    key={profile.id}
+                    profile={profile}
+                    metadata={metadataMap.get(profile.id)}
+                    onPlay={handlePlayAgainst}
+                    onDetails={handleViewDetails}
+                    onDownload={handleDownload}
+                    compareMode={compareMode}
+                    selected={compareIds.includes(profile.id)}
+                    onSelectCompare={
+                      compareMode ? handleCompareSelect : undefined
+                    }
+                  />
+                ))}
+              </AvatarTradingCardGrid>
+            ) : (
+              <VirtualScroll
+                className="space-y-3"
+                items={profiles}
+                itemHeight={220}
+                maxHeight={600}
+                threshold={24}
+                getKey={(profile) => profile.id}
+                renderItem={(profile) => (
+                  <Card
+                    className={`bg-slate-950 border-slate-800 hover:border-purple-700 transition-colors ${
+                      compareMode && compareIds.includes(profile.id)
+                        ? "ring-2 ring-cyan-400"
+                        : ""
+                    }`}
+                    onClick={
+                      compareMode
+                        ? () => handleCompareSelect(profile)
+                        : undefined
+                    }
+                    role={compareMode ? "button" : undefined}
+                  >
+                    <CardContent className="p-4 space-y-3">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-bold text-slate-200">{profile.username}</h3>
+                            <Badge
+                              variant="outline"
+                              className={`text-xs ${
+                                profile.platform === "chesscom"
+                                  ? "border-green-500 text-green-300 bg-green-500/10"
+                                  : "border-blue-500 text-blue-300 bg-blue-500/10"
+                              }`}
+                            >
+                              {profile.platform === "chesscom" ? "Chess.com" : "Lichess"}
+                            </Badge>
+                            {profile.is_public ? (
+                              <Unlock className="h-3 w-3 text-green-400" />
+                            ) : (
+                              <Lock className="h-3 w-3 text-orange-400" />
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 mt-1">
+                            <Badge variant="outline" className="text-xs text-amber-400 border-amber-400">
+                              ELO {profile.config.elo}
+                            </Badge>
+                            <Badge variant="outline" className="text-xs">
+                              {t.engineConfig.depthLevel} {profile.config.difficulty}
+                            </Badge>
+                          </div>
+                        </div>
+                        <Globe className="h-5 w-5 text-purple-400" />
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-2 text-xs">
+                        <div className="text-center bg-slate-900 p-2 rounded">
+                          <div className="text-slate-400">{t.library.style}</div>
+                          <div className="font-semibold text-slate-200 capitalize">
+                            {(
+                              {
+                                agressif: t.engineConfig.playStyleAggressive,
+                                solide: t.engineConfig.playStyleSolid,
+                                équilibré: t.engineConfig.playStyleBalanced,
+                                positionnel: t.engineConfig.playStylePositional,
+                                tactique: t.engineConfig.playStyleTactical,
+                              } as Record<string, string>
+                            )[profile.config.playStyle] || profile.config.playStyle}
+                          </div>
+                        </div>
+                        <div className="text-center bg-slate-900 p-2 rounded">
+                          <div className="text-slate-400">{t.library.aggression}</div>
+                          <div className="font-semibold text-red-400">
+                            {profile.config.aggressiveness}%
+                          </div>
+                        </div>
+                        <div className="text-center bg-slate-900 p-2 rounded">
+                          <div className="text-slate-400">{t.library.depth}</div>
+                          <div className="font-semibold text-purple-400">
+                            {profile.config.depth}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div
+                        className="grid grid-cols-3 gap-2"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Button
+                          size="sm"
+                          onClick={() => handlePlayAgainst(profile)}
+                          className="bg-blue-600 hover:bg-blue-500 text-white font-semibold shadow-md border border-blue-700"
+                          title={t.engineConfig.playAgainstProfile}
                         >
-                          {profile.platform === 'chesscom' ? 'Chess.com' : 'Lichess'}
-                        </Badge>
-                        {profile.is_public ? (
-                          <Unlock className="h-3 w-3 text-green-400" />
-                        ) : (
-                          <Lock className="h-3 w-3 text-orange-400" />
+                          <Play className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => handleViewDetails(profile)}
+                          className="bg-purple-600 hover:bg-purple-500 text-white font-semibold shadow-md border border-purple-700"
+                          title={t.engineConfig.viewDetails}
+                        >
+                          <Settings className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleDownload(profile)}
+                          className="border-2 border-green-500 bg-green-500/10 text-green-300 hover:bg-green-500/20 font-semibold shadow-sm"
+                          title={t.engineConfig.exportJsonLabel}
+                        >
+                          <Download className="h-3 w-3" />
+                        </Button>
+                      </div>
+
+                      <div className="text-xs text-slate-600 text-center flex items-center justify-center gap-1">
+                        {profile.config.creatorName && (
+                          <>
+                            <User className="h-3 w-3" />
+                            <span className="text-slate-400">{profile.config.creatorName}</span>
+                            <span>·</span>
+                          </>
+                        )}
+                        {t.library.createdOn}{" "}
+                        {new Date(profile.created_at).toLocaleDateString(
+                          lang === "fr" ? "fr-FR" : "en-US"
                         )}
                       </div>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Badge variant="outline" className="text-xs text-amber-400 border-amber-400">
-                          ELO {profile.config.elo}
-                        </Badge>
-                        <Badge variant="outline" className="text-xs">
-                          {t.engineConfig.depthLevel} {profile.config.difficulty}
-                        </Badge>
-                      </div>
-                    </div>
-                    <Globe className="h-5 w-5 text-purple-400" />
-                  </div>
-
-                  {/* Stats */}
-                  <div className="grid grid-cols-3 gap-2 text-xs">
-                    <div className="text-center bg-slate-900 p-2 rounded">
-                      <div className="text-slate-400">{t.library.style}</div>
-                      <div className="font-semibold text-slate-200 capitalize">{
-                        ({
-                          'agressif': t.engineConfig.playStyleAggressive,
-                          'solide': t.engineConfig.playStyleSolid,
-                          'équilibré': t.engineConfig.playStyleBalanced,
-                          'positionnel': t.engineConfig.playStylePositional,
-                          'tactique': t.engineConfig.playStyleTactical,
-                        } as Record<string, string>)[profile.config.playStyle] || profile.config.playStyle
-                      }</div>
-                    </div>
-                    <div className="text-center bg-slate-900 p-2 rounded">
-                      <div className="text-slate-400">{t.library.aggression}</div>
-                      <div className="font-semibold text-red-400">{profile.config.aggressiveness}%</div>
-                    </div>
-                    <div className="text-center bg-slate-900 p-2 rounded">
-                      <div className="text-slate-400">{t.library.depth}</div>
-                      <div className="font-semibold text-purple-400">{profile.config.depth}</div>
-                    </div>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="grid grid-cols-3 gap-2">
-                    <Button
-                      size="sm"
-                      onClick={() => handlePlayAgainst(profile)}
-                      className="bg-blue-600 hover:bg-blue-500 text-white font-semibold shadow-md border border-blue-700"
-                      title={t.engineConfig.playAgainstProfile}
-                    >
-                      <Play className="h-3 w-3" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      onClick={() => handleViewDetails(profile)}
-                      className="bg-purple-600 hover:bg-purple-500 text-white font-semibold shadow-md border border-purple-700"
-                      title={t.engineConfig.viewDetails}
-                    >
-                      <Settings className="h-3 w-3" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleDownload(profile)}
-                      className="border-2 border-green-500 bg-green-500/10 text-green-300 hover:bg-green-500/20 font-semibold shadow-sm"
-                      title={t.engineConfig.exportJsonLabel}
-                    >
-                      <Download className="h-3 w-3" />
-                    </Button>
-                  </div>
-
-                  {/* Creator & Date */}
-                  <div className="text-xs text-slate-600 text-center flex items-center justify-center gap-1">
-                    {profile.config.creatorName && (
-                      <>
-                        <User className="h-3 w-3" />
-                        <span className="text-slate-400">{profile.config.creatorName}</span>
-                        <span>·</span>
-                      </>
-                    )}
-                    {t.library.createdOn} {new Date(profile.created_at).toLocaleDateString(lang === 'fr' ? 'fr-FR' : 'en-US')}
-                  </div>
-                </CardContent>
-              </Card>
+                    </CardContent>
+                  </Card>
+                )}
+              />
             )}
-          />
+          </>
         )}
       </CardContent>
 

@@ -1,4 +1,5 @@
 import { Chess } from "chess.js";
+import { clampProfileElo } from "@/lib/elo-bounds";
 
 /** Export UCI / Fritz (AvatarEngine.py) — réponses noires après séquence de coups blancs. */
 export interface FritzBlackChoice {
@@ -59,6 +60,8 @@ export interface EngineConfig {
    * 0 = désactivé. undefined = 10 (comportement par défaut).
    */
   humanBlunderInterval?: number;
+  /** Profil créé par le script / API « champions » Arène */
+  featuredSeed?: boolean;
 }
 
 function normalizeOpeningName(raw?: string | null): string | null {
@@ -124,12 +127,59 @@ function extractOpeningName(game: PersonaGameInput): string | null {
   return null;
 }
 
+function estimatePersonaElo(
+  games: PersonaGameInput[],
+  username: string,
+  winRate: number,
+  platformRating?: number
+): number {
+  if (platformRating != null && platformRating > 0) {
+    return clampProfileElo(platformRating);
+  }
+
+  const needle = username.toLowerCase();
+  const perfRatings: number[] = [];
+
+  for (const game of games) {
+    const pgn = typeof game?.pgn === "string" ? game.pgn : "";
+    const whiteName =
+      game.players?.white?.user?.name ||
+      game.players?.white?.username ||
+      "";
+    const blackName =
+      game.players?.black?.user?.name ||
+      game.players?.black?.username ||
+      "";
+    const isWhite = whiteName.toLowerCase() === needle;
+    const oppRatingTag = isWhite ? "BlackElo" : "WhiteElo";
+    const selfRatingTag = isWhite ? "WhiteElo" : "BlackElo";
+    const selfR = parsePgnTag(pgn, selfRatingTag);
+    const oppR = parsePgnTag(pgn, oppRatingTag);
+    const selfNum = selfR ? parseInt(selfR, 10) : NaN;
+    const oppNum = oppR ? parseInt(oppR, 10) : NaN;
+    if (!Number.isNaN(selfNum) && selfNum > 0) perfRatings.push(selfNum);
+    if (!Number.isNaN(oppNum) && oppNum > 0) {
+      const perf = oppNum + (winRate - 50) * 4;
+      perfRatings.push(perf);
+    }
+  }
+
+  if (perfRatings.length >= 2) {
+    const avg =
+      perfRatings.reduce((a, b) => a + b, 0) / perfRatings.length;
+    return clampProfileElo(avg);
+  }
+
+  return clampProfileElo(800 + winRate * 27);
+}
+
 // On ajoute le paramètre platform à la fonction
 export function analyzePersona(
   games: PersonaGameInput[],
   username: string,
   avatarUrl?: string,
-  platform?: "lichess" | "chesscom"
+  platform?: "lichess" | "chesscom",
+  platformRating?: number
 ): { stats: PersonaStats; config: EngineConfig } {
   let wins = 0;
   let draws = 0;
@@ -214,13 +264,19 @@ export function analyzePersona(
   else if (winRate >= 40) difficulty = 2;
   else difficulty = 1;
 
-  // Calcul de l'ELO estimé
-  const estimatedElo = 1200 + (winRate * 10);
+  const estimatedElo = estimatePersonaElo(
+    validGames,
+    username,
+    winRate,
+    platformRating
+  );
 
   // Détermination du style de jeu
   let playStyle: "agressif" | "solide" | "équilibré" | "positionnel" | "tactique" = "équilibré";
   if (style === "Agressif") playStyle = avgMoves < 35 ? "tactique" : "agressif";
-  else if (style === "Solide") playStyle = "positionnel";
+  else if (style === "Solide") {
+    playStyle = avgMoves >= 40 ? "solide" : avgMoves <= 32 ? "équilibré" : "positionnel";
+  }
   else if (style === "Chaotique") playStyle = "tactique";
   // Équilibré reste "équilibré" par défaut
 
@@ -244,7 +300,7 @@ export function analyzePersona(
       name: `Bot_${username}`,
       avatarUrl,
       platform,
-      elo: Math.round(estimatedElo),
+      elo: estimatedElo,
       difficulty,
       aggressiveness: style === "Agressif" ? 100 : style === "Solide" ? 20 : 50,
       threads: difficulty >= 4 ? 4 : 2, // Minimum 2 threads

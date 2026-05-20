@@ -14,6 +14,16 @@ import { prepareConfigForExport } from "@/lib/forced-line-utils";
 import { OPENINGS_DATABASE } from "@/lib/openings-library";
 import { useLanguage } from "@/lib/language-context";
 import ProfileDetailsModal from "./ProfileDetailsModal";
+import AvatarLibraryCard from "./AvatarLibraryCard";
+import AvatarCardViewToggle from "./AvatarCardViewToggle";
+import { AvatarTradingCardGrid } from "./AvatarTradingCard";
+import { fetchMetadataForProfiles } from "@/lib/profile-metadata";
+import {
+  readLibraryViewMode,
+  writeLibraryViewMode,
+  type LibraryViewMode,
+} from "@/lib/library-view-mode";
+import type { ProfileMetadata } from "@/types/chess";
 import { toast } from "sonner";
 
 export default function UserSavedAvatars() {
@@ -24,6 +34,24 @@ export default function UserSavedAvatars() {
   const [loading, setLoading] = useState(true);
   const [selectedProfile, setSelectedProfile] = useState<DbProfile | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [viewMode, setViewMode] = useState<LibraryViewMode>("list");
+  const [metadataMap, setMetadataMap] = useState<
+    Map<string, ProfileMetadata>
+  >(new Map());
+
+  useEffect(() => {
+    setViewMode(readLibraryViewMode());
+  }, []);
+
+  useEffect(() => {
+    if (profiles.length === 0) {
+      setMetadataMap(new Map());
+      return;
+    }
+    void fetchMetadataForProfiles(profiles.map((p) => p.id)).then(
+      setMetadataMap
+    );
+  }, [profiles]);
 
   const loadProfiles = useCallback(async () => {
     const data = await getUserProfiles();
@@ -75,7 +103,14 @@ export default function UserSavedAvatars() {
   };
 
   const handleTogglePublic = async (profile: DbProfile) => {
-    const res = await updateProfile(profile.id, { is_public: !profile.is_public });
+    const nextPublic = !profile.is_public;
+    const res = await updateProfile(profile.id, {
+      is_public: nextPublic,
+      config: {
+        ...profile.config,
+        featuredSeed: nextPublic ? true : undefined,
+      },
+    });
     if (res.success) {
       loadProfiles();
     } else {
@@ -190,17 +225,43 @@ export default function UserSavedAvatars() {
 
       <CardContent className="space-y-4">
         <div>
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
             <h3 className="text-sm font-semibold text-slate-300">{t.profile.savedProfiles}</h3>
-            <Badge variant="outline" className="text-slate-400 border-slate-700">
-              {profiles.length}
-            </Badge>
+            <div className="flex items-center gap-2">
+              {profiles.length > 0 && (
+                <AvatarCardViewToggle
+                  mode={viewMode}
+                  onChange={(m) => {
+                    setViewMode(m);
+                    writeLibraryViewMode(m);
+                  }}
+                />
+              )}
+              <Badge variant="outline" className="text-slate-400 border-slate-700">
+                {profiles.length}
+              </Badge>
+            </div>
           </div>
 
           {profiles.length === 0 ? (
             <Alert className="bg-slate-950 border-slate-800">
               <AlertDescription className="text-slate-400 text-sm">{t.profile.noProfiles}</AlertDescription>
             </Alert>
+          ) : viewMode === "cards" ? (
+            <AvatarTradingCardGrid>
+              {profiles.map((profile) => (
+                <AvatarLibraryCard
+                  key={profile.id}
+                  profile={profile}
+                  metadata={metadataMap.get(profile.id)}
+                  onPlay={handlePlayAgainst}
+                  onDetails={handleViewDetails}
+                  onDownload={handleDownload}
+                  onTogglePublic={handleTogglePublic}
+                  onDelete={handleDelete}
+                />
+              ))}
+            </AvatarTradingCardGrid>
           ) : (
             <div className="space-y-2">
               {profiles.map((profile) => (

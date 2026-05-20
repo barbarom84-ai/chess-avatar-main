@@ -6,6 +6,7 @@ import {
   profileCacheKey,
   setCachedProfileResponse,
 } from "@/lib/profile-api-cache";
+import { bestLichessRating } from "@/lib/platform-rating";
 
 export async function GET(request: NextRequest) {
   const limited = await rateLimit(request, { windowMs: 60_000, max: 40 });
@@ -39,6 +40,7 @@ export async function GET(request: NextRequest) {
   try {
     const profileResponse = await fetch(`https://lichess.org/api/user/${encodeURIComponent(username)}`);
     let avatarUrl = `https://lichess.org/assets/logo/lichess-pad3.svg`;
+    let platformRating: number | undefined;
 
     if (profileResponse.ok) {
       const profileData: unknown = await profileResponse.json().catch(() => null);
@@ -47,6 +49,7 @@ export async function GET(request: NextRequest) {
         avatarUrl =
           profile.profile?.avatar ||
           `https://lichess1.org/assets/_Qr0fOa/logo/lichess-favicon-512.png`;
+        platformRating = bestLichessRating(profileData);
       }
     }
 
@@ -85,7 +88,7 @@ export async function GET(request: NextRequest) {
       })
       .filter((game) => game !== null);
 
-    const payload = { games, avatarUrl };
+    const payload = { games, avatarUrl, platformRating };
     setCachedProfileResponse(cacheKey, payload);
     return NextResponse.json(payload);
   } catch (error) {

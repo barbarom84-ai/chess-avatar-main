@@ -17,6 +17,14 @@ import { isSupabaseConfigured, supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/language-context";
 import { usePremium } from "@/hooks/usePremium";
 import EvaluationBar from "@/components/EvaluationBar";
+import AvatarTradingCard from "@/components/AvatarTradingCard";
+import {
+  buildAvatarCardModel,
+  minimalPersonaStatsFromConfig,
+} from "@/lib/avatar-card-model";
+import { getAvatarCardLabels } from "@/lib/avatar-card-labels";
+import { generateAIAnalysis } from "@/lib/ai-analysis";
+import { derivePlayingStyle } from "@/lib/avatar-card-model";
 import { toast } from "sonner";
 import {
   Play,
@@ -36,12 +44,7 @@ const MAX_PICKER_ROWS = 36;
 
 type ProfilePlatformFilter = "all" | "lichess" | "chesscom";
 
-type ProfileOption = {
-  key: string;
-  label: string;
-  config: EngineConfig;
-  savedAt: number;
-};
+import type { ProfileOption } from "@/lib/arena-types";
 
 function replayUci(history: string[]): Chess {
   const g = new Chess();
@@ -146,6 +149,53 @@ function mergeLocalAndCloud(
   }
   out.sort((a, b) => b.savedAt - a.savedAt);
   return out;
+}
+
+function mergeFeaturedFirst(
+  featured: ProfileOption[],
+  rest: ProfileOption[]
+): ProfileOption[] {
+  const seen = new Set<string>();
+  const out: ProfileOption[] = [];
+  for (const f of featured) {
+    const ik = profileIdentityKey(f.config);
+    if (seen.has(ik)) continue;
+    seen.add(ik);
+    out.push(f);
+  }
+  for (const r of rest) {
+    const ik = profileIdentityKey(r.config);
+    if (seen.has(ik)) continue;
+    seen.add(ik);
+    out.push(r);
+  }
+  return out;
+}
+
+async function fetchFeaturedArenaOptions(
+  featuredLabel: string
+): Promise<ProfileOption[]> {
+  try {
+    const res = await fetch("/api/arena/featured", { cache: "no-store" });
+    if (!res.ok) return [];
+    const data = (await res.json()) as {
+      options?: {
+        key: string;
+        label: string;
+        config: EngineConfig;
+        savedAt: number;
+        platform: "lichess" | "chesscom";
+      }[];
+    };
+    return (data.options ?? []).map((o) => ({
+      key: o.key,
+      label: o.label || `${o.config.name} (${featuredLabel})`,
+      config: o.config,
+      savedAt: o.savedAt,
+    }));
+  } catch {
+    return [];
+  }
 }
 
 function filterByPlatform(
@@ -354,6 +404,27 @@ function buildArenaPgn(params: {
   return headers.join("\n") + "\n\n" + movesStr;
 }
 
+function optionToCardModel(
+  option: ProfileOption,
+  labels: ReturnType<typeof getAvatarCardLabels>
+) {
+  const stats =
+    option.stats && (option.stats.gameCount ?? 0) > 0
+      ? option.stats
+      : minimalPersonaStatsFromConfig(
+          option.config,
+          option.config.name || option.label
+        );
+  const playingStyle = derivePlayingStyle(option.config);
+  const analysis = generateAIAnalysis(playingStyle, stats, stats.gameCount);
+  return buildAvatarCardModel({
+    stats,
+    config: option.config,
+    analysis,
+    labels,
+  });
+}
+
 function ArenaProfilePicker({
   sideLabel,
   selectedKey,
@@ -364,7 +435,7 @@ function ArenaProfilePicker({
   searchPlaceholder,
   noMatches,
   listHint,
-  selectedPrefix,
+  cardsHint,
 }: {
   sideLabel: string;
   selectedKey: string;
@@ -375,17 +446,20 @@ function ArenaProfilePicker({
   searchPlaceholder: string;
   noMatches: string;
   listHint: string;
-  selectedPrefix: string;
+  cardsHint: string;
 }) {
+  const { t } = useLanguage();
+  const labels = useMemo(() => getAvatarCardLabels(t), [t]);
+
   const visible = useMemo(() => {
     return filterBySearch(pool, searchQuery).slice(0, MAX_PICKER_ROWS);
   }, [pool, searchQuery]);
 
-  const selected = pool.find((o) => o.key === selectedKey);
-
   return (
     <div className="space-y-2 min-w-0">
-      <Label className="text-xs text-slate-400">{sideLabel}</Label>
+      <Label className="text-xs font-semibold text-cyan-300/90 uppercase tracking-wide">
+        {sideLabel}
+      </Label>
       <div className="relative">
         <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-500 pointer-events-none" />
         <Input
@@ -396,40 +470,97 @@ function ArenaProfilePicker({
           autoComplete="off"
         />
       </div>
-      {selected && (
-        <div className="text-[11px] text-cyan-200/90 truncate rounded border border-cyan-500/30 bg-cyan-950/30 px-2 py-1.5">
-          <span className="text-slate-500">{selectedPrefix}: </span>
-          <span className="font-medium">{selected.label}</span>
-        </div>
-      )}
-      <p className="text-[10px] text-slate-500">{listHint}</p>
-      <div className="max-h-44 overflow-y-auto rounded-md border border-slate-700 bg-slate-950 shadow-inner">
+      <p className="text-[10px] text-slate-500">
+        {listHint} {cardsHint}
+      </p>
+      <div className="max-h-[420px] overflow-y-auto rounded-lg border border-slate-700/80 bg-slate-950/80 p-2">
         {visible.length === 0 ? (
-          <div className="px-3 py-6 text-center text-xs text-slate-500">
+          <div className="px-3 py-8 text-center text-xs text-slate-500">
             {noMatches}
           </div>
         ) : (
-          visible.map((o) => (
-            <button
-              key={o.key}
-              type="button"
-              onClick={() => onSelectKey(o.key)}
-              className={`w-full text-left px-3 py-2 text-sm border-b border-slate-800/80 last:border-b-0 transition-colors ${
-                selectedKey === o.key
-                  ? "bg-cyan-900/35 text-cyan-100"
-                  : "text-slate-200 hover:bg-slate-800/80"
-              }`}
-            >
-              <span className="line-clamp-2">{o.label}</span>
-            </button>
-          ))
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-2">
+            {visible.map((o) => {
+              const model = optionToCardModel(o, labels);
+              const selected = selectedKey === o.key;
+              return (
+                <div
+                  key={o.key}
+                  className={
+                    selected
+                      ? "ring-2 ring-cyan-400 rounded-xl"
+                      : "rounded-xl opacity-90 hover:opacity-100"
+                  }
+                >
+                  <AvatarTradingCard
+                    model={model}
+                    labels={labels}
+                    size="md"
+                    flippable={selected}
+                    interactive
+                    className="w-full max-w-none cursor-pointer"
+                    onClick={() => onSelectKey(o.key)}
+                  />
+                </div>
+              );
+            })}
+          </div>
         )}
       </div>
     </div>
   );
 }
 
-export default function ArenaSpectator() {
+function ArenaMatchupBanner({
+  whiteOption,
+  blackOption,
+  vsLabel,
+}: {
+  whiteOption: ProfileOption | undefined;
+  blackOption: ProfileOption | undefined;
+  vsLabel: string;
+}) {
+  const { t } = useLanguage();
+  const labels = useMemo(() => getAvatarCardLabels(t), [t]);
+
+  if (!whiteOption && !blackOption) return null;
+
+  return (
+    <div className="flex flex-col sm:flex-row items-center justify-center gap-3 py-4 px-2 rounded-xl border border-amber-500/25 bg-gradient-to-r from-slate-950 via-amber-950/20 to-slate-950">
+      {whiteOption ? (
+        <AvatarTradingCard
+          model={optionToCardModel(whiteOption, labels)}
+          labels={labels}
+          size="md"
+          flippable
+          className="w-full max-w-[220px]"
+        />
+      ) : (
+        <div className="w-[220px] h-[320px] rounded-xl border border-dashed border-slate-700 flex items-center justify-center text-slate-500 text-xs">
+          —
+        </div>
+      )}
+      <span className="text-2xl font-black text-amber-400/90 font-serif shrink-0 px-2">
+        {vsLabel}
+      </span>
+      {blackOption ? (
+        <AvatarTradingCard
+          model={optionToCardModel(blackOption, labels)}
+          labels={labels}
+          size="md"
+          flippable
+          className="w-full max-w-[220px]"
+        />
+      ) : (
+        <div className="w-[220px] h-[320px] rounded-xl border border-dashed border-slate-700 flex items-center justify-center text-slate-500 text-xs">
+          —
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function ArenaSpectator({ embedded = false }: { embedded?: boolean }) {
   const { t, lang } = useLanguage();
   const { userId } = usePremium();
   const {
@@ -507,14 +638,15 @@ export default function ArenaSpectator() {
   const loadOptions = useCallback(async () => {
     setListLoading(true);
     try {
-      const local = buildRawOptions(
-        t.arenaPage.savedProfiles,
-        t.arenaPage.recentProfiles
+      const { loadArenaProfilePool } = await import("@/lib/arena-profile-pool");
+      setRawOptions(
+        await loadArenaProfilePool({
+          savedProfiles: t.arenaPage.savedProfiles,
+          recentProfiles: t.arenaPage.recentProfiles,
+          cloudLibrary: t.arenaPage.cloudLibrary,
+          featuredChampions: t.arenaPage.featuredChampions,
+        })
       );
-      const cloud = await fetchCloudArenaProfileOptions(
-        t.arenaPage.cloudLibrary
-      );
-      setRawOptions(mergeLocalAndCloud(local, cloud));
     } finally {
       setListLoading(false);
     }
@@ -522,6 +654,7 @@ export default function ArenaSpectator() {
     t.arenaPage.savedProfiles,
     t.arenaPage.recentProfiles,
     t.arenaPage.cloudLibrary,
+    t.arenaPage.featuredChampions,
   ]);
 
   useEffect(() => {
@@ -796,18 +929,27 @@ export default function ArenaSpectator() {
   const needsProfiles = !listLoading && rawOptions.length < 2;
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6 p-4 md:p-6">
-      <div className="text-center space-y-2">
-        <h1 className="text-3xl font-bold text-cyan-400">{t.pages.arena.title}</h1>
-        <p className="text-sm text-slate-400 max-w-2xl mx-auto">
-          {t.pages.arena.subtitle}
-        </p>
-      </div>
+    <div
+      className={
+        embedded ? "space-y-6" : "max-w-6xl mx-auto space-y-6 p-4 md:p-6"
+      }
+    >
+      {!embedded && (
+        <div className="text-center space-y-2">
+          <h1 className="text-3xl font-bold text-cyan-400">{t.pages.arena.title}</h1>
+          <p className="text-sm text-slate-400 max-w-2xl mx-auto">
+            {t.pages.arena.subtitle}
+          </p>
+        </div>
+      )}
 
       {listLoading && rawOptions.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-3 py-16 text-slate-400">
           <Loader2 className="h-10 w-10 animate-spin text-cyan-500" />
           <span className="text-sm">{t.arenaPage.loadingProfiles}</span>
+          <span className="text-xs text-slate-500 max-w-sm text-center">
+            {t.arenaPage.featuredLoading}
+          </span>
         </div>
       ) : needsProfiles ? (
         <Card className="bg-slate-900/70 border-amber-500/30">
@@ -914,7 +1056,7 @@ export default function ArenaSpectator() {
                   searchPlaceholder={t.arenaPage.pickSearchPlaceholder}
                   noMatches={t.arenaPage.pickNoMatches}
                   listHint={t.arenaPage.pickListHint}
-                  selectedPrefix={t.arenaPage.pickSelectedLabel}
+                  cardsHint={t.arenaPage.pickCardsHint}
                 />
                 <ArenaProfilePicker
                   sideLabel={t.arenaPage.blackSide}
@@ -926,9 +1068,15 @@ export default function ArenaSpectator() {
                   searchPlaceholder={t.arenaPage.pickSearchPlaceholder}
                   noMatches={t.arenaPage.pickNoMatches}
                   listHint={t.arenaPage.pickListHint}
-                  selectedPrefix={t.arenaPage.pickSelectedLabel}
+                  cardsHint={t.arenaPage.pickCardsHint}
                 />
               </div>
+
+              <ArenaMatchupBanner
+                whiteOption={poolOptions.find((o) => o.key === whiteKey)}
+                blackOption={poolOptions.find((o) => o.key === blackKey)}
+                vsLabel={t.arenaPage.matchupVs}
+              />
 
               <div className="grid sm:grid-cols-2 gap-4 md:col-span-2 pt-2">
                 <div>

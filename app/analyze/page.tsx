@@ -73,6 +73,7 @@ export default function AnalyzePage() {
       let gamesData = [];
       let avatarUrl = "";
       let detectedPlatform: 'lichess' | 'chesscom' = 'lichess';
+      let platformRating: number | undefined;
 
       // 1. CHOIX DE L'API SELON LA PLATEFORME
       if (platform === "lichess") {
@@ -82,6 +83,10 @@ export default function AnalyzePage() {
         const data = await response.json();
         gamesData = data.games;
         avatarUrl = data.avatarUrl;
+        platformRating =
+          typeof data.platformRating === "number"
+            ? data.platformRating
+            : undefined;
         detectedPlatform = 'lichess';
       
       } else {
@@ -96,6 +101,10 @@ export default function AnalyzePage() {
         
         gamesData = data.games;
         avatarUrl = data.avatarUrl;
+        platformRating =
+          typeof data.platformRating === "number"
+            ? data.platformRating
+            : undefined;
         detectedPlatform = 'chesscom';
       }
 
@@ -115,7 +124,8 @@ export default function AnalyzePage() {
           gamesData,
           username,
           avatarUrl,
-          detectedPlatform
+          detectedPlatform,
+          platformRating
         );
         setPersonaStats(analysis.stats);
         setEngineConfig(analysis.config);

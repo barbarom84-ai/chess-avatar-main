@@ -77,7 +77,7 @@ const FAMOUS_PLAYERS = {
 // Hachage déterministe pour variantes (sans appel API)
 // ========================================
 
-function seedFromContext(style: PlayingStyle, stats?: PersonaStats): number {
+export function seedFromContext(style: PlayingStyle, stats?: PersonaStats): number {
   let s = 0;
   s += (stats?.username?.codePointAt(0) ?? 0) * 7;
   s += Math.floor(style.aggression + style.tactical + style.positional);
@@ -382,64 +382,183 @@ function generateRecommendations(
 }
 
 /**
- * Axes d’amélioration — curseurs + stats
+ * Axes d’amélioration — curseurs + stats (export pour cartes avatar / UI)
  */
-function findImprovementAreas(
+const WEAKNESS_POOL: Record<string, string[]> = {
+  endgame: [
+    "Finales techniques à consolider",
+    "Conversion en finale",
+    "Tours passives en finale",
+  ],
+  openingTheory: [
+    "Répertoire d’ouverture à structurer",
+    "Mémorisation des lignes critiques",
+    "Surprises en début de partie",
+  ],
+  timeManagement: [
+    "Zeitnot en fin de partie",
+    "Décisions trop lentes au milieu",
+    "Cadence rapide sous pression",
+  ],
+  positional: [
+    "Plans longs à affiner",
+    "Structure pion fragile",
+    "Cases faibles mal exploitées",
+  ],
+  tactical: [
+    "Calcul de variantes court",
+    "Combinaisons manquées",
+    "Défense tactique à renforcer",
+  ],
+  stats: [
+    "Efficacité en parties serrées",
+    "Trop de nuls passives",
+    "Résultats en retrait sur l’échantillon",
+    "Manque de mordant en milieu de jeu",
+  ],
+};
+
+export function findImprovementAreas(
   style: PlayingStyle,
-  stats?: PersonaStats
+  stats?: PersonaStats,
+  seed = 0
 ): string[] {
   const areas: string[] = [];
-  const weakPoints: { key: keyof PlayingStyle; label: string; threshold: number }[] = [
-    { key: 'endgame', label: 'Finales', threshold: 60 },
-    { key: 'openingTheory', label: 'Théorie d’ouverture', threshold: 60 },
-    { key: 'timeManagement', label: 'Gestion du temps', threshold: 60 },
-    { key: 'positional', label: 'Jeu positionnel', threshold: 65 },
-    { key: 'tactical', label: 'Vision tactique', threshold: 65 }
+  const weakPoints: { key: keyof PlayingStyle; poolKey: string; threshold: number }[] = [
+    { key: "endgame", poolKey: "endgame", threshold: 62 },
+    { key: "openingTheory", poolKey: "openingTheory", threshold: 62 },
+    { key: "timeManagement", poolKey: "timeManagement", threshold: 62 },
+    { key: "positional", poolKey: "positional", threshold: 68 },
+    { key: "tactical", poolKey: "tactical", threshold: 68 },
   ];
+  let idx = 0;
   for (const p of weakPoints) {
-    if (style[p.key] < p.threshold) areas.push(p.label);
+    if (style[p.key] >= p.threshold) continue;
+    const pool = WEAKNESS_POOL[p.poolKey] ?? [];
+    if (pool.length) {
+      areas.push(pool[pickIndex(seed + idx++, pool.length)]);
+    }
   }
   if (stats) {
-    if (stats.winRate < 40 && stats.gameCount >= 10) areas.push('Efficacité (score en partie)');
-    if (stats.drawRate > 50 && stats.winRate < 35) areas.push('Dynamiser les nuls serrés');
+    if (stats.winRate < 42 && stats.gameCount >= 8) {
+      areas.push(
+        WEAKNESS_POOL.stats[pickIndex(seed + 20, WEAKNESS_POOL.stats.length)]
+      );
+    } else if (stats.drawRate > 48 && stats.winRate < 40) {
+      areas.push(WEAKNESS_POOL.stats[1]);
+    }
+    const top = stats.topOpenings?.[0];
+    if (top?.name && style.openingTheory < 70) {
+      areas.push(`Lignes alternatives à ${top.name}`);
+    }
   }
-  return areas.slice(0, 4);
+  if (areas.length < 2) {
+    areas.push(
+      WEAKNESS_POOL.positional[pickIndex(seed + 40, WEAKNESS_POOL.positional.length)]
+    );
+  }
+  return [...new Set(areas)].slice(0, 3);
 }
 
 /**
- * Points forts
+ * Points forts (export pour cartes avatar / UI)
  */
-function findStrengths(
+const STRENGTH_POOL: Record<string, string[]> = {
+  aggression: [
+    "Initiative dès l’ouverture",
+    "Pression constante sur le roi adverse",
+    "Sacrifices calculés",
+  ],
+  tactical: [
+    "Combinaisons nettes",
+    "Calcul de variantes profond",
+    "Défense tactique tenace",
+  ],
+  positional: [
+    "Structure pion supérieure",
+    "Plans stratégiques patientes",
+    "Domination des cases faibles",
+  ],
+  endgame: [
+    "Technique de finale solide",
+    "Conversion précise",
+    "Patience en finale gagnante",
+  ],
+  openingTheory: [
+    "Répertoire théorique rodé",
+    "Préparation d’ouverture pointue",
+    "Surprises en début de partie",
+  ],
+  timeManagement: [
+    "Horloge bien gérée",
+    "Décisions rapides en zeitnot",
+    "Rythme soutenu sans panique",
+  ],
+  stats: [
+    "Bilan positif sur l’échantillon",
+    "Résultats stables en tournoi",
+    "Style cohérent avec les stats plateforme",
+    "Polyvalence ouverture / milieu",
+  ],
+  elo: [
+    "Niveau élite (3000+)",
+    "Force blitz de haut niveau",
+    "Référence classement mondial",
+  ],
+};
+
+export function findStrengths(
   style: PlayingStyle,
   seed: number,
   stats?: PersonaStats
 ): string[] {
   const strengths: string[] = [];
-  const strongPoints: { key: keyof PlayingStyle; label: string; threshold: number }[] = [
-    { key: 'aggression', label: 'Jeu agressif et offensif', threshold: 80 },
-    { key: 'tactical', label: 'Vision tactique aiguisée', threshold: 80 },
-    { key: 'positional', label: 'Compréhension positionnelle', threshold: 80 },
-    { key: 'endgame', label: 'Technique en finale', threshold: 80 },
-    { key: 'openingTheory', label: 'Connaissance théorique', threshold: 80 },
-    { key: 'timeManagement', label: 'Gestion du temps', threshold: 80 }
+  const strongPoints: { key: keyof PlayingStyle; poolKey: string; threshold: number }[] = [
+    { key: "aggression", poolKey: "aggression", threshold: 72 },
+    { key: "tactical", poolKey: "tactical", threshold: 72 },
+    { key: "positional", poolKey: "positional", threshold: 72 },
+    { key: "endgame", poolKey: "endgame", threshold: 72 },
+    { key: "openingTheory", poolKey: "openingTheory", threshold: 72 },
+    { key: "timeManagement", poolKey: "timeManagement", threshold: 72 },
   ];
+  let idx = 0;
   for (const p of strongPoints) {
-    if (style[p.key] >= p.threshold) strengths.push(p.label);
+    if (style[p.key] < p.threshold) continue;
+    const pool = STRENGTH_POOL[p.poolKey] ?? [];
+    if (pool.length) {
+      strengths.push(pool[pickIndex(seed + idx++ * 3, pool.length)]);
+    }
   }
   if (stats) {
-    if (stats.style === 'Agressif' && style.aggression >= 55) {
-      strengths.push("Cohérence agressive (curseurs + étiquette)");
-    } else if (stats.style === 'Solide' && (style.positional + style.endgame) / 2 >= 65) {
-      strengths.push("Cohérence de solidité (scores + courbes)");
+    const top = stats.topOpenings?.[0];
+    if (top?.name && top.count >= 2) {
+      strengths.push(`Maîtrise de ${top.name}`);
     }
-    if (stats.winRate >= 55 && stats.gameCount >= 10) {
-      strengths.push("Bilan positif sur l’échantillon de parties");
+    if (stats.winRate >= 54 && stats.gameCount >= 8) {
+      strengths.push(
+        STRENGTH_POOL.stats[pickIndex(seed + 11, STRENGTH_POOL.stats.length)]
+      );
+    }
+    if (stats.style === "Agressif" && style.aggression >= 58) {
+      strengths.push("Identité offensive confirmée");
+    } else if (stats.style === "Solide" && style.positional >= 65) {
+      strengths.push("Solidité structurelle");
+    } else if (stats.style === "Chaotique" && style.tactical >= 65) {
+      strengths.push("Jeu imprévisible et tranchant");
+    }
+    if (stats.avgMoves >= 42) {
+      strengths.push("Endurance en parties longues");
+    } else if (stats.avgMoves > 0 && stats.avgMoves <= 32) {
+      strengths.push("Décisions rapides, parties courtes");
     }
   }
-  if (strengths.length < 2 && pickIndex(seed, 2) === 0) {
-    strengths.push('Capacité d’adaptation (style composite)');
+  if (strengths.length < 2) {
+    const fallbackPools = ["tactical", "positional", "endgame"] as const;
+    const k = fallbackPools[pickIndex(seed + 50, fallbackPools.length)];
+    const pool = STRENGTH_POOL[k];
+    strengths.push(pool[pickIndex(seed + 51, pool.length)]);
   }
-  return strengths.slice(0, 4);
+  return [...new Set(strengths)].slice(0, 3);
 }
 
 /**
@@ -482,7 +601,7 @@ export function generateAIAnalysis(
     summary: generateSummary(style, seed, stats),
     styleDescription: generateStyleDescription(style, seed, stats),
     recommendations: generateRecommendations(style, seed, stats),
-    improvementAreas: findImprovementAreas(style, stats),
+    improvementAreas: findImprovementAreas(style, stats, seed),
     strengths: findStrengths(style, seed, stats),
     famousComparisons: findFamousComparisons(style),
     confidence: calculateConfidence(nGames, hasGoodData, stats),

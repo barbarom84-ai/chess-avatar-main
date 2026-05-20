@@ -7,9 +7,11 @@ export function skillLevelFromDifficulty(d: number): number {
   return map[clamped] ?? 10;
 }
 
-/** Elo UCI Stockfish (1320–3190) à partir du profil. */
+import { uciEloFromProfileElo } from "@/lib/elo-bounds";
+
+/** Elo UCI Stockfish (1320–3190) à partir du profil affiché. */
 export function uciEloFromConfig(elo: number): number {
-  return Math.min(3190, Math.max(1320, Math.round(elo)));
+  return uciEloFromProfileElo(elo);
 }
 
 /**

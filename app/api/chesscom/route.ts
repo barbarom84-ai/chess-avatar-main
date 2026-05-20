@@ -7,6 +7,7 @@ import {
   profileCacheKey,
   setCachedProfileResponse,
 } from "@/lib/profile-api-cache";
+import { bestChessComRating } from "@/lib/platform-rating";
 
 interface ChessComArchiveGame {
   uuid?: string;
@@ -68,6 +69,19 @@ export async function GET(request: NextRequest) {
       "avatar" in profile && typeof (profile as { avatar?: string }).avatar === "string"
         ? (profile as { avatar: string }).avatar
         : undefined;
+
+    let platformRating: number | undefined;
+    try {
+      const statsRes = await fetch(
+        `https://api.chess.com/pub/player/${encoded}/stats`
+      );
+      if (statsRes.ok) {
+        const statsJson: unknown = await statsRes.json().catch(() => null);
+        platformRating = bestChessComRating(statsJson);
+      }
+    } catch {
+      /* stats optionnelles */
+    }
 
     const archivesRes = await fetch(`https://api.chess.com/pub/player/${encoded}/games/archives`);
     if (!archivesRes.ok) {
@@ -142,7 +156,8 @@ export async function GET(request: NextRequest) {
 
     const payload = {
         games: normalizedGames,
-        avatarUrl: avatar || "https://www.chess.com/bundles/web/images/user-image.svg"
+        avatarUrl: avatar || "https://www.chess.com/bundles/web/images/user-image.svg",
+        platformRating,
     };
     setCachedProfileResponse(cacheKey, payload);
     return NextResponse.json(payload);

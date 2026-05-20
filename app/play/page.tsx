@@ -1,6 +1,12 @@
 "use client";
 
 import { useEffect, useState, Suspense, useMemo } from "react";
+import AvatarTradingCard from "@/components/AvatarTradingCard";
+import {
+  buildAvatarCardModel,
+  minimalPersonaStatsFromConfig,
+} from "@/lib/avatar-card-model";
+import { getAvatarCardLabels } from "@/lib/avatar-card-labels";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import dynamic from "next/dynamic";
@@ -30,6 +36,7 @@ const PlayableChessboard = dynamic(() => import("@/components/PlayableChessboard
 function PlayContent() {
   const searchParams = useSearchParams();
   const { t } = useLanguage();
+  const cardLabels = useMemo(() => getAvatarCardLabels(t), [t]);
   const [config, setConfig] = useState<EngineConfig | null>(null);
   const [playerColor, setPlayerColor] = useState<'white' | 'black'>('white');
   const [error, setError] = useState("");
@@ -69,6 +76,12 @@ function PlayContent() {
   const handleColorChange = () => {
     setPlayerColor(prev => prev === 'white' ? 'black' : 'white');
   };
+
+  const playCardModel = useMemo(() => {
+    if (!config) return null;
+    const stats = minimalPersonaStatsFromConfig(config);
+    return buildAvatarCardModel({ stats, config, labels: cardLabels });
+  }, [config, cardLabels]);
 
   if (error) {
     return (
@@ -140,13 +153,30 @@ function PlayContent() {
         {/* Barre de contrôle compacte en haut - Position fixe */}
         <div className="lg:sticky lg:top-0 z-50 bg-gradient-to-b from-slate-950 to-slate-950/95 backdrop-blur-sm border-b theme-border px-2 md:px-4 py-2 space-y-1.5">
           <div className="flex items-center justify-between gap-2">
-            {/* Gauche: Info Bot */}
-            <div className="flex items-center gap-1.5 min-w-0">
-              <Bot className="h-4 w-4 text-cyan-400 shrink-0" />
-              <span className="text-sm font-semibold text-cyan-100 truncate">{config.name}</span>
-              <Badge variant="outline" className="text-[10px] h-4 px-1.5 border-cyan-400/50 hidden sm:inline-flex shrink-0">
-                Niv {config.difficulty}
-              </Badge>
+            {/* Gauche: carte compacte adversaire */}
+            <div className="flex items-center gap-2 min-w-0">
+              {playCardModel ? (
+                <AvatarTradingCard
+                  model={playCardModel}
+                  labels={cardLabels}
+                  size="sm"
+                  interactive={false}
+                  className="shrink-0"
+                />
+              ) : (
+                <>
+                  <Bot className="h-4 w-4 text-cyan-400 shrink-0" />
+                  <span className="text-sm font-semibold text-cyan-100 truncate">
+                    {config.name}
+                  </span>
+                  <Badge
+                    variant="outline"
+                    className="text-[10px] h-4 px-1.5 border-cyan-400/50 hidden sm:inline-flex shrink-0"
+                  >
+                    Niv {config.difficulty}
+                  </Badge>
+                </>
+              )}
             </div>
 
             {/* Centre: Sélection couleur */}

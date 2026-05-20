@@ -343,12 +343,12 @@ export default function SimpleChessboard({
 
   return (
     <div
-      className={`w-full aspect-square bg-slate-800 p-1.5 sm:p-2 rounded-lg shadow-2xl relative mx-auto ${
+      className={`w-full aspect-square bg-slate-800 p-1.5 sm:p-2 rounded-lg shadow-2xl relative mx-auto min-h-0 ${
         onDrop ? "touch-none" : ""
       } ${isBoardDragging ? "cursor-grabbing select-none" : ""}`}
       style={{ maxWidth: "min(96vw, 84vh, 820px)" }}
     >
-      <div className="grid grid-cols-8 gap-0 w-full h-full">
+      <div className="grid grid-cols-8 grid-rows-8 gap-0 w-full h-full min-h-0">
         {displayRanks.map((rank, rankIdx) =>
           displayFiles.map((file, fileIdx) => {
             const square = `${file}${rank}`;

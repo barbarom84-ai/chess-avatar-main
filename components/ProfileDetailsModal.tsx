@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,14 +8,20 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { 
-  Bot, Swords, Shield, Activity, Cpu, Clock, Target, BookOpen, TrendingUp, 
+  Swords, Shield, Activity, Cpu, Clock, Target, BookOpen, TrendingUp, 
   Zap, BarChart, Play, Pencil, User
 } from "lucide-react";
 import type { DbProfile } from "@/lib/supabase";
 import type { EngineConfig, PersonaStats } from "@/lib/analysis";
 import EngineConfigPanel from "./EngineConfigPanel";
-import Image from "next/image";
+import AvatarTradingCard from "./AvatarTradingCard";
 import { useLanguage } from "@/lib/language-context";
+import { getProfileMetadata } from "@/lib/profile-metadata";
+import type { ProfileMetadata } from "@/types/chess";
+import { buildAvatarCardModel } from "@/lib/avatar-card-model";
+import { getAvatarCardLabels } from "@/lib/avatar-card-labels";
+import { generateAIAnalysis } from "@/lib/ai-analysis";
+import { derivePlayingStyle } from "@/lib/avatar-card-model";
 
 interface ProfileDetailsModalProps {
   open: boolean;
@@ -68,6 +74,8 @@ export default function ProfileDetailsModal({
   const [isEditing, setIsEditing] = useState(false);
   const [editedConfig, setEditedConfig] = useState<EngineConfig | null>(null);
   const [saving, setSaving] = useState(false);
+  const [metadata, setMetadata] = useState<ProfileMetadata | null>(null);
+  const labels = useMemo(() => getAvatarCardLabels(t), [t]);
 
   const profileIdForEffect = profile?.id;
 
@@ -76,12 +84,33 @@ export default function ProfileDetailsModal({
     setActiveTab("stats");
     setIsEditing(false);
     setEditedConfig(null);
+    void getProfileMetadata(profileIdForEffect).then(setMetadata);
   }, [open, profileIdForEffect]);
 
-  if (!profile) return null;
+  const stats = profile?.stats as PersonaStats | undefined;
+  const config = profile
+    ? editedConfig || (profile.config as EngineConfig)
+    : null;
 
-  const stats = profile.stats as PersonaStats;
-  const config = editedConfig || (profile.config as EngineConfig);
+  const cardModel = useMemo(() => {
+    if (!profile || !stats || !config) return null;
+    const playingStyle = derivePlayingStyle(config, metadata);
+    const analysis = generateAIAnalysis(
+      playingStyle,
+      stats,
+      metadata?.gamesPlayed ?? stats.gameCount
+    );
+    return buildAvatarCardModel({
+      stats,
+      config,
+      metadata: metadata ?? undefined,
+      analysis,
+      labels,
+    });
+  }, [profile, stats, config, metadata, labels]);
+
+  if (!profile || !stats || !config || !cardModel) return null;
+
   const difficultyInfo = difficultyLabels[config.difficulty];
   const styleIcon = playStyleIcons[config.playStyle];
   const StyleIcon = styleIcon?.icon || Activity;
@@ -106,46 +135,33 @@ export default function ProfileDetailsModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-slate-900 border-slate-700">
         <DialogHeader>
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-4">
-              {/* Avatar */}
-              {config.avatarUrl ? (
-                <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-green-500 shadow-lg">
-                  <Image 
-                    src={config.avatarUrl} 
-                    alt={profile.username} 
-                    width={80} 
-                    height={80}
-                    className="object-cover"
-                    unoptimized
-                  />
-                </div>
-              ) : (
-                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg">
-                  <Bot className="h-10 w-10 text-white" />
-                </div>
-              )}
-              
-              <div>
-                <DialogTitle className="text-3xl font-bold flex items-center gap-2">
+          <div className="flex flex-col lg:flex-row gap-4 items-start justify-between">
+            <div className="flex flex-col sm:flex-row gap-4 items-start flex-1 min-w-0">
+              <AvatarTradingCard
+                model={cardModel}
+                labels={labels}
+                size="lg"
+                flippable
+                exportable
+                className="shrink-0 mx-auto sm:mx-0"
+              />
+              <div className="min-w-0 flex-1">
+                <DialogTitle className="text-2xl font-bold flex items-center gap-2 flex-wrap">
                   {profile.username}
-                  <Badge 
-                    variant="outline" 
+                  <Badge
+                    variant="outline"
                     className={`text-xs ${
-                      profile.platform === 'chesscom' 
-                        ? 'border-green-500 text-green-300 bg-green-500/10' 
-                        : 'border-blue-500 text-blue-300 bg-blue-500/10'
+                      profile.platform === "chesscom"
+                        ? "border-green-500 text-green-300 bg-green-500/10"
+                        : "border-blue-500 text-blue-300 bg-blue-500/10"
                     }`}
                   >
-                    {profile.platform === 'chesscom' ? t.platform.chesscom : t.platform.lichess}
+                    {profile.platform === "chesscom" ? t.platform.chesscom : t.platform.lichess}
                   </Badge>
                 </DialogTitle>
-                <div className="flex items-center gap-2 mt-2">
+                <div className="flex items-center gap-2 mt-2 flex-wrap">
                   <Badge variant="outline" className={difficultyInfo.color}>
                     {difficultyInfo.label}
-                  </Badge>
-                  <Badge variant="outline" className="text-amber-400 border-amber-400 bg-amber-400/10">
-                    ELO {config.elo}
                   </Badge>
                   {profile.is_public && (
                     <Badge variant="outline" className="text-green-400 border-green-400 bg-green-400/10">
@@ -153,7 +169,7 @@ export default function ProfileDetailsModal({
                     </Badge>
                   )}
                 </div>
-                <DialogDescription className="mt-2 text-slate-400 flex items-center gap-2">
+                <DialogDescription className="mt-2 text-slate-400 flex items-center gap-2 flex-wrap">
                   {config.creatorName && (
                     <span className="inline-flex items-center gap-1 text-slate-300">
                       <User className="h-3 w-3" />
@@ -161,14 +177,16 @@ export default function ProfileDetailsModal({
                       <span className="text-slate-600">·</span>
                     </span>
                   )}
-                  {t.profileDetails.createdOn} {new Date(profile.created_at).toLocaleDateString()} {new Date(profile.created_at).toLocaleTimeString()}
+                  {t.profileDetails.createdOn}{" "}
+                  {new Date(profile.created_at).toLocaleDateString()}{" "}
+                  {new Date(profile.created_at).toLocaleTimeString()}
                 </DialogDescription>
               </div>
             </div>
-            
-            <Button 
+
+            <Button
               onClick={() => onPlay?.(profile)}
-              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white font-bold shadow-lg"
+              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white font-bold shadow-lg shrink-0 w-full sm:w-auto"
             >
               <Play className="mr-2 h-4 w-4" />
               {t.profileDetails.play}

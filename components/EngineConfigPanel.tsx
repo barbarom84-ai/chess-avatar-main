@@ -82,8 +82,8 @@ export default function EngineConfigPanel({
 
   // Calculer automatiquement les paramètres selon le niveau
   const calculateAutoConfig = (difficulty: number): Partial<EngineConfig> => {
-    const baseElo = 1200;
-    const eloIncrement = 200;
+    const baseElo = 1500;
+    const eloIncrement = 400;
     const validDifficulty = Math.min(5, Math.max(1, Math.round(difficulty))) as 1 | 2 | 3 | 4 | 5;
     
     // Profondeur plus basse en 1–2 pour un jeu plus humain ; 3+ inchangé (14, 17, 20).

@@ -283,6 +283,137 @@ nextjs-portal {
   .theme-gradient {
     @apply bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900;
   }
+
+  /* Avatar trading cards (TCG hybrid) */
+  .avatar-card {
+    --avatar-card-border: #64748b;
+    --avatar-card-glow: rgb(100 116 139 / 0.35);
+    position: relative;
+    border-radius: 0.75rem;
+    border: 3px solid var(--avatar-card-border);
+    background: linear-gradient(165deg, #1e293b 0%, #0f172a 45%, #020617 100%);
+    box-shadow:
+      0 4px 24px var(--avatar-card-glow),
+      inset 0 1px 0 rgb(255 255 255 / 0.08);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .avatar-card--common {
+    --avatar-card-border: #94a3b8;
+    --avatar-card-glow: rgb(148 163 184 / 0.25);
+  }
+
+  .avatar-card--rare {
+    --avatar-card-border: #3b82f6;
+    --avatar-card-glow: rgb(59 130 246 / 0.4);
+  }
+
+  .avatar-card--epic {
+    --avatar-card-border: #a855f7;
+    --avatar-card-glow: rgb(168 85 247 / 0.45);
+  }
+
+  .avatar-card--legendary {
+    --avatar-card-border: #f59e0b;
+    --avatar-card-glow: rgb(245 158 11 / 0.5);
+  }
+
+  .avatar-card--element-fire {
+    --avatar-card-accent: #ef4444;
+  }
+
+  .avatar-card--element-earth {
+    --avatar-card-accent: #84cc16;
+  }
+
+  .avatar-card--element-water {
+    --avatar-card-accent: #06b6d4;
+  }
+
+  .avatar-card--element-air {
+    --avatar-card-accent: #a78bfa;
+  }
+
+  .avatar-card--element-neutral {
+    --avatar-card-accent: #94a3b8;
+  }
+
+  .avatar-card-flip-scene {
+    perspective: 1000px;
+    width: 100%;
+  }
+
+  .avatar-card-flip-inner {
+    position: relative;
+    width: 100%;
+    transform-style: preserve-3d;
+    transition: transform 0.55s ease;
+  }
+
+  .avatar-card-flip-inner.is-flipped {
+    transform: rotateY(180deg);
+  }
+
+  .avatar-card-face {
+    position: relative;
+    width: 100%;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    transform: rotateY(0deg);
+  }
+
+  .avatar-card-back {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    min-height: 100%;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    transform: rotateY(180deg);
+    background: linear-gradient(165deg, #1e293b 0%, #0f172a 45%, #020617 100%);
+    border-radius: calc(0.75rem - 3px);
+    overflow: auto;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .avatar-card-interactive:not(.avatar-card--flippable):hover {
+      transform: scale(1.02);
+      box-shadow:
+        0 8px 32px var(--avatar-card-glow),
+        inset 0 1px 0 rgb(255 255 255 / 0.1);
+    }
+
+    .avatar-card--flippable.avatar-card-interactive:hover {
+      box-shadow:
+        0 8px 32px var(--avatar-card-glow),
+        inset 0 1px 0 rgb(255 255 255 / 0.1);
+    }
+
+    .avatar-card-foil::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      pointer-events: none;
+      background: linear-gradient(
+        125deg,
+        transparent 30%,
+        rgb(255 255 255 / 0.06) 45%,
+        rgb(255 255 255 / 0.14) 50%,
+        transparent 65%
+      );
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
+
+    .avatar-card-foil:hover::after {
+      opacity: 1;
+    }
+  }
+
 }
 
 /* ========================================
@@ -337,4 +468,27 @@ nextjs-portal {
 
 .animate-pvp-clock-shake {
   animation: pvp-clock-shake 0.45s ease-in-out infinite;
+}
+
+/* Arène — mode playoff (bracket + roster) */
+.arena-playoff-layout {
+  width: 100%;
+}
+
+.arena-playoff-grid {
+  align-items: start;
+}
+
+.arena-playoff-bracket .arena-playoff-tree {
+  scrollbar-width: thin;
+}
+
+.arena-playoff-roster {
+  scrollbar-width: thin;
+}
+
+@media (max-width: 1023px) {
+  .arena-playoff-grid .sticky {
+    position: static;
+  }
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -29,7 +29,10 @@ import {
 } from '@/lib/profile-suggestions';
 import { getSimilarProfilesForEditor } from '@/lib/supabase-storage';
 import type { AIAnalysis } from '@/lib/ai-analysis';
-import type { PersonaStats } from '@/lib/analysis';
+import type { PersonaStats, EngineConfig } from '@/lib/analysis';
+import AvatarTradingCard from './AvatarTradingCard';
+import { buildAvatarCardModel } from '@/lib/avatar-card-model';
+import { getAvatarCardLabels } from '@/lib/avatar-card-labels';
 import type { OpeningRecommendation, ConfigSuggestion } from '@/lib/profile-suggestions';
 import {
   AVAILABLE_TAGS,
@@ -60,6 +63,8 @@ interface ProfileEditorProps {
   profileName: string;
   /** Stats Lichess / Chess.com du profil, pour enrichir l’analyse heuristique. */
   personaStats?: PersonaStats;
+  /** Config moteur pour l’aperçu carte TCG. */
+  engineConfig?: EngineConfig;
 }
 
 export default function ProfileEditor({
@@ -67,9 +72,11 @@ export default function ProfileEditor({
   onOpenChange,
   profileId,
   profileName,
-  personaStats
+  personaStats,
+  engineConfig,
 }: ProfileEditorProps) {
   const { t, lang } = useLanguage();
+  const cardLabels = useMemo(() => getAvatarCardLabels(t), [t]);
   // États
   const [saving, setSaving] = useState(false);
   
@@ -98,6 +105,38 @@ export default function ProfileEditor({
   const [openingRecommendations, setOpeningRecommendations] = useState<OpeningRecommendation[]>([]);
   const [configSuggestion, setConfigSuggestion] = useState<ConfigSuggestion | null>(null);
   const [similarProfiles, setSimilarProfiles] = useState<SimilarProfile[]>([]);
+
+  const previewCardModel = useMemo(() => {
+    if (!personaStats || !engineConfig) return null;
+    return buildAvatarCardModel({
+      stats: personaStats,
+      config: engineConfig,
+      metadata: {
+        id: profileId,
+        profileId,
+        userId: "",
+        tags: selectedTags,
+        playingStyle,
+        strengths,
+        weaknesses,
+        gamesPlayed: personaStats.gameCount,
+        createdAt: "",
+        updatedAt: "",
+      },
+      analysis: aiAnalysis,
+      labels: cardLabels,
+    });
+  }, [
+    personaStats,
+    engineConfig,
+    selectedTags,
+    playingStyle,
+    strengths,
+    weaknesses,
+    aiAnalysis,
+    cardLabels,
+    profileId,
+  ]);
 
   // Charger les données au montage
   useEffect(() => {
@@ -393,6 +432,20 @@ export default function ProfileEditor({
 
             {/* Onglet Style de Jeu */}
             <TabsContent value="style" className="space-y-6 px-2">
+              {previewCardModel && (
+                <div className="flex flex-col items-center gap-2 pb-2 border-b border-slate-800">
+                  <p className="text-xs text-slate-500 uppercase tracking-wide">
+                    {t.avatarCard.viewCards}
+                  </p>
+                  <AvatarTradingCard
+                    model={previewCardModel}
+                    labels={cardLabels}
+                    size="md"
+                    flippable
+                    exportable
+                  />
+                </div>
+              )}
               <div>
                 <h3 className="text-lg font-semibold text-cyan-100 mb-4">{t.profileEditor.playStyle}</h3>
                 <StyleRadarChart style={playingStyle} />

@@ -276,6 +276,12 @@ export const translations = {
       title: "Mes avatars sauvegardés",
       subtitle: "Gérez vos bots sauvegardés dans le cloud : jouer, modifier, partager ou exporter.",
       cardTitle: "Avatars cloud",
+      championsTitle: "Champions Arène (publics)",
+      championsHint:
+        "Profils publics marqués pour l’Arène (Playoff). Ajoutez-les un par un via Analyse, puis rendez-les publics.",
+      championsEmpty:
+        "Aucun champion pour l’instant. Importez un joueur via Analyse, sauvegardez-le en cloud et passez-le en public — il apparaîtra ici et dans le roster Playoff.",
+      championsAnalyzeCta: "Analyser un joueur",
     },
     
     // Games Page
@@ -1450,7 +1456,11 @@ export const translations = {
       pickSearchPlaceholder: "Tapez pour filtrer les profils…",
       pickNoMatches: "Aucun profil ne correspond.",
       pickListHint:
-        "Liste courte : affinez avec la recherche ou les filtres ci-dessus.",
+        "Cliquez sur une carte pour la sélectionner. Affinez avec la recherche ou les filtres.",
+      pickCardsHint: "Grille de cartes — retournez une carte pour les stats moteur.",
+      featuredChampions: "Champions (tops)",
+      featuredLoading: "Chargement des tops Lichess & Chess.com…",
+      matchupVs: "VS",
       pickSelectedLabel: "Sélection",
       refreshList: "Rafraîchir les profils",
       cloudLibrary: "Cloud (public)",
@@ -1462,6 +1472,38 @@ export const translations = {
       saveCloudNeedLogin: "Connectez-vous pour sauvegarder les parties d’arène dans le cloud.",
       cloudSavedToast: "Partie d’arène enregistrée.",
       cloudSaveErrorToast: "Impossible d’enregistrer la partie d’arène.",
+    },
+
+    arenaPlayoff: {
+      tabSpectator: "Spectateur",
+      tabPlayoff: "Playoff",
+      title: "Playoff — tournoi à élimination",
+      subtitle:
+        "Glissez les cartes avatar sur les emplacements, puis lancez le bracket. Chaque duel est en blitz 3+0 (3 minutes par camp).",
+      timeControl: "Blitz 3+0",
+      bracket4: "4 joueurs",
+      bracket8: "8 joueurs",
+      seedsTitle: "Têtes de série (glisser-déposer)",
+      rosterTitle: "Roster",
+      rosterHint:
+        "Faites glisser une carte vers un emplacement #1–8. Cliquez sur × pour vider un slot.",
+      dropHere: "Déposer ici",
+      clearSlot: "Vider l’emplacement",
+      champion: "Champion",
+      autoSeed: "Remplir auto (tops du roster)",
+      runTournament: "Lancer tout le bracket",
+      seedsFilled: "{{n}} / {{total}} emplacements",
+      playSelectedMatch: "Jouer le match sélectionné",
+      selectMatch: "Sélectionnez un match prêt dans le bracket",
+      matchLive: "Match en cours — blitz 3+0",
+      matchPaused: "Match interrompu",
+      bracketTitle: "Tableau",
+      rosterSearch: "Filtrer le roster…",
+      championsCachedHint:
+        "Les champions viennent de la bibliothèque cloud (profils publics) — import manuel, pas de sync automatique.",
+      tapAssignHint: "Touchez un joueur, puis un emplacement #1–8 (mobile).",
+      tapAssignActive: "Joueur sélectionné — choisissez un emplacement",
+      tapAssignClear: "Annuler la sélection",
     },
 
     // Forced line editor
@@ -1675,6 +1717,43 @@ export const translations = {
       packDownloadError: "Échec du téléchargement du pack",
       jsonOnly: "JSON seul",
       jsonOnlyTooltip: "Télécharger uniquement le profil JSON (utilisateurs avancés)"
+    },
+
+    avatarCard: {
+      strengths: "Forces",
+      weaknesses: "Faiblesses",
+      ability: "Capacité",
+      games: "parties",
+      morale: "Moral",
+      flipHint: "Cliquer pour retourner la carte",
+      backEngine: "Moteur",
+      viewList: "Liste",
+      viewCards: "Cartes",
+      compare: "Comparer",
+      compareExit: "Quitter la comparaison",
+      exportImage: "Exporter l'image",
+      exportImageSuccess: "Image de la carte enregistrée",
+      exportImageError: "Impossible d'exporter la carte",
+      playStyles: {
+        agressif: "Agressif",
+        solide: "Solide",
+        équilibré: "Équilibré",
+        positionnel: "Positionnel",
+        tactique: "Tactique",
+      },
+      elements: {
+        fire: "Feu",
+        earth: "Terre",
+        water: "Eau",
+        air: "Air",
+        neutral: "Neutre",
+      },
+      rarities: {
+        common: "Commun",
+        rare: "Rare",
+        epic: "Épique",
+        legendary: "Légendaire",
+      },
     },
 
     // Playable chessboard
@@ -2097,6 +2176,12 @@ export const translations = {
       title: "My saved avatars",
       subtitle: "Manage your cloud-saved bots: play, edit, share, or export.",
       cardTitle: "Cloud avatars",
+      championsTitle: "Arena champions (public)",
+      championsHint:
+        "Public profiles curated for the Arena (Playoff). Add them one at a time via Analyze, then make them public.",
+      championsEmpty:
+        "No champions yet. Import a player via Analyze, save to the cloud, and make the profile public — it will show here and in the Playoff roster.",
+      championsAnalyzeCta: "Analyze a player",
     },
     
     // Games Page
@@ -3264,7 +3349,11 @@ export const translations = {
       movesPlayed: "Moves played",
       pickSearchPlaceholder: "Type to filter profiles…",
       pickNoMatches: "No profiles match.",
-      pickListHint: "Short list — narrow with search or filters above.",
+      pickListHint: "Click a card to select. Narrow with search or filters.",
+      pickCardsHint: "Card grid — flip a card for engine stats.",
+      featuredChampions: "Champions (leaderboards)",
+      featuredLoading: "Loading Lichess & Chess.com top players…",
+      matchupVs: "VS",
       pickSelectedLabel: "Selected",
       refreshList: "Refresh profiles",
       cloudLibrary: "Cloud (public)",
@@ -3276,6 +3365,38 @@ export const translations = {
       saveCloudNeedLogin: "Sign in to save arena games to the cloud.",
       cloudSavedToast: "Arena game saved.",
       cloudSaveErrorToast: "Could not save the arena game.",
+    },
+
+    arenaPlayoff: {
+      tabSpectator: "Spectator",
+      tabPlayoff: "Playoff",
+      title: "Playoff — single elimination",
+      subtitle:
+        "Drag avatar cards onto seed slots, then run the bracket. Each duel uses blitz 3+0 (3 minutes per side).",
+      timeControl: "Blitz 3+0",
+      bracket4: "4 players",
+      bracket8: "8 players",
+      seedsTitle: "Seeds (drag & drop)",
+      rosterTitle: "Roster",
+      rosterHint:
+        "Drag a card onto slots #1–8. Click × to clear a slot.",
+      dropHere: "Drop here",
+      clearSlot: "Clear slot",
+      champion: "Champion",
+      autoSeed: "Auto-fill (top of roster)",
+      runTournament: "Run full bracket",
+      seedsFilled: "{{n}} / {{total}} slots filled",
+      playSelectedMatch: "Play selected match",
+      selectMatch: "Select a ready match in the bracket",
+      matchLive: "Match live — blitz 3+0",
+      matchPaused: "Match stopped",
+      bracketTitle: "Bracket",
+      rosterSearch: "Filter roster…",
+      championsCachedHint:
+        "Champions come from the cloud library (public profiles) — manual import, no automatic sync.",
+      tapAssignHint: "Tap a player, then a slot #1–8 (mobile).",
+      tapAssignActive: "Player selected — pick a slot",
+      tapAssignClear: "Clear selection",
     },
 
     // Forced line editor
@@ -3489,6 +3610,43 @@ export const translations = {
       packDownloadError: "Failed to download pack",
       jsonOnly: "JSON only",
       jsonOnlyTooltip: "Download only the JSON profile (advanced users)"
+    },
+
+    avatarCard: {
+      strengths: "Strengths",
+      weaknesses: "Weaknesses",
+      ability: "Ability",
+      games: "games",
+      morale: "Morale",
+      flipHint: "Click to flip the card",
+      backEngine: "Engine",
+      viewList: "List",
+      viewCards: "Cards",
+      compare: "Compare",
+      compareExit: "Exit compare",
+      exportImage: "Export image",
+      exportImageSuccess: "Card image saved",
+      exportImageError: "Could not export card",
+      playStyles: {
+        agressif: "Aggressive",
+        solide: "Solid",
+        équilibré: "Balanced",
+        positionnel: "Positional",
+        tactique: "Tactical",
+      },
+      elements: {
+        fire: "Fire",
+        earth: "Earth",
+        water: "Water",
+        air: "Air",
+        neutral: "Neutral",
+      },
+      rarities: {
+        common: "Common",
+        rare: "Rare",
+        epic: "Epic",
+        legendary: "Legendary",
+      },
     },
 
     // Playable chessboard
