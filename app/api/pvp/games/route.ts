@@ -4,6 +4,7 @@ import { getAuthedUserFromRequest } from "@/lib/supabase-auth-request";
 import { createServiceSupabase } from "@/lib/supabase-service";
 import { isValidPvpTimePresetId, resolvePvpTimePreset } from "@/lib/pvp-time-controls";
 import { displayNameFromAuthUser } from "@/lib/pvp-display-name";
+import { fetchAccountSummariesByUserIds } from "@/lib/account-server";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
@@ -43,27 +44,43 @@ export async function GET(request: NextRequest) {
 
   if (error) return jsonError(error.message ?? "List failed", 500);
 
-  const games = (data ?? []).map(
-    (row: {
-      id: string;
-      created_at: string;
-      white_user_id: string;
-      white_display_name?: string | null;
-      time_preset?: string | null;
-      clock_mode?: string | null;
-      clock_initial_sec?: number | null;
-      clock_increment_sec?: number | null;
-    }) => ({
+  type WaitingRow = {
+    id: string;
+    created_at: string;
+    white_user_id: string;
+    white_display_name?: string | null;
+    time_preset?: string | null;
+    clock_mode?: string | null;
+    clock_initial_sec?: number | null;
+    clock_increment_sec?: number | null;
+  };
+
+  const waitingRows = (data ?? []) as WaitingRow[];
+  const hostIdsForEnrich = [
+    ...new Set(
+      waitingRows
+        .filter((row) => row.white_user_id !== user.id)
+        .map((row) => row.white_user_id)
+    ),
+  ];
+  const hostSummaries = await fetchAccountSummariesByUserIds(sb, hostIdsForEnrich);
+
+  const games = waitingRows.map((row) => {
+    const summary = hostSummaries.get(row.white_user_id);
+    const snapshotName = row.white_display_name?.trim() || null;
+    return {
       id: row.id,
       created_at: row.created_at,
       isHost: row.white_user_id === user.id,
-      host_display_name: row.white_display_name?.trim() || null,
+      host_user_id: row.white_user_id,
+      host_display_name: summary?.displayName ?? snapshotName,
+      host_avatar_url: summary?.avatarUrl ?? null,
       time_preset: row.time_preset ?? "unlimited",
       clock_mode: row.clock_mode ?? "unlimited",
       clock_initial_sec: row.clock_initial_sec ?? 0,
       clock_increment_sec: row.clock_increment_sec ?? 0,
-    })
-  );
+    };
+  });
 
   const activeSince = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
   const { data: activeRows, error: activeErr } = await sb
@@ -95,17 +112,33 @@ export async function GET(request: NextRequest) {
     status: string;
   };
 
-  const activeGames = (activeRows ?? []).map((row: ActiveRow) => {
+  const activeList = (activeRows ?? []) as ActiveRow[];
+  const oppIdsForEnrich = [
+    ...new Set(
+      activeList
+        .map((row) => {
+          const isWhite = row.white_user_id === user.id;
+          return isWhite ? row.black_user_id : row.white_user_id;
+        })
+        .filter((id): id is string => !!id && id.length >= 8)
+    ),
+  ];
+  const oppSummaries = await fetchAccountSummariesByUserIds(sb, oppIdsForEnrich);
+
+  const activeGames = activeList.map((row: ActiveRow) => {
     const isWhite = row.white_user_id === user.id;
     const oppId = isWhite ? row.black_user_id : row.white_user_id;
     const oppLabel = isWhite ? row.black_display_name : row.white_display_name;
+    const snapshotName = oppLabel?.trim() || null;
+    const summary = oppId ? oppSummaries.get(oppId) : undefined;
     return {
       id: row.id,
       created_at: row.created_at,
       updated_at: row.updated_at,
       role: isWhite ? ("white" as const) : ("black" as const),
       opponent_user_id: oppId ?? "",
-      opponent_display_name: oppLabel?.trim() || null,
+      opponent_display_name: summary?.displayName ?? snapshotName,
+      opponent_avatar_url: summary?.avatarUrl ?? null,
       time_preset: row.time_preset ?? "unlimited",
       clock_mode: row.clock_mode ?? "unlimited",
       clock_initial_sec: row.clock_initial_sec ?? 0,

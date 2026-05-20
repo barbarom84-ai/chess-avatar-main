@@ -7,7 +7,9 @@ export type OpenPvpLobby = {
   id: string;
   created_at: string;
   isHost: boolean;
+  host_user_id: string;
   host_display_name: string | null;
+  host_avatar_url: string | null;
   time_preset: string;
   clock_mode: string;
   clock_initial_sec: number;
@@ -21,6 +23,7 @@ export type ActivePvpGame = {
   role: "white" | "black";
   opponent_user_id: string;
   opponent_display_name: string | null;
+  opponent_avatar_url: string | null;
   time_preset: string;
   clock_mode: string;
   clock_initial_sec: number;

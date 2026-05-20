@@ -13,9 +13,12 @@ import {
   Users,
 } from "lucide-react";
 import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
+import AccountAvatar from "@/components/AccountAvatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSuperUser } from "@/hooks/useSuperUser";
+import { accountProfileInitials } from "@/lib/account-profile";
+import type { AccountUserSummary } from "@/lib/account-server";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import type { PvpGameRow } from "@/lib/pvp-chess";
 
@@ -74,6 +77,7 @@ export default function AdminOpsPage() {
   const { isSuperUser, loading: superLoading } = useSuperUser();
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   const [events, setEvents] = useState<ActivityRow[]>([]);
+  const [userSummaries, setUserSummaries] = useState<Record<string, AccountUserSummary>>({});
   const [pvpLive, setPvpLive] = useState<PvpGameRow[]>([]);
   const [presenceList, setPresenceList] = useState<PresenceState[]>([]);
   const [loading, setLoading] = useState(false);
@@ -89,10 +93,14 @@ export default function AdminOpsPage() {
     try {
       const [snap, ev] = await Promise.all([
         fetchWithAuth("/api/admin/ops/snapshot") as Promise<Snapshot>,
-        fetchWithAuth("/api/admin/ops/events?limit=40") as Promise<{ events: ActivityRow[] }>,
+        fetchWithAuth("/api/admin/ops/events?limit=40") as Promise<{
+          events: ActivityRow[];
+          userSummaries?: Record<string, AccountUserSummary>;
+        }>,
       ]);
       setSnapshot(snap);
       setEvents(ev.events ?? []);
+      setUserSummaries((prev) => ({ ...prev, ...(ev.userSummaries ?? {}) }));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error");
     } finally {
@@ -282,9 +290,7 @@ export default function AdminOpsPage() {
                     key={p.user_id}
                     className="flex justify-between gap-2 border-b border-slate-800 pb-1"
                   >
-                    <span className="font-mono text-xs text-slate-400 truncate max-w-[140px]">
-                      {p.user_id.slice(0, 8)}…
-                    </span>
+                    <OpsUserCell userId={p.user_id} summaries={userSummaries} />
                     <span className="text-slate-300 truncate">{p.page}</span>
                     <span className="text-slate-500 text-xs shrink-0">
                       {new Date(p.last_seen).toLocaleTimeString()}
@@ -400,8 +406,12 @@ export default function AdminOpsPage() {
                     <td className="py-1.5 pr-3 text-slate-400 truncate max-w-[200px]">
                       {e.path ?? "—"}
                     </td>
-                    <td className="py-1.5 font-mono text-xs text-slate-500">
-                      {e.user_id ? `${e.user_id.slice(0, 8)}…` : "—"}
+                    <td className="py-1.5">
+                      {e.user_id ? (
+                        <OpsUserCell userId={e.user_id} summaries={userSummaries} />
+                      ) : (
+                        "—"
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -411,6 +421,43 @@ export default function AdminOpsPage() {
         </Card>
       </div>
     </main>
+  );
+}
+
+function OpsUserCell({
+  userId,
+  summaries,
+}: {
+  userId: string;
+  summaries: Record<string, AccountUserSummary>;
+}) {
+  const summary = summaries[userId];
+  if (!summary) {
+    return (
+      <span
+        className="font-mono text-xs text-slate-500 truncate max-w-[140px]"
+        title={userId}
+      >
+        {userId.slice(0, 8)}…
+      </span>
+    );
+  }
+  return (
+    <span
+      className="inline-flex items-center gap-2 min-w-0 max-w-[200px]"
+      title={userId}
+    >
+      <span className="relative h-7 w-7 shrink-0 overflow-hidden rounded-full border border-slate-700 bg-gradient-to-br from-cyan-600 to-blue-800">
+        <AccountAvatar
+          src={summary.avatarUrl}
+          alt={summary.displayName}
+          initials={accountProfileInitials(summary.displayName)}
+          sizes="28px"
+          className="text-[10px]"
+        />
+      </span>
+      <span className="text-slate-300 truncate text-xs">{summary.displayName}</span>
+    </span>
   );
 }
 

@@ -3,6 +3,7 @@ import { rateLimit } from "@/lib/rate-limit";
 import { getAuthedUserFromRequest } from "@/lib/supabase-auth-request";
 import { createServiceSupabase } from "@/lib/supabase-service";
 import { isSuperUserServer } from "@/lib/is-super-user-server";
+import { fetchAccountSummariesByUserIds } from "@/lib/account-server";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
@@ -43,5 +44,20 @@ export async function GET(request: NextRequest) {
 
   if (error) return jsonError(error.message ?? "Query failed", 500);
 
-  return NextResponse.json({ events: data ?? [] });
+  const events = data ?? [];
+  const userIds = [
+    ...new Set(
+      events
+        .map((row) => row.user_id)
+        .filter((id): id is string => typeof id === "string" && id.length >= 8)
+    ),
+  ];
+  const summaries = await fetchAccountSummariesByUserIds(sb, userIds);
+  const userSummaries: Record<string, { displayName: string; avatarUrl: string | null }> =
+    {};
+  for (const [id, summary] of summaries) {
+    userSummaries[id] = summary;
+  }
+
+  return NextResponse.json({ events, userSummaries });
 }

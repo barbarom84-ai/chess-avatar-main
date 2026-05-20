@@ -24,6 +24,11 @@ type FriendRow = {
   created_at: string;
 };
 
+export type AccountUserSummary = {
+  displayName: string;
+  avatarUrl: string | null;
+};
+
 export function resolveAccountDisplayName(
   row: Pick<AccountRow, "display_name"> | null | undefined,
   authUser?: Pick<User, "email" | "user_metadata"> | null
@@ -32,6 +37,35 @@ export function resolveAccountDisplayName(
   if (custom) return custom.slice(0, MAX_ACCOUNT_DISPLAY_NAME_LENGTH);
   if (authUser) return displayNameFromAuthUser(authUser);
   return "Player";
+}
+
+/** Batch lookup display names and avatars for PvP lists and Ops. */
+export async function fetchAccountSummariesByUserIds(
+  sb: SupabaseClient,
+  userIds: string[]
+): Promise<Map<string, AccountUserSummary>> {
+  const unique = [...new Set(userIds.filter((id) => id.length >= 8))];
+  const map = new Map<string, AccountUserSummary>();
+  if (unique.length === 0) return map;
+
+  const { data, error } = await sb
+    .from("user_accounts")
+    .select("user_id, display_name, avatar_url")
+    .in("user_id", unique);
+
+  if (error) throw new Error(error.message);
+
+  for (const row of (data ?? []) as Array<{
+    user_id: string;
+    display_name: string | null;
+    avatar_url: string | null;
+  }>) {
+    map.set(row.user_id, {
+      displayName: resolveAccountDisplayName(row, null),
+      avatarUrl: row.avatar_url?.trim() ? row.avatar_url.trim() : null,
+    });
+  }
+  return map;
 }
 
 function toProfile(

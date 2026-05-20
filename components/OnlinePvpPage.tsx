@@ -27,7 +27,9 @@ import {
   migrateLocalFriendsOnce,
   removeAccountFriendRemote,
 } from "@/lib/account-friends";
-import type { AccountFriend } from "@/lib/account-types";
+import AccountAvatar from "@/components/AccountAvatar";
+import type { AccountFriend, AccountProfile } from "@/lib/account-types";
+import { accountProfileInitials, fetchPublicAccountProfile } from "@/lib/account-profile";
 import { saveGameToCloud } from "@/lib/supabase-storage";
 import { PVP_TIME_PRESETS } from "@/lib/pvp-time-controls";
 import { pvpGameStatsFromUcis, formatDurationSec } from "@/lib/pvp-result-stats";
@@ -109,8 +111,23 @@ export default function OnlinePvpPage() {
   const [savedToCloud, setSavedToCloud] = useState(false);
   const [showResultModal, setShowResultModal] = useState(false);
   const [endedDurationSec, setEndedDurationSec] = useState<number | null>(null);
+  const [opponentProfile, setOpponentProfile] = useState<AccountProfile | null>(null);
   const startMsRef = useRef<number | null>(null);
   const resultModalShownForGameId = useRef<string | null>(null);
+
+  const opponentUserId = useMemo(() => {
+    const g = online.game;
+    if (!g || !userId || !g.black_user_id) return null;
+    return g.white_user_id === userId ? g.black_user_id : g.white_user_id;
+  }, [online.game, userId]);
+
+  useEffect(() => {
+    if (!opponentUserId) {
+      setOpponentProfile(null);
+      return;
+    }
+    void fetchPublicAccountProfile(opponentUserId).then(setOpponentProfile);
+  }, [opponentUserId]);
 
   useEffect(() => {
     void refreshFriends();
@@ -478,7 +495,19 @@ export default function OnlinePvpPage() {
                         key={ag.id}
                         className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-3 py-2.5 bg-slate-900/40"
                       >
-                        <div className="min-w-0 space-y-0.5">
+                        <div className="min-w-0 space-y-1 flex items-start gap-2.5">
+                          <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full border border-slate-700 bg-gradient-to-br from-cyan-600 to-blue-800">
+                            <AccountAvatar
+                              src={ag.opponent_avatar_url}
+                              alt={ag.opponent_display_name ?? o.anonymousPlayer}
+                              initials={accountProfileInitials(
+                                ag.opponent_display_name ?? o.anonymousPlayer
+                              )}
+                              sizes="36px"
+                              className="text-[10px]"
+                            />
+                          </div>
+                          <div className="min-w-0 space-y-0.5">
                           <p className="text-sm text-slate-200 font-medium truncate">
                             {o.resumeGameOpponent.replace(
                               "{name}",
@@ -492,6 +521,7 @@ export default function OnlinePvpPage() {
                             <Badge variant="outline" className="text-[10px] border-slate-600">
                               {ag.role === "white" ? o.youAreWhite : o.youAreBlack}
                             </Badge>
+                          </div>
                           </div>
                         </div>
                         <Button asChild size="sm" className="shrink-0">
@@ -523,15 +553,28 @@ export default function OnlinePvpPage() {
                         key={f.friendUserId}
                         className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-md border border-slate-800 bg-slate-900/40 px-3 py-2"
                       >
-                        <div className="min-w-0">
-                          <Link
-                            href={`/players/${f.friendUserId}`}
-                            className="text-sm font-medium text-slate-100 truncate hover:text-cyan-300"
-                          >
-                            {f.label || f.displayName}
-                          </Link>
-                          <p className="text-[10px] text-slate-500 truncate">{f.displayName}</p>
-                        </div>
+                        <Link
+                          href={`/players/${f.friendUserId}`}
+                          className="flex items-center gap-3 min-w-0 hover:opacity-90"
+                        >
+                          <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full border border-slate-700 bg-gradient-to-br from-cyan-600 to-blue-800">
+                            <AccountAvatar
+                              src={f.avatarUrl}
+                              alt={f.displayName}
+                              initials={accountProfileInitials(f.displayName)}
+                              sizes="40px"
+                              className="text-xs"
+                            />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-slate-100 truncate">
+                              {f.label || f.displayName}
+                            </p>
+                            {f.label && f.label !== f.displayName ? (
+                              <p className="text-[10px] text-slate-500 truncate">{f.displayName}</p>
+                            ) : null}
+                          </div>
+                        </Link>
                         <div className="flex flex-wrap gap-2 shrink-0">
                           <Button
                             type="button"
@@ -607,7 +650,7 @@ export default function OnlinePvpPage() {
                         key={lobby.id}
                         className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-3 py-2.5 bg-slate-900/40"
                       >
-                        <div className="min-w-0 space-y-0.5">
+                        <div className="min-w-0 space-y-1">
                           <div className="flex items-center gap-2 flex-wrap">
                             <Badge
                               variant="outline"
@@ -622,17 +665,27 @@ export default function OnlinePvpPage() {
                             <Badge variant="secondary" className="text-[10px] font-normal">
                               {presetLabels[lobby.time_preset] ?? lobby.time_preset}
                             </Badge>
-                            <span className="font-mono text-xs text-slate-500 truncate">
-                              {lobby.id.slice(0, 8)}…
-                            </span>
                           </div>
                           {!lobby.isHost && (
-                            <p className="text-xs text-slate-300">
-                              {o.canJoinHostLabel.replace(
-                                "{name}",
-                                lobby.host_display_name ?? o.anonymousHost
-                              )}
-                            </p>
+                            <Link
+                              href={`/players/${lobby.host_user_id}`}
+                              className="flex items-center gap-2.5 min-w-0 hover:opacity-90"
+                            >
+                              <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full border border-slate-700 bg-gradient-to-br from-cyan-600 to-blue-800">
+                                <AccountAvatar
+                                  src={lobby.host_avatar_url}
+                                  alt={lobby.host_display_name ?? o.anonymousHost}
+                                  initials={accountProfileInitials(
+                                    lobby.host_display_name ?? o.anonymousHost
+                                  )}
+                                  sizes="40px"
+                                  className="text-xs"
+                                />
+                              </div>
+                              <p className="text-sm font-medium text-slate-200 truncate">
+                                {lobby.host_display_name ?? o.anonymousHost}
+                              </p>
+                            </Link>
                           )}
                           {lobby.isHost && lobby.host_display_name && (
                             <p className="text-xs text-slate-500">
@@ -821,14 +874,29 @@ export default function OnlinePvpPage() {
               <CardTitle className="text-base text-slate-100">{o.opponentCardTitle}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 pt-2">
-              <div>
-                <p className="text-lg font-semibold text-cyan-100">{oppInfo.oppLabel}</p>
-                <p className="text-xs text-slate-500">
-                  {oppInfo.oppColor === "white" ? o.opponentAsWhite : o.opponentAsBlack}
-                </p>
-                <p className="text-[10px] font-mono text-slate-600 mt-1 break-all">
-                  {o.playerIdShort.replace("{id}", oppInfo.oppId)}
-                </p>
+              <div className="flex items-start gap-3">
+                <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full border border-slate-700 bg-gradient-to-br from-cyan-600 to-blue-800">
+                  <AccountAvatar
+                    src={opponentProfile?.avatarUrl}
+                    alt={opponentProfile?.displayName ?? oppInfo.oppLabel}
+                    initials={accountProfileInitials(
+                      opponentProfile?.displayName ?? oppInfo.oppLabel
+                    )}
+                    sizes="56px"
+                    className="text-lg"
+                  />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-lg font-semibold text-cyan-100">
+                    {opponentProfile?.displayName ?? oppInfo.oppLabel}
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    {oppInfo.oppColor === "white" ? o.opponentAsWhite : o.opponentAsBlack}
+                  </p>
+                  {opponentProfile?.bio ? (
+                    <p className="text-xs text-slate-400 mt-1 line-clamp-2">{opponentProfile.bio}</p>
+                  ) : null}
+                </div>
               </div>
               <div className="flex flex-wrap gap-2">
                 <Button asChild type="button" size="sm" variant="outline" className="border-slate-600">
