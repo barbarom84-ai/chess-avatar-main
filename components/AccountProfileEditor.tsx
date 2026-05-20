@@ -15,11 +15,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useLanguage } from "@/lib/language-context";
 import type { AccountProfile } from "@/lib/account-types";
+import AccountAvatarCropDialog from "@/components/AccountAvatarCropDialog";
 import {
   accountProfileInitials,
+  fileFromCroppedAvatarBlob,
   patchAccountProfile,
   uploadAccountAvatar,
 } from "@/lib/account-profile";
+import {
+  validateAvatarSourceDecodable,
+  validateAvatarSourceFile,
+  type AvatarFileErrorCode,
+  type AvatarValidationFailure,
+} from "@/lib/avatar-upload";
 import { toast } from "sonner";
 
 type AccountProfileEditorProps = {
@@ -44,6 +52,8 @@ export default function AccountProfileEditor({
   const [bio, setBio] = useState(profile.bio ?? "");
   const [avatarUrl, setAvatarUrl] = useState(profile.avatarUrl);
   const [saving, setSaving] = useState(false);
+  const [cropOpen, setCropOpen] = useState(false);
+  const [cropFile, setCropFile] = useState<File | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -72,25 +82,64 @@ export default function AccountProfileEditor({
     }
   };
 
+  const showAvatarError = (
+    code: AvatarFileErrorCode,
+    failure?: AvatarValidationFailure,
+    storageMessage?: string | null
+  ) => {
+    const err =
+      copy.avatarErrors[code as keyof typeof copy.avatarErrors] ?? copy.avatarErrors.storage_upload_failed;
+    const detail = err.detail
+      .replace("{type}", failure?.receivedType ?? "—")
+      .replace("{sizeMb}", String(failure?.maxSourceMb ?? failure?.maxOutputMb ?? "2"))
+      .replace("{receivedMb}", failure?.receivedSizeBytes
+        ? String(Math.round((failure.receivedSizeBytes / (1024 * 1024)) * 10) / 10)
+        : "—");
+    const description = [detail, err.hint, storageMessage].filter(Boolean).join(" ");
+    toast.error(err.title, { description, duration: 8000 });
+  };
+
   const handleAvatarPick = async (file: File | undefined) => {
     if (!file) return;
+    if (fileInputRef.current) fileInputRef.current.value = "";
+
+    const basic = validateAvatarSourceFile(file);
+    if (!basic.ok) {
+      showAvatarError(basic.code, basic);
+      return;
+    }
+
+    const decoded = await validateAvatarSourceDecodable(file);
+    if (!decoded.ok) {
+      showAvatarError(decoded.code, decoded);
+      return;
+    }
+
+    setCropFile(file);
+    setCropOpen(true);
+  };
+
+  const handleCroppedAvatar = async (blob: Blob) => {
     setSaving(true);
     try {
-      const { url, error } = await uploadAccountAvatar(userId, file);
-      if (!url) {
-        toast.error(error ?? copy.avatarUploadError);
+      const file = fileFromCroppedAvatarBlob(userId, blob);
+      const result = await uploadAccountAvatar(userId, file);
+      if (!result.url) {
+        showAvatarError(result.code ?? "storage_upload_failed", undefined, result.error);
         return;
       }
-      setAvatarUrl(url);
+      setAvatarUrl(result.url);
+      toast.success(copy.avatarUploadSuccess);
     } finally {
       setSaving(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
+      setCropFile(null);
     }
   };
 
   const initials = accountProfileInitials(displayName || profile.displayName);
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-slate-900 border-slate-700 text-slate-100">
         <DialogHeader>
@@ -111,7 +160,7 @@ export default function AccountProfileEditor({
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/jpeg,image/png,image/webp,image/gif"
+                accept="image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif"
                 className="hidden"
                 onChange={(event) => void handleAvatarPick(event.target.files?.[0])}
               />
@@ -174,5 +223,17 @@ export default function AccountProfileEditor({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    <AccountAvatarCropDialog
+      open={cropOpen}
+      onOpenChange={(next) => {
+        setCropOpen(next);
+        if (!next) setCropFile(null);
+      }}
+      file={cropFile}
+      onConfirm={(blob) => void handleCroppedAvatar(blob)}
+      onError={(code, failure) => showAvatarError(code, failure)}
+    />
+    </>
   );
 }

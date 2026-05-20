@@ -15,6 +15,7 @@ export const PVP_TIME_PRESETS: readonly PvpTimePreset[] = [
   { id: "unlimited", mode: "unlimited", initialSec: 0, incrementSec: 0 },
   { id: "bullet_2_1", mode: "timed", initialSec: 120, incrementSec: 1 },
   { id: "blitz_3_0", mode: "timed", initialSec: 180, incrementSec: 0 },
+  { id: "blitz_3_2", mode: "timed", initialSec: 180, incrementSec: 2 },
   { id: "blitz_5_0", mode: "timed", initialSec: 300, incrementSec: 0 },
   { id: "blitz_5_3", mode: "timed", initialSec: 300, incrementSec: 3 },
   { id: "blitz_10_0", mode: "timed", initialSec: 600, incrementSec: 0 },

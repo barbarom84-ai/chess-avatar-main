@@ -80,12 +80,16 @@ export async function POST(
   const next = new Chess(chess.fen());
   if (!applyUciMove(next, uci)) return jsonError("Illegal move", 400);
 
-  const { error: insErr } = await sb.from("pvp_moves").insert({
-    game_id: gameId,
-    ply: expectedPly,
-    uci,
-    played_by: user.id,
-  });
+  const { data: insertedMove, error: insErr } = await sb
+    .from("pvp_moves")
+    .insert({
+      game_id: gameId,
+      ply: expectedPly,
+      uci,
+      played_by: user.id,
+    })
+    .select("id, game_id, ply, uci, played_by, created_at")
+    .single();
 
   if (insErr) {
     if (insErr.code === "23505") return jsonError("Move already submitted", 409);
@@ -126,24 +130,37 @@ export async function POST(
     ongoingClock.clock_turn_started_at = clock.clock_turn_started_at;
   }
 
+  const gameUpdate = {
+    status: newStatus,
+    result,
+    result_reason: resultReason,
+    ...ongoingClock,
+  };
+
   if (newStatus === "finished") {
-    await sb
-      .from("pvp_games")
-      .update({
-        status: newStatus,
-        result,
-        result_reason: resultReason,
-        ...ongoingClock,
-      })
-      .eq("id", gameId);
+    await sb.from("pvp_games").update(gameUpdate).eq("id", gameId);
   } else {
     await sb.from("pvp_games").update(ongoingClock).eq("id", gameId);
+  }
+
+  const gamePatch: Partial<PvpGameRow> = {
+    status: newStatus,
+    result,
+    result_reason: resultReason,
+    draw_offered_by: null,
+  };
+  if (row.clock_mode === "timed" && clock.kind === "tick") {
+    gamePatch.white_remaining_ms = clock.white_remaining_ms;
+    gamePatch.black_remaining_ms = clock.black_remaining_ms;
+    gamePatch.clock_turn_started_at = clock.clock_turn_started_at;
   }
 
   return NextResponse.json({
     ok: true,
     ply: expectedPly,
     uci,
+    move: insertedMove,
+    game: gamePatch,
     gameOver: newStatus === "finished",
     result,
     resultReason,

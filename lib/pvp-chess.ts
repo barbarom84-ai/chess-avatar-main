@@ -53,6 +53,32 @@ export function normalizeUci(raw: string): string | null {
   return s;
 }
 
+export function uciToLastMoveSquares(
+  uci: string | null | undefined
+): { from: string; to: string } | null {
+  if (!uci || uci.length < 4) return null;
+  return { from: uci.slice(0, 2), to: uci.slice(2, 4) };
+}
+
+/** Client-side validation before optimistic PvP move (mirrors server rules). */
+export function validateUciForPlayer(
+  ucis: string[],
+  uci: string,
+  role: "white" | "black"
+): { ok: true; uci: string } | { ok: false; reason: string } {
+  const normalized = normalizeUci(uci);
+  if (!normalized) return { ok: false, reason: "Invalid move" };
+
+  const chess = replayGameFromUcis(ucis);
+  const expectWhite = chess.turn() === "w";
+  if (expectWhite && role !== "white") return { ok: false, reason: "Not your turn" };
+  if (!expectWhite && role !== "black") return { ok: false, reason: "Not your turn" };
+
+  const next = new Chess(chess.fen());
+  if (!applyUciMove(next, normalized)) return { ok: false, reason: "Illegal move" };
+  return { ok: true, uci: normalized };
+}
+
 /** Returns PGN with minimal headers (chess.js). */
 export function buildPgnFromUcis(
   ucis: string[],

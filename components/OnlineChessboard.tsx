@@ -4,8 +4,6 @@ import { useCallback, useState } from "react";
 import { Chess, type Square } from "chess.js";
 import SimpleChessboard from "@/components/SimpleChessboard";
 import PromotionDialog from "@/components/PromotionDialog";
-import { playChessMoveSound } from "@/lib/chess-sound";
-
 interface OnlineChessboardProps {
   fen: string;
   orientation: "white" | "black";
@@ -33,7 +31,6 @@ export default function OnlineChessboard({
       setSubmitting(true);
       try {
         await onSubmitUci(uci);
-        playChessMoveSound();
       } catch (e) {
         onMoveError?.(e instanceof Error ? e.message : "Move failed");
       } finally {

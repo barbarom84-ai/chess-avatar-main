@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { Users, Copy, Loader2, Trash2, Mail, UserPlus, UserMinus } from "lucide-react";
+import { Users, Copy, Loader2, Trash2, Mail, UserPlus, UserMinus, Handshake } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -371,13 +371,7 @@ export default function OnlinePvpPage() {
     URL.revokeObjectURL(url);
   }, [pgnStringForDownload, gameId]);
 
-  const lastUci = online.moves.length
-    ? online.moves[online.moves.length - 1].uci
-    : null;
-  const lastMove =
-    lastUci && lastUci.length >= 4
-      ? { from: lastUci.slice(0, 2), to: lastUci.slice(2, 4) }
-      : null;
+  const lastMove = online.lastMove;
 
   const gameOver = Boolean(
     online.game &&
@@ -967,66 +961,95 @@ export default function OnlinePvpPage() {
         </div>
 
         {g.status === "playing" && online.role && userId && (
-          <div className="flex flex-wrap gap-2 justify-center">
-            <Button
-              type="button"
-              variant="destructive"
-              size="sm"
-              onClick={() => void online.resign().catch((e) => toast.error(String(e)))}
-            >
-              {o.resign}
-            </Button>
-            {g.draw_offered_by === userId ? (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  void online.drawAction("cancel").catch((e) => toast.error(String(e)))
-                }
+          <div className="w-full max-w-lg mx-auto space-y-3 px-1 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+            {g.draw_offered_by && g.draw_offered_by !== userId && (
+              <div
+                role="status"
+                aria-live="polite"
+                className="sticky bottom-2 z-20 rounded-xl border-2 border-amber-400/80 bg-amber-950/90 px-4 py-4 shadow-xl shadow-amber-950/50 ring-1 ring-amber-300/30"
               >
-                {o.drawCancel}
-              </Button>
-            ) : g.draw_offered_by && g.draw_offered_by !== userId ? (
-              <>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  onClick={() =>
-                    void online.drawAction("accept").catch((e) => toast.error(String(e)))
-                  }
-                >
-                  {o.drawAccept}
-                </Button>
+                <div className="flex items-start gap-3">
+                  <Handshake
+                    className="h-6 w-6 shrink-0 text-amber-300 mt-0.5"
+                    aria-hidden
+                  />
+                  <p className="text-base sm:text-lg font-semibold text-amber-50 leading-snug">
+                    {o.opponentOfferedDraw}
+                  </p>
+                </div>
+                <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:gap-3">
+                  <Button
+                    type="button"
+                    size="lg"
+                    className="w-full min-h-12 text-base font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-md"
+                    onClick={() =>
+                      void online.drawAction("accept").catch((e) => toast.error(String(e)))
+                    }
+                  >
+                    {o.drawAccept}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="lg"
+                    className="w-full min-h-12 text-base border-amber-400/60 text-amber-100 hover:bg-amber-950/60"
+                    onClick={() =>
+                      void online.drawAction("decline").catch((e) => toast.error(String(e)))
+                    }
+                  >
+                    {o.drawDecline}
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {g.draw_offered_by === userId && (
+              <div
+                role="status"
+                className="rounded-xl border border-cyan-500/50 bg-cyan-950/40 px-4 py-3 text-center"
+              >
+                <p className="text-sm sm:text-base text-cyan-100 font-medium">
+                  {o.youOfferedDraw}
+                </p>
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
+                  className="mt-3 border-cyan-600/60 text-cyan-200"
                   onClick={() =>
-                    void online.drawAction("decline").catch((e) => toast.error(String(e)))
+                    void online.drawAction("cancel").catch((e) => toast.error(String(e)))
                   }
                 >
-                  {o.drawDecline}
+                  {o.drawCancel}
                 </Button>
-              </>
-            ) : (
+              </div>
+            )}
+
+            <div className="flex flex-wrap gap-2 justify-center">
               <Button
                 type="button"
-                variant="outline"
+                variant="destructive"
                 size="sm"
-                onClick={() =>
-                  void online.drawAction("offer").catch((e) => toast.error(String(e)))
-                }
+                className="min-h-10"
+                onClick={() => void online.resign().catch((e) => toast.error(String(e)))}
               >
-                {o.drawOffer}
+                {o.resign}
               </Button>
-            )}
+              {!g.draw_offered_by && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="min-h-10 border-slate-600"
+                  onClick={() =>
+                    void online.drawAction("offer").catch((e) => toast.error(String(e)))
+                  }
+                >
+                  {o.drawOffer}
+                </Button>
+              )}
+            </div>
           </div>
-        )}
-
-        {g.draw_offered_by && g.draw_offered_by !== userId && online.role && (
-          <p className="text-center text-sm text-amber-200/90">{o.opponentOfferedDraw}</p>
         )}
 
         <OnlinePvpResultModal
