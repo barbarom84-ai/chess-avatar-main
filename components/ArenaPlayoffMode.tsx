@@ -20,11 +20,15 @@ import {
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { toast } from "sonner";
 import {
-  applyArenaCaps,
   classifyArenaOutcome,
   replayUci,
   stmEvalToWhitePov,
 } from "@/lib/arena-chess";
+import { prepareArenaEngineConfig } from "@/lib/arena-forced-opening";
+import {
+  getArenaMoveDisplayDelayMs,
+  getArenaPhase,
+} from "@/lib/arena-move-timing";
 import type { PlayoffBracketSize } from "@/lib/arena-playoff-bracket";
 import {
   createPlayoffBracket,
@@ -67,7 +71,11 @@ function playoffDrawWinnerKey(blackKey: string): string {
   return blackKey;
 }
 
-export default function ArenaPlayoffMode() {
+export default function ArenaPlayoffMode({
+  forcedOpeningId = null,
+}: {
+  forcedOpeningId?: string | null;
+}) {
   const { t, lang } = useLanguage();
   const { userId } = usePremium();
   const { isReady, getBestMove, stopThinking, getPositionEvaluation } =
@@ -235,8 +243,8 @@ export default function ArenaPlayoffMode() {
       whiteOpt: NonNullable<typeof activeSides.white>,
       blackOpt: NonNullable<typeof activeSides.black>
     ): Promise<{ winnerKey: string | null; note: string }> => {
-      const whiteConfig = applyArenaCaps(whiteOpt.config, PLAYOFF_DEPTH);
-      const blackConfig = applyArenaCaps(blackOpt.config, PLAYOFF_DEPTH);
+      const whiteConfig = whiteOpt.config;
+      const blackConfig = blackOpt.config;
       const whiteKey = whiteOpt.key;
       const blackKey = blackOpt.key;
 
@@ -311,9 +319,20 @@ export default function ArenaPlayoffMode() {
         liveClock = tick.clock;
         setClock(liveClock);
 
-        const cfg = stm === "w" ? whiteConfig : blackConfig;
+        const base = stm === "w" ? whiteConfig : blackConfig;
+        const cfg = prepareArenaEngineConfig(base, {
+          depthCap: PLAYOFF_DEPTH,
+          ply: hist.length,
+          game: replay,
+          forcedOpeningId,
+        });
+        const phase = getArenaPhase(hist.length, replay);
+        const moveDelay = getArenaMoveDisplayDelayMs(phase, cfg.timeControl);
         const uci = await new Promise<string | null>((resolve) => {
-          getBestMove(replay.fen(), cfg, (move) => resolve(move));
+          getBestMove(replay.fen(), cfg, (move) => resolve(move), {
+            moveHistoryUci: hist,
+            playerColor: stm === "w" ? "black" : "white",
+          });
         });
 
         if (!runningRef.current) break;
@@ -374,7 +393,7 @@ export default function ArenaPlayoffMode() {
           return complete(winnerKey, note, historyRef.current, true);
         }
 
-        await new Promise((r) => setTimeout(r, 280));
+        await new Promise((r) => setTimeout(r, moveDelay));
       }
 
       return complete(null, t.arenaPlayoff.matchPaused, historyRef.current);
@@ -384,6 +403,7 @@ export default function ArenaPlayoffMode() {
       lang,
       saveCloudGames,
       userId,
+      forcedOpeningId,
       t.arenaPage,
       t.arenaPlayoff,
     ]

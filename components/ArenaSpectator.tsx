@@ -14,6 +14,11 @@ import { getSavedConfigs, getRecentConfigs } from "@/lib/storage";
 import { normalizeEnginePlatform } from "@/lib/normalize-engine-platform";
 import { getFilteredProfiles } from "@/lib/supabase-storage";
 import { saveArenaMatchToCloud } from "@/lib/arena-cloud-save";
+import { prepareArenaEngineConfig } from "@/lib/arena-forced-opening";
+import {
+  getArenaMoveDisplayDelayMs,
+  getArenaPhase,
+} from "@/lib/arena-move-timing";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/language-context";
 import { usePremium } from "@/hooks/usePremium";
@@ -488,7 +493,13 @@ function ArenaMatchupBanner({
   );
 }
 
-export default function ArenaSpectator({ embedded = false }: { embedded?: boolean }) {
+export default function ArenaSpectator({
+  embedded = false,
+  forcedOpeningId = null,
+}: {
+  embedded?: boolean;
+  forcedOpeningId?: string | null;
+}) {
   const { t, lang } = useLanguage();
   const { userId } = usePremium();
   const {
@@ -520,6 +531,7 @@ export default function ArenaSpectator({ embedded = false }: { embedded?: boolea
   const arenaClockStartRef = useRef<number | null>(null);
   const arenaSavedRef = useRef(false);
   const evalSeqRef = useRef(0);
+  const lastMoveDelayRef = useRef(400);
   const [saveCloudGames, setSaveCloudGames] = useState(false);
   const [barEval, setBarEval] = useState<number | null>(null);
 
@@ -731,7 +743,17 @@ export default function ArenaSpectator({ embedded = false }: { embedded?: boolea
 
     const stm = game.turn();
     const base = stm === "w" ? whiteConfig : blackConfig;
-    const cfg = applyArenaCaps(base, arenaDepth);
+    const cfg = prepareArenaEngineConfig(base, {
+      depthCap: arenaDepth,
+      ply: hist.length,
+      game,
+      forcedOpeningId,
+    });
+    const phase = getArenaPhase(hist.length, game);
+    lastMoveDelayRef.current = getArenaMoveDisplayDelayMs(
+      phase,
+      cfg.timeControl
+    );
     const playerColor = stm === "w" ? "black" : "white";
 
     const uci = await new Promise<string>((resolve) => {
@@ -815,6 +837,7 @@ export default function ArenaSpectator({ embedded = false }: { embedded?: boolea
     userId,
     trySaveArenaCloud,
     lang,
+    forcedOpeningId,
   ]);
 
   const handleStartAuto = async () => {
@@ -825,7 +848,9 @@ export default function ArenaSpectator({ embedded = false }: { embedded?: boolea
       while (runningRef.current) {
         const done = await playStep();
         if (done) break;
-        await new Promise((r) => setTimeout(r, 400));
+        await new Promise((r) =>
+          setTimeout(r, lastMoveDelayRef.current)
+        );
       }
     } finally {
       runningRef.current = false;

@@ -1472,6 +1472,15 @@ export const translations = {
       saveCloudNeedLogin: "Connectez-vous pour sauvegarder les parties d’arène dans le cloud.",
       cloudSavedToast: "Partie d’arène enregistrée.",
       cloudSaveErrorToast: "Impossible d’enregistrer la partie d’arène.",
+      adaptiveTimingHint:
+        "Réflexion plus courte en ouverture, plus longue au milieu et en finale.",
+      forcedOpeningLabel: "Ouverture imposée (tous les avatars)",
+      forcedOpeningNone: "Aucune — répertoire de chaque avatar",
+      forcedOpeningSearch: "Rechercher une ouverture (nom, ECO, tag)…",
+      forcedOpeningPreview: "Ligne",
+      forcedOpeningNoUci: "Ligne UCI indisponible",
+      forcedOpeningPlies: "{{n}} coups UCI",
+      forcedOpeningLoading: "Chargement du catalogue…",
     },
 
     arenaPlayoff: {
@@ -3385,6 +3394,15 @@ export const translations = {
       saveCloudNeedLogin: "Sign in to save arena games to the cloud.",
       cloudSavedToast: "Arena game saved.",
       cloudSaveErrorToast: "Could not save the arena game.",
+      adaptiveTimingHint:
+        "Shorter think time in the opening, longer in the middlegame and endgame.",
+      forcedOpeningLabel: "Forced opening (all avatars)",
+      forcedOpeningNone: "None — each avatar's repertoire",
+      forcedOpeningSearch: "Search an opening (name, ECO, tag)…",
+      forcedOpeningPreview: "Line",
+      forcedOpeningNoUci: "UCI line unavailable",
+      forcedOpeningPlies: "{{n}} UCI moves",
+      forcedOpeningLoading: "Loading catalogue…",
     },
 
     arenaPlayoff: {

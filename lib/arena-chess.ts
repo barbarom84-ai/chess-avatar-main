@@ -1,5 +1,9 @@
 import { Chess } from "chess.js";
 import type { EngineConfig } from "@/lib/analysis";
+import {
+  getArenaMoveParams,
+  getArenaPhase,
+} from "@/lib/arena-move-timing";
 
 /** Blitz 3+0 pour le mode playoff Arène. */
 export const PLAYOFF_INITIAL_MS = 180_000;
@@ -25,6 +29,21 @@ export function applyArenaCaps(c: EngineConfig, depthCap: number): EngineConfig 
     ...c,
     depth: Math.min(Math.max(5, c.depth), depthCap),
     timeControl: Math.min(Math.max(100, c.timeControl), 2000),
+    threads: Math.min(Math.max(2, c.threads), 4),
+  };
+}
+
+/** Profil moteur pour un coup d’arène : caps + réflexion par phase. */
+export function applyArenaMoveConfig(
+  c: EngineConfig,
+  opts: { depthCap: number; ply: number; game: Chess }
+): EngineConfig {
+  const phase = getArenaPhase(opts.ply, opts.game);
+  const { timeControl, depth } = getArenaMoveParams(c, phase, opts.depthCap);
+  return {
+    ...c,
+    depth,
+    timeControl,
     threads: Math.min(Math.max(2, c.threads), 4),
   };
 }
