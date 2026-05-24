@@ -783,6 +783,7 @@ export const translations = {
       emailInviteBody: "Rejoins-moi pour une partie aux échecs :\n\n{url}",
       presets: {
         unlimited: "Illimitée",
+        bullet_1_0: "1 min (bullet)",
         bullet_2_1: "2 min + 1 s (bullet)",
         blitz_3_0: "3 min (blitz)",
         blitz_3_2: "3 min + 2 s (blitz)",
@@ -1446,6 +1447,7 @@ export const translations = {
       gameOver: "Partie terminée",
       maxPliesLabel: "Limite de coups (sécurité)",
       depthLabel: "Profondeur moteur (arène)",
+      timeControlLabel: "Cadence",
       needEngine: "Chargement du moteur…",
       loadingProfiles: "Chargement des profils…",
       pickBoth: "Choisis deux avatars différents pour lancer l’arène.",
@@ -1473,7 +1475,7 @@ export const translations = {
       cloudSavedToast: "Partie d’arène enregistrée.",
       cloudSaveErrorToast: "Impossible d’enregistrer la partie d’arène.",
       adaptiveTimingHint:
-        "Réflexion plus courte en ouverture, plus longue au milieu et en finale.",
+        "3 s par coup après l’ouverture théorique ; coup instantané s’il n’y en a qu’un de légal ; mode rapide sous 20 s.",
       forcedOpeningLabel: "Ouverture imposée (tous les avatars)",
       forcedOpeningNone: "Aucune — répertoire de chaque avatar",
       forcedOpeningSearch: "Rechercher une ouverture (nom, ECO, tag)…",
@@ -1488,12 +1490,15 @@ export const translations = {
       tabPlayoff: "Playoff",
       title: "Playoff — tournoi à élimination",
       subtitle:
-        "Glissez les cartes avatar sur les emplacements, puis lancez le bracket. Chaque duel est en blitz 3+0 (3 minutes par camp).",
+        "Glissez les cartes avatar sur les emplacements, puis lancez le bracket. Chaque duel respecte la cadence choisie ci-dessus.",
       timeControl: "Blitz 3+0",
       bracket4: "4 joueurs",
       bracket8: "8 joueurs",
       seedsTitle: "Têtes de série (glisser-déposer)",
       rosterTitle: "Roster",
+      rosterDeckTitle: "Deck — roster",
+      rosterDeckHint:
+        "Défilez horizontalement. Glissez une mini-carte vers un emplacement, ou touchez une carte puis un slot.",
       rosterHint:
         "Faites glisser une carte vers un emplacement #1–8. Cliquez sur × pour vider un slot.",
       dropHere: "Déposer ici",
@@ -2708,6 +2713,7 @@ export const translations = {
       emailInviteBody: "Join me for a chess game:\n\n{url}",
       presets: {
         unlimited: "Unlimited",
+        bullet_1_0: "1 min (bullet)",
         bullet_2_1: "2+1 (bullet)",
         blitz_3_0: "3 min (blitz)",
         blitz_3_2: "3+2 (blitz)",
@@ -3369,6 +3375,7 @@ export const translations = {
       gameOver: "Game over",
       maxPliesLabel: "Move limit (safety)",
       depthLabel: "Engine depth (arena)",
+      timeControlLabel: "Time control",
       needEngine: "Loading engine…",
       loadingProfiles: "Loading profiles…",
       pickBoth: "Pick two different avatars to start the arena.",
@@ -3395,7 +3402,7 @@ export const translations = {
       cloudSavedToast: "Arena game saved.",
       cloudSaveErrorToast: "Could not save the arena game.",
       adaptiveTimingHint:
-        "Shorter think time in the opening, longer in the middlegame and endgame.",
+        "3 s per move after the theoretical opening; instant when only one legal move; fast mode under 20 s.",
       forcedOpeningLabel: "Forced opening (all avatars)",
       forcedOpeningNone: "None — each avatar's repertoire",
       forcedOpeningSearch: "Search an opening (name, ECO, tag)…",
@@ -3410,12 +3417,15 @@ export const translations = {
       tabPlayoff: "Playoff",
       title: "Playoff — single elimination",
       subtitle:
-        "Drag avatar cards onto seed slots, then run the bracket. Each duel uses blitz 3+0 (3 minutes per side).",
+        "Drag avatar cards onto seed slots, then run the bracket. Each duel uses the time control selected above.",
       timeControl: "Blitz 3+0",
       bracket4: "4 players",
       bracket8: "8 players",
       seedsTitle: "Seeds (drag & drop)",
       rosterTitle: "Roster",
+      rosterDeckTitle: "Deck — roster",
+      rosterDeckHint:
+        "Scroll horizontally. Drag a mini card onto a slot, or tap a card then tap a slot.",
       rosterHint:
         "Drag a card onto slots #1–8. Click × to clear a slot.",
       dropHere: "Drop here",

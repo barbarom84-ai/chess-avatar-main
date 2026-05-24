@@ -5,6 +5,7 @@ import { Chess } from "chess.js";
 import SimpleChessboard from "@/components/SimpleChessboard";
 import ArenaBotClockBar from "@/components/ArenaBotClockBar";
 import ArenaPlayoffBracket from "@/components/ArenaPlayoffBracket";
+import ArenaPlayoffRosterDeck from "@/components/ArenaPlayoffRosterDeck";
 import EvaluationBar from "@/components/EvaluationBar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,9 +27,16 @@ import {
 } from "@/lib/arena-chess";
 import { prepareArenaEngineConfig } from "@/lib/arena-forced-opening";
 import {
-  getArenaMoveDisplayDelayMs,
-  getArenaPhase,
+  getArenaThinkBudgetMs,
+  getCadenceDepthCap,
+  getSingleLegalMoveUci,
+  isArenaTheoreticalOpening,
+  sleepArenaThinkRemainder,
 } from "@/lib/arena-move-timing";
+import {
+  cadenceFromPreset,
+  resolveArenaTimePreset,
+} from "@/lib/arena-time-controls";
 import type { PlayoffBracketSize } from "@/lib/arena-playoff-bracket";
 import {
   createPlayoffBracket,
@@ -42,6 +50,7 @@ import type { PlayoffBracketState } from "@/lib/arena-playoff-bracket";
 import {
   commitPlayoffClockTurn,
   createPlayoffClock,
+  getPlayoffClockDisplay,
   switchPlayoffClockTurn,
   tickPlayoffClock,
 } from "@/lib/arena-playoff-clock";
@@ -62,7 +71,7 @@ import {
   Swords,
 } from "lucide-react";
 
-const PLAYOFF_DEPTH = 10;
+const PLAYOFF_DEPTH_CAP = 14;
 const PLAYOFF_MAX_PLIES = 200;
 const ARENA_PLAYOFF_SAVE_CLOUD = "chess-arena.playoff.saveCloud";
 
@@ -73,8 +82,10 @@ function playoffDrawWinnerKey(blackKey: string): string {
 
 export default function ArenaPlayoffMode({
   forcedOpeningId = null,
+  timePresetId,
 }: {
   forcedOpeningId?: string | null;
+  timePresetId: string;
 }) {
   const { t, lang } = useLanguage();
   const { userId } = usePremium();
@@ -92,6 +103,7 @@ export default function ArenaPlayoffMode({
   );
   const [activeMatchId, setActiveMatchId] = useState<string | null>(null);
   const [dragOptionKey, setDragOptionKey] = useState<string | null>(null);
+  const [tapPickKey, setTapPickKey] = useState<string | null>(null);
   const [rosterFilter, setRosterFilter] = useState("");
   const [setupOpen, setSetupOpen] = useState(true);
   const [fen, setFen] = useState(() => new Chess().fen());
@@ -105,6 +117,18 @@ export default function ArenaPlayoffMode({
   const [tournamentRunning, setTournamentRunning] = useState(false);
   const [barEval, setBarEval] = useState<number | null>(null);
   const [saveCloudGames, setSaveCloudGames] = useState(false);
+
+  const timePreset = useMemo(
+    () => resolveArenaTimePreset(timePresetId),
+    [timePresetId]
+  );
+  const cadence = useMemo(() => cadenceFromPreset(timePreset), [timePreset]);
+  const playoffDepthCap = useMemo(
+    () => getCadenceDepthCap(cadence, PLAYOFF_DEPTH_CAP),
+    [cadence]
+  );
+  const presetLabels = t.playOnline.presets as Record<string, string>;
+  const timeControlLabel = presetLabels[timePreset.id] ?? timePreset.id;
 
   const historyRef = useRef<string[]>([]);
   const runningRef = useRef(false);
@@ -194,7 +218,7 @@ export default function ArenaPlayoffMode({
     let cancelled = false;
     void (async () => {
       try {
-        const raw = await getPositionEvaluation(fen, PLAYOFF_DEPTH);
+        const raw = await getPositionEvaluation(fen, playoffDepthCap);
         if (cancelled || seq !== evalSeqRef.current) return;
         setBarEval(stmEvalToWhitePov(fen, raw));
       } catch {
@@ -204,7 +228,7 @@ export default function ArenaPlayoffMode({
     return () => {
       cancelled = true;
     };
-  }, [fen, isReady, getPositionEvaluation, clock, matchRunning]);
+  }, [fen, isReady, getPositionEvaluation, clock, matchRunning, playoffDepthCap]);
 
   const activeMatch = useMemo(
     () => bracket.matches.find((m) => m.id === activeMatchId) ?? null,
@@ -221,11 +245,23 @@ export default function ArenaPlayoffMode({
   }, [activeMatch, bracket, poolOptions]);
 
   const filledSeeds = bracket.seeds.filter(Boolean).length;
+  const rosterComplete = filledSeeds >= bracketSize;
+  const showBoard =
+    rosterComplete && (matchRunning || tournamentRunning);
+  const placedKeys = useMemo(
+    () => new Set(bracket.seeds.filter(Boolean) as string[]),
+    [bracket.seeds]
+  );
   const canStartTournament =
     filledSeeds >= bracketSize && !tournamentRunning && !matchRunning;
 
+  const handleTapPickKey = useCallback((key: string) => {
+    setTapPickKey((prev) => (prev === key ? null : key));
+  }, []);
+
   const handleDropSeed = useCallback((slot: number, key: string | null) => {
     setBracket((prev) => setSeed(prev, slot, key));
+    setTapPickKey(null);
   }, []);
 
   const handleAutoSeed = useCallback(() => {
@@ -249,7 +285,7 @@ export default function ArenaPlayoffMode({
       const blackKey = blackOpt.key;
 
       historyRef.current = [];
-      let liveClock = createPlayoffClock();
+      let liveClock = createPlayoffClock(timePreset);
       setClock(liveClock);
       setFen(new Chess().fen());
       setLastMove(null);
@@ -319,21 +355,39 @@ export default function ArenaPlayoffMode({
         liveClock = tick.clock;
         setClock(liveClock);
 
+        const clockView = getPlayoffClockDisplay(liveClock, stm);
+        const sideClockMs =
+          stm === "w" ? clockView.whiteMs : clockView.blackMs;
+
         const base = stm === "w" ? whiteConfig : blackConfig;
         const cfg = prepareArenaEngineConfig(base, {
-          depthCap: PLAYOFF_DEPTH,
+          depthCap: playoffDepthCap,
           ply: hist.length,
           game: replay,
           forcedOpeningId,
+          cadence,
+          historyUci: hist,
+          sideClockMs,
         });
-        const phase = getArenaPhase(hist.length, replay);
-        const moveDelay = getArenaMoveDisplayDelayMs(phase, cfg.timeControl);
-        const uci = await new Promise<string | null>((resolve) => {
-          getBestMove(replay.fen(), cfg, (move) => resolve(move), {
-            moveHistoryUci: hist,
-            playerColor: stm === "w" ? "black" : "white",
+        const thinkBudgetMs = getArenaThinkBudgetMs(
+          isArenaTheoreticalOpening(cfg, hist.length, hist),
+          sideClockMs
+        );
+        const singleUci = getSingleLegalMoveUci(replay);
+        let uci: string | null;
+
+        if (singleUci) {
+          uci = singleUci;
+        } else {
+          const thinkStartedAt = Date.now();
+          uci = await new Promise<string | null>((resolve) => {
+            getBestMove(replay.fen(), cfg, (move) => resolve(move), {
+              moveHistoryUci: hist,
+              playerColor: stm === "w" ? "black" : "white",
+            });
           });
-        });
+          await sleepArenaThinkRemainder(thinkStartedAt, thinkBudgetMs);
+        }
 
         if (!runningRef.current) break;
 
@@ -392,8 +446,6 @@ export default function ArenaPlayoffMode({
           const note = t.arenaPlayoff.moveLimitBlackWins;
           return complete(winnerKey, note, historyRef.current, true);
         }
-
-        await new Promise((r) => setTimeout(r, moveDelay));
       }
 
       return complete(null, t.arenaPlayoff.matchPaused, historyRef.current);
@@ -404,6 +456,9 @@ export default function ArenaPlayoffMode({
       saveCloudGames,
       userId,
       forcedOpeningId,
+      cadence,
+      playoffDepthCap,
+      timePreset,
       t.arenaPage,
       t.arenaPlayoff,
     ]
@@ -504,14 +559,12 @@ export default function ArenaPlayoffMode({
     );
   }
 
-  const showBoardFirst = matchRunning || tournamentRunning;
-
   return (
     <div className="arena-playoff-layout space-y-3">
       <div className="flex flex-wrap items-center gap-2 rounded-lg border border-amber-500/20 bg-slate-900/50 px-3 py-2">
         <Swords className="h-4 w-4 text-amber-400 shrink-0" />
         <span className="text-xs text-slate-400 hidden sm:inline">
-          {t.arenaPlayoff.timeControl}
+          {timeControlLabel}
           <span className="text-slate-500"> · {t.arenaPlayoff.drawRuleHint}</span>
         </span>
         <div className="flex gap-1">
@@ -583,17 +636,30 @@ export default function ArenaPlayoffMode({
         </p>
       ) : null}
 
+      {!showBoard && (
+        <ArenaPlayoffRosterDeck
+          pool={poolOptions}
+          rosterFilter={rosterFilter}
+          onRosterFilterChange={setRosterFilter}
+          tapPickKey={tapPickKey}
+          onTapPickKey={handleTapPickKey}
+          dragOptionKey={dragOptionKey}
+          onDragStartOption={setDragOptionKey}
+          onDragEnd={() => setDragOptionKey(null)}
+          placedKeys={placedKeys}
+        />
+      )}
+
       <div
         className={`arena-playoff-grid grid gap-3 items-start ${
-          showBoardFirst
+          showBoard
             ? "grid-cols-1 xl:grid-cols-[minmax(0,1.15fr)_minmax(260px,0.85fr)]"
-            : "grid-cols-1 xl:grid-cols-[minmax(260px,0.85fr)_minmax(0,1.15fr)]"
+            : "grid-cols-1"
         }`}
       >
+        {showBoard && (
         <Card
-          className={`bg-slate-900/70 border-cyan-500/20 ${
-            showBoardFirst ? "xl:order-1" : "xl:order-2"
-          }`}
+          className="bg-slate-900/70 border-cyan-500/20 xl:order-1"
         >
           <CardHeader className="py-2 px-3">
             <CardTitle className="text-cyan-300 text-sm">
@@ -665,10 +731,11 @@ export default function ArenaPlayoffMode({
             )}
           </CardContent>
         </Card>
+        )}
 
         <Card
           className={`bg-slate-900/50 border-slate-700/80 overflow-hidden ${
-            showBoardFirst ? "xl:order-2" : "xl:order-1"
+            showBoard ? "xl:order-2" : ""
           }`}
         >
           <button
@@ -696,11 +763,8 @@ export default function ArenaPlayoffMode({
                 }
               }}
               onDropSeed={handleDropSeed}
-              dragOptionKey={dragOptionKey}
-              onDragStartOption={setDragOptionKey}
-              onDragEnd={() => setDragOptionKey(null)}
-              rosterFilter={rosterFilter}
-              onRosterFilterChange={setRosterFilter}
+              tapPickKey={tapPickKey}
+              onTapPickKey={setTapPickKey}
             />
             {activeMatch?.status === "ready" && !tournamentRunning && (
               <Button

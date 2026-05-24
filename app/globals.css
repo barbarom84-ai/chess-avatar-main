@@ -491,6 +491,39 @@ nextjs-portal {
   scrollbar-width: thin;
 }
 
+.arena-roster-deck {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  min-height: 112px;
+  padding-top: 4px;
+}
+
+.arena-roster-deck-card {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+  margin-left: -18px;
+  transition: transform 0.15s ease, z-index 0s;
+}
+
+.arena-roster-deck-card:first-child {
+  margin-left: 0;
+}
+
+.arena-roster-deck-card--alt {
+  transform: translateY(8px);
+}
+
+.arena-roster-deck-card:hover {
+  z-index: 30 !important;
+}
+
 @media (max-width: 1023px) {
   .arena-playoff-grid .sticky {
     position: static;

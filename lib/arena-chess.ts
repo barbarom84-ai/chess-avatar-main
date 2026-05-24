@@ -3,9 +3,13 @@ import type { EngineConfig } from "@/lib/analysis";
 import {
   getArenaMoveParams,
   getArenaPhase,
+  getArenaThinkBudgetMs,
+  getArenaThinkMode,
+  isArenaTheoreticalOpening,
 } from "@/lib/arena-move-timing";
+import type { ArenaCadence } from "@/lib/arena-time-controls";
 
-/** Blitz 3+0 pour le mode playoff Arène. */
+/** @deprecated Utiliser getArenaInitialMs(cadence) — conservé pour compat. */
 export const PLAYOFF_INITIAL_MS = 180_000;
 
 export function replayUci(history: string[]): Chess {
@@ -36,10 +40,34 @@ export function applyArenaCaps(c: EngineConfig, depthCap: number): EngineConfig 
 /** Profil moteur pour un coup d’arène : caps + réflexion par phase. */
 export function applyArenaMoveConfig(
   c: EngineConfig,
-  opts: { depthCap: number; ply: number; game: Chess }
+  opts: {
+    depthCap: number;
+    ply: number;
+    game: Chess;
+    cadence: ArenaCadence;
+    historyUci: string[];
+    sideClockMs?: number;
+  }
 ): EngineConfig {
   const phase = getArenaPhase(opts.ply, opts.game);
-  const { timeControl, depth } = getArenaMoveParams(c, phase, opts.depthCap);
+  const inTheoretical = isArenaTheoreticalOpening(
+    c,
+    opts.ply,
+    opts.historyUci
+  );
+  const thinkBudgetMs = getArenaThinkBudgetMs(
+    inTheoretical,
+    opts.sideClockMs
+  );
+  const thinkMode = getArenaThinkMode(inTheoretical, opts.sideClockMs);
+  const { timeControl, depth } = getArenaMoveParams(
+    c,
+    phase,
+    opts.depthCap,
+    opts.cadence,
+    thinkBudgetMs,
+    thinkMode
+  );
   return {
     ...c,
     depth,

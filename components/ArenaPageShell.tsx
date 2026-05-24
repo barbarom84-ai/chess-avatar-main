@@ -4,9 +4,14 @@ import { useEffect, useState } from "react";
 import ArenaSpectator from "@/components/ArenaSpectator";
 import ArenaPlayoffMode from "@/components/ArenaPlayoffMode";
 import ArenaForcedOpeningPicker from "@/components/ArenaForcedOpeningPicker";
+import ArenaTimeControlPicker from "@/components/ArenaTimeControlPicker";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/lib/language-context";
 import { ARENA_FORCED_OPENING_STORAGE } from "@/lib/arena-forced-opening";
+import {
+  ARENA_DEFAULT_TIME_PRESET_ID,
+  ARENA_TIME_PRESET_STORAGE,
+} from "@/lib/arena-time-controls";
 import { Eye, Swords } from "lucide-react";
 
 type ArenaTab = "spectator" | "playoff";
@@ -15,12 +20,15 @@ export default function ArenaPageShell() {
   const { t } = useLanguage();
   const [tab, setTab] = useState<ArenaTab>("spectator");
   const [forcedOpeningId, setForcedOpeningId] = useState<string | null>(null);
+  const [timePresetId, setTimePresetId] = useState(ARENA_DEFAULT_TIME_PRESET_ID);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
       const stored = localStorage.getItem(ARENA_FORCED_OPENING_STORAGE);
       if (stored?.trim()) setForcedOpeningId(stored.trim());
+      const storedTc = localStorage.getItem(ARENA_TIME_PRESET_STORAGE);
+      if (storedTc?.trim()) setTimePresetId(storedTc.trim());
     } catch {
       /* ignore */
     }
@@ -38,6 +46,15 @@ export default function ArenaPageShell() {
       /* ignore */
     }
   }, [forcedOpeningId]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      localStorage.setItem(ARENA_TIME_PRESET_STORAGE, timePresetId);
+    } catch {
+      /* ignore */
+    }
+  }, [timePresetId]);
 
   return (
     <div className="max-w-7xl mx-auto space-y-4 p-4 md:p-6">
@@ -84,10 +101,19 @@ export default function ArenaPageShell() {
         onChange={setForcedOpeningId}
       />
 
+      <ArenaTimeControlPicker value={timePresetId} onChange={setTimePresetId} />
+
       {tab === "spectator" ? (
-        <ArenaSpectator embedded forcedOpeningId={forcedOpeningId} />
+        <ArenaSpectator
+          embedded
+          forcedOpeningId={forcedOpeningId}
+          timePresetId={timePresetId}
+        />
       ) : (
-        <ArenaPlayoffMode forcedOpeningId={forcedOpeningId} />
+        <ArenaPlayoffMode
+          forcedOpeningId={forcedOpeningId}
+          timePresetId={timePresetId}
+        />
       )}
     </div>
   );

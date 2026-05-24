@@ -1,18 +1,26 @@
-import { PLAYOFF_INITIAL_MS } from "@/lib/arena-chess";
+import {
+  getArenaIncrementMs,
+  getArenaInitialMs,
+} from "@/lib/arena-time-controls";
+import type { PvpTimePreset } from "@/lib/pvp-time-controls";
 
 export type PlayoffClockState = {
   whiteMs: number;
   blackMs: number;
   turnStartedAt: number;
+  incrementMs: number;
 };
 
 export function createPlayoffClock(
-  initialMs = PLAYOFF_INITIAL_MS
+  preset?: Pick<PvpTimePreset, "initialSec" | "incrementSec">
 ): PlayoffClockState {
+  const initialMs = preset ? getArenaInitialMs(preset) : 180_000;
+  const incrementMs = preset ? getArenaIncrementMs(preset) : 0;
   return {
     whiteMs: initialMs,
     blackMs: initialMs,
     turnStartedAt: Date.now(),
+    incrementMs,
   };
 }
 
@@ -35,7 +43,7 @@ export function tickPlayoffClock(
       return {
         kind: "timeout",
         winner: "black",
-        clock: { whiteMs: 0, blackMs, turnStartedAt: nowMs },
+        clock: { ...clock, whiteMs: 0, blackMs, turnStartedAt: nowMs },
       };
     }
   } else {
@@ -44,14 +52,14 @@ export function tickPlayoffClock(
       return {
         kind: "timeout",
         winner: "white",
-        clock: { whiteMs, blackMs: 0, turnStartedAt: nowMs },
+        clock: { ...clock, whiteMs, blackMs: 0, turnStartedAt: nowMs },
       };
     }
   }
 
   return {
     kind: "ok",
-    clock: { whiteMs, blackMs, turnStartedAt: nowMs },
+    clock: { ...clock, whiteMs, blackMs, turnStartedAt: nowMs },
   };
 }
 
@@ -63,14 +71,14 @@ export function commitPlayoffClockTurn(
   const elapsed = Math.max(0, nowMs - clock.turnStartedAt);
   if (sideToMove === "w") {
     return {
-      whiteMs: Math.max(0, clock.whiteMs - elapsed),
-      blackMs: clock.blackMs,
+      ...clock,
+      whiteMs: Math.max(0, clock.whiteMs - elapsed) + clock.incrementMs,
       turnStartedAt: nowMs,
     };
   }
   return {
-    whiteMs: clock.whiteMs,
-    blackMs: Math.max(0, clock.blackMs - elapsed),
+    ...clock,
+    blackMs: Math.max(0, clock.blackMs - elapsed) + clock.incrementMs,
     turnStartedAt: nowMs,
   };
 }

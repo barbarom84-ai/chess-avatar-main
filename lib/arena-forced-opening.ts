@@ -3,6 +3,7 @@ import type { EngineConfig } from "@/lib/analysis";
 import { applyArenaMoveConfig } from "@/lib/arena-chess";
 import { splitUciSequence } from "@/lib/forced-line-utils";
 import { getOpeningById } from "@/lib/openings-registry";
+import type { ArenaCadence } from "@/lib/arena-time-controls";
 
 export type ArenaForcedLines = { white: string[]; black: string[] };
 
@@ -44,6 +45,9 @@ export function prepareArenaEngineConfig(
     ply: number;
     game: Chess;
     forcedOpeningId?: string | null;
+    cadence: ArenaCadence;
+    historyUci: string[];
+    sideClockMs?: number;
   }
 ): EngineConfig {
   const merged = mergeArenaOpeningIntoConfig(
@@ -54,6 +58,9 @@ export function prepareArenaEngineConfig(
     depthCap: opts.depthCap,
     ply: opts.ply,
     game: opts.game,
+    cadence: opts.cadence,
+    historyUci: opts.historyUci,
+    sideClockMs: opts.sideClockMs,
   });
 }
 

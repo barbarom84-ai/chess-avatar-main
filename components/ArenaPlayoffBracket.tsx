@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
-import { ChevronDown, ChevronUp, GripVertical, Trophy, X } from "lucide-react";
+import { useCallback, useState } from "react";
+import { Trophy, X } from "lucide-react";
 import type { ProfileOption } from "@/lib/arena-types";
 import type { PlayoffBracketState, PlayoffMatch } from "@/lib/arena-playoff-bracket";
 import {
@@ -9,11 +9,10 @@ import {
   resolveMatchSideKeys,
   roundLabel,
 } from "@/lib/arena-playoff-bracket";
+import { PLAYOFF_DRAG_KEY } from "@/components/ArenaPlayoffRosterDeck";
 import { useLanguage } from "@/lib/language-context";
 import { normalizeEnginePlatform } from "@/lib/normalize-engine-platform";
 import { Button } from "@/components/ui/button";
-
-const DRAG_KEY = "application/x-chess-avatar-playoff";
 
 function PlayerChip({
   option,
@@ -118,27 +117,19 @@ export default function ArenaPlayoffBracket({
   activeMatchId,
   onSelectMatch,
   onDropSeed,
-  dragOptionKey,
-  onDragStartOption,
-  onDragEnd,
-  rosterFilter,
-  onRosterFilterChange,
+  tapPickKey,
+  onTapPickKey,
 }: {
   state: PlayoffBracketState;
   pool: ProfileOption[];
   activeMatchId: string | null;
   onSelectMatch: (id: string) => void;
   onDropSeed: (slotIndex: number, key: string | null) => void;
-  dragOptionKey: string | null;
-  onDragStartOption: (key: string) => void;
-  onDragEnd: () => void;
-  rosterFilter: string;
-  onRosterFilterChange: (q: string) => void;
+  tapPickKey: string | null;
+  onTapPickKey: (key: string | null) => void;
 }) {
   const { t } = useLanguage();
   const [dragOverSlot, setDragOverSlot] = useState<number | null>(null);
-  const [rosterOpen, setRosterOpen] = useState(true);
-  const [tapPickKey, setTapPickKey] = useState<string | null>(null);
 
   const handleDragOver = useCallback((e: React.DragEvent, slot: number) => {
     e.preventDefault();
@@ -149,24 +140,20 @@ export default function ArenaPlayoffBracket({
     (e: React.DragEvent, slot: number) => {
       e.preventDefault();
       setDragOverSlot(null);
-      const key = e.dataTransfer.getData(DRAG_KEY);
+      const key = e.dataTransfer.getData(PLAYOFF_DRAG_KEY);
       if (key) {
         onDropSeed(slot, key);
-        setTapPickKey(null);
+        onTapPickKey(null);
       }
     },
-    [onDropSeed]
+    [onDropSeed, onTapPickKey]
   );
-
-  const handleTapRoster = useCallback((key: string) => {
-    setTapPickKey((prev) => (prev === key ? null : key));
-  }, []);
 
   const handleTapSlot = useCallback(
     (slot: number) => {
       if (tapPickKey) {
         onDropSeed(slot, tapPickKey);
-        setTapPickKey(null);
+        onTapPickKey(null);
         return;
       }
       const existing = state.seeds[slot];
@@ -174,17 +161,8 @@ export default function ArenaPlayoffBracket({
         onDropSeed(slot, null);
       }
     },
-    [tapPickKey, onDropSeed, state.seeds]
+    [tapPickKey, onDropSeed, onTapPickKey, state.seeds]
   );
-
-  const rosterVisible = useMemo(() => {
-    const q = rosterFilter.trim().toLowerCase();
-    const rows = pool;
-    if (!q) return rows.slice(0, 40);
-    return rows
-      .filter((o) => (o.config.name || o.label).toLowerCase().includes(q))
-      .slice(0, 40);
-  }, [pool, rosterFilter]);
 
   const rounds = state.size === 8 ? [0, 1, 2] : [0, 1];
 
@@ -206,7 +184,7 @@ export default function ArenaPlayoffBracket({
             size="sm"
             variant="ghost"
             className="h-7 px-2 text-xs"
-            onClick={() => setTapPickKey(null)}
+            onClick={() => onTapPickKey(null)}
           >
             <X className="h-3 w-3 mr-0.5" />
             {t.arenaPlayoff.tapAssignClear}
@@ -269,9 +247,7 @@ export default function ArenaPlayoffBracket({
                   </>
                 ) : (
                   <span className="text-[10px] text-slate-500">
-                    {tapPickKey
-                      ? t.arenaPlayoff.dropHere
-                      : t.arenaPlayoff.dropHere}
+                    {t.arenaPlayoff.dropHere}
                   </span>
                 )}
               </div>
@@ -312,66 +288,6 @@ export default function ArenaPlayoffBracket({
               </strong>
             </span>
           </div>
-        )}
-      </div>
-
-      <div className="border-t border-slate-800 pt-2">
-        <button
-          type="button"
-          className="flex w-full items-center justify-between text-xs text-slate-400 hover:text-slate-200 touch-manipulation py-1"
-          onClick={() => setRosterOpen((v) => !v)}
-        >
-          <span className="flex items-center gap-1">
-            <GripVertical className="h-3.5 w-3.5" />
-            {t.arenaPlayoff.rosterTitle}
-          </span>
-          {rosterOpen ? (
-            <ChevronUp className="h-4 w-4" />
-          ) : (
-            <ChevronDown className="h-4 w-4" />
-          )}
-        </button>
-        {rosterOpen && (
-          <>
-            <input
-              type="search"
-              value={rosterFilter}
-              onChange={(e) => onRosterFilterChange(e.target.value)}
-              placeholder={t.arenaPlayoff.rosterSearch}
-              className="mt-2 w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-2 text-xs text-slate-200 touch-manipulation"
-            />
-            <div className="mt-2 flex flex-wrap gap-1.5 max-h-36 overflow-y-auto">
-              {rosterVisible.map((opt) => {
-                const picked = tapPickKey === opt.key;
-                return (
-                  <button
-                    key={opt.key}
-                    type="button"
-                    draggable
-                    onDragStart={(e) => {
-                      e.dataTransfer.setData(DRAG_KEY, opt.key);
-                      onDragStartOption(opt.key);
-                    }}
-                    onDragEnd={onDragEnd}
-                    onClick={() => handleTapRoster(opt.key)}
-                    className={`rounded-full border px-2.5 py-1.5 text-[10px] touch-manipulation min-h-[2rem] ${
-                      picked
-                        ? "border-cyan-400 bg-cyan-950/60 text-cyan-100"
-                        : dragOptionKey === opt.key
-                          ? "opacity-40 border-cyan-500"
-                          : "border-slate-600 text-slate-300 active:bg-slate-800"
-                    }`}
-                  >
-                    {opt.config.name}
-                    {opt.config.elo != null ? ` · ${opt.config.elo}` : ""}
-                  </button>
-                );
-              })}
-            </div>
-            <p className="text-[9px] text-slate-500 mt-1">
-              {t.arenaPlayoff.rosterHint}
-            </p>
-          </>
         )}
       </div>
     </div>

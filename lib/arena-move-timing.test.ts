@@ -1,9 +1,16 @@
 import { describe, expect, it } from "vitest";
 import { Chess } from "chess.js";
 import {
+  ARENA_MAIN_THINK_MS,
+  ARENA_THEORETICAL_THINK_MS,
+  ARENA_ZEITNOT_THINK_MS,
   getArenaMoveDisplayDelayMs,
   getArenaMoveParams,
   getArenaPhase,
+  getArenaThinkBudgetMs,
+  getArenaThinkMode,
+  getSingleLegalMoveUci,
+  isArenaTheoreticalOpening,
 } from "./arena-move-timing";
 import type { EngineConfig } from "./analysis";
 
@@ -20,40 +27,94 @@ const baseConfig: EngineConfig = {
   openings: {},
 };
 
+const blitz3 = { initialSec: 180, incrementSec: 0 };
+
 describe("getArenaPhase", () => {
   it("returns opening for early plies", () => {
     expect(getArenaPhase(0, new Chess())).toBe("opening");
-    expect(getArenaPhase(10, new Chess())).toBe("opening");
+  });
+});
+
+describe("getArenaThinkBudgetMs", () => {
+  it("uses 3s after theoretical opening", () => {
+    expect(getArenaThinkBudgetMs(false)).toBe(ARENA_MAIN_THINK_MS);
+    expect(ARENA_MAIN_THINK_MS).toBe(3000);
   });
 
-  it("returns middlegame in mid game with full material", () => {
-    const g = new Chess();
-    expect(getArenaPhase(20, g)).toBe("middlegame");
+  it("uses zero budget for single legal move", () => {
+    expect(getArenaThinkBudgetMs(false, undefined, true)).toBe(0);
   });
 
-  it("returns endgame with few pieces", () => {
-    const g = new Chess("4k3/8/8/8/8/8/8/4K3 w - - 0 1");
-    expect(getArenaPhase(20, g)).toBe("endgame");
+  it("uses short budget during theoretical opening", () => {
+    expect(getArenaThinkBudgetMs(true)).toBe(ARENA_THEORETICAL_THINK_MS);
+  });
+
+  it("uses zeitnot budget under 20 seconds", () => {
+    expect(getArenaThinkBudgetMs(false, 19_000)).toBe(ARENA_ZEITNOT_THINK_MS);
   });
 });
 
 describe("getArenaMoveParams", () => {
-  it("opening movetime is less than middlegame and endgame", () => {
-    const opening = getArenaMoveParams(baseConfig, "opening", 10);
-    const middle = getArenaMoveParams(baseConfig, "middlegame", 10);
-    const end = getArenaMoveParams(baseConfig, "endgame", 10);
+  it("main mode uses 3 second movetime", () => {
+    const main = getArenaMoveParams(
+      baseConfig,
+      "middlegame",
+      14,
+      blitz3,
+      ARENA_MAIN_THINK_MS,
+      "main"
+    );
+    expect(main.timeControl).toBe(3000);
+    expect(main.depth).toBeGreaterThanOrEqual(12);
+  });
 
-    expect(opening.timeControl).toBeLessThan(middle.timeControl);
-    expect(middle.timeControl).toBeLessThan(end.timeControl);
-    expect(opening.depth).toBeLessThanOrEqual(8);
-    expect(middle.depth).toBe(10);
+  it("zeitnot mode is faster than main", () => {
+    const main = getArenaMoveParams(
+      baseConfig,
+      "middlegame",
+      14,
+      blitz3,
+      ARENA_MAIN_THINK_MS,
+      "main"
+    );
+    const fast = getArenaMoveParams(
+      baseConfig,
+      "middlegame",
+      14,
+      blitz3,
+      ARENA_ZEITNOT_THINK_MS,
+      "zeitnot"
+    );
+    expect(fast.timeControl).toBeLessThan(main.timeControl);
+  });
+});
+
+describe("getSingleLegalMoveUci", () => {
+  it("returns uci when only one legal move", () => {
+    const g = new Chess("8/8/8/8/8/8/1k6/K7 w - - 0 1");
+    expect(getSingleLegalMoveUci(g)).toBe("a1b2");
+  });
+
+  it("returns null when multiple legal moves", () => {
+    expect(getSingleLegalMoveUci(new Chess())).toBeNull();
+  });
+});
+
+describe("isArenaTheoreticalOpening", () => {
+  it("treats early plies as theoretical when no book", () => {
+    expect(isArenaTheoreticalOpening(baseConfig, 8, [])).toBe(true);
+    expect(isArenaTheoreticalOpening(baseConfig, 20, [])).toBe(false);
   });
 });
 
 describe("getArenaMoveDisplayDelayMs", () => {
-  it("respects phase minimum display", () => {
-    expect(getArenaMoveDisplayDelayMs("opening", 200)).toBeGreaterThanOrEqual(
-      320
-    );
+  it("returns minimal UI pause", () => {
+    expect(getArenaMoveDisplayDelayMs("middlegame", 5000, "spectator")).toBe(80);
+  });
+});
+
+describe("getArenaThinkMode", () => {
+  it("prioritizes theoretical over zeitnot", () => {
+    expect(getArenaThinkMode(true, 10_000)).toBe("theoretical");
   });
 });

@@ -18,7 +18,16 @@ import { prepareArenaEngineConfig } from "@/lib/arena-forced-opening";
 import {
   getArenaMoveDisplayDelayMs,
   getArenaPhase,
+  getArenaThinkBudgetMs,
+  getCadenceDepthCap,
+  getSingleLegalMoveUci,
+  isArenaTheoreticalOpening,
+  sleepArenaThinkRemainder,
 } from "@/lib/arena-move-timing";
+import {
+  cadenceFromPreset,
+  resolveArenaTimePreset,
+} from "@/lib/arena-time-controls";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/language-context";
 import { usePremium } from "@/hooks/usePremium";
@@ -496,9 +505,11 @@ function ArenaMatchupBanner({
 export default function ArenaSpectator({
   embedded = false,
   forcedOpeningId = null,
+  timePresetId,
 }: {
   embedded?: boolean;
   forcedOpeningId?: string | null;
+  timePresetId: string;
 }) {
   const { t, lang } = useLanguage();
   const { userId } = usePremium();
@@ -519,6 +530,15 @@ export default function ArenaSpectator({
   const [dedupeIdentity, setDedupeIdentity] = useState(true);
   const [arenaDepth, setArenaDepth] = useState(10);
   const [maxPlies, setMaxPlies] = useState(120);
+  const timePreset = useMemo(
+    () => resolveArenaTimePreset(timePresetId),
+    [timePresetId]
+  );
+  const cadence = useMemo(() => cadenceFromPreset(timePreset), [timePreset]);
+  const effectiveDepthCap = useMemo(
+    () => getCadenceDepthCap(cadence, arenaDepth),
+    [cadence, arenaDepth]
+  );
   const [fen, setFen] = useState(() => new Chess().fen());
   const historyRef = useRef<string[]>([]);
   const [moveCount, setMoveCount] = useState(0);
@@ -744,24 +764,41 @@ export default function ArenaSpectator({
     const stm = game.turn();
     const base = stm === "w" ? whiteConfig : blackConfig;
     const cfg = prepareArenaEngineConfig(base, {
-      depthCap: arenaDepth,
+      depthCap: effectiveDepthCap,
       ply: hist.length,
       game,
       forcedOpeningId,
+      cadence,
+      historyUci: hist,
     });
     const phase = getArenaPhase(hist.length, game);
+    const singleUci = getSingleLegalMoveUci(game);
+    let uci: string;
+
+    if (singleUci) {
+      uci = singleUci;
+    } else {
+      const thinkBudgetMs = getArenaThinkBudgetMs(
+        isArenaTheoreticalOpening(cfg, hist.length, hist)
+      );
+      const thinkStartedAt = Date.now();
+      const playerColor = stm === "w" ? "black" : "white";
+
+      uci = await new Promise<string>((resolve) => {
+        getBestMove(game.fen(), cfg, (m) => resolve(m || ""), {
+          moveHistoryUci: hist,
+          playerColor,
+        });
+      });
+
+      await sleepArenaThinkRemainder(thinkStartedAt, thinkBudgetMs);
+    }
+
     lastMoveDelayRef.current = getArenaMoveDisplayDelayMs(
       phase,
-      cfg.timeControl
+      cfg.timeControl,
+      "spectator"
     );
-    const playerColor = stm === "w" ? "black" : "white";
-
-    const uci = await new Promise<string>((resolve) => {
-      getBestMove(game.fen(), cfg, (m) => resolve(m || ""), {
-        moveHistoryUci: hist,
-        playerColor,
-      });
-    });
 
     if (!uci || uci.length < 4) {
       setStatusNote(t.arenaPage.gameOver);
@@ -829,6 +866,8 @@ export default function ArenaSpectator({
     whiteKey,
     blackKey,
     arenaDepth,
+    effectiveDepthCap,
+    cadence,
     maxPlies,
     getBestMove,
     t.arenaPage,

@@ -36,12 +36,24 @@ const ELEMENT_ICONS = {
 } as const;
 
 const FLIP_MIN_HEIGHT: Record<keyof typeof SIZE_CLASSES, number> = {
+  xs: 100,
   sm: 220,
   md: 360,
   lg: 440,
 };
 
 const SIZE_CLASSES = {
+  xs: {
+    root: "w-[88px] min-h-[100px] text-[9px]",
+    portrait: "h-[52px]",
+    title: "text-[10px]",
+    cost: "h-5 w-5 text-[8px]",
+    pad: "p-1 gap-0.5",
+    hideMorale: true,
+    hideAbility: true,
+    hideBadges: true,
+    hideElementBadge: true,
+  },
   sm: {
     root: "w-[140px] min-h-[200px] text-[10px]",
     portrait: "h-[72px]",
@@ -50,6 +62,8 @@ const SIZE_CLASSES = {
     pad: "p-2 gap-1.5",
     hideMorale: true,
     hideAbility: true,
+    hideBadges: false,
+    hideElementBadge: false,
   },
   md: {
     root: "w-full max-w-[220px] min-h-[360px] text-xs",
@@ -59,6 +73,8 @@ const SIZE_CLASSES = {
     pad: "p-3 gap-2",
     hideMorale: false,
     hideAbility: false,
+    hideBadges: false,
+    hideElementBadge: false,
   },
   lg: {
     root: "w-full max-w-[280px] min-h-[400px] text-sm",
@@ -68,6 +84,8 @@ const SIZE_CLASSES = {
     pad: "p-4 gap-2.5",
     hideMorale: false,
     hideAbility: false,
+    hideBadges: false,
+    hideElementBadge: false,
   },
 } as const;
 
@@ -176,20 +194,22 @@ function CardFace({
 
   return (
     <div className={`avatar-card-face flex flex-col min-h-full ${sz.pad}`}>
-      <div className="flex items-start justify-between gap-1">
-        <Badge
-          variant="outline"
-          className="text-[9px] px-1 py-0 border-[var(--avatar-card-accent,#94a3b8)] text-[var(--avatar-card-accent,#94a3b8)]"
-        >
-          {elementLabel}
-        </Badge>
-        <div
-          className={`${sz.cost} shrink-0 rounded-full bg-amber-500/90 border-2 border-amber-200 flex items-center justify-center font-bold text-slate-950 shadow-md`}
-          title="ELO"
-        >
-          {model.elo}
+      {!sz.hideElementBadge ? (
+        <div className="flex items-start justify-between gap-1">
+          <Badge
+            variant="outline"
+            className="text-[9px] px-1 py-0 border-[var(--avatar-card-accent,#94a3b8)] text-[var(--avatar-card-accent,#94a3b8)]"
+          >
+            {elementLabel}
+          </Badge>
+          <div
+            className={`${sz.cost} shrink-0 rounded-full bg-amber-500/90 border-2 border-amber-200 flex items-center justify-center font-bold text-slate-950 shadow-md`}
+            title="ELO"
+          >
+            {model.elo}
+          </div>
         </div>
-      </div>
+      ) : null}
 
       <div
         className={`relative ${sz.portrait} w-full rounded-md overflow-hidden border border-slate-700/80 bg-slate-950`}
@@ -204,10 +224,24 @@ function CardFace({
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-slate-800 to-slate-950">
-            <Bot className="h-10 w-10 text-slate-500" />
+            <Bot
+              className={`${sizeKey === "xs" ? "h-6 w-6" : "h-10 w-10"} text-slate-500`}
+            />
           </div>
         )}
-        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent px-2 py-1.5">
+        {sz.hideElementBadge ? (
+          <div
+            className={`absolute top-0.5 right-0.5 ${sz.cost} rounded-full bg-amber-500/95 border border-amber-200 flex items-center justify-center font-bold text-slate-950 shadow`}
+            title="ELO"
+          >
+            {model.elo}
+          </div>
+        ) : null}
+        <div
+          className={`absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent ${
+            sizeKey === "xs" ? "px-1 py-0.5" : "px-2 py-1.5"
+          }`}
+        >
           <p
             className={`font-serif font-bold text-amber-100 truncate ${sz.title}`}
           >
@@ -227,6 +261,7 @@ function CardFace({
         )}
       </div>
 
+      {!sz.hideBadges ? (
       <div className="flex flex-wrap items-center gap-1">
         <Badge
           variant="outline"
@@ -247,6 +282,7 @@ function CardFace({
           </Badge>
         )}
       </div>
+      ) : null}
 
       {!sz.hideAbility && (
         <p className="text-slate-400 leading-snug line-clamp-3 italic flex-1 min-h-0">
