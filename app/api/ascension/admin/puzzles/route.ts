@@ -1,12 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { getAuthedUserFromRequest } from "@/lib/supabase-auth-request";
 import { isSuperUserServer } from "@/lib/is-super-user-server";
 import { FantasyChessEngine } from "@/lib/ascension/fantasy-chess/engine";
 import type { FantasyRuleSet } from "@/lib/ascension/fantasy-chess/types";
-import { Chess } from "chess.js";
+import { validateStandardPuzzleLine } from "@/lib/ascension/puzzle-validation";
 
 export const runtime = "nodejs";
+
+type PuzzleRow = Record<string, unknown>;
+
+async function unpublishOtherLevels(
+  admin: SupabaseClient,
+  sortOrder: number,
+  keepId: string
+) {
+  await admin
+    .from("campaign_puzzles")
+    .update({ is_published: false })
+    .eq("sort_order", sortOrder)
+    .neq("id", keepId);
+}
 
 export async function POST(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
@@ -37,6 +51,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid body" }, { status: 400 });
   }
 
+  const puzzleId = typeof body.id === "string" && body.id.trim() ? body.id.trim() : null;
   const slug = typeof body.slug === "string" ? body.slug.trim() : "";
   const kind = body.kind === "fantasy" ? "fantasy" : "standard";
   const fen = typeof body.fen === "string" ? body.fen : "";
@@ -54,11 +69,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: replay.error }, { status: 400 });
     }
   } else {
-    const chess = new Chess(fen);
-    for (const uci of solutionUcis) {
-      if (!chess.move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci[4] as "q" | "r" | "b" | "n" | undefined })) {
-        return NextResponse.json({ error: `Illegal move: ${uci}` }, { status: 400 });
-      }
+    const validation = validateStandardPuzzleLine(fen, solutionUcis);
+    if (!validation.ok) {
+      return NextResponse.json({ error: validation.error }, { status: 400 });
     }
   }
 
@@ -79,17 +92,62 @@ export async function POST(request: NextRequest) {
     is_published: Boolean(body.is_published ?? false),
   };
 
-  const { data, error } = await admin
+  const slugOwner = await admin
     .from("campaign_puzzles")
-    .upsert(row, { onConflict: "slug" })
-    .select("*")
-    .single();
+    .select("id")
+    .eq("slug", slug)
+    .maybeSingle();
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  if (slugOwner.data && slugOwner.data.id !== puzzleId) {
+    return NextResponse.json({ error: `Slug already used: ${slug}` }, { status: 409 });
   }
 
-  return NextResponse.json({ puzzle: data });
+  let saved: PuzzleRow | null = null;
+  let saveError: string | null = null;
+
+  if (puzzleId) {
+    const existing = await admin.from("campaign_puzzles").select("id").eq("id", puzzleId).maybeSingle();
+    if (!existing.data) {
+      return NextResponse.json({ error: "Puzzle not found" }, { status: 404 });
+    }
+
+    const updateRes = await admin
+      .from("campaign_puzzles")
+      .update(row)
+      .eq("id", puzzleId)
+      .select("*")
+      .single();
+
+    saved = updateRes.data as PuzzleRow | null;
+    saveError = updateRes.error?.message ?? null;
+  } else {
+    const upsertRes = await admin
+      .from("campaign_puzzles")
+      .upsert(row, { onConflict: "slug" })
+      .select("*")
+      .single();
+
+    saved = upsertRes.data as PuzzleRow | null;
+    saveError = upsertRes.error?.message ?? null;
+  }
+
+  if (saveError || !saved) {
+    return NextResponse.json({ error: saveError ?? "Save failed" }, { status: 500 });
+  }
+
+  const savedId = String(saved.id);
+
+  if (row.is_published) {
+    await unpublishOtherLevels(admin, row.sort_order, savedId);
+  }
+
+  const { data: refreshed } = await admin
+    .from("campaign_puzzles")
+    .select("*")
+    .eq("id", savedId)
+    .single();
+
+  return NextResponse.json({ puzzle: refreshed ?? saved });
 }
 
 export async function GET(request: NextRequest) {
@@ -117,7 +175,8 @@ export async function GET(request: NextRequest) {
   const { data, error } = await admin
     .from("campaign_puzzles")
     .select("*")
-    .order("sort_order", { ascending: true });
+    .order("sort_order", { ascending: true })
+    .order("updated_at", { ascending: false });
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

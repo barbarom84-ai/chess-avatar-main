@@ -64,6 +64,7 @@ export interface DbCampaignPuzzle {
   insight: LocalizedText;
   sort_order: number;
   is_published: boolean;
+  updated_at?: string;
 }
 
 export interface DbPlayerPuzzleCompletion {

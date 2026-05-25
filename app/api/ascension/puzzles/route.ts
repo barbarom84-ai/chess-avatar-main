@@ -4,6 +4,7 @@ import {
   mapDbChampionCard,
   requireAscensionPremium,
 } from "@/lib/ascension/server-auth";
+import { dedupeCampaignPuzzlesByLevel } from "@/lib/ascension/campaign-puzzle-utils";
 
 export const runtime = "nodejs";
 
@@ -41,8 +42,9 @@ export async function GET(request: NextRequest) {
     (completions.data ?? []).map((c) => [String(c.puzzle_id), c])
   );
 
-  const mapped = (puzzles ?? []).map((p) => {
-    const puzzle = mapDbCampaignPuzzle(p as Record<string, unknown>);
+  const mapped = dedupeCampaignPuzzlesByLevel(
+    (puzzles ?? []).map((p) => mapDbCampaignPuzzle(p as Record<string, unknown>))
+  ).map((puzzle) => {
     const completion = completionMap.get(puzzle.id);
     return {
       ...puzzle,

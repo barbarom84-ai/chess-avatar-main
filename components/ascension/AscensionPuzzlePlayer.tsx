@@ -10,6 +10,7 @@ import { FantasyChessEngine } from "@/lib/ascension/fantasy-chess/engine";
 import type { FantasyRuleSet } from "@/lib/ascension/fantasy-chess/types";
 import type { AscensionPuzzleListItem } from "@/lib/ascension/client";
 import { playerFantasyAbilities } from "@/lib/ascension/skill-tree";
+import { boardOrientationFromFen, getSideToMoveFromFen } from "@/lib/ascension/fen-utils";
 import { useLanguage } from "@/lib/language-context";
 
 interface AscensionPuzzlePlayerProps {
@@ -131,6 +132,22 @@ export default function AscensionPuzzlePlayer({
 
   const maxHints = puzzle.hints.length + (hasExtraHint ? 1 : 0);
 
+  const playerOrientation = useMemo(
+    () => boardOrientationFromFen(puzzle.fen),
+    [puzzle.fen]
+  );
+
+  const sideToMove = useMemo(() => {
+    try {
+      return getSideToMoveFromFen(position);
+    } catch {
+      return getSideToMoveFromFen(puzzle.fen);
+    }
+  }, [position, puzzle.fen]);
+
+  const sideLabel =
+    sideToMove === "b" ? t.ascension.sideBlack : t.ascension.sideWhite;
+
   return (
     <Card className="theme-bg-secondary border-cyan-500/20">
       <CardHeader className="pb-2">
@@ -144,7 +161,19 @@ export default function AscensionPuzzlePlayer({
         </div>
       </CardHeader>
       <CardContent className={`space-y-4 ${frozen ? "pointer-events-none opacity-90" : ""}`}>
-        <SimpleChessboard position={position} onDrop={handleDrop} lastMove={lastMove} />
+        <div className="flex items-center justify-between gap-2 rounded-md border border-slate-700/80 bg-slate-900/50 px-3 py-2 text-sm">
+          <span className="text-slate-400">{t.ascension.sideToMove}</span>
+          <Badge variant="outline" className="border-cyan-500/40 text-cyan-200">
+            {sideLabel}
+          </Badge>
+        </div>
+        <p className="text-xs text-slate-500 -mt-2">{t.ascension.sideToMoveHint}</p>
+        <SimpleChessboard
+          position={position}
+          onDrop={handleDrop}
+          lastMove={lastMove}
+          orientation={playerOrientation}
+        />
 
         {puzzle.kind === "fantasy" && fantasyRules.enabledAbilities.length > 0 && (
           <div className="flex flex-wrap gap-2">

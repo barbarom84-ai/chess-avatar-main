@@ -11,10 +11,21 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { accountApiHeaders, readAccountApiError } from "@/lib/account-api-auth";
 import type { DbCampaignPuzzle } from "@/lib/ascension/types";
+import { validateStandardPuzzleLine } from "@/lib/ascension/puzzle-validation";
+import {
+  boardOrientationFromFen,
+  getSideToMoveFromFen,
+  normalizeFen,
+  setSideToMoveInFen,
+  type SideToMove,
+} from "@/lib/ascension/fen-utils";
+import { canonicalPuzzleAtLevel } from "@/lib/ascension/campaign-puzzle-utils";
+import SimpleChessboard from "@/components/SimpleChessboard";
 import { useLanguage } from "@/lib/language-context";
 import { useSuperUser } from "@/hooks/useSuperUser";
 
 type PuzzleForm = {
+  id: string | null;
   slug: string;
   kind: "standard" | "fantasy";
   min_elo: number;
@@ -28,10 +39,12 @@ type PuzzleForm = {
   sort_order: number;
   is_published: boolean;
   fantasy_abilities: string;
+  side_to_move: SideToMove;
 };
 
 function puzzleToForm(p: DbCampaignPuzzle): PuzzleForm {
   return {
+    id: p.id,
     slug: p.slug,
     kind: p.kind,
     min_elo: p.min_elo,
@@ -39,17 +52,21 @@ function puzzleToForm(p: DbCampaignPuzzle): PuzzleForm {
     xp_reward: p.xp_reward,
     elo_reward: p.elo_reward,
     fen: p.fen,
-    solution_ucis: p.solution_ucis.join(" "),
+    solution_ucis: Array.isArray(p.solution_ucis)
+      ? p.solution_ucis.join(" ")
+      : String(p.solution_ucis ?? ""),
     prompt_fr: p.prompt.fr,
     prompt_en: p.prompt.en,
     sort_order: p.sort_order,
     is_published: p.is_published,
     fantasy_abilities: (p.fantasy_rules.enabledAbilities ?? []).join(", "),
+    side_to_move: getSideToMoveFromFen(p.fen),
   };
 }
 
 function emptyForm(level: number): PuzzleForm {
   return {
+    id: null,
     slug: `level-${level}-custom`,
     kind: "standard",
     min_elo: 0,
@@ -63,6 +80,7 @@ function emptyForm(level: number): PuzzleForm {
     sort_order: level,
     is_published: false,
     fantasy_abilities: "",
+    side_to_move: "w",
   };
 }
 
@@ -70,7 +88,8 @@ export default function AscensionAdminPage() {
   const { t } = useLanguage();
   const { isSuperUser, loading } = useSuperUser();
   const [puzzles, setPuzzles] = useState<DbCampaignPuzzle[]>([]);
-  const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
+  const [selectedPuzzleId, setSelectedPuzzleId] = useState<string | null>(null);
+  const [selectedLevel, setSelectedLevel] = useState<number | null>(null);
   const [form, setForm] = useState<PuzzleForm | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -98,14 +117,16 @@ export default function AscensionAdminPage() {
     if (isSuperUser) void load();
   }, [isSuperUser, load]);
 
-  const selectPuzzle = (p: DbCampaignPuzzle) => {
-    setSelectedSlug(p.slug);
+  const selectPuzzle = (p: DbCampaignPuzzle, level: number) => {
+    setSelectedPuzzleId(p.id);
+    setSelectedLevel(level);
     setForm(puzzleToForm(p));
     setError(null);
   };
 
   const selectNewLevel = (level: number) => {
-    setSelectedSlug(`__new_${level}`);
+    setSelectedPuzzleId(null);
+    setSelectedLevel(level);
     setForm(emptyForm(level));
     setError(null);
   };
@@ -119,19 +140,31 @@ export default function AscensionAdminPage() {
         .split(/[\s,]+/)
         .map((s) => s.trim().toLowerCase())
         .filter(Boolean);
+
+      if (form.kind === "standard") {
+        const normalizedFen = normalizeFen(form.fen.trim(), form.side_to_move);
+        const validation = validateStandardPuzzleLine(normalizedFen, solution_ucis);
+        if (!validation.ok) {
+          setError(validation.error);
+          setSaving(false);
+          return;
+        }
+      }
+
       const abilities = form.fantasy_abilities
         .split(/[,;\s]+/)
         .map((s) => s.trim())
         .filter(Boolean);
 
       const body = {
+        id: form.id,
         slug: form.slug.trim(),
         kind: form.kind,
         min_elo: form.min_elo,
         max_elo: form.max_elo,
         xp_reward: form.xp_reward,
         elo_reward: form.elo_reward,
-        fen: form.fen.trim(),
+        fen: normalizeFen(form.fen.trim(), form.side_to_move),
         solution_ucis,
         sort_order: form.sort_order,
         is_published: form.is_published,
@@ -154,9 +187,14 @@ export default function AscensionAdminPage() {
         body: JSON.stringify(body),
       });
       if (!res.ok) throw new Error(await readAccountApiError(res, "Save failed"));
+      const saved = (await res.json()) as { puzzle: DbCampaignPuzzle };
       toast.success(t.ascension.adminSaved);
       await load();
-      setSelectedSlug(form.slug);
+      if (saved.puzzle) {
+        setSelectedPuzzleId(saved.puzzle.id);
+        setSelectedLevel(saved.puzzle.sort_order);
+        setForm(puzzleToForm(saved.puzzle));
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error");
     } finally {
@@ -194,7 +232,16 @@ export default function AscensionAdminPage() {
     );
   }
 
-  const maxLevel = Math.max(9, puzzles.length + 1);
+  const maxLevel = Math.max(
+    9,
+    ...puzzles.map((p) => p.sort_order),
+    selectedLevel ?? 0
+  );
+
+  const duplicateLevels = puzzles.reduce<Record<number, number>>((acc, p) => {
+    acc[p.sort_order] = (acc[p.sort_order] ?? 0) + 1;
+    return acc;
+  }, {});
 
   return (
     <main className="min-h-screen theme-gradient p-4 md:p-8">
@@ -231,16 +278,17 @@ export default function AscensionAdminPage() {
               <>
                 <div className="flex flex-wrap gap-2">
                   {Array.from({ length: maxLevel }, (_, i) => i + 1).map((level) => {
-                    const p = puzzles.find((x) => x.sort_order === level);
-                    const isSelected =
-                      (p && selectedSlug === p.slug) || selectedSlug === `__new_${level}`;
+                    const p = canonicalPuzzleAtLevel(puzzles, level);
+                    const isSelected = selectedLevel === level;
+                    const hasDuplicates = (duplicateLevels[level] ?? 0) > 1;
                     return (
                       <Button
                         key={level}
                         size="sm"
                         variant={isSelected ? "default" : "outline"}
-                        className={isSelected ? "bg-cyan-700" : ""}
-                        onClick={() => (p ? selectPuzzle(p) : selectNewLevel(level))}
+                        className={`${isSelected ? "bg-cyan-700" : ""} ${hasDuplicates ? "border-amber-500/60" : ""}`}
+                        onClick={() => (p ? selectPuzzle(p, level) : selectNewLevel(level))}
+                        title={hasDuplicates ? t.ascension.adminDuplicateLevel : undefined}
                       >
                         #{level}
                         {p && (
@@ -313,11 +361,58 @@ export default function AscensionAdminPage() {
                       </div>
                     </div>
 
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div className="space-y-1">
+                        <Label>{t.ascension.adminSideToMove}</Label>
+                        <select
+                          className="w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200"
+                          value={form.side_to_move}
+                          onChange={(e) => {
+                            const side = e.target.value as SideToMove;
+                            setForm({
+                              ...form,
+                              side_to_move: side,
+                              fen: setSideToMoveInFen(form.fen, side),
+                            });
+                          }}
+                        >
+                          <option value="w">{t.ascension.sideWhite}</option>
+                          <option value="b">{t.ascension.sideBlack}</option>
+                        </select>
+                        <p className="text-[11px] text-slate-500">{t.ascension.adminSideToMoveHint}</p>
+                      </div>
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <p className="text-xs text-slate-400">
+                          {t.ascension.sideToMove}:{" "}
+                          <span className="font-medium text-cyan-300">
+                            {form.side_to_move === "b" ? t.ascension.sideBlack : t.ascension.sideWhite}
+                          </span>
+                        </p>
+                        {form.fen.trim() && (
+                          <div className="w-full max-w-[280px]">
+                            <SimpleChessboard
+                              position={normalizeFen(form.fen, form.side_to_move)}
+                              orientation={boardOrientationFromFen(
+                                normalizeFen(form.fen, form.side_to_move)
+                              )}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
                     <div className="space-y-1">
                       <Label>FEN</Label>
                       <Input
                         value={form.fen}
-                        onChange={(e) => setForm({ ...form, fen: e.target.value })}
+                        onChange={(e) => {
+                          const fen = e.target.value;
+                          setForm({
+                            ...form,
+                            fen,
+                            side_to_move: getSideToMoveFromFen(fen),
+                          });
+                        }}
                         className="font-mono text-xs"
                       />
                     </div>
@@ -382,4 +477,5 @@ export default function AscensionAdminPage() {
     </main>
   );
 }
+
 

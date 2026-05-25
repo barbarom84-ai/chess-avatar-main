@@ -102,5 +102,6 @@ export function mapDbCampaignPuzzle(row: Record<string, unknown>) {
         : { fr: "", en: "" },
     sort_order: Number(row.sort_order ?? 0),
     is_published: Boolean(row.is_published),
+    updated_at: typeof row.updated_at === "string" ? row.updated_at : undefined,
   };
 }
