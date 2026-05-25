@@ -44,6 +44,7 @@ export type AnalyticsEventName =
   | "premium_activated"
   | "lesson_opened"
   | "lesson_completed"
+  | "ascension_puzzle_complete"
   | "page_view";
 
 export function trackEvent(

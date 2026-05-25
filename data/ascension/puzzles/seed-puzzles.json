@@ -1,0 +1,172 @@
+[
+  {
+    "slug": "std-001-mate-in-1",
+    "kind": "standard",
+    "min_elo": 0,
+    "max_elo": 200,
+    "xp_reward": 15,
+    "elo_reward": 15,
+    "fen": "r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 4 4",
+    "solution_ucis": ["h5f7"],
+    "fantasy_rules": {},
+    "prompt": { "fr": "Mat en 1 coup", "en": "Mate in 1" },
+    "hints": [{ "fr": "La dame peut donner mat sur f7.", "en": "The queen can deliver mate on f7." }],
+    "insight": { "fr": "Dxf7# — mat du berger.", "en": "Qxf7# — scholar's mate." },
+    "sort_order": 1
+  },
+  {
+    "slug": "std-002-mate-in-1",
+    "kind": "standard",
+    "min_elo": 0,
+    "max_elo": 250,
+    "xp_reward": 15,
+    "elo_reward": 15,
+    "fen": "6k1/5ppp/8/8/8/8/5PPP/4R2K w - - 0 1",
+    "solution_ucis": ["e1e8"],
+    "fantasy_rules": {},
+    "prompt": { "fr": "Mat de couloir — tour et roi", "en": "Back rank mate — rook and king" },
+    "hints": [{ "fr": "La tour monte sur la 8e rangée avec le soutien du roi.", "en": "The rook reaches the back rank with the king's support." }],
+    "insight": { "fr": "Te8# — mat de couloir.", "en": "Re8# — back rank mate." },
+    "sort_order": 2
+  },
+  {
+    "slug": "std-003-win-pawn",
+    "kind": "standard",
+    "min_elo": 15,
+    "max_elo": 400,
+    "xp_reward": 20,
+    "elo_reward": 20,
+    "fen": "r1bqkb1r/pppp2pp/2n2n2/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 0 4",
+    "solution_ucis": ["f3e5"],
+    "fantasy_rules": {},
+    "prompt": { "fr": "Gagnez le pion central", "en": "Win the central pawn" },
+    "hints": [{ "fr": "Le cavalier peut capturer le pion e5.", "en": "The knight can capture the pawn on e5." }],
+    "insight": { "fr": "Cxe5 — vous gagnez un pion.", "en": "Nxe5 — you win a pawn." },
+    "sort_order": 3
+  },
+  {
+    "slug": "std-004-queen-mate",
+    "kind": "standard",
+    "min_elo": 30,
+    "max_elo": 500,
+    "xp_reward": 25,
+    "elo_reward": 25,
+    "fen": "4K3/3k4/8/8/8/8/3Q4/8 w - - 0 1",
+    "solution_ucis": ["d2d7"],
+    "fantasy_rules": {},
+    "prompt": { "fr": "Mat en 1 — dame et roi", "en": "Mate in 1 — queen and king" },
+    "hints": [{ "fr": "La dame peut capturer sur d7 avec mat.", "en": "The queen can capture on d7 with checkmate." }],
+    "insight": { "fr": "Dxd7# — mat en un coup.", "en": "Qxd7# — one-move mate." },
+    "sort_order": 4
+  },
+  {
+    "slug": "std-005-attack-f7",
+    "kind": "standard",
+    "min_elo": 50,
+    "max_elo": 600,
+    "xp_reward": 25,
+    "elo_reward": 25,
+    "fen": "r1bqkb1r/pppp1ppp/2n2n2/4p2b/2B1P3/8/PPPP1PPP/RNBQK1NR w KQkq - 2 3",
+    "solution_ucis": ["c4f7"],
+    "fantasy_rules": {},
+    "prompt": { "fr": "Attaquez f7 avec le fou", "en": "Attack f7 with the bishop" },
+    "hints": [{ "fr": "Le fou blanc vise la case f7.", "en": "The white bishop targets f7." }],
+    "insight": { "fr": "Fxf7+ — attaque décisive sur f7.", "en": "Bxf7+ — decisive attack on f7." },
+    "sort_order": 5
+  },
+  {
+    "slug": "fan-001-bishop-orthogonal",
+    "kind": "fantasy",
+    "min_elo": 60,
+    "max_elo": 800,
+    "xp_reward": 35,
+    "elo_reward": 30,
+    "fen": "8/8/8/8/4B3/8/8/2K2k2 w - - 0 1",
+    "solution_ucis": ["e4e8"],
+    "fantasy_rules": {
+      "enabledAbilities": ["bishop_orthogonal"],
+      "objective": "reach_square",
+      "objectiveSquare": "e8"
+    },
+    "prompt": {
+      "fr": "Pouvoir fantasy : fou orthogonal",
+      "en": "Fantasy power: orthogonal bishop"
+    },
+    "hints": [
+      {
+        "fr": "Le fou peut glisser verticalement comme une tour (pouvoir fantasy).",
+        "en": "The bishop can slide vertically like a rook (fantasy power)."
+      }
+    ],
+    "insight": { "fr": "Fe4-e8 en ligne droite — impossible en échecs classiques.", "en": "Be4-e8 in a straight line — impossible in standard chess." },
+    "sort_order": 6
+  },
+  {
+    "slug": "fan-002-rook-tunnel",
+    "kind": "fantasy",
+    "min_elo": 90,
+    "max_elo": 900,
+    "xp_reward": 40,
+    "elo_reward": 35,
+    "fen": "8/8/8/8/4R3/3P4/8/2K2k2 w - - 0 1",
+    "solution_ucis": ["e4e8"],
+    "fantasy_rules": {
+      "enabledAbilities": ["rook_tunnel"],
+      "objective": "reach_square",
+      "objectiveSquare": "e8"
+    },
+    "prompt": { "fr": "Pouvoir fantasy : tour tunnel", "en": "Fantasy power: tunnel rook" },
+    "hints": [{ "fr": "La tour traverse le pion allié sur e3.", "en": "The rook passes through the friendly pawn on e3." }],
+    "insight": { "fr": "Te4 traverse e3 pour atteindre e8.", "en": "Re4 tunnels through e3 to reach e8." },
+    "sort_order": 7
+  },
+  {
+    "slug": "fan-003-pawn-charge",
+    "kind": "fantasy",
+    "min_elo": 120,
+    "max_elo": 1000,
+    "xp_reward": 45,
+    "elo_reward": 40,
+    "fen": "8/8/8/8/8/3p4/3P4/3K2k1 w - - 0 1",
+    "solution_ucis": ["d2d4"],
+    "fantasy_rules": {
+      "enabledAbilities": ["pawn_charge"],
+      "objective": "reach_square",
+      "objectiveSquare": "d4"
+    },
+    "prompt": { "fr": "Pouvoir fantasy : charge du pion", "en": "Fantasy power: pawn charge" },
+    "hints": [{ "fr": "Le pion avance de deux cases malgré le blocage.", "en": "The pawn advances two squares despite the block." }],
+    "insight": { "fr": "d2-d4 en charge — règle fantasy uniquement.", "en": "d2-d4 charge — fantasy rule only." },
+    "sort_order": 8
+  },
+  {
+    "slug": "fan-004-bishop-orthogonal-2",
+    "kind": "fantasy",
+    "min_elo": 150,
+    "max_elo": 1100,
+    "xp_reward": 45,
+    "elo_reward": 40,
+    "fen": "8/8/8/8/8/1B6/8/1K3k2 w - - 0 1",
+    "solution_ucis": ["b3b8"],
+    "fantasy_rules": {
+      "enabledAbilities": ["bishop_orthogonal"],
+      "objective": "reach_square",
+      "objectiveSquare": "b8"
+    },
+    "prompt": {
+      "fr": "Pouvoir fantasy : fou en ligne droite",
+      "en": "Fantasy power: straight-line bishop"
+    },
+    "hints": [
+      {
+        "fr": "Le fou monte verticalement de b3 à b8.",
+        "en": "The bishop slides vertically from b3 to b8."
+      }
+    ],
+    "insight": {
+      "fr": "Fb3-b8 — glisse orthogonale.",
+      "en": "Bb3-b8 — orthogonal slide."
+    },
+    "sort_order": 9
+  }
+]

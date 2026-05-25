@@ -475,6 +475,11 @@ function ProfileIdentityRow({
               Premium
             </Button>
           )}
+          {!premiumLoading && isPremium && (
+            <Button type="button" size="sm" variant="outline" className="border-cyan-600/50 text-cyan-200" asChild>
+              <Link href="/ascension">{copy.ascensionLink}</Link>
+            </Button>
+          )}
         </div>
       </div>
     </div>

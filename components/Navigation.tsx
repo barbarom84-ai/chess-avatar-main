@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Globe, Palette, Crown, LogIn, LogOut, User, Bot, Activity } from "lucide-react";
+import { Globe, Palette, Crown, LogIn, LogOut, User, Bot, Activity, Settings2 } from "lucide-react";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/lib/language-context";
@@ -13,39 +13,29 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { usePremium } from "@/hooks/usePremium";
 import { useSuperUser } from "@/hooks/useSuperUser";
+import { NAV_ITEMS, type NavItemDef } from "@/lib/nav-items";
+import { useSiteConfig } from "@/contexts/SiteConfigContext";
+import type { NavPageBadge } from "@/lib/site-config";
 import { translations, type Language } from "@/lib/translations";
 import ChessboardSettingsModal from "./ChessboardSettingsModal";
 import AuthModal from "./AuthModal";
 
 type NavPieceColor = "w" | "b";
 
-type NavItemDef = {
-  href: string;
-  piece: string;
-  navPieceColor: NavPieceColor;
-  label: { fr: string; en: string };
-};
-
-const NAV_ITEMS: NavItemDef[] = [
-  { href: "/analyze", piece: "Q", navPieceColor: "w", label: { fr: "Créer", en: "Build" } },
-  { href: "/play", piece: "N", navPieceColor: "w", label: { fr: "Jouer", en: "Play" } },
-  { href: "/online", piece: "P", navPieceColor: "b", label: { fr: "PvP", en: "PvP" } },
-  { href: "/arena", piece: "R", navPieceColor: "w", label: { fr: "Arène", en: "Arena" } },
-  { href: "/learn", piece: "B", navPieceColor: "w", label: { fr: "Ouvertures", en: "Openings" } },
-  { href: "/puzzles", piece: "P", navPieceColor: "w", label: { fr: "Puzzles", en: "Puzzles" } },
-  { href: "/profile", piece: "K", navPieceColor: "w", label: { fr: "Compte", en: "Account" } },
-  { href: "/avatars", piece: "B", navPieceColor: "b", label: { fr: "Avatars", en: "Avatars" } },
-  { href: "/games", piece: "Q", navPieceColor: "b", label: { fr: "Parties", en: "Games" } },
-  { href: "/guide", piece: "R", navPieceColor: "b", label: { fr: "Guide", en: "Guide" } },
-];
-
 type Translations = (typeof translations)[Language];
+
+function navBadgeLabel(badge: NavPageBadge, lang: Language): string | null {
+  if (badge === "beta") return lang === "fr" ? "Bêta" : "Beta";
+  if (badge === "maintenance") return lang === "fr" ? "Maintenance" : "Maintenance";
+  return null;
+}
 
 function isNavItemActive(pathname: string, href: string): boolean {
   return (
     pathname === href ||
     (href === "/learn" && pathname.startsWith("/learn")) ||
     (href === "/puzzles" && pathname.startsWith("/puzzles")) ||
+    (href === "/ascension" && pathname.startsWith("/ascension")) ||
     (href === "/arena" && pathname.startsWith("/arena")) ||
     (href === "/play" && pathname.startsWith("/play")) ||
     (href === "/online" && pathname.startsWith("/online")) ||
@@ -64,6 +54,7 @@ function navItemLabel(
   if (item.href === "/arena") return t.pages.arena.nav;
   if (item.href === "/learn") return t.pages.learn.nav;
   if (item.href === "/puzzles") return t.pages.puzzles.nav;
+  if (item.href === "/ascension") return t.pages.ascension.nav;
   if (item.href === "/profile") return t.pages.profile.nav;
   if (item.href === "/avatars") return t.pages.avatars.nav;
   if (item.href === "/games") return t.pages.games.nav;
@@ -78,6 +69,7 @@ function NavItemLinks({
   lang,
   t,
   compact,
+  navConfig,
 }: {
   items: NavItemDef[];
   pathname: string;
@@ -85,6 +77,7 @@ function NavItemLinks({
   lang: Language;
   t: Translations;
   compact: boolean;
+  navConfig: Record<string, { hidden?: boolean; badge?: NavPageBadge }>;
 }) {
   return (
     <>
@@ -96,6 +89,8 @@ function NavItemLinks({
           item.piece
         );
         const label = navItemLabel(item, lang, t);
+        const badge = navConfig[item.href]?.badge ?? "none";
+        const badgeText = navBadgeLabel(badge, lang);
         const inactiveClass = compact
           ? "text-slate-300 hover:text-cyan-300"
           : "text-slate-300 hover:text-cyan-300 hover:bg-slate-800";
@@ -119,6 +114,17 @@ function NavItemLinks({
               />
               <span className={compact ? "ml-1 text-xs" : "ml-2"}>
                 {label}
+                {badgeText && (
+                  <span
+                    className={`ml-1.5 inline-block rounded px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${
+                      badge === "beta"
+                        ? "bg-purple-500/25 text-purple-200"
+                        : "bg-amber-500/25 text-amber-200"
+                    }`}
+                  >
+                    {badgeText}
+                  </span>
+                )}
               </span>
             </Button>
           </Link>
@@ -138,8 +144,15 @@ export default function Navigation() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const { isPremium } = usePremium();
   const { isSuperUser, loading: superLoading } = useSuperUser();
+  const { config: siteConfig } = useSiteConfig();
   const userMenuRef = useRef<HTMLDivElement>(null);
   const opsLabel = lang === "fr" ? "Ops" : "Ops";
+  const siteLabel = lang === "fr" ? "Site" : "Site";
+
+  const visibleNavItems = NAV_ITEMS.filter((item) => {
+    if (isSuperUser) return true;
+    return !siteConfig.nav[item.href]?.hidden;
+  });
 
   useEffect(() => {
     if (!isSupabaseConfigured || !supabase) return;
@@ -197,14 +210,16 @@ export default function Navigation() {
 
           <div className="hidden md:flex flex-wrap items-center gap-x-1 gap-y-1">
             <NavItemLinks
-              items={NAV_ITEMS}
+              items={visibleNavItems}
               pathname={pathname}
               pieceSet={settings.pieceSet}
               lang={lang}
               t={t}
               compact={false}
+              navConfig={siteConfig.nav}
             />
             {isSuperUser && !superLoading && (
+              <>
               <Link href="/admin/ops">
                 <Button
                   variant={pathname.startsWith("/admin/ops") ? "default" : "ghost"}
@@ -224,6 +239,22 @@ export default function Navigation() {
                   <span className="ml-2">{opsLabel}</span>
                 </Button>
               </Link>
+              <Link href="/admin/site">
+                <Button
+                  variant={pathname.startsWith("/admin/site") ? "default" : "ghost"}
+                  size="sm"
+                  className={
+                    pathname.startsWith("/admin/site")
+                      ? "bg-amber-700 text-white hover:bg-amber-600"
+                      : "text-slate-300 hover:text-amber-300 hover:bg-slate-800"
+                  }
+                  title={lang === "fr" ? "Configuration du site" : "Site configuration"}
+                >
+                  <Settings2 className="h-4 w-4" />
+                  <span className="ml-2">{siteLabel}</span>
+                </Button>
+              </Link>
+              </>
             )}
           </div>
 
@@ -270,6 +301,7 @@ export default function Navigation() {
                           {t.pages.avatars.title}
                         </Link>
                         {isSuperUser && !superLoading && (
+                          <>
                           <Link
                             href="/admin/ops"
                             onClick={() => setShowUserMenu(false)}
@@ -278,6 +310,15 @@ export default function Navigation() {
                             <Activity className="h-4 w-4" />
                             {opsLabel}
                           </Link>
+                          <Link
+                            href="/admin/site"
+                            onClick={() => setShowUserMenu(false)}
+                            className="flex items-center gap-2 px-3 py-2 text-sm text-amber-300 hover:bg-slate-800 transition-colors"
+                          >
+                            <Settings2 className="h-4 w-4" />
+                            {siteLabel}
+                          </Link>
+                          </>
                         )}
                         <button
                           type="button"
@@ -422,14 +463,16 @@ export default function Navigation() {
 
         <div className="md:hidden flex items-center gap-1 pb-3 overflow-x-auto">
           <NavItemLinks
-            items={NAV_ITEMS}
+            items={visibleNavItems}
             pathname={pathname}
             pieceSet={settings.pieceSet}
             lang={lang}
             t={t}
             compact
+            navConfig={siteConfig.nav}
           />
           {isSuperUser && !superLoading && (
+            <>
             <Link href="/admin/ops">
               <Button
                 variant={pathname.startsWith("/admin/ops") ? "default" : "ghost"}
@@ -444,6 +487,21 @@ export default function Navigation() {
                 <span className="ml-1 text-xs">{opsLabel}</span>
               </Button>
             </Link>
+            <Link href="/admin/site">
+              <Button
+                variant={pathname.startsWith("/admin/site") ? "default" : "ghost"}
+                size="sm"
+                className={
+                  pathname.startsWith("/admin/site")
+                    ? "bg-amber-700 text-white"
+                    : "text-slate-300 hover:text-amber-300"
+                }
+              >
+                <Settings2 className="h-4 w-4" />
+                <span className="ml-1 text-xs">{siteLabel}</span>
+              </Button>
+            </Link>
+            </>
           )}
         </div>
       </div>

@@ -1,0 +1,350 @@
+import { Chess, type Square } from "chess.js";
+import type {
+  FantasyChessStateSnapshot,
+  FantasyMove,
+  FantasyObjective,
+  FantasyRuleSet,
+  PieceAbilityId,
+} from "@/lib/ascension/fantasy-chess/types";
+
+const FILES = "abcdefgh";
+const RANKS = "12345678";
+
+function squareToCoords(sq: Square): { file: number; rank: number } {
+  return { file: FILES.indexOf(sq[0]!), rank: RANKS.indexOf(sq[1]!) };
+}
+
+function coordsToSquare(file: number, rank: number): Square | null {
+  if (file < 0 || file > 7 || rank < 0 || rank > 7) return null;
+  return `${FILES[file]}${RANKS[rank]}` as Square;
+}
+
+function normalizeUci(uci: string): string | null {
+  const u = uci.trim().toLowerCase();
+  if (!/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(u)) return null;
+  return u;
+}
+
+function applyStandardMove(chess: Chess, uci: string): boolean {
+  const from = uci.slice(0, 2) as Square;
+  const to = uci.slice(2, 4) as Square;
+  const promotion = uci.length > 4 ? (uci[4] as "q" | "r" | "b" | "n") : undefined;
+  try {
+    const move = chess.move({ from, to, promotion });
+    return !!move;
+  } catch {
+    return false;
+  }
+}
+
+function pieceAt(chess: Chess, sq: Square) {
+  return chess.get(sq);
+}
+
+function generateKnightPhantomMoves(
+  chess: Chess,
+  from: Square,
+  rules: FantasyRuleSet,
+  used: PieceAbilityId[]
+): FantasyMove[] {
+  if (!rules.enabledAbilities.includes("knight_phantom") || used.includes("knight_phantom")) {
+    return [];
+  }
+  const piece = pieceAt(chess, from);
+  if (!piece || piece.type !== "n") return [];
+
+  const { file, rank } = squareToCoords(from);
+  const deltas = [
+    [1, 2],
+    [2, 1],
+    [2, -1],
+    [1, -2],
+    [-1, -2],
+    [-2, -1],
+    [-2, 1],
+    [-1, 2],
+  ];
+  const moves: FantasyMove[] = [];
+
+  for (const [df, dr] of deltas) {
+    const midFile = file + df;
+    const midRank = rank + dr;
+    const mid = coordsToSquare(Math.floor((file + midFile) / 2), Math.floor((rank + midRank) / 2));
+    const to = coordsToSquare(file + df, rank + dr);
+    if (!to) continue;
+
+    const midPiece = mid ? pieceAt(chess, mid) : null;
+    if (midPiece) {
+      const target = pieceAt(chess, to);
+      if (target && target.color === piece.color) continue;
+      moves.push({ uci: `${from}${to}`, isFantasy: true, abilityId: "knight_phantom" });
+    }
+  }
+
+  return moves;
+}
+
+function generateBishopOrthogonalMoves(
+  chess: Chess,
+  from: Square,
+  rules: FantasyRuleSet,
+  used: PieceAbilityId[]
+): FantasyMove[] {
+  if (!rules.enabledAbilities.includes("bishop_orthogonal") || used.includes("bishop_orthogonal")) {
+    return [];
+  }
+  const piece = pieceAt(chess, from);
+  if (!piece || piece.type !== "b") return [];
+
+  const { file, rank } = squareToCoords(from);
+  const ortho = [
+    [1, 0],
+    [-1, 0],
+    [0, 1],
+    [0, -1],
+  ];
+  const moves: FantasyMove[] = [];
+
+  for (const [df, dr] of ortho) {
+    for (let step = 1; step <= 7; step++) {
+      const to = coordsToSquare(file + df * step, rank + dr * step);
+      if (!to) break;
+      const target = pieceAt(chess, to);
+      if (!target) {
+        moves.push({ uci: `${from}${to}`, isFantasy: true, abilityId: "bishop_orthogonal" });
+        continue;
+      }
+      if (target.color !== piece.color) {
+        moves.push({ uci: `${from}${to}`, isFantasy: true, abilityId: "bishop_orthogonal" });
+      }
+      break;
+    }
+  }
+
+  return moves;
+}
+
+function generateRookTunnelMoves(
+  chess: Chess,
+  from: Square,
+  rules: FantasyRuleSet
+): FantasyMove[] {
+  if (!rules.enabledAbilities.includes("rook_tunnel")) return [];
+  const piece = pieceAt(chess, from);
+  if (!piece || piece.type !== "r") return [];
+
+  const { file, rank } = squareToCoords(from);
+  const dirs = [
+    [1, 0],
+    [-1, 0],
+    [0, 1],
+    [0, -1],
+  ];
+  const moves: FantasyMove[] = [];
+
+  for (const [df, dr] of dirs) {
+    let skippedAlly = false;
+    for (let step = 1; step <= 7; step++) {
+      const to = coordsToSquare(file + df * step, rank + dr * step);
+      if (!to) break;
+      const target = pieceAt(chess, to);
+      if (!target) {
+        moves.push({ uci: `${from}${to}`, isFantasy: true, abilityId: "rook_tunnel" });
+        continue;
+      }
+      if (target.color === piece.color && !skippedAlly) {
+        skippedAlly = true;
+        continue;
+      }
+      if (target.color !== piece.color) {
+        moves.push({ uci: `${from}${to}`, isFantasy: true, abilityId: "rook_tunnel" });
+      }
+      break;
+    }
+  }
+
+  return moves;
+}
+
+function generatePawnChargeMoves(
+  chess: Chess,
+  from: Square,
+  rules: FantasyRuleSet,
+  used: PieceAbilityId[]
+): FantasyMove[] {
+  if (!rules.enabledAbilities.includes("pawn_charge") || used.includes("pawn_charge")) {
+    return [];
+  }
+  const piece = pieceAt(chess, from);
+  if (!piece || piece.type !== "p") return [];
+
+  const { file, rank } = squareToCoords(from);
+  const dir = piece.color === "w" ? 1 : -1;
+  const to = coordsToSquare(file, rank + dir * 2);
+  if (!to) return [];
+
+  const mid = coordsToSquare(file, rank + dir);
+  if (!mid) return [];
+  const midPiece = pieceAt(chess, mid);
+  if (midPiece) {
+    return [{ uci: `${from}${to}`, isFantasy: true, abilityId: "pawn_charge" }];
+  }
+  return [];
+}
+
+export class FantasyChessEngine {
+  private chess: Chess;
+  private rules: FantasyRuleSet;
+  private moveHistory: string[] = [];
+  private usedAbilities: PieceAbilityId[] = [];
+  private fantasyMoveFlags: boolean[] = [];
+  private abilityByMoveIndex: (PieceAbilityId | undefined)[] = [];
+
+  constructor(fen: string, rules: FantasyRuleSet) {
+    this.chess = new Chess(fen);
+    this.rules = rules;
+  }
+
+  get fen(): string {
+    return this.chess.fen();
+  }
+
+  get turn(): "w" | "b" {
+    return this.chess.turn();
+  }
+
+  snapshot(): FantasyChessStateSnapshot {
+    return {
+      fen: this.chess.fen(),
+      moveHistory: [...this.moveHistory],
+      usedAbilities: [...this.usedAbilities],
+      fantasyMovesUsed: this.fantasyMoveFlags.filter(Boolean).length,
+    };
+  }
+
+  getLegalMoves(from?: Square): FantasyMove[] {
+    const standard = this.chess.moves({ square: from, verbose: true }).map((m) => ({
+      uci: `${m.from}${m.to}${m.promotion ?? ""}`,
+      isFantasy: false as const,
+    }));
+
+    if (!from) return standard;
+
+    const fantasy: FantasyMove[] = [
+      ...generateKnightPhantomMoves(this.chess, from, this.rules, this.usedAbilities),
+      ...generateBishopOrthogonalMoves(this.chess, from, this.rules, this.usedAbilities),
+      ...generateRookTunnelMoves(this.chess, from, this.rules),
+      ...generatePawnChargeMoves(this.chess, from, this.rules, this.usedAbilities),
+    ];
+
+    const seen = new Set<string>();
+    const merged: FantasyMove[] = [];
+    for (const m of [...standard, ...fantasy]) {
+      if (seen.has(m.uci)) continue;
+      seen.add(m.uci);
+      merged.push(m);
+    }
+    return merged;
+  }
+
+  private applyFantasyMove(from: Square, to: Square, promotion?: string): boolean {
+    const piece = this.chess.get(from);
+    if (!piece) return false;
+
+    const temp = new Chess(this.chess.fen());
+    temp.remove(from);
+    if (temp.get(to)) temp.remove(to);
+    const placedType =
+      promotion && piece.type === "p"
+        ? (promotion as "q" | "r" | "b" | "n")
+        : piece.type;
+    temp.put({ type: placedType, color: piece.color }, to);
+
+    const parts = temp.fen().split(" ");
+    parts[1] = this.chess.turn() === "w" ? "b" : "w";
+    parts[4] = "0";
+    if (parts[1] === "w") {
+      parts[5] = String(Number(parts[5] ?? "1") + 1);
+    }
+    this.chess.load(parts.join(" "));
+    return true;
+  }
+
+  applyMove(uci: string): boolean {
+    const normalized = normalizeUci(uci);
+    if (!normalized) return false;
+
+    const from = normalized.slice(0, 2) as Square;
+    const legal = this.getLegalMoves(from);
+    const match = legal.find((m) => m.uci === normalized);
+    if (!match) return false;
+
+    const next = new Chess(this.chess.fen());
+    const applied = applyStandardMove(next, normalized);
+
+    if (applied) {
+      this.chess = next;
+    } else if (match.isFantasy) {
+      const to = normalized.slice(2, 4) as Square;
+      const promotion = normalized.length > 4 ? normalized[4] : undefined;
+      if (!this.applyFantasyMove(from, to, promotion)) return false;
+    } else {
+      return false;
+    }
+
+    this.moveHistory.push(normalized);
+    this.fantasyMoveFlags.push(match.isFantasy);
+    this.abilityByMoveIndex.push(match.abilityId);
+    if (match.abilityId && !this.usedAbilities.includes(match.abilityId)) {
+      this.usedAbilities.push(match.abilityId);
+    }
+    return true;
+  }
+
+  isObjectiveMet(objective: FantasyObjective = this.rules.objective ?? "checkmate"): boolean {
+    if (objective === "checkmate") {
+      return this.chess.isCheckmate();
+    }
+    if (objective === "reach_square" && this.rules.objectiveSquare) {
+      const sq = this.rules.objectiveSquare as Square;
+      const piece = this.chess.get(sq);
+      const moverColor = this.chess.turn() === "w" ? "b" : "w";
+      return !!piece && piece.color === moverColor;
+    }
+    if (objective === "capture_piece" && this.rules.objectivePiece) {
+      const [color, type] = this.rules.objectivePiece.split(":");
+      for (const sq of FILES.split("").flatMap((f) =>
+        RANKS.split("").map((r) => `${f}${r}` as Square)
+      )) {
+        const p = this.chess.get(sq);
+        if (p && p.color === color && p.type === type) return false;
+      }
+      return true;
+    }
+    return this.chess.isCheckmate();
+  }
+
+  isPuzzleSolved(solutionUcis: string[]): boolean {
+    if (this.moveHistory.length !== solutionUcis.length) return false;
+    for (let i = 0; i < solutionUcis.length; i++) {
+      if (this.moveHistory[i]!.toLowerCase() !== solutionUcis[i]!.toLowerCase()) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  static replaySolution(
+    fen: string,
+    rules: FantasyRuleSet,
+    solutionUcis: string[]
+  ): { ok: boolean; error?: string } {
+    const engine = new FantasyChessEngine(fen, rules);
+    for (const uci of solutionUcis) {
+      if (!engine.applyMove(uci)) {
+        return { ok: false, error: `Illegal move: ${uci}` };
+      }
+    }
+    return { ok: true };
+  }
+}

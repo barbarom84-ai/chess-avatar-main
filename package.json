@@ -11,6 +11,7 @@
     "pgn:count-games": "node scripts/count-pgn-games.mjs",
     "pgn:split-chunks": "node scripts/split-pgn-chunks.mjs",
     "index-community-puzzles": "tsx scripts/index-community-puzzles.ts",
+    "validate-campaign-puzzles": "tsx scripts/validate-campaign-puzzles.ts",
     "seed:featured-profiles": "tsx scripts/seed-featured-profiles.ts",
     "start": "next start",
     "lint": "eslint",
