@@ -16,6 +16,7 @@ import {
   boardOrientationFromFen,
   getSideToMoveFromFen,
   normalizeFen,
+  sanitizeFen,
   setSideToMoveInFen,
   type SideToMove,
 } from "@/lib/ascension/fen-utils";
@@ -416,7 +417,9 @@ export default function AscensionAdminPage() {
                       <Input
                         value={form.fen}
                         onChange={(e) => {
-                          const fen = e.target.value;
+                          // Sanitize on input: replace typographic dashes (–, —, …)
+                          // that chess apps sometimes produce when copy-pasting FENs.
+                          const fen = sanitizeFen(e.target.value);
                           setForm({
                             ...form,
                             fen,
@@ -437,13 +440,54 @@ export default function AscensionAdminPage() {
                     </div>
 
                     {form.kind === "fantasy" && (
-                      <div className="space-y-1">
+                      <div className="space-y-2">
                         <Label>{t.ascension.adminFantasyAbilities}</Label>
-                        <Input
-                          value={form.fantasy_abilities}
-                          onChange={(e) => setForm({ ...form, fantasy_abilities: e.target.value })}
-                          placeholder="bishop_orthogonal, rook_tunnel"
-                        />
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                          {(
+                            [
+                              "bishop_orthogonal",
+                              "rook_tunnel",
+                              "knight_phantom",
+                              "queen_split",
+                              "pawn_charge",
+                              "pawn_greedy",
+                              "king_anchor",
+                            ] as const
+                          ).map((ability) => {
+                            const selected = form.fantasy_abilities
+                              .split(/[,;\s]+/)
+                              .map((s) => s.trim())
+                              .filter(Boolean)
+                              .includes(ability);
+                            return (
+                              <label
+                                key={ability}
+                                className={`flex items-center gap-2 rounded-md border px-3 py-2 text-xs cursor-pointer select-none transition-colors ${
+                                  selected
+                                    ? "border-purple-500/60 bg-purple-950/50 text-purple-100"
+                                    : "border-slate-700/60 bg-slate-900/40 text-slate-400 hover:border-slate-600"
+                                }`}
+                              >
+                                <input
+                                  type="checkbox"
+                                  className="accent-purple-500 shrink-0"
+                                  checked={selected}
+                                  onChange={(e) => {
+                                    const current = form.fantasy_abilities
+                                      .split(/[,;\s]+/)
+                                      .map((s) => s.trim())
+                                      .filter(Boolean);
+                                    const next = e.target.checked
+                                      ? [...new Set([...current, ability])]
+                                      : current.filter((a) => a !== ability);
+                                    setForm({ ...form, fantasy_abilities: next.join(", ") });
+                                  }}
+                                />
+                                <span className="font-mono leading-tight">{ability}</span>
+                              </label>
+                            );
+                          })}
+                        </div>
                       </div>
                     )}
 

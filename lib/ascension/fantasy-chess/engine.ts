@@ -446,7 +446,12 @@ export class FantasyChessEngine {
     rules: FantasyRuleSet,
     solutionUcis: string[]
   ): { ok: boolean; error?: string } {
-    const engine = new FantasyChessEngine(fen, rules);
+    let engine: FantasyChessEngine;
+    try {
+      engine = new FantasyChessEngine(fen, rules);
+    } catch {
+      return { ok: false, error: `Invalid FEN: ${fen}` };
+    }
     for (const uci of solutionUcis) {
       if (!engine.applyMove(uci)) {
         return { ok: false, error: `Illegal move: ${uci}` };

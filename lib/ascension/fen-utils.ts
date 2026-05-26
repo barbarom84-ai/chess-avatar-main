@@ -42,9 +42,19 @@ export function setSideToMoveInFen(fen: string, turn: SideToMove): string {
   return buildFen({ ...parts, turn });
 }
 
+/**
+ * Sanitize a raw FEN string: normalize exotic dash characters (–, —, ‐ …)
+ * to regular ASCII hyphens. Copy-paste from chess apps/PDFs often introduces
+ * typographic dashes that chess.js silently rejects.
+ */
+export function sanitizeFen(fen: string): string {
+  // Replace any Unicode dash/hyphen variant with ASCII hyphen
+  return fen.replace(/[\u2010-\u2015\u2212\uFE58\uFE63\uFF0D]/g, "-");
+}
+
 /** Ensures a full 6-field FEN; optional turn overrides the active color field. */
 export function normalizeFen(fen: string, turn?: SideToMove): string {
-  const trimmed = fen.trim();
+  const trimmed = sanitizeFen(fen.trim());
   if (!trimmed) return trimmed;
   const parts = parseFenParts(trimmed);
   if (turn) parts.turn = turn;
