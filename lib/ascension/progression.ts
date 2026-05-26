@@ -1,5 +1,5 @@
-import { resolveChampionTier } from "@/lib/ascension/tiers";
-import type { CampaignPuzzleKind } from "@/lib/ascension/types";
+import { resolveChampionTierByCount } from "@/lib/ascension/tiers";
+import type { CampaignPuzzleKind, ChampionTier } from "@/lib/ascension/types";
 
 export const ELO_CAP = 3000;
 export const REPEAT_XP_MULTIPLIER = 0.1;
@@ -9,6 +9,11 @@ export interface PuzzleRewardInput {
   xpReward: number;
   eloReward: number;
   isFirstCompletion: boolean;
+  /**
+   * Total number of completed puzzles (including this one if isFirstCompletion).
+   * Used to determine the player's tier milestone.
+   */
+  completedPuzzleCount: number;
 }
 
 export interface PuzzleRewardResult {
@@ -16,7 +21,7 @@ export interface PuzzleRewardResult {
   eloGain: number;
   newElo: number;
   newXp: number;
-  newTier: ReturnType<typeof resolveChampionTier>;
+  newTier: ChampionTier;
 }
 
 export function computePuzzleRewards(
@@ -35,7 +40,7 @@ export function computePuzzleRewards(
     eloGain: newElo - currentElo,
     newElo,
     newXp,
-    newTier: resolveChampionTier(newElo),
+    newTier: resolveChampionTierByCount(input.completedPuzzleCount),
   };
 }
 

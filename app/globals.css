@@ -529,3 +529,9 @@ nextjs-portal {
     position: static;
   }
 }
+
+/* Ascension reward modal shimmer */
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}

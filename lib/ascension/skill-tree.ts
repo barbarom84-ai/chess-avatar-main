@@ -48,10 +48,10 @@ export const SKILL_TREE: SkillDefinition[] = [
   },
   {
     id: "knight_phantom",
-    name: { fr: "Cavalier fantôme", en: "Phantom knight" },
+    name: { fr: "Cavalier fou (Crazy Horse)", en: "Crazy Horse knight" },
     description: {
-      fr: "En puzzles fantasy : le cavalier peut sauter par-dessus une pièce bloquante.",
-      en: "In fantasy puzzles: the knight can leap over a blocking piece.",
+      fr: "En puzzles fantasy : le cavalier glisse en diagonale comme un fou (sur sa couleur) et peut sauter de 2 cases sur les côtés (gauche, droite, haut, bas).",
+      en: "In fantasy puzzles: the knight slides diagonally like a bishop (on its square color) and may leap 2 squares orthogonally (left, right, up, down).",
     },
     cost: 60,
     prerequisites: ["root"],
@@ -101,6 +101,20 @@ export const SKILL_TREE: SkillDefinition[] = [
     abilityId: "pawn_charge",
     branch: "fantasy",
     position: { x: 2, y: 2 },
+  },
+  {
+    id: "pawn_greedy",
+    name: { fr: "Pion glouton", en: "Greedy pawn" },
+    description: {
+      fr: "En puzzles fantasy : après une capture, le pion continue à manger tant qu'il le peut, sans passer son tour.",
+      en: "In fantasy puzzles: after capturing, the pawn keeps taking as long as it can without yielding the turn.",
+    },
+    cost: 110,
+    prerequisites: ["pawn_charge"],
+    effectKind: "fantasy_ability",
+    abilityId: "pawn_greedy",
+    branch: "fantasy",
+    position: { x: 2, y: 3 },
   },
   {
     id: "card_aura",

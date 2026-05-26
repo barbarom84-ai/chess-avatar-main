@@ -4,6 +4,7 @@ export type PieceAbilityId =
   | "rook_tunnel"
   | "queen_split"
   | "pawn_charge"
+  | "pawn_greedy"
   | "king_anchor";
 
 export type FantasyObjective = "checkmate" | "capture_piece" | "reach_square";

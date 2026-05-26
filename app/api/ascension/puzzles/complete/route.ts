@@ -119,11 +119,20 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ solved: false });
   }
 
+  // Count total completed puzzles (after this one) to compute the new tier milestone.
+  const { count: existingCount } = await auth.ctx.admin
+    .from("player_puzzle_completions")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", auth.ctx.user.id);
+
+  const completedPuzzleCount = (existingCount ?? 0) + (isFirstCompletion ? 1 : 0);
+
   const rewards = computePuzzleRewards(card.elo, card.xp, {
     kind: puzzle.kind,
     xpReward: puzzle.xp_reward,
     eloReward: puzzle.elo_reward,
     isFirstCompletion,
+    completedPuzzleCount,
   });
 
   const cardUpdate = await auth.ctx.admin

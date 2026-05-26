@@ -13,6 +13,10 @@ async function ensureChampionCard(admin: SupabaseClient, userId: string) {
     .maybeSingle();
 
   if (existing.data) {
+    // Ensure root skill is always present (backfill for pre-existing cards).
+    await admin
+      .from("player_skill_allocations")
+      .upsert({ user_id: userId, skill_id: "root", rank: 1 }, { onConflict: "user_id,skill_id" });
     return mapDbChampionCard(existing.data as Record<string, unknown>);
   }
 

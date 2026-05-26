@@ -168,5 +168,73 @@
       "en": "Bb3-b8 — orthogonal slide."
     },
     "sort_order": 9
+  },
+  {
+    "slug": "fan-005-crazy-horse",
+    "kind": "fantasy",
+    "min_elo": 0,
+    "max_elo": 850,
+    "xp_reward": 35,
+    "elo_reward": 30,
+    "fen": "8/8/8/8/4N3/8/8/2K2k2 w - - 0 1",
+    "solution_ucis": ["e4e6"],
+    "fantasy_rules": {
+      "enabledAbilities": ["knight_phantom"],
+      "objective": "reach_square",
+      "objectiveSquare": "e6"
+    },
+    "prompt": {
+      "fr": "Pouvoir fantasy : Cavalier fou (Crazy Horse)",
+      "en": "Fantasy power: Crazy Horse knight"
+    },
+    "hints": [
+      {
+        "fr": "Le cavalier peut sauter de 2 cases sur les côtés (haut, bas, gauche, droite).",
+        "en": "The knight can leap 2 squares orthogonally (up, down, left, right)."
+      },
+      {
+        "fr": "Il glisse aussi en diagonale comme un fou sur sa couleur.",
+        "en": "It also slides diagonally like a bishop on its square color."
+      }
+    ],
+    "insight": {
+      "fr": "Ne4-e6 — saut orthogonal de 2 cases.",
+      "en": "Ne4-e6 — 2-square orthogonal leap."
+    },
+    "sort_order": 10
+  },
+  {
+    "slug": "fan-006-greedy-pawn",
+    "kind": "fantasy",
+    "min_elo": 140,
+    "max_elo": 1050,
+    "xp_reward": 45,
+    "elo_reward": 40,
+    "fen": "8/8/3p4/2p5/1P6/8/8/2K2k2 w - - 0 1",
+    "solution_ucis": ["b4c5", "c5d6"],
+    "fantasy_rules": {
+      "enabledAbilities": ["pawn_greedy"],
+      "objective": "reach_square",
+      "objectiveSquare": "d6"
+    },
+    "prompt": {
+      "fr": "Pouvoir fantasy : pion glouton",
+      "en": "Fantasy power: greedy pawn"
+    },
+    "hints": [
+      {
+        "fr": "Capturez sur c5 : le pion continue à manger tant qu'une capture est possible.",
+        "en": "Capture on c5: the pawn keeps taking while another capture is available."
+      },
+      {
+        "fr": "Enchaînez c5xd6 sans passer le tour.",
+        "en": "Chain c5xd6 without yielding the turn."
+      }
+    ],
+    "insight": {
+      "fr": "b4xc5 puis c5xd6 — chaîne du pion glouton.",
+      "en": "b4xc5 then c5xd6 — greedy pawn chain."
+    },
+    "sort_order": 11
   }
 ]

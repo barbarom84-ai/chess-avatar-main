@@ -299,6 +299,16 @@ export default function AscensionAdminPage() {
                       </Button>
                     );
                   })}
+                  {/* Create a brand-new level beyond the current maximum */}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="border-dashed border-cyan-600/50 text-cyan-400 hover:border-cyan-400 hover:text-cyan-200"
+                    onClick={() => selectNewLevel(maxLevel + 1)}
+                    title={t.ascension.adminNewLevel}
+                  >
+                    + #{maxLevel + 1}
+                  </Button>
                 </div>
 
                 {form && (

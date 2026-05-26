@@ -41,7 +41,7 @@ function pieceAt(chess: Chess, sq: Square) {
   return chess.get(sq);
 }
 
-function generateKnightPhantomMoves(
+function generateKnightCrazyHorseMoves(
   chess: Chess,
   from: Square,
   rules: FantasyRuleSet,
@@ -54,31 +54,44 @@ function generateKnightPhantomMoves(
   if (!piece || piece.type !== "n") return [];
 
   const { file, rank } = squareToCoords(from);
-  const deltas = [
-    [1, 2],
-    [2, 1],
-    [2, -1],
-    [1, -2],
-    [-1, -2],
-    [-2, -1],
-    [-2, 1],
-    [-1, 2],
-  ];
   const moves: FantasyMove[] = [];
 
-  for (const [df, dr] of deltas) {
-    const midFile = file + df;
-    const midRank = rank + dr;
-    const mid = coordsToSquare(Math.floor((file + midFile) / 2), Math.floor((rank + midRank) / 2));
+  // Diagonal slides like a bishop (same-color squares from the knight's square).
+  const diagonals = [
+    [1, 1],
+    [1, -1],
+    [-1, 1],
+    [-1, -1],
+  ];
+  for (const [df, dr] of diagonals) {
+    for (let step = 1; step <= 7; step++) {
+      const to = coordsToSquare(file + df * step, rank + dr * step);
+      if (!to) break;
+      const target = pieceAt(chess, to);
+      if (!target) {
+        moves.push({ uci: `${from}${to}`, isFantasy: true, abilityId: "knight_phantom" });
+        continue;
+      }
+      if (target.color !== piece.color) {
+        moves.push({ uci: `${from}${to}`, isFantasy: true, abilityId: "knight_phantom" });
+      }
+      break;
+    }
+  }
+
+  // Orthogonal leap of exactly 2 squares (left, right, up, down); can jump over a blocker.
+  const ortho2 = [
+    [2, 0],
+    [-2, 0],
+    [0, 2],
+    [0, -2],
+  ];
+  for (const [df, dr] of ortho2) {
     const to = coordsToSquare(file + df, rank + dr);
     if (!to) continue;
-
-    const midPiece = mid ? pieceAt(chess, mid) : null;
-    if (midPiece) {
-      const target = pieceAt(chess, to);
-      if (target && target.color === piece.color) continue;
-      moves.push({ uci: `${from}${to}`, isFantasy: true, abilityId: "knight_phantom" });
-    }
+    const target = pieceAt(chess, to);
+    if (target && target.color === piece.color) continue;
+    moves.push({ uci: `${from}${to}`, isFantasy: true, abilityId: "knight_phantom" });
   }
 
   return moves;
@@ -192,6 +205,34 @@ function generatePawnChargeMoves(
   return [];
 }
 
+function getGreedyPawnCaptures(chess: Chess, from: Square): FantasyMove[] {
+  const piece = pieceAt(chess, from);
+  if (!piece || piece.type !== "p") return [];
+
+  const { file, rank } = squareToCoords(from);
+  const dir = piece.color === "w" ? 1 : -1;
+  const moves: FantasyMove[] = [];
+
+  for (const df of [-1, 1]) {
+    const to = coordsToSquare(file + df, rank + dir);
+    if (!to) continue;
+    const target = pieceAt(chess, to);
+    if (!target || target.color === piece.color) continue;
+
+    const promoRank = piece.color === "w" ? 7 : 0;
+    const landRank = squareToCoords(to).rank;
+    if (landRank === promoRank) {
+      for (const promotion of ["q", "r", "b", "n"] as const) {
+        moves.push({ uci: `${from}${to}${promotion}`, isFantasy: false, abilityId: "pawn_greedy" });
+      }
+    } else {
+      moves.push({ uci: `${from}${to}`, isFantasy: false, abilityId: "pawn_greedy" });
+    }
+  }
+
+  return moves;
+}
+
 export class FantasyChessEngine {
   private chess: Chess;
   private rules: FantasyRuleSet;
@@ -199,6 +240,7 @@ export class FantasyChessEngine {
   private usedAbilities: PieceAbilityId[] = [];
   private fantasyMoveFlags: boolean[] = [];
   private abilityByMoveIndex: (PieceAbilityId | undefined)[] = [];
+  private greedyPawnSquare: Square | null = null;
 
   constructor(fen: string, rules: FantasyRuleSet) {
     this.chess = new Chess(fen);
@@ -213,6 +255,34 @@ export class FantasyChessEngine {
     return this.chess.turn();
   }
 
+  isGreedyChainActive(): boolean {
+    return this.greedyPawnSquare !== null;
+  }
+
+  getGreedyPawnSquare(): Square | null {
+    return this.greedyPawnSquare;
+  }
+
+  private setSideToMove(color: "w" | "b") {
+    const parts = this.chess.fen().split(" ");
+    parts[1] = color;
+    this.chess.load(parts.join(" "));
+  }
+
+  private continueGreedyChainIfPossible(landSquare: Square, pawnColor: "w" | "b") {
+    if (!this.rules.enabledAbilities.includes("pawn_greedy")) {
+      this.greedyPawnSquare = null;
+      return;
+    }
+    const moreCaptures = getGreedyPawnCaptures(this.chess, landSquare);
+    if (moreCaptures.length > 0) {
+      this.greedyPawnSquare = landSquare;
+      this.setSideToMove(pawnColor);
+      return;
+    }
+    this.greedyPawnSquare = null;
+  }
+
   snapshot(): FantasyChessStateSnapshot {
     return {
       fen: this.chess.fen(),
@@ -223,6 +293,12 @@ export class FantasyChessEngine {
   }
 
   getLegalMoves(from?: Square): FantasyMove[] {
+    if (this.greedyPawnSquare) {
+      const chainSquare = this.greedyPawnSquare;
+      if (from && from !== chainSquare) return [];
+      return getGreedyPawnCaptures(this.chess, chainSquare);
+    }
+
     const standard = this.chess.moves({ square: from, verbose: true }).map((m) => ({
       uci: `${m.from}${m.to}${m.promotion ?? ""}`,
       isFantasy: false as const,
@@ -231,7 +307,7 @@ export class FantasyChessEngine {
     if (!from) return standard;
 
     const fantasy: FantasyMove[] = [
-      ...generateKnightPhantomMoves(this.chess, from, this.rules, this.usedAbilities),
+      ...generateKnightCrazyHorseMoves(this.chess, from, this.rules, this.usedAbilities),
       ...generateBishopOrthogonalMoves(this.chess, from, this.rules, this.usedAbilities),
       ...generateRookTunnelMoves(this.chess, from, this.rules),
       ...generatePawnChargeMoves(this.chess, from, this.rules, this.usedAbilities),
@@ -275,6 +351,27 @@ export class FantasyChessEngine {
     if (!normalized) return false;
 
     const from = normalized.slice(0, 2) as Square;
+    const to = normalized.slice(2, 4) as Square;
+    const pieceBefore = this.chess.get(from);
+    const capturedBefore = this.chess.get(to);
+
+    if (this.greedyPawnSquare) {
+      if (from !== this.greedyPawnSquare) return false;
+      const legal = getGreedyPawnCaptures(this.chess, from);
+      const match = legal.find((m) => m.uci === normalized);
+      if (!match || !pieceBefore) return false;
+
+      const next = new Chess(this.chess.fen());
+      if (!applyStandardMove(next, normalized)) return false;
+      this.chess = next;
+
+      this.moveHistory.push(normalized);
+      this.fantasyMoveFlags.push(false);
+      this.abilityByMoveIndex.push("pawn_greedy");
+      this.continueGreedyChainIfPossible(to, pieceBefore.color);
+      return true;
+    }
+
     const legal = this.getLegalMoves(from);
     const match = legal.find((m) => m.uci === normalized);
     if (!match) return false;
@@ -285,7 +382,6 @@ export class FantasyChessEngine {
     if (applied) {
       this.chess = next;
     } else if (match.isFantasy) {
-      const to = normalized.slice(2, 4) as Square;
       const promotion = normalized.length > 4 ? normalized[4] : undefined;
       if (!this.applyFantasyMove(from, to, promotion)) return false;
     } else {
@@ -298,6 +394,17 @@ export class FantasyChessEngine {
     if (match.abilityId && !this.usedAbilities.includes(match.abilityId)) {
       this.usedAbilities.push(match.abilityId);
     }
+
+    const wasPawnCapture =
+      pieceBefore?.type === "p" &&
+      !!capturedBefore &&
+      capturedBefore.color !== pieceBefore.color;
+    if (wasPawnCapture) {
+      this.continueGreedyChainIfPossible(to, pieceBefore.color);
+    } else {
+      this.greedyPawnSquare = null;
+    }
+
     return true;
   }
 

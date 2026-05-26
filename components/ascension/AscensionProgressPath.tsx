@@ -2,25 +2,39 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
-import { Check, Crown, Lock, Sparkles } from "lucide-react";
+import { Check, Crown, Lock, Sparkles, Star } from "lucide-react";
 import type { AscensionPuzzleListItem } from "@/lib/ascension/client";
 import type { ChampionCardModel } from "@/lib/ascension/types";
 import {
-  ASCENSION_PATH_NODES,
-  ASCENSION_PATH_VIEW_HEIGHT,
+  ascensionContentHeight,
   buildAscensionPathD,
+  generateAscensionNodes,
   pathNodeToStyle,
+  NODE_SPACING_PX,
 } from "@/lib/ascension/progress-path";
 import { useLanguage } from "@/lib/language-context";
+import { playerFantasyAbilities } from "@/lib/ascension/skill-tree";
+import { TIER_PUZZLE_THRESHOLDS, resolveChampionTierByCount } from "@/lib/ascension/tiers";
+import type { ChampionTier } from "@/lib/ascension/types";
+
+const MAX_VISIBLE_HEIGHT = 680;
+
+/** X% position for fantasy bonus nodes (right column). */
+const BONUS_X = 88;
+/** Vertical spacing for bonus nodes (can be tighter or looser). */
+const BONUS_SPACING = NODE_SPACING_PX;
 
 interface AscensionProgressPathProps {
   puzzles: AscensionPuzzleListItem[];
   card: ChampionCardModel;
   selectedPuzzleId: string | null;
   onSelectPuzzle: (id: string) => void;
+  /** Index in the standard-only sub-list. */
   progressNodeIndex: number;
   animateToIndex: number | null;
   onAnimationComplete?: () => void;
+  /** Skills unlocked by the player — used to gate bonus puzzle access. */
+  unlockedSkills: string[];
 }
 
 function PathChampionToken({
@@ -39,17 +53,14 @@ function PathChampionToken({
   onTransitionEnd: () => void;
 }) {
   const style = pathNodeToStyle(node);
-
   return (
     <div
-      className={`absolute z-20 -translate-x-1/2 -translate-y-1/2 pointer-events-none transition-[left,top,transform] duration-700 ease-in-out ${
+      className={`absolute z-20 -translate-x-1/2 -translate-y-1/2 pointer-events-none transition-[left,top] duration-700 ease-in-out ${
         isMoving ? "scale-110" : "scale-100"
       }`}
       style={style}
       onTransitionEnd={(e) => {
-        if (e.propertyName === "left" || e.propertyName === "top") {
-          onTransitionEnd();
-        }
+        if (e.propertyName === "left" || e.propertyName === "top") onTransitionEnd();
       }}
     >
       <div
@@ -82,22 +93,54 @@ export default function AscensionProgressPath({
   progressNodeIndex,
   animateToIndex,
   onAnimationComplete,
+  unlockedSkills,
 }: AscensionProgressPathProps) {
   const { lang, t } = useLanguage();
+  const playerAbilities = useMemo(() => playerFantasyAbilities(unlockedSkills), [unlockedSkills]);
   const uiLang = lang === "fr" ? "fr" : "en";
   const animationHandled = useRef(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const sorted = useMemo(
     () => [...puzzles].sort((a, b) => a.sort_order - b.sort_order),
     [puzzles]
   );
 
-  const pathD = useMemo(
-    () => buildAscensionPathD(ASCENSION_PATH_NODES.slice(0, sorted.length)),
-    [sorted.length]
+  // Split into standard (main path) and fantasy (bonus side column)
+  const standardPuzzles = useMemo(() => sorted.filter((p) => p.kind === "standard"), [sorted]);
+  const fantasyPuzzles = useMemo(() => sorted.filter((p) => p.kind === "fantasy"), [sorted]);
+
+  // Main path nodes (standard only)
+  const standardNodes = useMemo(
+    () => generateAscensionNodes(standardPuzzles.length),
+    [standardPuzzles.length]
   );
-  const currentIdx = sorted.findIndex((p) => p.id === selectedPuzzleId);
-  const completedCount = sorted.filter((p) => p.completed).length;
+
+  // Content height = enough for standard path OR for bonus column, whichever is taller
+  const standardHeight = useMemo(
+    () => ascensionContentHeight(standardPuzzles.length),
+    [standardPuzzles.length]
+  );
+  const bonusHeight = useMemo(
+    () =>
+      fantasyPuzzles.length === 0
+        ? 0
+        : 52 + (fantasyPuzzles.length - 1) * BONUS_SPACING + 52,
+    [fantasyPuzzles.length]
+  );
+  const contentHeight = Math.max(standardHeight, bonusHeight);
+
+  // Bonus nodes: right column, stacked from bottom
+  const bonusNodes = useMemo(() => {
+    const bottomY = contentHeight - 52;
+    return fantasyPuzzles.map((_, i) => ({
+      x: BONUS_X,
+      y: bottomY - i * BONUS_SPACING,
+    }));
+  }, [fantasyPuzzles.length, contentHeight]);
+
+  const pathD = useMemo(() => buildAscensionPathD(standardNodes), [standardNodes]);
+  const completedStandardCount = standardPuzzles.filter((p) => p.completed).length;
   const eloPct = Math.min(100, (card.elo / 3000) * 100);
 
   const [visualIndex, setVisualIndex] = useState(progressNodeIndex);
@@ -108,7 +151,6 @@ export default function AscensionProgressPath({
       animationHandled.current = false;
       return;
     }
-
     setVisualIndex(progressNodeIndex);
     animationHandled.current = false;
     const frame = requestAnimationFrame(() => {
@@ -117,7 +159,16 @@ export default function AscensionProgressPath({
     return () => cancelAnimationFrame(frame);
   }, [animateToIndex, progressNodeIndex]);
 
-  const visualNode = ASCENSION_PATH_NODES[visualIndex] ?? ASCENSION_PATH_NODES[0]!;
+  // Auto-scroll to keep the current progress node visible
+  useEffect(() => {
+    const container = scrollRef.current;
+    const targetNode = standardNodes[visualIndex];
+    if (!container || !targetNode) return;
+    const desired = targetNode.y - container.clientHeight / 2;
+    container.scrollTo({ top: Math.max(0, desired), behavior: "smooth" });
+  }, [visualIndex, standardNodes]);
+
+  const visualNode = standardNodes[visualIndex] ?? standardNodes[0]!;
 
   const handleTokenTransitionEnd = () => {
     if (animateToIndex == null || animationHandled.current) return;
@@ -126,8 +177,9 @@ export default function AscensionProgressPath({
   };
 
   return (
-    <div className="rounded-xl border border-cyan-500/20 bg-gradient-to-b from-slate-950/90 to-emerald-950/20 overflow-hidden">
-      <div className="p-4 border-b border-slate-800/80 space-y-3">
+    <div className="rounded-xl border border-cyan-500/20 bg-gradient-to-b from-slate-950/90 to-emerald-950/20 overflow-hidden flex flex-col">
+      {/* ── Header ── */}
+      <div className="p-4 border-b border-slate-800/80 space-y-3 shrink-0">
         <div className="flex items-center justify-between gap-2">
           <h3 className="text-sm font-semibold text-slate-100 flex items-center gap-2">
             <Crown className="h-4 w-4 text-amber-400" />
@@ -141,7 +193,8 @@ export default function AscensionProgressPath({
           <div className="flex justify-between text-[10px] text-slate-500">
             <span>{t.ascension.tiers[card.tier]}</span>
             <span>
-              {completedCount}/{sorted.length} {t.ascension.puzzlesCompleted}
+              {completedStandardCount}/{standardPuzzles.length}{" "}
+              {t.ascension.puzzlesCompleted}
             </span>
           </div>
           <div className="h-2 rounded-full bg-slate-800 overflow-hidden">
@@ -151,108 +204,271 @@ export default function AscensionProgressPath({
             />
           </div>
         </div>
+
+        {/* Bonus quest count */}
+        {fantasyPuzzles.length > 0 && (
+          <div className="flex items-center gap-1.5 text-[10px] text-purple-300/70">
+            <Star className="h-3 w-3 text-amber-400/70" />
+            <span>
+              {fantasyPuzzles.filter((p) => p.completed).length}/{fantasyPuzzles.length}{" "}
+              {t.ascension.bonusColumn}
+            </span>
+          </div>
+        )}
       </div>
 
-      <div className="relative p-2 min-h-[420px] md:min-h-[480px]">
-        <svg
-          viewBox={`0 0 100 ${ASCENSION_PATH_VIEW_HEIGHT}`}
-          className="absolute inset-0 w-full h-full"
-          preserveAspectRatio="xMidYMid meet"
-          aria-hidden
-        >
-          <defs>
-            <linearGradient id="ascensionPathGrad" x1="0%" y1="100%" x2="0%" y2="0%">
-              <stop offset="0%" stopColor="rgb(16 185 129 / 0.15)" />
-              <stop offset="100%" stopColor="rgb(34 211 238 / 0.35)" />
-            </linearGradient>
-          </defs>
-          <rect x="0" y="0" width="100" height={ASCENSION_PATH_VIEW_HEIGHT} fill="url(#ascensionPathGrad)" rx="4" />
-          <path
-            d={pathD}
-            fill="none"
-            stroke="rgb(34 211 238 / 0.2)"
-            strokeWidth="3"
-            strokeLinecap="round"
-          />
-          <path
-            d={pathD}
-            fill="none"
-            stroke="rgb(16 185 129 / 0.5)"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeDasharray={`${(completedCount / Math.max(1, sorted.length - 1)) * 200} 400`}
-            className="transition-all duration-700"
-          />
-        </svg>
+      {/* ── Scrollable path ── */}
+      <div
+        ref={scrollRef}
+        className="relative overflow-y-auto"
+        style={{ maxHeight: MAX_VISIBLE_HEIGHT }}
+      >
+        {/* Top fade */}
+        <div className="pointer-events-none sticky top-0 z-10 h-8 bg-gradient-to-b from-slate-950/80 to-transparent" />
 
-        {sorted.map((puzzle, idx) => {
-          const node = ASCENSION_PATH_NODES[idx];
-          if (!node) return null;
-          const isSelected = puzzle.id === selectedPuzzleId;
-          const isCurrent = idx === currentIdx || (currentIdx < 0 && idx === 0);
-          const isLocked = card.elo < puzzle.min_elo;
-          const label = puzzle.prompt[uiLang] || puzzle.slug;
-          const isTokenHere = visualIndex === idx;
+        <div className="relative" style={{ height: contentHeight }}>
+          {/* ── Background SVG + main path ── */}
+          <svg
+            viewBox={`0 0 100 ${contentHeight}`}
+            preserveAspectRatio="none"
+            className="absolute inset-0 w-full pointer-events-none"
+            style={{ height: contentHeight }}
+            aria-hidden
+          >
+            <defs>
+              <linearGradient id="ascPathGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+                <stop offset="0%" stopColor="rgb(16 185 129 / 0.1)" />
+                <stop offset="100%" stopColor="rgb(34 211 238 / 0.22)" />
+              </linearGradient>
+            </defs>
+            <rect x="0" y="0" width="100" height={contentHeight} fill="url(#ascPathGrad)" />
 
-          return (
-            <button
-              key={puzzle.id}
-              type="button"
-              disabled={isLocked}
-              onClick={() => onSelectPuzzle(puzzle.id)}
-              title={label}
-              className="absolute -translate-x-1/2 -translate-y-1/2 group focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 rounded-full"
-              style={pathNodeToStyle(node)}
-            >
-              <div
-                className={`relative flex flex-col items-center gap-1 transition-transform ${
-                  isLocked ? "opacity-45 cursor-not-allowed" : "hover:scale-105"
-                } ${isTokenHere ? "opacity-0" : ""}`}
+            {/* Separator between main path and bonus column */}
+            {fantasyPuzzles.length > 0 && (
+              <line
+                x1="79" y1="0" x2="79" y2={contentHeight}
+                stroke="rgba(168,85,247,0.15)"
+                strokeWidth="0.5"
+                strokeDasharray="4 6"
+              />
+            )}
+
+            {/* Ghost track */}
+            <path
+              d={pathD}
+              fill="none"
+              stroke="rgb(34 211 238 / 0.15)"
+              strokeWidth="3"
+              strokeLinecap="round"
+            />
+            {/* Progress line */}
+            <path
+              d={pathD}
+              fill="none"
+              stroke="rgb(16 185 129 / 0.55)"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeDasharray={`${(completedStandardCount / Math.max(1, standardPuzzles.length - 1)) * 1000} 2000`}
+              className="transition-all duration-700"
+            />
+          </svg>
+
+          {/* ── Standard puzzle nodes ── */}
+          {standardPuzzles.map((puzzle, idx) => {
+            const node = standardNodes[idx];
+            if (!node) return null;
+            const isSelected = puzzle.id === selectedPuzzleId;
+            const isTokenHere = visualIndex === idx;
+
+            return (
+              <button
+                key={puzzle.id}
+                type="button"
+                onClick={() => onSelectPuzzle(puzzle.id)}
+                title={puzzle.prompt[uiLang] || puzzle.slug}
+                className="absolute -translate-x-1/2 -translate-y-1/2 group focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 rounded-full"
+                style={pathNodeToStyle(node)}
               >
                 <div
-                  className={`w-11 h-11 md:w-12 md:h-12 rounded-full border-2 flex items-center justify-center text-sm font-bold shadow-lg transition-colors ${
-                    puzzle.completed
-                      ? "border-emerald-400 bg-emerald-950/80 text-emerald-300"
-                      : isSelected || isCurrent
-                        ? "border-cyan-400 bg-cyan-950/90 text-cyan-100 ring-2 ring-cyan-400/40"
-                        : puzzle.kind === "fantasy"
-                          ? "border-purple-500/60 bg-purple-950/60 text-purple-200"
-                          : "border-slate-600 bg-slate-900/90 text-slate-300"
+                  className={`relative flex flex-col items-center gap-1 transition-transform hover:scale-105 ${
+                    isTokenHere ? "opacity-0" : ""
                   }`}
                 >
-                  {puzzle.completed ? (
-                    <Check className="h-5 w-5" />
-                  ) : isLocked ? (
-                    <Lock className="h-4 w-4" />
-                  ) : puzzle.kind === "fantasy" ? (
-                    <Sparkles className="h-4 w-4" />
-                  ) : (
-                    idx + 1
+                  <div
+                    className={`w-11 h-11 rounded-full border-2 flex items-center justify-center text-sm font-bold shadow-lg transition-colors ${
+                      puzzle.completed
+                        ? "border-emerald-400 bg-emerald-950/80 text-emerald-300"
+                        : isSelected
+                          ? "border-cyan-400 bg-cyan-950/90 text-cyan-100 ring-2 ring-cyan-400/40"
+                          : "border-slate-600 bg-slate-900/90 text-slate-300"
+                    }`}
+                  >
+                    {puzzle.completed ? <Check className="h-5 w-5" /> : idx + 1}
+                  </div>
+                  <span
+                    className={`max-w-[72px] text-[10px] leading-tight text-center line-clamp-2 ${
+                      isSelected ? "text-cyan-200 font-medium" : "text-slate-400"
+                    }`}
+                  >
+                    {puzzle.prompt[uiLang] || puzzle.slug}
+                  </span>
+                  {isSelected && (
+                    <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]" />
                   )}
                 </div>
-                <span
-                  className={`max-w-[72px] text-[9px] leading-tight text-center line-clamp-2 ${
-                    isSelected ? "text-cyan-200 font-medium" : "text-slate-500"
-                  }`}
-                >
-                  {label}
-                </span>
-                {isSelected && (
-                  <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]" />
-                )}
-              </div>
-            </button>
-          );
-        })}
+              </button>
+            );
+          })}
 
-        <PathChampionToken
-          avatarUrl={card.avatarUrl ?? null}
-          displayName={card.displayName}
-          tier={card.tier}
-          node={visualNode}
-          isMoving={animateToIndex != null}
-          onTransitionEnd={handleTokenTransitionEnd}
-        />
+          {/* ── Tier milestone gates (every 20 standard nodes) ── */}
+          {TIER_PUZZLE_THRESHOLDS
+            .filter((entry) => entry.minCount > 0) // skip stone (count = 0)
+            .map((entry) => {
+              // The milestone appears between node[count-1] and node[count]
+              const beforeNode = standardNodes[entry.minCount - 1];
+              const afterNode  = standardNodes[entry.minCount];
+              if (!beforeNode) return null; // path not long enough yet
+              // Y mid-point between the two surrounding nodes (or just below the last node)
+              const gateY = afterNode
+                ? (beforeNode.y + afterNode.y) / 2
+                : beforeNode.y + 28;
+              const isReached = completedStandardCount >= entry.minCount;
+              const tierName = t.ascension.tiers[entry.tier as keyof typeof t.ascension.tiers] ?? entry.tier;
+
+              const tierColors: Record<ChampionTier, { border: string; bg: string; text: string; glow: string }> = {
+                stone:     { border: "border-slate-600/60",    bg: "bg-slate-800/80",    text: "text-slate-300",    glow: "" },
+                bronze:    { border: "border-amber-700/60",    bg: "bg-amber-950/80",    text: "text-amber-300",    glow: "shadow-[0_0_8px_rgba(180,83,9,0.4)]" },
+                silver:    { border: "border-slate-400/60",    bg: "bg-slate-700/80",    text: "text-slate-100",    glow: "shadow-[0_0_8px_rgba(148,163,184,0.3)]" },
+                gold:      { border: "border-yellow-500/70",   bg: "bg-yellow-950/80",   text: "text-yellow-300",   glow: "shadow-[0_0_10px_rgba(234,179,8,0.35)]" },
+                platinum:  { border: "border-cyan-500/70",     bg: "bg-cyan-950/80",     text: "text-cyan-200",     glow: "shadow-[0_0_10px_rgba(6,182,212,0.35)]" },
+                diamond:   { border: "border-blue-400/70",     bg: "bg-blue-950/80",     text: "text-blue-200",     glow: "shadow-[0_0_12px_rgba(96,165,250,0.4)]" },
+                legendary: { border: "border-purple-400/70",   bg: "bg-purple-950/80",   text: "text-purple-200",   glow: "shadow-[0_0_14px_rgba(192,132,252,0.45)]" },
+              };
+              const colors = tierColors[entry.tier];
+
+              return (
+                <div
+                  key={entry.tier}
+                  className="absolute left-0 right-0 pointer-events-none flex items-center gap-2 px-3"
+                  style={{ top: gateY, transform: "translateY(-50%)" }}
+                >
+                  {/* Left line */}
+                  <div className={`flex-1 h-px ${isReached ? "bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent" : "bg-gradient-to-r from-transparent via-slate-700/50 to-transparent"}`} />
+                  {/* Tier badge */}
+                  <div
+                    className={`pointer-events-auto shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-bold uppercase tracking-wider transition-all ${colors.border} ${colors.bg} ${colors.text} ${isReached ? colors.glow : "opacity-50"}`}
+                    title={`${t.ascension.tierMilestoneHint.replace("{count}", String(entry.minCount))}`}
+                  >
+                    {isReached ? (
+                      <Check className="h-3 w-3 shrink-0" />
+                    ) : (
+                      <span className="h-3 w-3 shrink-0 flex items-center justify-center text-[9px]">{entry.minCount}</span>
+                    )}
+                    {tierName}
+                  </div>
+                  {/* Right line */}
+                  <div className={`flex-1 h-px ${isReached ? "bg-gradient-to-l from-transparent via-emerald-500/40 to-transparent" : "bg-gradient-to-l from-transparent via-slate-700/50 to-transparent"}`} />
+                </div>
+              );
+            })}
+
+          {/* ── Fantasy bonus nodes (right column) ── */}
+          {fantasyPuzzles.length > 0 && (
+            <>
+              {/* "Bonus Quests" label */}
+              <div
+                className="absolute pointer-events-none text-[9px] uppercase tracking-widest text-purple-300/60 font-semibold"
+                style={{ left: `${BONUS_X - 8}%`, top: 8, transform: "translateX(-50%)" }}
+              >
+                {t.ascension.bonusColumn}
+              </div>
+
+              {fantasyPuzzles.map((puzzle, idx) => {
+                const node = bonusNodes[idx];
+                if (!node) return null;
+                const isSelected = puzzle.id === selectedPuzzleId;
+
+                /** True if this bonus puzzle requires a power the player hasn't unlocked. */
+                const requiredAbilities = puzzle.fantasy_rules?.enabledAbilities ?? [];
+                const isLocked = !puzzle.completed && requiredAbilities.some(
+                  (a) => !playerAbilities.includes(a as never)
+                );
+
+                return (
+                  <button
+                    key={puzzle.id}
+                    type="button"
+                    onClick={() => !isLocked && onSelectPuzzle(puzzle.id)}
+                    disabled={isLocked}
+                    title={
+                      isLocked
+                        ? t.ascension.bonusLockedTitle
+                        : (puzzle.prompt[uiLang] || puzzle.slug)
+                    }
+                    className={`absolute -translate-x-1/2 -translate-y-1/2 group focus:outline-none rounded-full ${
+                      isLocked ? "cursor-not-allowed" : ""
+                    }`}
+                    style={pathNodeToStyle(node)}
+                  >
+                    <div
+                      className={`relative flex flex-col items-center gap-1 transition-transform ${
+                        isLocked ? "opacity-40" : "hover:scale-105"
+                      }`}
+                    >
+                      {/* Outer glow ring when selected */}
+                      {isSelected && !isLocked && (
+                        <span className="absolute inset-[-4px] rounded-full border border-amber-400/50 animate-pulse" />
+                      )}
+                      <div
+                        className={`w-10 h-10 rounded-full border-2 flex items-center justify-center shadow-lg transition-colors ${
+                          isLocked
+                            ? "border-slate-700/50 bg-slate-900/50 text-slate-600"
+                            : puzzle.completed
+                              ? "border-amber-400 bg-amber-950/80 text-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.35)]"
+                              : isSelected
+                                ? "border-purple-400 bg-purple-950/90 text-purple-100 ring-2 ring-purple-400/40 shadow-[0_0_10px_rgba(192,132,252,0.3)]"
+                                : "border-purple-600/60 bg-purple-950/40 text-purple-300"
+                        }`}
+                      >
+                        {isLocked ? (
+                          <Lock className="h-4 w-4" />
+                        ) : puzzle.completed ? (
+                          <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+                        ) : (
+                          <Sparkles className="h-4 w-4" />
+                        )}
+                      </div>
+                      <span
+                        className={`max-w-[52px] text-[9px] leading-tight text-center line-clamp-2 ${
+                          isLocked
+                            ? "text-slate-600"
+                            : isSelected
+                              ? "text-purple-200 font-medium"
+                              : "text-purple-400/70"
+                        }`}
+                      >
+                        {puzzle.prompt[uiLang] || puzzle.slug}
+                      </span>
+                    </div>
+                  </button>
+                );
+              })}
+            </>
+          )}
+
+          {/* ── Champion token (standard path only) ── */}
+          <PathChampionToken
+            avatarUrl={card.avatarUrl ?? null}
+            displayName={card.displayName}
+            tier={card.tier}
+            node={visualNode}
+            isMoving={animateToIndex != null}
+            onTransitionEnd={handleTokenTransitionEnd}
+          />
+        </div>
+
+        {/* Bottom fade */}
+        <div className="pointer-events-none sticky bottom-0 z-10 h-8 bg-gradient-to-t from-slate-950/80 to-transparent" />
       </div>
     </div>
   );
