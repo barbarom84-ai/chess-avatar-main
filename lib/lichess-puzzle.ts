@@ -114,6 +114,26 @@ function parsePlayers(game: Record<string, unknown>): NormalizedLichessPuzzle["p
   return out;
 }
 
+function isNormalizedLichessPuzzle(raw: unknown): raw is NormalizedLichessPuzzle {
+  if (!isRecord(raw)) return false;
+  return (
+    typeof raw.puzzleId === "string" &&
+    typeof raw.gameId === "string" &&
+    typeof raw.fen === "string" &&
+    Array.isArray(raw.solutionUci) &&
+    raw.solutionUci.every((u) => typeof u === "string")
+  );
+}
+
+/**
+ * Accept either raw Lichess API JSON (`{ game, puzzle }`) or our normalized API response
+ * (`/api/puzzles/daily` and `/api/puzzles/random` already return the latter).
+ */
+export function parseLichessPuzzleResponse(raw: unknown): NormalizedLichessPuzzle | null {
+  if (isNormalizedLichessPuzzle(raw)) return raw;
+  return normalizeLichessPuzzlePayload(raw);
+}
+
 /** Normalize `GET /api/puzzle/daily` or single puzzle object shape. */
 export function normalizeLichessPuzzlePayload(raw: unknown): NormalizedLichessPuzzle | null {
   if (!isRecord(raw)) return null;

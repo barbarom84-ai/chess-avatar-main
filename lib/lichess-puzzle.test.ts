@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { normalizeLichessPuzzlePayload } from "./lichess-puzzle";
+import {
+  normalizeLichessPuzzlePayload,
+  parseLichessPuzzleResponse,
+} from "./lichess-puzzle";
 
 const VALID = {
   game: {
@@ -39,5 +42,12 @@ describe("normalizeLichessPuzzlePayload", () => {
         puzzle: { ...VALID.puzzle, solution: [] },
       })
     ).toBeNull();
+  });
+
+  it("accepts already-normalized API responses", () => {
+    const normalized = normalizeLichessPuzzlePayload(VALID);
+    expect(normalized).not.toBeNull();
+    expect(parseLichessPuzzleResponse(normalized)).toEqual(normalized);
+    expect(parseLichessPuzzleResponse(VALID)).toEqual(normalized);
   });
 });

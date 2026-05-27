@@ -9,7 +9,7 @@ import LichessPuzzlePlayer from "@/components/LichessPuzzlePlayer";
 import MoveChallengeCard from "@/components/learn/MoveChallengeCard";
 import { useLanguage } from "@/lib/language-context";
 import {
-  normalizeLichessPuzzlePayload,
+  parseLichessPuzzleResponse,
   type NormalizedLichessPuzzle,
 } from "@/lib/lichess-puzzle";
 import type { HistoricalGame } from "@/lib/opening-lessons";
@@ -105,7 +105,7 @@ export default function PuzzlesPageClient({
         return;
       }
       const data: unknown = await res.json();
-      const puzzle = normalizeLichessPuzzlePayload(data);
+      const puzzle = parseLichessPuzzleResponse(data);
       if (!puzzle) {
         setDailyError(p.dailyError);
         setDaily(null);
@@ -204,7 +204,7 @@ export default function PuzzlesPageClient({
         return;
       }
       const data: unknown = await res.json();
-      const puzzle = normalizeLichessPuzzlePayload(data);
+      const puzzle = parseLichessPuzzleResponse(data);
       if (!puzzle) {
         setRandomError(p.randomError);
         setRandom(null);
