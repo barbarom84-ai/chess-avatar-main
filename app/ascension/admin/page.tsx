@@ -345,6 +345,7 @@ export default function AscensionAdminPage() {
                           value={form.min_elo}
                           onChange={(e) => setForm({ ...form, min_elo: Number(e.target.value) })}
                         />
+                        <p className="text-[11px] text-slate-500">{t.ascension.adminMinEloHint}</p>
                       </div>
                       <div className="space-y-1">
                         <Label>{t.ascension.adminMaxElo}</Label>

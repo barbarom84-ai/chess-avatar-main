@@ -40,3 +40,30 @@ export function dedupeCampaignPuzzlesByLevel(puzzles: PuzzleRow[]): PuzzleRow[] 
   }
   return [...levels.values()].sort((a, b) => a.sort_order - b.sort_order);
 }
+
+type PuzzleWithCompletion = DbCampaignPuzzle & { completed: boolean };
+
+/**
+ * Standard puzzles are unlocked sequentially by sort_order.
+ * The first standard puzzle is always unlocked; each next one requires
+ * the previous standard (by sort_order) to be completed.
+ */
+export function computeStandardPuzzleLocked(
+  puzzles: PuzzleWithCompletion[]
+): Map<string, boolean> {
+  const standards = [...puzzles]
+    .filter((p) => p.kind === "standard")
+    .sort((a, b) => a.sort_order - b.sort_order);
+
+  const locked = new Map<string, boolean>();
+  for (let i = 0; i < standards.length; i++) {
+    const puzzle = standards[i]!;
+    if (i === 0) {
+      locked.set(puzzle.id, false);
+      continue;
+    }
+    const prev = standards[i - 1]!;
+    locked.set(puzzle.id, !prev.completed);
+  }
+  return locked;
+}

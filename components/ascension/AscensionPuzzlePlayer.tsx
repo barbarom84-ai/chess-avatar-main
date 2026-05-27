@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Info, Lock, Sparkles, Star } from "lucide-react";
 import { Chess } from "chess.js";
 import SimpleChessboard from "@/components/SimpleChessboard";
@@ -18,6 +18,12 @@ import type { FantasyRuleSet } from "@/lib/ascension/fantasy-chess/types";
 import type { AscensionPuzzleListItem } from "@/lib/ascension/client";
 import { playerFantasyAbilities } from "@/lib/ascension/skill-tree";
 import { boardOrientationFromFen, getSideToMoveFromFen } from "@/lib/ascension/fen-utils";
+import {
+  applyMoveToChess,
+  extractPlayerMoves,
+  getSolverColor,
+  isSolverTurn,
+} from "@/lib/ascension/puzzle-sequence";
 import { useLanguage } from "@/lib/language-context";
 
 interface AscensionPuzzlePlayerProps {
@@ -35,7 +41,15 @@ export default function AscensionPuzzlePlayer({
 }: AscensionPuzzlePlayerProps) {
   const { lang, t } = useLanguage();
   const uiLang = lang === "fr" ? "fr" : "en";
-  const [moves, setMoves] = useState<string[]>([]);
+  const solution = useMemo(
+    () => puzzle.solution_ucis.map((s) => s.trim().toLowerCase()),
+    [puzzle.solution_ucis]
+  );
+  const solverColor = useMemo(() => getSolverColor(puzzle.fen), [puzzle.fen]);
+
+  const [lineMoves, setLineMoves] = useState<string[]>([]);
+  const [playerMoves, setPlayerMoves] = useState<string[]>([]);
+  const moveIndexRef = useRef(0);
   const [hintIdx, setHintIdx] = useState(-1);
   const [status, setStatus] = useState<"playing" | "success" | "fail">("playing");
   const [startTime] = useState(() => Date.now());
@@ -53,7 +67,6 @@ export default function AscensionPuzzlePlayer({
     };
   }, [puzzle, unlockedSkills]);
 
-  /** True if this fantasy puzzle requires a power the player hasn't unlocked yet. */
   const missingRequiredPower = useMemo(() => {
     if (puzzle.kind !== "fantasy") return false;
     const puzzleAbilities = puzzle.fantasy_rules.enabledAbilities ?? [];
@@ -61,88 +74,148 @@ export default function AscensionPuzzlePlayer({
     return puzzleAbilities.some((a) => !playerAbilities.includes(a));
   }, [puzzle, unlockedSkills]);
 
-  const position = useMemo(() => {
-    if (puzzle.kind === "fantasy") {
-      const replay = new FantasyChessEngine(puzzle.fen, fantasyRules);
-      for (const uci of moves) replay.applyMove(uci);
-      return replay.fen;
-    }
-    const chess = new Chess(puzzle.fen);
+  const reset = useCallback(() => {
+    setLineMoves([]);
+    setPlayerMoves([]);
+    moveIndexRef.current = 0;
+    setHintIdx(-1);
+    setStatus("playing");
+  }, []);
+
+  useEffect(() => {
+    reset();
+  }, [puzzle.id, puzzle.fen, reset]);
+
+  const applyLineMoveStandard = useCallback((fen: string, moves: string[]): string => {
+    const chess = new Chess(fen);
     for (const uci of moves) {
-      chess.move({
-        from: uci.slice(0, 2),
-        to: uci.slice(2, 4),
-        promotion: uci[4] as "q" | "r" | "b" | "n" | undefined,
-      });
+      applyMoveToChess(chess, uci);
     }
     return chess.fen();
-  }, [puzzle, moves, fantasyRules]);
+  }, []);
+
+  const applyLineMoveFantasy = useCallback(
+    (fen: string, moves: string[]): string => {
+      const engine = new FantasyChessEngine(fen, fantasyRules);
+      for (const uci of moves) {
+        engine.applyMove(uci);
+      }
+      return engine.fen;
+    },
+    [fantasyRules]
+  );
+
+  const position = useMemo(() => {
+    if (lineMoves.length === 0) return puzzle.fen;
+    return puzzle.kind === "fantasy"
+      ? applyLineMoveFantasy(puzzle.fen, lineMoves)
+      : applyLineMoveStandard(puzzle.fen, lineMoves);
+  }, [puzzle, lineMoves, applyLineMoveFantasy, applyLineMoveStandard]);
 
   const lastMove = useMemo(() => {
-    const last = moves[moves.length - 1];
+    const last = lineMoves[lineMoves.length - 1];
     if (!last || last.length < 4) return null;
     return { from: last.slice(0, 2), to: last.slice(2, 4) };
-  }, [moves]);
+  }, [lineMoves]);
+
+  const autoPlayOpponent = useCallback(
+    (currentLine: string[], currentIndex: number): { line: string[]; index: number; done: boolean } => {
+      let line = [...currentLine];
+      let idx = currentIndex;
+
+      while (idx < solution.length) {
+        const fenAfter = puzzle.kind === "fantasy"
+          ? applyLineMoveFantasy(puzzle.fen, line)
+          : applyLineMoveStandard(puzzle.fen, line);
+
+        if (getSideToMoveFromFen(fenAfter) === solverColor) break;
+
+        const oppMove = solution[idx]!;
+        line = [...line, oppMove];
+        idx += 1;
+      }
+
+      return { line, index: idx, done: idx >= solution.length };
+    },
+    [solution, puzzle, solverColor, applyLineMoveFantasy, applyLineMoveStandard]
+  );
+
+  const finishSuccess = useCallback(
+    (finalPlayerMoves: string[]) => {
+      setStatus("success");
+      void onComplete(finalPlayerMoves, Date.now() - startTime);
+    },
+    [onComplete, startTime]
+  );
 
   const handleDrop = useCallback(
     (from: string, to: string): boolean => {
-      if (status !== "playing" || frozen) return false;
-      const uci = `${from}${to}`;
+      if (status !== "playing" || frozen || puzzle.locked || missingRequiredPower) return false;
+
+      const idx = moveIndexRef.current;
+      if (idx >= solution.length) return false;
+      if (!isSolverTurn(puzzle.fen, lineMoves)) return false;
+
+      const expected = solution[idx]!;
+      const uci = `${from}${to}`.toLowerCase();
+      const expectedFrom = expected.slice(0, 2);
+      const expectedTo = expected.slice(2, 4);
+
+      if (from.toLowerCase() !== expectedFrom || to.toLowerCase() !== expectedTo) {
+        setStatus("fail");
+        return false;
+      }
+
+      const playedUci = expected.length > 4 ? expected : uci;
 
       if (puzzle.kind === "fantasy") {
-        const replay = new FantasyChessEngine(puzzle.fen, fantasyRules);
-        for (const m of moves) replay.applyMove(m);
-        if (!replay.applyMove(uci)) return false;
+        const engine = new FantasyChessEngine(puzzle.fen, fantasyRules);
+        for (const m of lineMoves) engine.applyMove(m);
+        if (!engine.applyMove(playedUci)) {
+          setStatus("fail");
+          return false;
+        }
       } else {
         const chess = new Chess(puzzle.fen);
-        for (const m of moves) {
-          chess.move({
-            from: m.slice(0, 2),
-            to: m.slice(2, 4),
-            promotion: m[4] as "q" | "r" | "b" | "n" | undefined,
-          });
-        }
-        try {
-          if (!chess.move({ from, to })) return false;
-        } catch {
+        for (const m of lineMoves) applyMoveToChess(chess, m);
+        if (!applyMoveToChess(chess, playedUci)) {
+          setStatus("fail");
           return false;
         }
       }
 
-      const nextMoves = [...moves, uci];
-      setMoves(nextMoves);
+      const nextLine = [...lineMoves, playedUci];
+      const nextPlayer = [...playerMoves, playedUci];
+      let nextIndex = idx + 1;
 
-      const solution = puzzle.solution_ucis.map((s) => s.toLowerCase());
-      const normalized = nextMoves.map((s) => s.toLowerCase());
+      const auto = autoPlayOpponent(nextLine, nextIndex);
+      moveIndexRef.current = auto.index;
+      setLineMoves(auto.line);
+      setPlayerMoves(nextPlayer);
 
-      if (normalized.length === solution.length) {
-        const correct = normalized.every((m, i) => m === solution[i]);
-        if (correct) {
-          setStatus("success");
-          void onComplete(nextMoves, Date.now() - startTime);
-        } else {
-          setStatus("fail");
-        }
-      } else {
-        const prefixOk = normalized.every((m, i) => m === solution[i]);
-        if (!prefixOk) setStatus("fail");
+      if (auto.done) {
+        finishSuccess(nextPlayer);
       }
 
       return true;
     },
-    [status, frozen, puzzle, fantasyRules, moves, onComplete, startTime]
+    [
+      status,
+      frozen,
+      puzzle,
+      missingRequiredPower,
+      solution,
+      lineMoves,
+      playerMoves,
+      fantasyRules,
+      autoPlayOpponent,
+      finishSuccess,
+    ]
   );
 
-  const reset = () => {
-    setMoves([]);
-    setHintIdx(-1);
-    setStatus("playing");
-  };
-
   const undo = () => {
-    if (!hasUndo || moves.length === 0 || status !== "playing") return;
-    setMoves((m) => m.slice(0, -1));
-    setStatus("playing");
+    if (!hasUndo || playerMoves.length === 0 || status !== "playing") return;
+    reset();
   };
 
   const maxHints = puzzle.hints.length + (hasExtraHint ? 1 : 0);
@@ -166,11 +239,14 @@ export default function AscensionPuzzlePlayer({
   const fantasyEngine = useMemo(() => {
     if (puzzle.kind !== "fantasy") return null;
     const replay = new FantasyChessEngine(puzzle.fen, fantasyRules);
-    for (const uci of moves) replay.applyMove(uci);
+    for (const uci of lineMoves) replay.applyMove(uci);
     return replay;
-  }, [puzzle, fantasyRules, moves]);
+  }, [puzzle, fantasyRules, lineMoves]);
 
   const greedyChainActive = fantasyEngine?.isGreedyChainActive() ?? false;
+
+  const blocked = missingRequiredPower || puzzle.locked;
+  const expectedPlayerMoveCount = extractPlayerMoves(puzzle.fen, solution).length;
 
   return (
     <Card className="theme-bg-secondary border-cyan-500/20">
@@ -193,7 +269,14 @@ export default function AscensionPuzzlePlayer({
         </div>
       </CardHeader>
       <CardContent className={`space-y-3 ${frozen ? "pointer-events-none opacity-90" : ""}`}>
-        {/* ── Blocked: missing required power ── */}
+        {puzzle.locked && (
+          <div className="flex flex-col items-center gap-3 rounded-lg border border-slate-700/60 bg-slate-900/60 px-4 py-6 text-center">
+            <Lock className="h-8 w-8 text-slate-500" />
+            <p className="text-sm font-semibold text-slate-200">{t.ascension.puzzleLockedTitle}</p>
+            <p className="text-xs text-slate-400 max-w-xs">{t.ascension.puzzleLockedPrevious}</p>
+          </div>
+        )}
+
         {missingRequiredPower && (
           <div className="flex flex-col items-center gap-3 rounded-lg border border-slate-700/60 bg-slate-900/60 px-4 py-6 text-center">
             <Lock className="h-8 w-8 text-slate-500" />
@@ -202,10 +285,9 @@ export default function AscensionPuzzlePlayer({
           </div>
         )}
 
-        {!missingRequiredPower && puzzle.kind === "fantasy" && (
+        {!blocked && puzzle.kind === "fantasy" && (
           <TooltipProvider delayDuration={150}>
             <div className="flex flex-wrap items-center gap-2 rounded-lg border border-purple-500/35 bg-purple-950/30 px-3 py-2">
-              {/* Bonus quest label */}
               <span className="flex items-center gap-1 cursor-default">
                 <Star className="h-3.5 w-3.5 shrink-0 text-amber-400" />
                 <span className="text-[11px] font-semibold text-amber-300">
@@ -215,7 +297,6 @@ export default function AscensionPuzzlePlayer({
 
               <span className="text-purple-700">|</span>
 
-              {/* Fantasy rules info */}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span className="flex items-center gap-1 cursor-default">
@@ -229,7 +310,6 @@ export default function AscensionPuzzlePlayer({
                 </TooltipContent>
               </Tooltip>
 
-              {/* Active power badges with individual tooltips */}
               {fantasyRules.enabledAbilities.length > 0 && (
                 <>
                   <span className="text-purple-700">|</span>
@@ -263,7 +343,7 @@ export default function AscensionPuzzlePlayer({
           </p>
         )}
 
-        {!missingRequiredPower && (
+        {!blocked && (
         <div className="flex items-center justify-between gap-2 rounded-md border border-slate-700/80 bg-slate-900/50 px-3 py-2 text-sm">
           <span className="text-slate-400">{t.ascension.sideToMove}</span>
           <Badge variant="outline" className="border-cyan-500/40 text-cyan-200">
@@ -271,15 +351,22 @@ export default function AscensionPuzzlePlayer({
           </Badge>
         </div>
         )}
-        {!missingRequiredPower && <p className="text-xs text-slate-500 -mt-2">{t.ascension.sideToMoveHint}</p>}
-        {!missingRequiredPower && <SimpleChessboard
+        {!blocked && <p className="text-xs text-slate-500 -mt-2">{t.ascension.sideToMoveHint}</p>}
+        {!blocked && expectedPlayerMoveCount > 1 && (
+          <p className="text-xs text-cyan-400/80">
+            {playerMoves.length}/{expectedPlayerMoveCount} — {t.ascension.multiMoveHint}
+          </p>
+        )}
+        {!blocked && (
+        <SimpleChessboard
           position={position}
           onDrop={handleDrop}
           lastMove={lastMove}
           orientation={playerOrientation}
-        />}
+        />
+        )}
 
-        {!missingRequiredPower && (
+        {!blocked && (
         <div className="flex flex-wrap gap-2">
           {hintIdx < maxHints - 1 && hintIdx < puzzle.hints.length - 1 && (
             <Button
@@ -291,7 +378,7 @@ export default function AscensionPuzzlePlayer({
             </Button>
           )}
           {hasUndo && (
-            <Button variant="outline" size="sm" onClick={undo} disabled={moves.length === 0}>
+            <Button variant="outline" size="sm" onClick={undo} disabled={playerMoves.length === 0}>
               {t.ascension.undo}
             </Button>
           )}
@@ -301,7 +388,7 @@ export default function AscensionPuzzlePlayer({
         </div>
         )}
 
-        {!missingRequiredPower && hintIdx >= 0 && puzzle.hints[hintIdx] && (
+        {!blocked && hintIdx >= 0 && puzzle.hints[hintIdx] && (
           <p className="text-sm text-cyan-300/90">{puzzle.hints[hintIdx]![uiLang]}</p>
         )}
 

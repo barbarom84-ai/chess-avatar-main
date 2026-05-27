@@ -10,6 +10,8 @@ export interface AscensionCardResponse {
 export interface AscensionPuzzleListItem extends DbCampaignPuzzle {
   completed: boolean;
   attempts: number;
+  /** True when the puzzle cannot be played yet (sequential lock for standard puzzles). */
+  locked: boolean;
 }
 
 export async function initAscension(): Promise<DbPlayerChampionCard> {

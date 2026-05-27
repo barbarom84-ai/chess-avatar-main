@@ -54,13 +54,15 @@ export function firstOpenPuzzleIndex<T extends { completed: boolean }>(puzzles: 
 }
 
 /**
- * Returns the index of the first incomplete standard puzzle within the
- * standard-only sub-list. Fantasy puzzles are ignored for main-path progress.
+ * Returns the index of the first incomplete, unlocked standard puzzle.
+ * Fantasy puzzles are ignored for main-path progress.
  */
 export function firstOpenStandardPuzzleIndex<
-  T extends { completed: boolean; kind: string },
+  T extends { completed: boolean; kind: string; locked?: boolean },
 >(allPuzzlesSorted: T[]): number {
   const standard = allPuzzlesSorted.filter((p) => p.kind === "standard");
+  const unlockedIdx = standard.findIndex((p) => !p.completed && !p.locked);
+  if (unlockedIdx >= 0) return unlockedIdx;
   const idx = standard.findIndex((p) => !p.completed);
   return idx >= 0 ? idx : Math.max(0, standard.length - 1);
 }

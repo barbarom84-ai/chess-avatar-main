@@ -7,24 +7,52 @@ import {
   mapDbChampionCard,
   requireAscensionPremium,
 } from "@/lib/ascension/server-auth";
-import { Chess } from "chess.js";
+import {
+  computeStandardPuzzleLocked,
+  dedupeCampaignPuzzlesByLevel,
+} from "@/lib/ascension/campaign-puzzle-utils";
+import {
+  extractPlayerMoves,
+  getSolverColor,
+  validatePlayerSolution,
+} from "@/lib/ascension/puzzle-sequence";
+import { getSideToMoveFromFen } from "@/lib/ascension/fen-utils";
 
 export const runtime = "nodejs";
 
-function validateStandardSolution(fen: string, solutionUcis: string[]): boolean {
-  const chess = new Chess(fen);
-  for (const uci of solutionUcis) {
-    const from = uci.slice(0, 2);
-    const to = uci.slice(2, 4);
-    const promotion = uci.length > 4 ? uci[4] : undefined;
-    try {
-      const move = chess.move({ from, to, promotion: promotion as "q" | "r" | "b" | "n" | undefined });
-      if (!move) return false;
-    } catch {
-      return false;
+function validateFantasyPlayerSolution(
+  fen: string,
+  rules: {
+    enabledAbilities: PieceAbilityId[];
+    objective?: FantasyObjective;
+    objectiveSquare?: string;
+    objectivePiece?: string;
+  },
+  solutionUcis: string[],
+  playerMoves: string[]
+): boolean {
+  const normalizedSolution = solutionUcis.map((m) => m.trim().toLowerCase());
+  const normalizedPlayer = playerMoves.map((m) => m.trim().toLowerCase());
+  const solverColor = getSolverColor(fen);
+
+  const expectedIndices: number[] = [];
+  const engine = new FantasyChessEngine(fen, {
+    enabledAbilities: rules.enabledAbilities,
+    objective: rules.objective,
+    objectiveSquare: rules.objectiveSquare,
+    objectivePiece: rules.objectivePiece,
+  });
+
+  for (let i = 0; i < normalizedSolution.length; i++) {
+    if (getSideToMoveFromFen(engine.fen) === solverColor) {
+      expectedIndices.push(i);
     }
+    if (!engine.applyMove(normalizedSolution[i]!)) return false;
   }
-  return true;
+
+  const expectedPlayer = expectedIndices.map((i) => normalizedSolution[i]!);
+  if (normalizedPlayer.length !== expectedPlayer.length) return false;
+  return normalizedPlayer.every((m, i) => m === expectedPlayer[i]);
 }
 
 export async function POST(request: NextRequest) {
@@ -68,17 +96,39 @@ export async function POST(request: NextRequest) {
   }
 
   const card = mapDbChampionCard(cardRes.data as Record<string, unknown>);
-  if (card.elo < puzzle.min_elo) {
-    return NextResponse.json({ error: "ELO too low for this puzzle" }, { status: 403 });
+
+  // Sequential unlock check for standard puzzles
+  if (puzzle.kind === "standard") {
+    const allPuzzlesRes = await auth.ctx.admin
+      .from("campaign_puzzles")
+      .select("*")
+      .eq("is_published", true)
+      .order("sort_order", { ascending: true });
+
+    const completionsRes = await auth.ctx.admin
+      .from("player_puzzle_completions")
+      .select("puzzle_id")
+      .eq("user_id", auth.ctx.user.id);
+
+    const completedIds = new Set((completionsRes.data ?? []).map((c) => String(c.puzzle_id)));
+    const withCompletion = dedupeCampaignPuzzlesByLevel(
+      (allPuzzlesRes.data ?? []).map((p) => mapDbCampaignPuzzle(p as Record<string, unknown>))
+    ).map((p) => ({
+      ...p,
+      completed: completedIds.has(p.id),
+    }));
+
+    const lockedMap = computeStandardPuzzleLocked(withCompletion);
+    if (lockedMap.get(puzzle.id)) {
+      return NextResponse.json({ error: "Puzzle locked" }, { status: 403 });
+    }
   }
 
   const submitted = body.moves.map((m) => m.trim().toLowerCase());
   const solution = puzzle.solution_ucis.map((m) => m.trim().toLowerCase());
 
   let solved = false;
-  if (submitted.length !== solution.length) {
-    solved = false;
-  } else if (puzzle.kind === "fantasy") {
+  if (puzzle.kind === "fantasy") {
     const fr = puzzle.fantasy_rules;
     const rules = {
       enabledAbilities: (fr.enabledAbilities ?? []) as PieceAbilityId[],
@@ -86,12 +136,9 @@ export async function POST(request: NextRequest) {
       objectiveSquare: fr.objectiveSquare as string | undefined,
       objectivePiece: fr.objectivePiece as string | undefined,
     };
-    const replay = FantasyChessEngine.replaySolution(puzzle.fen, rules, submitted);
-    solved = replay.ok && submitted.every((m, i) => m === solution[i]);
+    solved = validateFantasyPlayerSolution(puzzle.fen, rules, solution, submitted);
   } else {
-    solved =
-      submitted.every((m, i) => m === solution[i]) &&
-      validateStandardSolution(puzzle.fen, submitted);
+    solved = validatePlayerSolution(puzzle.fen, solution, submitted);
   }
 
   const existing = await auth.ctx.admin

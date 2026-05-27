@@ -4,7 +4,7 @@ import {
   mapDbChampionCard,
   requireAscensionPremium,
 } from "@/lib/ascension/server-auth";
-import { dedupeCampaignPuzzlesByLevel } from "@/lib/ascension/campaign-puzzle-utils";
+import { dedupeCampaignPuzzlesByLevel, computeStandardPuzzleLocked } from "@/lib/ascension/campaign-puzzle-utils";
 
 export const runtime = "nodejs";
 
@@ -26,7 +26,6 @@ export async function GET(request: NextRequest) {
     .from("campaign_puzzles")
     .select("*")
     .eq("is_published", true)
-    .lte("min_elo", playerElo)
     .order("sort_order", { ascending: true });
 
   if (error) {
@@ -42,7 +41,7 @@ export async function GET(request: NextRequest) {
     (completions.data ?? []).map((c) => [String(c.puzzle_id), c])
   );
 
-  const mapped = dedupeCampaignPuzzlesByLevel(
+  const withCompletion = dedupeCampaignPuzzlesByLevel(
     (puzzles ?? []).map((p) => mapDbCampaignPuzzle(p as Record<string, unknown>))
   ).map((puzzle) => {
     const completion = completionMap.get(puzzle.id);
@@ -52,6 +51,13 @@ export async function GET(request: NextRequest) {
       attempts: completion?.attempts ?? 0,
     };
   });
+
+  const standardLocked = computeStandardPuzzleLocked(withCompletion);
+
+  const mapped = withCompletion.map((puzzle) => ({
+    ...puzzle,
+    locked: puzzle.kind === "standard" ? (standardLocked.get(puzzle.id) ?? false) : false,
+  }));
 
   return NextResponse.json({
     puzzles: mapped,

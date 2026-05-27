@@ -279,40 +279,60 @@ export default function AscensionProgressPath({
             if (!node) return null;
             const isSelected = puzzle.id === selectedPuzzleId;
             const isTokenHere = visualIndex === idx;
+            const isLocked = puzzle.locked && !puzzle.completed;
 
             return (
               <button
                 key={puzzle.id}
                 type="button"
-                onClick={() => onSelectPuzzle(puzzle.id)}
-                title={puzzle.prompt[uiLang] || puzzle.slug}
-                className="absolute -translate-x-1/2 -translate-y-1/2 group focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 rounded-full"
+                onClick={() => !isLocked && onSelectPuzzle(puzzle.id)}
+                disabled={isLocked}
+                title={
+                  isLocked
+                    ? t.ascension.puzzleLockedPrevious
+                    : (puzzle.prompt[uiLang] || puzzle.slug)
+                }
+                className={`absolute -translate-x-1/2 -translate-y-1/2 group focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 rounded-full ${
+                  isLocked ? "cursor-not-allowed" : ""
+                }`}
                 style={pathNodeToStyle(node)}
               >
                 <div
-                  className={`relative flex flex-col items-center gap-1 transition-transform hover:scale-105 ${
-                    isTokenHere ? "opacity-0" : ""
+                  className={`relative flex flex-col items-center gap-1 transition-transform ${
+                    isTokenHere ? "opacity-0" : isLocked ? "opacity-40" : "hover:scale-105"
                   }`}
                 >
                   <div
                     className={`w-11 h-11 rounded-full border-2 flex items-center justify-center text-sm font-bold shadow-lg transition-colors ${
-                      puzzle.completed
-                        ? "border-emerald-400 bg-emerald-950/80 text-emerald-300"
-                        : isSelected
-                          ? "border-cyan-400 bg-cyan-950/90 text-cyan-100 ring-2 ring-cyan-400/40"
-                          : "border-slate-600 bg-slate-900/90 text-slate-300"
+                      isLocked
+                        ? "border-slate-700/50 bg-slate-900/50 text-slate-600"
+                        : puzzle.completed
+                          ? "border-emerald-400 bg-emerald-950/80 text-emerald-300"
+                          : isSelected
+                            ? "border-cyan-400 bg-cyan-950/90 text-cyan-100 ring-2 ring-cyan-400/40"
+                            : "border-slate-600 bg-slate-900/90 text-slate-300"
                     }`}
                   >
-                    {puzzle.completed ? <Check className="h-5 w-5" /> : idx + 1}
+                    {isLocked ? (
+                      <Lock className="h-4 w-4" />
+                    ) : puzzle.completed ? (
+                      <Check className="h-5 w-5" />
+                    ) : (
+                      puzzle.sort_order
+                    )}
                   </div>
                   <span
                     className={`max-w-[72px] text-[10px] leading-tight text-center line-clamp-2 ${
-                      isSelected ? "text-cyan-200 font-medium" : "text-slate-400"
+                      isLocked
+                        ? "text-slate-600"
+                        : isSelected
+                          ? "text-cyan-200 font-medium"
+                          : "text-slate-400"
                     }`}
                   >
                     {puzzle.prompt[uiLang] || puzzle.slug}
                   </span>
-                  {isSelected && (
+                  {isSelected && !isLocked && (
                     <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]" />
                   )}
                 </div>
