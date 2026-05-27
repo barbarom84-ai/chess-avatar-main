@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { createServiceSupabase } from "@/lib/supabase-service";
 import { getAuthedUserFromRequest } from "@/lib/supabase-auth-request";
 import { isSuperUserServer } from "@/lib/is-super-user-server";
 import { FantasyChessEngine } from "@/lib/ascension/fantasy-chess/engine";
@@ -36,9 +37,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Authentication required" }, { status: 401 });
   }
 
-  const admin = createClient(supabaseUrl, serviceKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
+  const admin = createServiceSupabase();
+  if (!admin) {
+    return NextResponse.json({ error: "Supabase not configured" }, { status: 503 });
+  }
 
   if (!(await isSuperUserServer(admin, user.id))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -164,9 +166,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Authentication required" }, { status: 401 });
   }
 
-  const admin = createClient(supabaseUrl, serviceKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
+  const admin = createServiceSupabase();
+  if (!admin) {
+    return NextResponse.json({ error: "Supabase not configured" }, { status: 503 });
+  }
 
   if (!(await isSuperUserServer(admin, user.id))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });

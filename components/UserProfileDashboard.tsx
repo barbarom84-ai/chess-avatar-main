@@ -422,7 +422,7 @@ function ProfileIdentityRow({
   setUpgradeOpen,
 }: {
   avatarUrl: string | null;
-  copy: (typeof import("@/lib/translations").translations)["fr"]["profileDashboard"];
+  copy: import("@/lib/i18n").TranslationKey["profileDashboard"];
   displayName: string;
   email: string;
   initials: string;
@@ -490,7 +490,7 @@ function RecentGamesStat({
   copy,
   gamesCount,
 }: {
-  copy: (typeof import("@/lib/translations").translations)["fr"]["profileDashboard"];
+  copy: import("@/lib/i18n").TranslationKey["profileDashboard"];
   gamesCount: number;
 }) {
   return (

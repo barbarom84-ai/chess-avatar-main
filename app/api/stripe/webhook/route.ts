@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import * as Sentry from '@sentry/nextjs';
-import { createClient } from '@supabase/supabase-js';
+import { requireServiceSupabase } from '@/lib/supabase-service';
 import { getStripe } from '@/lib/stripe';
 
 export async function POST(req: NextRequest) {
@@ -14,11 +14,12 @@ export async function POST(req: NextRequest) {
 
   let event: Stripe.Event;
 
-  // Lazy init to avoid build-time errors
-  const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-    process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-  );
+  let supabaseAdmin;
+  try {
+    supabaseAdmin = requireServiceSupabase();
+  } catch {
+    return NextResponse.json({ error: 'Server misconfigured' }, { status: 500 });
+  }
 
   try {
     event = getStripe().webhooks.constructEvent(

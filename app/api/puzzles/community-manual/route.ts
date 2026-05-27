@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createServiceSupabase } from "@/lib/supabase-service";
 import { rateLimit } from "@/lib/rate-limit";
 import { userMayPublishCommunityPuzzle } from "@/lib/community-puzzle-admin-auth";
 import { tryBuildManualCommunityPuzzlePayload } from "@/lib/cloud-puzzle";
@@ -32,9 +32,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Authentication required" }, { status: 401 });
   }
 
-  const admin = createClient(supabaseUrl, serviceKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
+  const admin = createServiceSupabase();
+  if (!admin) {
+    return NextResponse.json({ error: "Server misconfigured" }, { status: 503 });
+  }
 
   if (!(await userMayPublishCommunityPuzzle(admin, user.id))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -97,9 +98,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Authentication required" }, { status: 401 });
   }
 
-  const admin = createClient(supabaseUrl, serviceKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
+  const admin = createServiceSupabase();
+  if (!admin) {
+    return NextResponse.json({ error: "Server misconfigured" }, { status: 503 });
+  }
 
   if (!(await userMayPublishCommunityPuzzle(admin, user.id))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });

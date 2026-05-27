@@ -1,5 +1,8 @@
 # Project Specification: Chess Avatar Creator (CAC)
 
+> **Archive:** This document describes the original MVP scope. For current features (Arena, Ascension, PvP, puzzles, coach), see [README.md](./README.md) and [docs/README.md](./docs/README.md).
+
+
 ## 1. Vision
 Une application web permettant aux joueurs d'échecs de créer un "Clone IA" de leur style de jeu (ou de celui d'un ami) en important des parties depuis Chess.com ou Lichess. Le but ultime est d'exporter ce profil sous forme compatible UCI pour jouer contre lui dans des logiciels tiers (Fritz, Chessbase).
 

@@ -64,6 +64,12 @@ Ouvrez [http://localhost:3000](http://localhost:3000) pour commencer !
 - Sauvegarde **localStorage** automatique
 - Import/Export de configurations
 
+### 🏟️ Arène, Ascension & PvP
+- **Arène** : deux avatars s'affrontent en spectateur
+- **Ascension** : campagne de puzzles et progression
+- **PvP en ligne** : salons et invitations
+- **Puzzles** cloud et communauté
+
 ### ☁️ Sauvegarde Cloud (Nouveau !)
 - **Authentification** email/password
 - **Sauvegarde Supabase** PostgreSQL
@@ -73,11 +79,15 @@ Ouvrez [http://localhost:3000](http://localhost:3000) pour commencer !
 
 ## 📖 Documentation
 
+Index complet : [**docs/README.md**](./docs/README.md)
+
 - ☁️ [**SUPABASE_CLOUD.md**](./SUPABASE_CLOUD.md) — Sauvegarde cloud et authentification
 - 🛠️ [**SUPABASE_SETUP.md**](./SUPABASE_SETUP.md) — Configuration Supabase
 - 🚀 [**DEPLOIEMENT_GUIDE.md**](./DEPLOIEMENT_GUIDE.md) — Déploiement Vercel
-- 📋 [**spec.md**](./spec.md) — Spécifications (MVP historique)
+- 📋 [**spec.md**](./spec.md) — Spécifications MVP (archive)
 - 🔒 [**docs/STOCKFISH_SECURITY.md**](./docs/STOCKFISH_SECURITY.md) — Stockfish Worker & CSP
+
+Scripts utiles : `npm run clean` (supprime `.next`), `npm run analyze` (bundle analyzer).
 
 ## 🎯 Guide d'Utilisation
 

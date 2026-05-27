@@ -194,3 +194,13 @@ export function dedupeByIdentity(options: ProfileOption[]): ProfileOption[] {
   return Array.from(map.values()).sort((a, b) => b.savedAt - a.savedAt);
 }
 
+export function filterBySearch(options: ProfileOption[], q: string): ProfileOption[] {
+  const needle = q.trim().toLowerCase();
+  if (!needle) return options;
+  return options.filter((o) => {
+    const name = (o.config.name || "").toLowerCase();
+    return (
+      o.label.toLowerCase().includes(needle) || name.includes(needle)
+    );
+  });
+}

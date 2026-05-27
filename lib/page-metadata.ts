@@ -1,20 +1,20 @@
-import { translations } from "@/lib/translations";
+import { en } from "@/lib/i18n/en";
 
 /** Browser tab titles (English default; UI titles follow client language). */
 export const pageMetaTitles = {
-  analyze: translations.en.pages.analyze.metaTitle,
-  play: translations.en.pages.play.metaTitle,
-  online: translations.en.pages.online.metaTitle,
-  arena: translations.en.pages.arena.metaTitle,
-  learn: translations.en.pages.learn.metaTitle,
-  puzzles: translations.en.pages.puzzles.metaTitle,
-  profile: translations.en.pages.profile.metaTitle,
-  avatars: translations.en.pages.avatars.metaTitle,
-  games: translations.en.pages.games.metaTitle,
-  review: translations.en.pages.review.metaTitle,
-  guide: translations.en.pages.guide.metaTitle,
-  contact: translations.en.contact.title,
-  terms: translations.en.legal.termsTitle,
-  privacy: translations.en.legal.privacyTitle,
-  refund: translations.en.legal.refundTitle,
+  analyze: en.pages.analyze.metaTitle,
+  play: en.pages.play.metaTitle,
+  online: en.pages.online.metaTitle,
+  arena: en.pages.arena.metaTitle,
+  learn: en.pages.learn.metaTitle,
+  puzzles: en.pages.puzzles.metaTitle,
+  profile: en.pages.profile.metaTitle,
+  avatars: en.pages.avatars.metaTitle,
+  games: en.pages.games.metaTitle,
+  review: en.pages.review.metaTitle,
+  guide: en.pages.guide.metaTitle,
+  contact: en.contact.title,
+  terms: en.legal.termsTitle,
+  privacy: en.legal.privacyTitle,
+  refund: en.legal.refundTitle,
 } as const;

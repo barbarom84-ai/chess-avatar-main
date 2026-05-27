@@ -1,16 +1,19 @@
 import type { NextRequest } from "next/server";
 import { cookies } from "next/headers";
-import { createServerClient } from "@supabase/auth-helpers-nextjs";
+import { createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
 import type { User } from "@supabase/supabase-js";
 
-/** Resolve Supabase Auth user from Bearer token or Next.js cookies (same pattern as puzzle APIs). */
+/** Resolve Supabase Auth user from Bearer token or Next.js cookies. */
 export async function getAuthedUserFromRequest(
   request: NextRequest,
   supabaseUrl: string,
   anonKey: string
 ): Promise<User | null> {
-  const bearer = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "").trim();
+  const bearer = request.headers
+    .get("authorization")
+    ?.replace(/^Bearer\s+/i, "")
+    .trim();
   if (bearer) {
     const sb = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: `Bearer ${bearer}` } },
@@ -35,7 +38,7 @@ export async function getAuthedUserFromRequest(
             cookieStore.set(name, value, options)
           );
         } catch {
-          /* ignore */
+          /* ignore when called from a Server Component */
         }
       },
     },

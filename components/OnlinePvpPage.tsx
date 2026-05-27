@@ -364,7 +364,7 @@ export default function OnlinePvpPage() {
     const rm = o.resultModal;
     const r = online.game.result;
     const rr = online.game.result_reason ?? "";
-    let detail = rm.reasonGeneric;
+    let detail: string = rm.reasonGeneric;
     switch (rr) {
       case "checkmate":
         detail = rm.reasonCheckmate;

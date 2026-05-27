@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createAnonSupabase } from '@/lib/supabase-service';
 import { getStripe, getStripePriceId } from '@/lib/stripe';
 
 export async function POST(req: NextRequest) {
@@ -14,18 +14,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-    if (!supabaseUrl || !supabaseAnonKey) {
+    const supabase = createAnonSupabase(token);
+    if (!supabase) {
       console.error('Supabase env not configured');
       return NextResponse.json({ error: 'CHECKOUT_ERROR' }, { status: 500 });
     }
-
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      global: {
-        headers: { Authorization: `Bearer ${token}` },
-      },
-    });
 
     const {
       data: { user },

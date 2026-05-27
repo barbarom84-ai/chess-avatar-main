@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { createAnonSupabase, createServiceSupabase } from "@/lib/supabase-service";
 import { createHash } from "node:crypto";
 import OpenAI from "openai";
 
@@ -159,9 +160,8 @@ export async function POST(req: NextRequest) {
   if (!openaiKey) return errorResponse("OPENAI_KEY_MISSING", 500);
 
   // 1) Authenticate the caller.
-  const userClient = createClient(supabaseUrl, supabaseAnonKey, {
-    global: { headers: { Authorization: `Bearer ${token}` } },
-  });
+  const userClient = createAnonSupabase(token);
+  if (!userClient) return errorResponse("SUPABASE_NOT_CONFIGURED", 500);
   const {
     data: { user },
     error: authError,
@@ -202,9 +202,8 @@ export async function POST(req: NextRequest) {
   };
 
   // 3) Service-role client for shared cache + usage writes.
-  const adminClient: AdminClient = createClient(supabaseUrl, serviceRoleKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
+  const adminClient = createServiceSupabase();
+  if (!adminClient) return errorResponse("SUPABASE_NOT_CONFIGURED", 500);
 
   const cacheKey = buildCacheKey(explainReq);
 

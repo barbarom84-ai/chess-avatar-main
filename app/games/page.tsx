@@ -44,33 +44,17 @@ import {
   MAX_PGN_FILE_BYTES,
   listPlayerNamesFromPgn,
   parsePgnFileForGames,
-  splitPgnDatabase,
-  parsePgnTagInBlock,
 } from "@/lib/pgn-import";
+import {
+  isHumanVsBotOnly,
+  matchupTitleFromStoredGame,
+} from "@/lib/games-matchup";
 import PgnImportCard from "@/components/PgnImportCard";
 import UpgradeModal from "@/components/UpgradeModal";
 import GameHistoryList from "@/components/GameHistoryList";
 
 /** Same Game Review tiering as /review/page.tsx so behavior stays consistent. */
 const FREE_MAX_PLIES = 60;
-
-/** Revue : titre lisible « Blancs vs Noirs » depuis le PGN (évite d’associer le badge résultat au seul adversaire). */
-function matchupTitleFromStoredGame(game: DbGame): string {
-  const raw = game.pgn?.trim();
-  if (!raw) return game.opponent_name;
-  const block = splitPgnDatabase(raw)[0];
-  if (!block) return game.opponent_name;
-  const w = parsePgnTagInBlock(block, "White")?.trim();
-  const b = parsePgnTagInBlock(block, "Black")?.trim();
-  if (w && b && w !== "?" && b !== "?") {
-    return `${w} vs ${b}`;
-  }
-  return game.opponent_name;
-}
-
-function isHumanVsBotOnly(game: DbGame): boolean {
-  return !isArenaBotVsBotGame(game) && !isPvpOnlineGame(game);
-}
 
 const GameReviewer = dynamic(() => import("@/components/GameReviewer"), {
   ssr: false,

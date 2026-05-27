@@ -172,7 +172,7 @@ export default function PuzzlesPageClient({
         return;
       }
       if (!res.ok) {
-        let msg = p.cloudPuzzleError;
+        let msg: string = p.cloudPuzzleError;
         try {
           const j = (await res.json()) as { error?: string };
           if (typeof j.error === "string") msg = j.error;

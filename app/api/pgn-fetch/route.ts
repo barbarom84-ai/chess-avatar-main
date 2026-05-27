@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createAnonSupabase } from "@/lib/supabase-service";
 import { isActiveSuperPlan } from "@/lib/subscription-access";
 import { rateLimit } from "@/lib/rate-limit";
 import { splitPgnGames } from "@/lib/pgn-to-uci";
@@ -136,9 +136,10 @@ async function authorizeSuperUser(req: NextRequest): Promise<{ ok: true } | { ok
   if (!supabaseUrl || !supabaseAnonKey) {
     return { ok: false, status: 500, error: "SUPABASE_NOT_CONFIGURED" };
   }
-  const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-    global: { headers: { Authorization: `Bearer ${token}` } },
-  });
+  const supabase = createAnonSupabase(token);
+  if (!supabase) {
+    return { ok: false, status: 500, error: "SUPABASE_NOT_CONFIGURED" };
+  }
   const {
     data: { user },
     error: authError,

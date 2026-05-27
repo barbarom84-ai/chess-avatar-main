@@ -16,8 +16,14 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import type { EngineConfig } from "@/lib/analysis";
-import PublicProfiles from "@/components/PublicProfiles";
 import { useLanguage } from "@/lib/language-context";
+
+const PublicProfiles = dynamic(() => import("@/components/PublicProfiles"), {
+  ssr: false,
+  loading: () => (
+    <div className="h-48 rounded-lg bg-slate-900/80 animate-pulse" aria-hidden />
+  ),
+});
 
 function PlayBoardLoading() {
   const { t } = useLanguage();
