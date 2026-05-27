@@ -18,7 +18,19 @@ NEXT_PUBLIC_SUPABASE_URL=https://votre-projet.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=votre_cle_anon
 ```
 
-### 3. Créer les Tables
+### 3. Appliquer les migrations
+
+Préférez les fichiers versionnés dans [`supabase/migrations/`](supabase/migrations/) (voir [`supabase/MIGRATIONS.md`](supabase/MIGRATIONS.md)) :
+
+```bash
+supabase db push
+```
+
+Ou exécutez chaque migration dans l’ordre via **SQL Editor** du Dashboard.
+
+### 4. Créer les Tables (exemple minimal)
+
+Si vous configurez à la main sans les migrations du dépôt, le SQL doit inclure **RLS et GRANTs Data API** (PostgREST / `supabase-js`). Sans `GRANT`, les tables créées après mai 2026 ne seront pas accessibles via le client.
 
 Exécutez ce SQL dans l'éditeur SQL de Supabase :
 
@@ -84,9 +96,13 @@ CREATE TRIGGER update_profiles_updated_at
   BEFORE UPDATE ON profiles
   FOR EACH ROW 
   EXECUTE FUNCTION update_updated_at_column();
+
+-- Data API (obligatoire sur les nouveaux projets / nouvelles tables)
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.profiles TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.profiles TO service_role;
 ```
 
-### 4. Configurer l'Authentification
+### 5. Configurer l'Authentification
 
 Dans Supabase Dashboard > Authentication > Settings :
 
@@ -94,7 +110,7 @@ Dans Supabase Dashboard > Authentication > Settings :
 2. **Confirm email** : OFF (pour dev, ON en prod)
 3. **Enable email confirmations** : OFF (pour dev)
 
-### 5. Tester la Configuration
+### 6. Tester la Configuration
 
 ```typescript
 import { supabase } from '@/lib/supabase';
@@ -104,13 +120,24 @@ const { data, error } = await supabase.auth.getSession();
 console.log('Connected:', !error);
 ```
 
-## 🔒 Sécurité (Row Level Security)
+## 🔒 Sécurité (GRANT + Row Level Security)
+
+Supabase sépare deux couches :
+
+1. **GRANT** — le rôle Postgres (`anon`, `authenticated`, `service_role`) peut-il atteindre la table via l’API (REST, GraphQL, `supabase-js`, Realtime) ?
+2. **RLS** — quelles lignes ce rôle peut-il lire ou modifier ?
 
 Les policies RLS garantissent :
 - ✅ Utilisateurs peuvent voir/modifier UNIQUEMENT leurs propres profils
 - ✅ Tout le monde peut voir les profils publics
 - ✅ Profils privés restent privés
 - ❌ Pas d'accès non autorisé
+
+**Audit** : Dashboard → **Advisors** → Security Advisor — vérifiez quelles tables sont exposées à l’API. Le dépôt inclut [`20260616120000_data_api_grants.sql`](supabase/migrations/20260616120000_data_api_grants.sql) pour toutes les tables actuelles.
+
+Option Dashboard : **Integrations → Data API** → « Automatically expose new tables » peut rester activé en secours, mais les **GRANTs dans les migrations** restent la source de vérité pour ce projet.
+
+Références : [changelog](https://supabase.com/changelog/45329-breaking-change-tables-not-exposed-to-data-and-graphql-api-automatically), [Securing your API](https://supabase.com/docs/guides/api/securing-your-api).
 
 ## 📊 Structure de la Base de Données
 
@@ -173,6 +200,10 @@ await migrateLocalToCloud();
 ### Erreur : "Row Level Security"
 - Vérifiez que les policies sont créées
 - Vérifiez que l'utilisateur est authentifié
+
+### Erreur : `permission denied for table` (code 42501)
+- La table n’a pas de `GRANT` pour le rôle utilisé (`anon` / `authenticated`)
+- Appliquez [`20260616120000_data_api_grants.sql`](supabase/migrations/20260616120000_data_api_grants.sql) ou ajoutez les `GRANT` dans votre migration (voir [`supabase/MIGRATIONS.md`](supabase/MIGRATIONS.md))
 
 ### Erreur : "relation does not exist"
 - Exécutez le SQL de création des tables

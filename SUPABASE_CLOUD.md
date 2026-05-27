@@ -79,7 +79,17 @@ NEXT_PUBLIC_SUPABASE_URL=https://votre-projet.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=votre_cle_anonyme_public
 ```
 
-#### 3. Créer les Tables
+#### 3. Appliquer les migrations
+
+Utilisez les migrations du dépôt ([`supabase/migrations/`](supabase/migrations/), guide [`supabase/MIGRATIONS.md`](supabase/MIGRATIONS.md)) :
+
+```bash
+supabase db push
+```
+
+Chaque nouvelle table doit inclure des **GRANTs Data API** en plus du RLS (voir changelog [tables not exposed automatically](https://supabase.com/changelog/45329-breaking-change-tables-not-exposed-to-data-and-graphql-api-automatically)). La migration [`20260616120000_data_api_grants.sql`](supabase/migrations/20260616120000_data_api_grants.sql) couvre toutes les tables actuelles.
+
+#### 4. Créer les Tables (exemple minimal)
 
 Dans Supabase Dashboard > SQL Editor, exécutez :
 
@@ -139,9 +149,12 @@ CREATE TRIGGER update_profiles_updated_at
   BEFORE UPDATE ON profiles
   FOR EACH ROW 
   EXECUTE FUNCTION update_updated_at_column();
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.profiles TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.profiles TO service_role;
 ```
 
-#### 4. Redémarrer le Serveur
+#### 5. Redémarrer le Serveur
 
 ```bash
 npm run dev
@@ -220,6 +233,12 @@ Bibliothèque publique :
 - Pagination
 
 ## 🔒 Sécurité
+
+### Data API grants + Row Level Security (RLS)
+
+**GRANT** contrôle si `anon` / `authenticated` / `service_role` peuvent appeler une table via PostgREST et `supabase-js`. **RLS** contrôle ensuite quelles lignes sont visibles. Les deux sont requis.
+
+Après déploiement, vérifiez **Dashboard → Advisors → Security Advisor** (tables exposées à l’API). Tables réservées au serveur (ex. `community_puzzles`) ne doivent pas avoir de grant `anon` / `authenticated`.
 
 ### Row Level Security (RLS)
 
@@ -304,6 +323,12 @@ SELECT * FROM pg_policies WHERE tablename = 'profiles';
 -- Recréez les policies si nécessaire
 ```
 
+### Erreur : `permission denied for table` (42501)
+```sql
+-- Appliquez la migration des grants ou ajoutez-les à votre CREATE TABLE
+-- Voir supabase/migrations/20260616120000_data_api_grants.sql
+```
+
 ### Erreur : "User not authenticated"
 ```typescript
 // Vérifiez l'authentification
@@ -353,6 +378,8 @@ console.log('Session:', data, 'Error:', error);
 - [Documentation Supabase](https://supabase.com/docs)
 - [Auth Helpers](https://supabase.com/docs/guides/auth)
 - [Row Level Security](https://supabase.com/docs/guides/auth/row-level-security)
+- [Securing your API (GRANT + RLS)](https://supabase.com/docs/guides/api/securing-your-api)
+- [Migrations checklist](supabase/MIGRATIONS.md)
 - [PostgreSQL JSONB](https://www.postgresql.org/docs/current/datatype-json.html)
 
 ## 💡 Conseils
