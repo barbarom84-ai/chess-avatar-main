@@ -154,7 +154,15 @@ export default function AscensionPuzzlePlayer({
 
       const idx = moveIndexRef.current;
       if (idx >= solution.length) return false;
-      if (!isSolverTurn(puzzle.fen, lineMoves)) return false;
+      if (
+        !isSolverTurn(
+          puzzle.fen,
+          lineMoves,
+          puzzle.kind === "fantasy" ? fantasyRules : undefined
+        )
+      ) {
+        return false;
+      }
 
       const expected = solution[idx]!;
       const uci = `${from}${to}`.toLowerCase();
@@ -246,7 +254,11 @@ export default function AscensionPuzzlePlayer({
   const greedyChainActive = fantasyEngine?.isGreedyChainActive() ?? false;
 
   const blocked = missingRequiredPower || puzzle.locked;
-  const expectedPlayerMoveCount = extractPlayerMoves(puzzle.fen, solution).length;
+  const expectedPlayerMoveCount = extractPlayerMoves(
+    puzzle.fen,
+    solution,
+    puzzle.kind === "fantasy" ? fantasyRules : undefined
+  ).length;
 
   return (
     <Card className="theme-bg-secondary border-cyan-500/20">

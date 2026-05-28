@@ -1,4 +1,6 @@
 import { Chess } from "chess.js";
+import { FantasyChessEngine } from "@/lib/ascension/fantasy-chess/engine";
+import type { FantasyRuleSet } from "@/lib/ascension/fantasy-chess/types";
 import { getSideToMoveFromFen } from "@/lib/ascension/fen-utils";
 
 export type SolverColor = "w" | "b";
@@ -22,9 +24,55 @@ export function applyMoveToChess(chess: Chess, uci: string): boolean {
   }
 }
 
+function sideToMoveAfterLine(
+  fen: string,
+  lineMoves: string[],
+  fantasyRules?: FantasyRuleSet
+): SolverColor | null {
+  if (fantasyRules) {
+    try {
+      const engine = new FantasyChessEngine(fen, fantasyRules);
+      for (const uci of lineMoves) {
+        if (!engine.applyMove(uci)) return null;
+      }
+      return engine.turn;
+    } catch {
+      return null;
+    }
+  }
+
+  let chess: Chess;
+  try {
+    chess = new Chess(fen);
+  } catch {
+    return null;
+  }
+  for (const uci of lineMoves) {
+    if (!applyMoveToChess(chess, uci)) return null;
+  }
+  return chess.turn();
+}
+
 /** Indices in solution_ucis that the solver must play. */
-export function getPlayerMoveIndices(fen: string, solutionUcis: string[]): number[] {
+export function getPlayerMoveIndices(
+  fen: string,
+  solutionUcis: string[],
+  fantasyRules?: FantasyRuleSet
+): number[] {
   const solverColor = getSolverColor(fen);
+  const indices: number[] = [];
+
+  if (fantasyRules) {
+    const engine = new FantasyChessEngine(fen, fantasyRules);
+    for (let i = 0; i < solutionUcis.length; i++) {
+      if (getSideToMoveFromFen(engine.fen) === solverColor) {
+        indices.push(i);
+      }
+      if (!engine.applyMove(solutionUcis[i]!)) break;
+    }
+    return indices;
+  }
+
   let chess: Chess;
   try {
     chess = new Chess(fen);
@@ -32,7 +80,6 @@ export function getPlayerMoveIndices(fen: string, solutionUcis: string[]): numbe
     return [];
   }
 
-  const indices: number[] = [];
   for (let i = 0; i < solutionUcis.length; i++) {
     if (chess.turn() === solverColor) {
       indices.push(i);
@@ -45,8 +92,12 @@ export function getPlayerMoveIndices(fen: string, solutionUcis: string[]): numbe
 }
 
 /** Player-only moves extracted from the full solution line. */
-export function extractPlayerMoves(fen: string, solutionUcis: string[]): string[] {
-  const indices = getPlayerMoveIndices(fen, solutionUcis);
+export function extractPlayerMoves(
+  fen: string,
+  solutionUcis: string[],
+  fantasyRules?: FantasyRuleSet
+): string[] {
+  const indices = getPlayerMoveIndices(fen, solutionUcis, fantasyRules);
   return indices.map((i) => solutionUcis[i]!.trim().toLowerCase());
 }
 
@@ -77,15 +128,12 @@ export function validatePlayerSolution(
 }
 
 /** Whether it is the solver's turn given moves already applied on the line. */
-export function isSolverTurn(fen: string, lineMoves: string[]): boolean {
-  let chess: Chess;
-  try {
-    chess = new Chess(fen);
-  } catch {
-    return false;
-  }
-  for (const uci of lineMoves) {
-    if (!applyMoveToChess(chess, uci)) return false;
-  }
-  return chess.turn() === getSolverColor(fen);
+export function isSolverTurn(
+  fen: string,
+  lineMoves: string[],
+  fantasyRules?: FantasyRuleSet
+): boolean {
+  const turn = sideToMoveAfterLine(fen, lineMoves, fantasyRules);
+  if (!turn) return false;
+  return turn === getSolverColor(fen);
 }
