@@ -1923,6 +1923,8 @@ export const fr = {
         "{imported} importé(s) · {skipped} doublon(s) ignoré(s) · {invalid} invalide(s)",
       adminImportNone: "Aucun nouveau puzzle importé.",
       adminImportError: "Échec de l'import depuis Lichess.",
+      adminImportRateLimited:
+        "Limite de débit Lichess atteinte. {imported} puzzle(s) importé(s) — patientez environ une minute avant de réessayer.",
       backToAscension: "Retour à Ascension",
       tierMilestone: "Palier atteint",
       tierMilestoneHint: "Complète {count} puzzles pour franchir ce palier",

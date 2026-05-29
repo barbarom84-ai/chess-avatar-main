@@ -1913,6 +1913,8 @@ export const en = {
         "{imported} imported · {skipped} duplicate(s) skipped · {invalid} invalid",
       adminImportNone: "No new puzzles imported.",
       adminImportError: "Lichess import failed.",
+      adminImportRateLimited:
+        "Lichess rate limit reached. {imported} puzzle(s) imported — wait about a minute before retrying.",
       backToAscension: "Back to Ascension",
       tierMilestone: "Milestone reached",
       tierMilestoneHint: "Complete {count} puzzles to reach this milestone",

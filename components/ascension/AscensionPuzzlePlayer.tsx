@@ -49,6 +49,9 @@ export default function AscensionPuzzlePlayer({
 
   const [lineMoves, setLineMoves] = useState<string[]>([]);
   const [playerMoves, setPlayerMoves] = useState<string[]>([]);
+  const [history, setHistory] = useState<
+    { line: string[]; player: string[]; index: number }[]
+  >([]);
   const moveIndexRef = useRef(0);
   const [hintIdx, setHintIdx] = useState(-1);
   const [status, setStatus] = useState<"playing" | "success" | "fail">("playing");
@@ -77,6 +80,7 @@ export default function AscensionPuzzlePlayer({
   const reset = useCallback(() => {
     setLineMoves([]);
     setPlayerMoves([]);
+    setHistory([]);
     moveIndexRef.current = 0;
     setHintIdx(-1);
     setStatus("playing");
@@ -150,7 +154,17 @@ export default function AscensionPuzzlePlayer({
 
   const handleDrop = useCallback(
     (from: string, to: string): boolean => {
-      if (status !== "playing" || frozen || puzzle.locked || missingRequiredPower) return false;
+      // A wrong move puts the puzzle in "fail" but does not commit anything, so the
+      // position is still valid: keep the board interactive so the player can retry
+      // (or undo) without restarting from scratch.
+      if (
+        (status !== "playing" && status !== "fail") ||
+        frozen ||
+        puzzle.locked ||
+        missingRequiredPower
+      ) {
+        return false;
+      }
 
       const idx = moveIndexRef.current;
       if (idx >= solution.length) return false;
@@ -192,17 +206,24 @@ export default function AscensionPuzzlePlayer({
         }
       }
 
+      // Snapshot the pre-move state so Undo can step back one player move.
+      const snapshot = { line: lineMoves, player: playerMoves, index: idx };
+
       const nextLine = [...lineMoves, playedUci];
       const nextPlayer = [...playerMoves, playedUci];
-      let nextIndex = idx + 1;
+      const nextIndex = idx + 1;
 
       const auto = autoPlayOpponent(nextLine, nextIndex);
       moveIndexRef.current = auto.index;
+      setHistory((h) => [...h, snapshot]);
       setLineMoves(auto.line);
       setPlayerMoves(nextPlayer);
 
       if (auto.done) {
         finishSuccess(nextPlayer);
+      } else {
+        // Clear any prior wrong-move feedback now that a correct move landed.
+        setStatus("playing");
       }
 
       return true;
@@ -221,10 +242,15 @@ export default function AscensionPuzzlePlayer({
     ]
   );
 
-  const undo = () => {
-    if (!hasUndo || playerMoves.length === 0 || status !== "playing") return;
-    reset();
-  };
+  const undo = useCallback(() => {
+    if (!hasUndo || status === "success" || history.length === 0) return;
+    const prev = history[history.length - 1]!;
+    setHistory((h) => h.slice(0, -1));
+    setLineMoves(prev.line);
+    setPlayerMoves(prev.player);
+    moveIndexRef.current = prev.index;
+    setStatus("playing");
+  }, [hasUndo, status, history]);
 
   const maxHints = puzzle.hints.length + (hasExtraHint ? 1 : 0);
 
@@ -390,7 +416,12 @@ export default function AscensionPuzzlePlayer({
             </Button>
           )}
           {hasUndo && (
-            <Button variant="outline" size="sm" onClick={undo} disabled={playerMoves.length === 0}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={undo}
+              disabled={history.length === 0 || status === "success"}
+            >
               {t.ascension.undo}
             </Button>
           )}

@@ -12,6 +12,7 @@ import {
   lichessPuzzleSlug,
   lichessPuzzleToCampaignRow,
   nextFreeStandardLevel,
+  resolveBatchFen,
   type CampaignLevelSlot,
 } from "@/lib/ascension/lichess-import";
 
@@ -25,11 +26,24 @@ const DIFFICULTIES = new Set([
   "hardest",
 ]);
 const MAX_COUNT = 30;
+/** Polite spacing between per-puzzle detail requests to avoid bursting Lichess. */
+const DETAIL_DELAY_MS = 250;
+const LICHESS_TOKEN = process.env.LICHESS_TOKEN ?? "";
 
 function clampCount(raw: unknown): number {
   const n = Math.floor(Number(raw));
   if (!Number.isFinite(n)) return 10;
   return Math.max(1, Math.min(MAX_COUNT, n));
+}
+
+function lichessHeaders(): Record<string, string> {
+  const headers: Record<string, string> = { Accept: "application/json" };
+  if (LICHESS_TOKEN) headers.Authorization = `Bearer ${LICHESS_TOKEN}`;
+  return headers;
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function rawPuzzleId(entry: unknown): string | null {
@@ -43,19 +57,37 @@ function rawPuzzleId(entry: unknown): string | null {
   return null;
 }
 
-async function fetchLichessDetail(
-  puzzleId: string
-): Promise<NormalizedLichessPuzzle | null> {
+/** Extract the game PGN + puzzle initialPly from a raw batch entry. */
+function rawBatchMeta(entry: unknown): { pgn: string; initialPly: number } | null {
+  if (!entry || typeof entry !== "object") return null;
+  const game = (entry as { game?: unknown }).game;
+  const puzzle = (entry as { puzzle?: unknown }).puzzle;
+  const pgn =
+    game && typeof game === "object" ? (game as { pgn?: unknown }).pgn : undefined;
+  const initialPly =
+    puzzle && typeof puzzle === "object"
+      ? (puzzle as { initialPly?: unknown }).initialPly
+      : undefined;
+  if (typeof pgn !== "string" || typeof initialPly !== "number") return null;
+  return { pgn, initialPly };
+}
+
+type DetailResult =
+  | { ok: true; puzzle: NormalizedLichessPuzzle | null }
+  | { ok: false; rateLimited: boolean };
+
+async function fetchLichessDetail(puzzleId: string): Promise<DetailResult> {
   try {
     const res = await fetch(
       `https://lichess.org/api/puzzle/${encodeURIComponent(puzzleId)}`,
-      { headers: { Accept: "application/json" }, cache: "no-store" }
+      { headers: lichessHeaders(), cache: "no-store" }
     );
-    if (!res.ok) return null;
+    if (res.status === 429) return { ok: false, rateLimited: true };
+    if (!res.ok) return { ok: false, rateLimited: false };
     const raw: unknown = await res.json().catch(() => null);
-    return normalizeLichessPuzzlePayload(raw);
+    return { ok: true, puzzle: normalizeLichessPuzzlePayload(raw) };
   } catch {
-    return null;
+    return { ok: false, rateLimited: false };
   }
 }
 
@@ -112,13 +144,20 @@ export async function POST(request: NextRequest) {
   let batchRaw: unknown;
   try {
     const batchRes = await fetch(lichessUrl.toString(), {
-      headers: { Accept: "application/json" },
+      headers: lichessHeaders(),
       cache: "no-store",
     });
+    if (batchRes.status === 429) {
+      const retryAfter = batchRes.headers.get("Retry-After") ?? "60";
+      return NextResponse.json(
+        { error: `Lichess returned 429`, rateLimited: true },
+        { status: 429, headers: { "Retry-After": retryAfter } }
+      );
+    }
     if (!batchRes.ok) {
       return NextResponse.json(
         { error: `Lichess returned ${batchRes.status}` },
-        { status: batchRes.status === 429 ? 429 : 502 }
+        { status: 502 }
       );
     }
     batchRaw = await batchRes.json().catch(() => null);
@@ -137,14 +176,48 @@ export async function POST(request: NextRequest) {
   }
 
   // 2. Normalize + validate each puzzle (fallback to the detail endpoint for FEN).
+  //    If Lichess rate-limits us mid-loop, stop fetching and import what we have.
   const normalized: NormalizedLichessPuzzle[] = [];
   let invalid = 0;
+  let rateLimited = false;
   for (const entry of entries) {
     const candidate = normalizeLichessPuzzlePayload(entry);
-    const fallbackId = rawPuzzleId(entry) ?? candidate?.puzzleId ?? null;
     let puzzle: NormalizedLichessPuzzle | null = candidate;
+
+    // Repair the batch FEN locally (no network) before any detail request.
+    if (candidate !== null) {
+      const lineOk =
+        candidate.solutionUci.length > 0 &&
+        validateStandardPuzzleLine(candidate.fen, candidate.solutionUci).ok;
+      if (!lineOk) {
+        const meta = rawBatchMeta(entry);
+        const repairedFen = meta
+          ? resolveBatchFen(meta.pgn, meta.initialPly, candidate.solutionUci)
+          : null;
+        if (repairedFen) {
+          puzzle = { ...candidate, fen: repairedFen };
+        }
+      }
+    }
+
+    // Network fallback only if the local repair could not produce a valid line.
     if (!isValidPuzzle(puzzle)) {
-      puzzle = fallbackId ? await fetchLichessDetail(fallbackId) : null;
+      const fallbackId = rawPuzzleId(entry) ?? candidate?.puzzleId ?? null;
+      if (fallbackId) {
+        const detail = await fetchLichessDetail(fallbackId);
+        if (!detail.ok) {
+          if (detail.rateLimited) {
+            rateLimited = true;
+            break;
+          }
+          puzzle = null;
+        } else {
+          puzzle = detail.puzzle;
+        }
+        await sleep(DETAIL_DELAY_MS);
+      } else {
+        puzzle = null;
+      }
     }
     if (!isValidPuzzle(puzzle)) {
       invalid++;
@@ -221,6 +294,7 @@ export async function POST(request: NextRequest) {
     skippedDuplicates,
     invalid,
     failed,
+    rateLimited,
     levels,
   });
 }

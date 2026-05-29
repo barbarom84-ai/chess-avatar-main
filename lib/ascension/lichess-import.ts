@@ -1,4 +1,5 @@
-import type { NormalizedLichessPuzzle } from "@/lib/lichess-puzzle";
+import { fenAfterInitialPly, type NormalizedLichessPuzzle } from "@/lib/lichess-puzzle";
+import { validateStandardPuzzleLine } from "@/lib/ascension/puzzle-validation";
 import type { LocalizedText } from "@/lib/ascension/types";
 
 /** Row shape inserted into `campaign_puzzles` (matches the admin POST payload, minus id). */
@@ -28,6 +29,26 @@ export interface CampaignLevelSlot {
 /** Stable, idempotent slug so re-imports of the same Lichess puzzle are deduplicated. */
 export function lichessPuzzleSlug(puzzleId: string): string {
   return `lichess-${puzzleId}`;
+}
+
+/**
+ * The Lichess `batch/mix` endpoint omits `puzzle.fen`; reconstructing it from the game
+ * PGN can be off by a ply. Try the reported ply and its neighbours, returning the first
+ * FEN from which the entire solution line is legal. This is pure and local (no network),
+ * which lets the importer avoid per-puzzle detail requests and the Lichess rate limit.
+ */
+export function resolveBatchFen(
+  pgn: string,
+  initialPly: number,
+  solution: string[]
+): string | null {
+  if (!pgn || solution.length === 0 || !Number.isFinite(initialPly)) return null;
+  for (const ply of [initialPly, initialPly + 1, initialPly - 1]) {
+    if (ply < 0) continue;
+    const fen = fenAfterInitialPly(pgn, ply);
+    if (fen && validateStandardPuzzleLine(fen, solution).ok) return fen;
+  }
+  return null;
 }
 
 /**

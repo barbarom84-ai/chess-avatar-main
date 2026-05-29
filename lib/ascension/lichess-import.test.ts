@@ -7,6 +7,7 @@ import {
   lichessPuzzleSlug,
   lichessPuzzleToCampaignRow,
   nextFreeStandardLevel,
+  resolveBatchFen,
   rewardForRating,
   type CampaignLevelSlot,
 } from "@/lib/ascension/lichess-import";
@@ -127,6 +128,27 @@ describe("assignTargetLevels", () => {
   it("clamps startLevel to at least 1", () => {
     const result = assignTargetLevels([], ["a"], -5);
     expect(result[0]!.level).toBe(1);
+  });
+});
+
+describe("resolveBatchFen", () => {
+  // Real `batch/mix` entry: omits puzzle.fen, and the correct position is at
+  // initialPly + 1 (the solution `g3h2` is only legal after all PGN plies).
+  const pgn =
+    "e4 c5 Nf3 d6 d4 cxd4 Qxd4 Nc6 Bb5 e5 Bxc6+ bxc6 Qc4 Qc7 Nc3 Nf6 Bg5 Be7 Bxf6 Bxf6 Nd5 Qa5+ b4 cxd5 Qc6+ Bd7 Qxa8+ Ke7 Qxh8 Qxb4+ Nd2 Bg5 O-O Qxd2 Qxg7 dxe4 Qxh7 e3 fxe3 Bxe3+ Kh1 Be6 Qh4+ Kd7 Qa4+ Ke7 Rad1 Qe2 Rfe1 Qf2 Qe4 Bf4 Qb7+ Kf6 Qe4 Bf5 Qe2 Qh4 h3 Qg3 Rxd6+ Kg5 Kg1 Bxh3 Rd3";
+  const solution = ["g3h2", "g1f1", "h2h1", "f1f2", "h1g2"];
+
+  it("recovers a FEN whose full solution line is legal despite the off-by-one ply", () => {
+    const fen = resolveBatchFen(pgn, 64, solution);
+    expect(fen).not.toBeNull();
+    expect(validateStandardPuzzleLine(fen!, solution).ok).toBe(true);
+    // Solver is the side to move; the solution starts with a Black move here.
+    expect(fen!.split(" ")[1]).toBe("b");
+  });
+
+  it("returns null when no nearby ply yields a legal line", () => {
+    expect(resolveBatchFen(pgn, 64, ["a1a8"])).toBeNull();
+    expect(resolveBatchFen("", 10, solution)).toBeNull();
   });
 });
 

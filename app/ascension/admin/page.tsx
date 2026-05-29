@@ -229,20 +229,37 @@ export default function AscensionAdminPage() {
           startLevel: importStartLevel || undefined,
         }),
       });
+      if (res.status === 429) {
+        const rateMsg = t.ascension.adminImportRateLimited.replace("{imported}", "0");
+        setImportMsg(rateMsg);
+        toast.error(rateMsg);
+        return;
+      }
       if (!res.ok) throw new Error(await readAccountApiError(res, t.ascension.adminImportError));
       const data = (await res.json()) as {
         imported: number;
         skippedDuplicates: number;
         invalid: number;
+        rateLimited?: boolean;
       };
       const msg = t.ascension.adminImportDone
         .replace("{imported}", String(data.imported))
         .replace("{skipped}", String(data.skippedDuplicates))
         .replace("{invalid}", String(data.invalid));
-      setImportMsg(data.imported > 0 ? msg : t.ascension.adminImportNone);
-      if (data.imported > 0) {
-        toast.success(msg);
-        setImportStartLevel(0);
+      if (data.rateLimited) {
+        const rateMsg = t.ascension.adminImportRateLimited.replace(
+          "{imported}",
+          String(data.imported)
+        );
+        setImportMsg(rateMsg);
+        toast.warning(rateMsg);
+        if (data.imported > 0) setImportStartLevel(0);
+      } else {
+        setImportMsg(data.imported > 0 ? msg : t.ascension.adminImportNone);
+        if (data.imported > 0) {
+          toast.success(msg);
+          setImportStartLevel(0);
+        }
       }
       await load();
     } catch (err) {
