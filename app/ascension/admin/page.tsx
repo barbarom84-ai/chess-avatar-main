@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Loader2, RotateCcw, Save } from "lucide-react";
+import { ArrowLeft, Download, Loader2, RotateCcw, Save } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,6 +21,7 @@ import {
   type SideToMove,
 } from "@/lib/ascension/fen-utils";
 import { canonicalPuzzleAtLevel } from "@/lib/ascension/campaign-puzzle-utils";
+import { nextFreeStandardLevel } from "@/lib/ascension/lichess-import";
 import SimpleChessboard from "@/components/SimpleChessboard";
 import { useLanguage } from "@/lib/language-context";
 import { useSuperUser } from "@/hooks/useSuperUser";
@@ -96,6 +97,11 @@ export default function AscensionAdminPage() {
   const [saving, setSaving] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [loadingPuzzles, setLoadingPuzzles] = useState(true);
+  const [importCount, setImportCount] = useState(10);
+  const [importDifficulty, setImportDifficulty] = useState("");
+  const [importStartLevel, setImportStartLevel] = useState(0);
+  const [importing, setImporting] = useState(false);
+  const [importMsg, setImportMsg] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoadingPuzzles(true);
@@ -117,6 +123,12 @@ export default function AscensionAdminPage() {
   useEffect(() => {
     if (isSuperUser) void load();
   }, [isSuperUser, load]);
+
+  useEffect(() => {
+    if (puzzles.length > 0 && importStartLevel === 0) {
+      setImportStartLevel(nextFreeStandardLevel(puzzles));
+    }
+  }, [puzzles, importStartLevel]);
 
   const selectPuzzle = (p: DbCampaignPuzzle, level: number) => {
     setSelectedPuzzleId(p.id);
@@ -203,6 +215,45 @@ export default function AscensionAdminPage() {
     }
   };
 
+  const importFromLichess = async () => {
+    setImporting(true);
+    setImportMsg(null);
+    setError(null);
+    try {
+      const res = await fetch("/api/ascension/admin/import-lichess", {
+        method: "POST",
+        headers: await accountApiHeaders(),
+        body: JSON.stringify({
+          count: importCount,
+          difficulty: importDifficulty || undefined,
+          startLevel: importStartLevel || undefined,
+        }),
+      });
+      if (!res.ok) throw new Error(await readAccountApiError(res, t.ascension.adminImportError));
+      const data = (await res.json()) as {
+        imported: number;
+        skippedDuplicates: number;
+        invalid: number;
+      };
+      const msg = t.ascension.adminImportDone
+        .replace("{imported}", String(data.imported))
+        .replace("{skipped}", String(data.skippedDuplicates))
+        .replace("{invalid}", String(data.invalid));
+      setImportMsg(data.imported > 0 ? msg : t.ascension.adminImportNone);
+      if (data.imported > 0) {
+        toast.success(msg);
+        setImportStartLevel(0);
+      }
+      await load();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : t.ascension.adminImportError;
+      setError(message);
+      toast.error(message);
+    } finally {
+      setImporting(false);
+    }
+  };
+
   const resetProgress = async () => {
     if (!window.confirm(t.ascension.adminResetConfirm)) return;
     setResetting(true);
@@ -265,6 +316,77 @@ export default function AscensionAdminPage() {
             {t.ascension.adminResetProgress}
           </Button>
         </div>
+
+        <Card className="theme-bg-secondary border-emerald-500/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Download className="h-4 w-4 text-emerald-400" />
+              {t.ascension.adminImportTitle}
+            </CardTitle>
+            <p className="text-sm text-slate-400">{t.ascension.adminImportSubtitle}</p>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="space-y-1">
+                <Label>{t.ascension.adminImportCount}</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={30}
+                  value={importCount}
+                  onChange={(e) =>
+                    setImportCount(Math.max(1, Math.min(30, Number(e.target.value) || 1)))
+                  }
+                />
+              </div>
+              <div className="space-y-1">
+                <Label>{t.ascension.adminImportDifficulty}</Label>
+                <select
+                  className="w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200"
+                  value={importDifficulty}
+                  onChange={(e) => setImportDifficulty(e.target.value)}
+                >
+                  <option value="">{t.ascension.adminImportDiffAny}</option>
+                  <option value="easiest">{t.ascension.adminImportDiffEasiest}</option>
+                  <option value="easier">{t.ascension.adminImportDiffEasier}</option>
+                  <option value="normal">{t.ascension.adminImportDiffNormal}</option>
+                  <option value="harder">{t.ascension.adminImportDiffHarder}</option>
+                  <option value="hardest">{t.ascension.adminImportDiffHardest}</option>
+                </select>
+              </div>
+              <div className="space-y-1">
+                <Label>{t.ascension.adminImportStartLevel}</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  value={importStartLevel}
+                  onChange={(e) =>
+                    setImportStartLevel(Math.max(1, Number(e.target.value) || 1))
+                  }
+                />
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              {importMsg ? (
+                <p className="text-sm text-emerald-300">{importMsg}</p>
+              ) : (
+                <span />
+              )}
+              <Button
+                onClick={() => void importFromLichess()}
+                disabled={importing}
+                className="gap-2 bg-emerald-700 hover:bg-emerald-600"
+              >
+                {importing ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Download className="h-4 w-4" />
+                )}
+                {t.ascension.adminImportButton}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
         <Card className="theme-bg-secondary border-cyan-500/20">
           <CardHeader>
