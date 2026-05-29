@@ -14,12 +14,14 @@ type PuzzleRow = Record<string, unknown>;
 async function unpublishOtherLevels(
   admin: SupabaseClient,
   sortOrder: number,
+  track: string,
   keepId: string
 ) {
   await admin
     .from("campaign_puzzles")
     .update({ is_published: false })
     .eq("sort_order", sortOrder)
+    .eq("track", track)
     .neq("id", keepId);
 }
 
@@ -56,6 +58,7 @@ export async function POST(request: NextRequest) {
   const puzzleId = typeof body.id === "string" && body.id.trim() ? body.id.trim() : null;
   const slug = typeof body.slug === "string" ? body.slug.trim() : "";
   const kind = body.kind === "fantasy" ? "fantasy" : "standard";
+  const track = body.track === "fantasy" ? "fantasy" : "main";
   const fen = typeof body.fen === "string" ? body.fen : "";
   const solutionUcis = Array.isArray(body.solution_ucis)
     ? (body.solution_ucis as string[])
@@ -91,6 +94,7 @@ export async function POST(request: NextRequest) {
     xp_reward: Number(body.xp_reward ?? 20),
     elo_reward: Number(body.elo_reward ?? 20),
     sort_order: Number(body.sort_order ?? 0),
+    track,
     is_published: Boolean(body.is_published ?? false),
   };
 
@@ -140,7 +144,7 @@ export async function POST(request: NextRequest) {
   const savedId = String(saved.id);
 
   if (row.is_published) {
-    await unpublishOtherLevels(admin, row.sort_order, savedId);
+    await unpublishOtherLevels(admin, row.sort_order, row.track, savedId);
   }
 
   const { data: refreshed } = await admin

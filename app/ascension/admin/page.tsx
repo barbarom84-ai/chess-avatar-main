@@ -10,7 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { accountApiHeaders, readAccountApiError } from "@/lib/account-api-auth";
-import type { DbCampaignPuzzle } from "@/lib/ascension/types";
+import type { CampaignTrack, DbCampaignPuzzle } from "@/lib/ascension/types";
+import type { SquareEffect, SquareEffectType } from "@/lib/ascension/fantasy-chess/types";
 import { validateStandardPuzzleLine } from "@/lib/ascension/puzzle-validation";
 import {
   boardOrientationFromFen,
@@ -39,8 +40,10 @@ type PuzzleForm = {
   prompt_fr: string;
   prompt_en: string;
   sort_order: number;
+  track: CampaignTrack;
   is_published: boolean;
   fantasy_abilities: string;
+  special_squares: SquareEffect[];
   side_to_move: SideToMove;
 };
 
@@ -60,17 +63,21 @@ function puzzleToForm(p: DbCampaignPuzzle): PuzzleForm {
     prompt_fr: p.prompt.fr,
     prompt_en: p.prompt.en,
     sort_order: p.sort_order,
+    track: p.track ?? "main",
     is_published: p.is_published,
     fantasy_abilities: (p.fantasy_rules.enabledAbilities ?? []).join(", "),
+    special_squares: Array.isArray(p.fantasy_rules.specialSquares)
+      ? p.fantasy_rules.specialSquares
+      : [],
     side_to_move: getSideToMoveFromFen(p.fen),
   };
 }
 
-function emptyForm(level: number): PuzzleForm {
+function emptyForm(level: number, track: CampaignTrack = "main"): PuzzleForm {
   return {
     id: null,
-    slug: `level-${level}-custom`,
-    kind: "standard",
+    slug: `${track}-level-${level}-custom`,
+    kind: track === "fantasy" ? "fantasy" : "standard",
     min_elo: 0,
     max_elo: 3000,
     xp_reward: 20,
@@ -80,8 +87,10 @@ function emptyForm(level: number): PuzzleForm {
     prompt_fr: "",
     prompt_en: "",
     sort_order: level,
+    track,
     is_published: false,
     fantasy_abilities: "",
+    special_squares: [],
     side_to_move: "w",
   };
 }
@@ -93,6 +102,7 @@ export default function AscensionAdminPage() {
   const [selectedPuzzleId, setSelectedPuzzleId] = useState<string | null>(null);
   const [selectedLevel, setSelectedLevel] = useState<number | null>(null);
   const [form, setForm] = useState<PuzzleForm | null>(null);
+  const [adminTrack, setAdminTrack] = useState<CampaignTrack>("main");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [resetting, setResetting] = useState(false);
@@ -140,7 +150,7 @@ export default function AscensionAdminPage() {
   const selectNewLevel = (level: number) => {
     setSelectedPuzzleId(null);
     setSelectedLevel(level);
-    setForm(emptyForm(level));
+    setForm(emptyForm(level, adminTrack));
     setError(null);
   };
 
@@ -169,6 +179,17 @@ export default function AscensionAdminPage() {
         .map((s) => s.trim())
         .filter(Boolean);
 
+      const specialSquares = form.special_squares
+        .map((eff) => {
+          const square = eff.square.trim().toLowerCase();
+          const linkTo = eff.linkTo?.trim().toLowerCase();
+          const cleaned: SquareEffect = { square, type: eff.type };
+          if (eff.type === "tunnel" && linkTo) cleaned.linkTo = linkTo;
+          return cleaned;
+        })
+        .filter((eff) => /^[a-h][1-8]$/.test(eff.square))
+        .filter((eff) => eff.type !== "tunnel" || /^[a-h][1-8]$/.test(eff.linkTo ?? ""));
+
       const body = {
         id: form.id,
         slug: form.slug.trim(),
@@ -180,6 +201,7 @@ export default function AscensionAdminPage() {
         fen: normalizeFen(form.fen.trim(), form.side_to_move),
         solution_ucis,
         sort_order: form.sort_order,
+        track: form.track,
         is_published: form.is_published,
         prompt: { fr: form.prompt_fr, en: form.prompt_en },
         hints: [],
@@ -190,6 +212,7 @@ export default function AscensionAdminPage() {
                 enabledAbilities: abilities,
                 objective: "reach_square",
                 objectiveSquare: solution_ucis[solution_ucis.length - 1]?.slice(2, 4),
+                ...(specialSquares.length > 0 ? { specialSquares } : {}),
               }
             : {},
       };
@@ -301,13 +324,15 @@ export default function AscensionAdminPage() {
     );
   }
 
+  const trackPuzzles = puzzles.filter((p) => (p.track ?? "main") === adminTrack);
+
   const maxLevel = Math.max(
     9,
-    ...puzzles.map((p) => p.sort_order),
+    ...trackPuzzles.map((p) => p.sort_order),
     selectedLevel ?? 0
   );
 
-  const duplicateLevels = puzzles.reduce<Record<number, number>>((acc, p) => {
+  const duplicateLevels = trackPuzzles.reduce<Record<number, number>>((acc, p) => {
     acc[p.sort_order] = (acc[p.sort_order] ?? 0) + 1;
     return acc;
   }, {});
@@ -416,9 +441,37 @@ export default function AscensionAdminPage() {
               <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
             ) : (
               <>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs uppercase tracking-wider text-slate-500">
+                    {t.ascension.adminTrackLabel}
+                  </span>
+                  <div className="inline-flex rounded-md border border-slate-700 overflow-hidden">
+                    {(["main", "fantasy"] as const).map((tr) => (
+                      <button
+                        key={tr}
+                        type="button"
+                        className={`px-3 py-1 text-xs font-medium transition-colors ${
+                          adminTrack === tr
+                            ? "bg-cyan-700 text-white"
+                            : "bg-slate-900 text-slate-400 hover:text-slate-200"
+                        }`}
+                        onClick={() => {
+                          setAdminTrack(tr);
+                          setForm(null);
+                          setSelectedPuzzleId(null);
+                          setSelectedLevel(null);
+                        }}
+                      >
+                        {tr === "main"
+                          ? t.ascension.adminTrackMain
+                          : t.ascension.adminTrackFantasy}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <div className="flex flex-wrap gap-2">
                   {Array.from({ length: maxLevel }, (_, i) => i + 1).map((level) => {
-                    const p = canonicalPuzzleAtLevel(puzzles, level);
+                    const p = canonicalPuzzleAtLevel(trackPuzzles, level);
                     const isSelected = selectedLevel === level;
                     const hasDuplicates = (duplicateLevels[level] ?? 0) > 1;
                     return (
@@ -628,6 +681,123 @@ export default function AscensionAdminPage() {
                             );
                           })}
                         </div>
+                      </div>
+                    )}
+
+                    {form.kind === "fantasy" && (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <Label>{t.ascension.adminSpecialSquares}</Label>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="border-cyan-600/50 text-cyan-300"
+                            onClick={() =>
+                              setForm({
+                                ...form,
+                                special_squares: [
+                                  ...form.special_squares,
+                                  { square: "", type: "explosive" },
+                                ],
+                              })
+                            }
+                          >
+                            {t.ascension.adminSpecialSquareAdd}
+                          </Button>
+                        </div>
+                        <p className="text-[11px] text-slate-500">
+                          {t.ascension.adminSpecialSquaresHint}
+                        </p>
+                        {form.special_squares.length === 0 && (
+                          <p className="text-xs text-slate-600 italic">
+                            {t.ascension.adminSpecialSquaresEmpty}
+                          </p>
+                        )}
+                        {form.special_squares.map((eff, idx) => (
+                          <div
+                            key={idx}
+                            className="flex flex-wrap items-end gap-2 rounded-md border border-slate-800 bg-slate-900/40 p-2"
+                          >
+                            <div className="space-y-1">
+                              <Label className="text-[10px] uppercase text-slate-500">
+                                {t.ascension.adminSpecialSquareCell}
+                              </Label>
+                              <Input
+                                value={eff.square}
+                                placeholder="e4"
+                                className="w-20 font-mono text-xs"
+                                onChange={(e) => {
+                                  const next = [...form.special_squares];
+                                  next[idx] = { ...eff, square: e.target.value };
+                                  setForm({ ...form, special_squares: next });
+                                }}
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-[10px] uppercase text-slate-500">
+                                {t.ascension.adminSpecialSquareType}
+                              </Label>
+                              <select
+                                className="rounded-md border border-slate-700 bg-slate-900 px-2 py-2 text-xs text-slate-200"
+                                value={eff.type}
+                                onChange={(e) => {
+                                  const type = e.target.value as SquareEffectType;
+                                  const next = [...form.special_squares];
+                                  next[idx] = {
+                                    ...eff,
+                                    type,
+                                    linkTo: type === "tunnel" ? eff.linkTo ?? "" : undefined,
+                                  };
+                                  setForm({ ...form, special_squares: next });
+                                }}
+                              >
+                                <option value="explosive">
+                                  💣 {t.ascension.adminSpecialSquareExplosive}
+                                </option>
+                                <option value="trap">
+                                  ⚠️ {t.ascension.adminSpecialSquareTrap}
+                                </option>
+                                <option value="tunnel">
+                                  🕳️ {t.ascension.adminSpecialSquareTunnel}
+                                </option>
+                              </select>
+                            </div>
+                            {eff.type === "tunnel" && (
+                              <div className="space-y-1">
+                                <Label className="text-[10px] uppercase text-slate-500">
+                                  {t.ascension.adminSpecialSquareLinkTo}
+                                </Label>
+                                <Input
+                                  value={eff.linkTo ?? ""}
+                                  placeholder="e6"
+                                  className="w-20 font-mono text-xs"
+                                  onChange={(e) => {
+                                    const next = [...form.special_squares];
+                                    next[idx] = { ...eff, linkTo: e.target.value };
+                                    setForm({ ...form, special_squares: next });
+                                  }}
+                                />
+                              </div>
+                            )}
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="text-rose-400 hover:text-rose-300"
+                              onClick={() =>
+                                setForm({
+                                  ...form,
+                                  special_squares: form.special_squares.filter(
+                                    (_, i) => i !== idx
+                                  ),
+                                })
+                              }
+                            >
+                              {t.ascension.adminSpecialSquareRemove}
+                            </Button>
+                          </div>
+                        ))}
                       </div>
                     )}
 

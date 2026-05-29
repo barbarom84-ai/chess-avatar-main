@@ -5,6 +5,7 @@ import type {
   FantasyObjective,
   FantasyRuleSet,
   PieceAbilityId,
+  SquareEffect,
 } from "@/lib/ascension/fantasy-chess/types";
 
 const FILES = "abcdefgh";
@@ -241,10 +242,19 @@ export class FantasyChessEngine {
   private fantasyMoveFlags: boolean[] = [];
   private abilityByMoveIndex: (PieceAbilityId | undefined)[] = [];
   private greedyPawnSquare: Square | null = null;
+  private triggeredSquares: Set<string> = new Set();
 
   constructor(fen: string, rules: FantasyRuleSet) {
     this.chess = new Chess(fen);
     this.rules = rules;
+  }
+
+  getSpecialSquares(): SquareEffect[] {
+    return this.rules.specialSquares ?? [];
+  }
+
+  getTriggeredSquares(): string[] {
+    return [...this.triggeredSquares];
   }
 
   get fen(): string {
@@ -289,7 +299,69 @@ export class FantasyChessEngine {
       moveHistory: [...this.moveHistory],
       usedAbilities: [...this.usedAbilities],
       fantasyMovesUsed: this.fantasyMoveFlags.filter(Boolean).length,
+      triggeredSquares: [...this.triggeredSquares],
     };
+  }
+
+  private squareEffectAt(square: string): SquareEffect | undefined {
+    return (this.rules.specialSquares ?? []).find((e) => e.square === square);
+  }
+
+  /** True when moving onto a tunnel entry whose exit is blocked by a friendly piece. */
+  private tunnelExitBlocked(from: Square, to: Square): boolean {
+    const effect = this.squareEffectAt(to);
+    if (!effect || effect.type !== "tunnel" || !effect.linkTo) return false;
+    const mover = this.chess.get(from);
+    const exitOccupant = this.chess.get(effect.linkTo as Square);
+    return !!mover && !!exitOccupant && exitOccupant.color === mover.color;
+  }
+
+  /**
+   * Resolve a special square after a piece has landed on `to`. Kings are immune to
+   * explosive/trap. Tunnels relocate the piece (capturing an enemy at the exit).
+   * Uses chess.js board edits, which preserve the side to move set by the move.
+   */
+  private resolveSquareEffects(to: Square): void {
+    const effect = this.squareEffectAt(to);
+    if (!effect) return;
+
+    if (effect.type === "tunnel") {
+      if (!effect.linkTo) return;
+      const exit = effect.linkTo as Square;
+      const piece = this.chess.get(to);
+      if (!piece) return;
+      const occupant = this.chess.get(exit);
+      if (occupant && occupant.color === piece.color) return;
+      if (occupant) this.chess.remove(exit);
+      this.chess.remove(to);
+      this.chess.put({ type: piece.type, color: piece.color }, exit);
+      return;
+    }
+
+    // explosive / trap fire once.
+    if (this.triggeredSquares.has(to)) return;
+    this.triggeredSquares.add(to);
+
+    if (effect.type === "trap") {
+      const piece = this.chess.get(to);
+      if (piece && piece.type !== "k") this.chess.remove(to);
+      return;
+    }
+
+    if (effect.type === "explosive") {
+      const { file, rank } = squareToCoords(to);
+      const center = this.chess.get(to);
+      if (center && center.type !== "k") this.chess.remove(to);
+      for (let df = -1; df <= 1; df++) {
+        for (let dr = -1; dr <= 1; dr++) {
+          if (df === 0 && dr === 0) continue;
+          const adj = coordsToSquare(file + df, rank + dr);
+          if (!adj) continue;
+          const p = this.chess.get(adj);
+          if (p && p.type !== "k") this.chess.remove(adj);
+        }
+      }
+    }
   }
 
   getLegalMoves(from?: Square): FantasyMove[] {
@@ -320,7 +392,9 @@ export class FantasyChessEngine {
       seen.add(m.uci);
       merged.push(m);
     }
-    return merged;
+    return merged.filter(
+      (m) => !this.tunnelExitBlocked(from, m.uci.slice(2, 4) as Square)
+    );
   }
 
   private applyFantasyMove(from: Square, to: Square, promotion?: string): boolean {
@@ -364,6 +438,7 @@ export class FantasyChessEngine {
       const next = new Chess(this.chess.fen());
       if (!applyStandardMove(next, normalized)) return false;
       this.chess = next;
+      this.resolveSquareEffects(to);
 
       this.moveHistory.push(normalized);
       this.fantasyMoveFlags.push(false);
@@ -387,6 +462,8 @@ export class FantasyChessEngine {
     } else {
       return false;
     }
+
+    this.resolveSquareEffects(to);
 
     this.moveHistory.push(normalized);
     this.fantasyMoveFlags.push(match.isFantasy);

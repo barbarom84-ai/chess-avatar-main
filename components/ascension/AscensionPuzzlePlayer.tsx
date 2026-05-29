@@ -67,6 +67,7 @@ export default function AscensionPuzzlePlayer({
       objective: puzzle.fantasy_rules.objective,
       objectiveSquare: puzzle.fantasy_rules.objectiveSquare,
       objectivePiece: puzzle.fantasy_rules.objectivePiece,
+      specialSquares: puzzle.fantasy_rules.specialSquares,
     };
   }, [puzzle, unlockedSkills]);
 
@@ -279,6 +280,51 @@ export default function AscensionPuzzlePlayer({
 
   const greedyChainActive = fantasyEngine?.isGreedyChainActive() ?? false;
 
+  const squareEffects = useMemo(() => {
+    if (puzzle.kind !== "fantasy") return undefined;
+    const specials = fantasyRules.specialSquares ?? [];
+    if (specials.length === 0) return undefined;
+    const triggered = new Set(fantasyEngine?.getTriggeredSquares() ?? []);
+    const map: Record<
+      string,
+      { icon: string; variant: "explosive" | "trap" | "tunnel" }
+    > = {};
+    for (const eff of specials) {
+      if (
+        (eff.type === "explosive" || eff.type === "trap") &&
+        triggered.has(eff.square)
+      ) {
+        continue;
+      }
+      const icon =
+        eff.type === "explosive" ? "💣" : eff.type === "trap" ? "⚠️" : "🕳️";
+      map[eff.square] = { icon, variant: eff.type };
+      if (eff.type === "tunnel" && eff.linkTo && !map[eff.linkTo]) {
+        map[eff.linkTo] = { icon: "🕳️", variant: "tunnel" };
+      }
+    }
+    return Object.keys(map).length > 0 ? map : undefined;
+  }, [puzzle.kind, fantasyRules, fantasyEngine]);
+
+  const squareEmojis = useMemo(() => {
+    if (
+      puzzle.kind === "fantasy" &&
+      fantasyRules.objective === "reach_square" &&
+      fantasyRules.objectiveSquare
+    ) {
+      return { [fantasyRules.objectiveSquare]: "🎯" };
+    }
+    return undefined;
+  }, [puzzle.kind, fantasyRules]);
+
+  const tunnelArrows = useMemo(() => {
+    if (puzzle.kind !== "fantasy") return undefined;
+    const arrows = (fantasyRules.specialSquares ?? [])
+      .filter((e) => e.type === "tunnel" && e.linkTo)
+      .map((e) => ({ from: e.square, to: e.linkTo as string, color: "#22d3ee" }));
+    return arrows.length > 0 ? arrows : undefined;
+  }, [puzzle.kind, fantasyRules]);
+
   const blocked = missingRequiredPower || puzzle.locked;
   const expectedPlayerMoveCount = extractPlayerMoves(
     puzzle.fen,
@@ -401,6 +447,9 @@ export default function AscensionPuzzlePlayer({
           onDrop={handleDrop}
           lastMove={lastMove}
           orientation={playerOrientation}
+          squareEffects={squareEffects}
+          squareEmojis={squareEmojis}
+          arrows={tunnelArrows}
         />
         )}
 

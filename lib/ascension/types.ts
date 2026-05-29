@@ -1,6 +1,6 @@
 import type { EngineConfig } from "@/lib/analysis";
 import type { AvatarCardElement } from "@/lib/avatar-card-model";
-import type { PieceAbilityId } from "@/lib/ascension/fantasy-chess/types";
+import type { PieceAbilityId, SquareEffect } from "@/lib/ascension/fantasy-chess/types";
 
 export type ChampionTier =
   | "stone"
@@ -12,6 +12,8 @@ export type ChampionTier =
   | "legendary";
 
 export type CampaignPuzzleKind = "standard" | "fantasy";
+
+export type CampaignTrack = "main" | "fantasy";
 
 export type LocalizedText = { fr: string; en: string };
 
@@ -58,11 +60,13 @@ export interface DbCampaignPuzzle {
     objective?: "checkmate" | "capture_piece" | "reach_square";
     objectiveSquare?: string;
     objectivePiece?: string;
+    specialSquares?: SquareEffect[];
   };
   prompt: LocalizedText;
   hints: LocalizedText[];
   insight: LocalizedText;
   sort_order: number;
+  track: CampaignTrack;
   is_published: boolean;
   updated_at?: string;
 }

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { Chess, type Square } from "chess.js";
 import { FantasyChessEngine } from "@/lib/ascension/fantasy-chess/engine";
 import type { FantasyRuleSet } from "@/lib/ascension/fantasy-chess/types";
 
@@ -81,5 +82,72 @@ describe("FantasyChessEngine", () => {
     );
     engine.applyMove("h5f7");
     expect(engine.isPuzzleSolved(["h5f7"])).toBe(true);
+  });
+
+  it("explodes the landing piece and adjacent pieces while sparing kings", () => {
+    const rules: FantasyRuleSet = {
+      enabledAbilities: [],
+      objective: "checkmate",
+      specialSquares: [{ square: "e4", type: "explosive" }],
+    };
+    // White Ke3 sits next to the explosion; black pawn d5 is adjacent and dies.
+    const engine = new FantasyChessEngine("6k1/8/8/3p4/R7/4K3/8/8 w - - 0 1", rules);
+    expect(engine.applyMove("a4e4")).toBe(true);
+
+    const board = new Chess(engine.fen);
+    expect(board.get("e4" as Square)).toBeFalsy(); // landing rook removed
+    expect(board.get("d5" as Square)).toBeFalsy(); // neighbour pawn removed
+    expect(board.get("e3" as Square)).toMatchObject({ type: "k", color: "w" }); // king immune
+    expect(engine.getTriggeredSquares()).toContain("e4");
+  });
+
+  it("removes only the landing piece on a trap square", () => {
+    const rules: FantasyRuleSet = {
+      enabledAbilities: [],
+      objective: "checkmate",
+      specialSquares: [{ square: "e4", type: "trap" }],
+    };
+    const engine = new FantasyChessEngine("6k1/8/8/3p1p2/R7/8/8/6K1 w - - 0 1", rules);
+    expect(engine.applyMove("a4e4")).toBe(true);
+
+    const board = new Chess(engine.fen);
+    expect(board.get("e4" as Square)).toBeFalsy(); // trapped rook removed
+    expect(board.get("d5" as Square)).toMatchObject({ type: "p", color: "b" }); // neighbours untouched
+    expect(board.get("f5" as Square)).toMatchObject({ type: "p", color: "b" });
+  });
+
+  it("teleports the landing piece through a tunnel, capturing an enemy at the exit", () => {
+    const rules: FantasyRuleSet = {
+      enabledAbilities: [],
+      objective: "reach_square",
+      objectiveSquare: "e6",
+      specialSquares: [{ square: "e4", type: "tunnel", linkTo: "e6" }],
+    };
+    const engine = new FantasyChessEngine("6k1/8/4p3/8/R7/8/8/6K1 w - - 0 1", rules);
+    expect(engine.applyMove("a4e4")).toBe(true);
+
+    const board = new Chess(engine.fen);
+    expect(board.get("e4" as Square)).toBeFalsy(); // left the tunnel entry
+    expect(board.get("e6" as Square)).toMatchObject({ type: "r", color: "w" }); // arrived + captured
+    expect(engine.isObjectiveMet("reach_square")).toBe(true);
+
+    expect(
+      FantasyChessEngine.replaySolution(
+        "6k1/8/4p3/8/R7/8/8/6K1 w - - 0 1",
+        rules,
+        ["a4e4"]
+      ).ok
+    ).toBe(true);
+  });
+
+  it("blocks moving into a tunnel whose exit is occupied by an ally", () => {
+    const rules: FantasyRuleSet = {
+      enabledAbilities: [],
+      objective: "checkmate",
+      specialSquares: [{ square: "e4", type: "tunnel", linkTo: "e6" }],
+    };
+    const engine = new FantasyChessEngine("6k1/8/4P3/8/R7/8/8/6K1 w - - 0 1", rules);
+    expect(engine.getLegalMoves("a4" as Square).some((m) => m.uci === "a4e4")).toBe(false);
+    expect(engine.applyMove("a4e4")).toBe(false);
   });
 });

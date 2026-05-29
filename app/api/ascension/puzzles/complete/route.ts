@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { FantasyChessEngine } from "@/lib/ascension/fantasy-chess/engine";
-import type { PieceAbilityId, FantasyObjective } from "@/lib/ascension/fantasy-chess/types";
+import type {
+  PieceAbilityId,
+  FantasyObjective,
+  SquareEffect,
+} from "@/lib/ascension/fantasy-chess/types";
 import { computePuzzleRewards } from "@/lib/ascension/progression";
 import {
   mapDbCampaignPuzzle,
@@ -9,8 +13,12 @@ import {
 } from "@/lib/ascension/server-auth";
 import {
   computeStandardPuzzleLocked,
+  computeFantasyTrackLocked,
   dedupeCampaignPuzzlesByLevel,
+  isMainCampaignComplete,
 } from "@/lib/ascension/campaign-puzzle-utils";
+
+const FANTASY_TRACK_ELO_GATE = 3000;
 import {
   extractPlayerMoves,
   getSolverColor,
@@ -27,6 +35,7 @@ function validateFantasyPlayerSolution(
     objective?: FantasyObjective;
     objectiveSquare?: string;
     objectivePiece?: string;
+    specialSquares?: SquareEffect[];
   },
   solutionUcis: string[],
   playerMoves: string[]
@@ -41,6 +50,7 @@ function validateFantasyPlayerSolution(
     objective: rules.objective,
     objectiveSquare: rules.objectiveSquare,
     objectivePiece: rules.objectivePiece,
+    specialSquares: rules.specialSquares,
   });
 
   for (let i = 0; i < normalizedSolution.length; i++) {
@@ -97,8 +107,8 @@ export async function POST(request: NextRequest) {
 
   const card = mapDbChampionCard(cardRes.data as Record<string, unknown>);
 
-  // Sequential unlock check for standard puzzles
-  if (puzzle.kind === "standard") {
+  // Sequential unlock check (per track) so a locked puzzle cannot be force-completed.
+  if (puzzle.kind === "standard" || puzzle.track === "fantasy") {
     const allPuzzlesRes = await auth.ctx.admin
       .from("campaign_puzzles")
       .select("*")
@@ -118,8 +128,16 @@ export async function POST(request: NextRequest) {
       completed: completedIds.has(p.id),
     }));
 
-    const lockedMap = computeStandardPuzzleLocked(withCompletion);
-    if (lockedMap.get(puzzle.id)) {
+    let locked = false;
+    if (puzzle.track === "fantasy") {
+      const trackUnlocked =
+        card.elo >= FANTASY_TRACK_ELO_GATE || isMainCampaignComplete(withCompletion);
+      locked = computeFantasyTrackLocked(withCompletion, trackUnlocked).get(puzzle.id) ?? true;
+    } else {
+      locked = computeStandardPuzzleLocked(withCompletion).get(puzzle.id) ?? false;
+    }
+
+    if (locked) {
       return NextResponse.json({ error: "Puzzle locked" }, { status: 403 });
     }
   }
@@ -135,6 +153,7 @@ export async function POST(request: NextRequest) {
       objective: fr.objective as FantasyObjective | undefined,
       objectiveSquare: fr.objectiveSquare as string | undefined,
       objectivePiece: fr.objectivePiece as string | undefined,
+      specialSquares: fr.specialSquares as SquareEffect[] | undefined,
     };
     solved = validateFantasyPlayerSolution(puzzle.fen, rules, solution, submitted);
   } else {

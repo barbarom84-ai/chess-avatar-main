@@ -35,6 +35,11 @@ interface AscensionProgressPathProps {
   onAnimationComplete?: () => void;
   /** Skills unlocked by the player — used to gate bonus puzzle access. */
   unlockedSkills: string[];
+  /**
+   * "main": classic campaign (standard puzzles on the path, fantasy as a bonus column).
+   * "fantasy": the post-3000 Fantasy campaign — every puzzle is a sequential path node.
+   */
+  variant?: "main" | "fantasy";
 }
 
 function PathChampionToken({
@@ -94,6 +99,7 @@ export default function AscensionProgressPath({
   animateToIndex,
   onAnimationComplete,
   unlockedSkills,
+  variant = "main",
 }: AscensionProgressPathProps) {
   const { lang, t } = useLanguage();
   const playerAbilities = useMemo(() => playerFantasyAbilities(unlockedSkills), [unlockedSkills]);
@@ -106,9 +112,16 @@ export default function AscensionProgressPath({
     [puzzles]
   );
 
-  // Split into standard (main path) and fantasy (bonus side column)
-  const standardPuzzles = useMemo(() => sorted.filter((p) => p.kind === "standard"), [sorted]);
-  const fantasyPuzzles = useMemo(() => sorted.filter((p) => p.kind === "fantasy"), [sorted]);
+  // In the main campaign, standard puzzles form the path and fantasy puzzles sit in a
+  // bonus side column. In the Fantasy campaign, every puzzle is a sequential path node.
+  const standardPuzzles = useMemo(
+    () => (variant === "fantasy" ? sorted : sorted.filter((p) => p.kind === "standard")),
+    [sorted, variant]
+  );
+  const fantasyPuzzles = useMemo(
+    () => (variant === "fantasy" ? [] : sorted.filter((p) => p.kind === "fantasy")),
+    [sorted, variant]
+  );
 
   // Main path nodes (standard only)
   const standardNodes = useMemo(
@@ -341,7 +354,7 @@ export default function AscensionProgressPath({
           })}
 
           {/* ── Tier milestone gates (every 20 standard nodes) ── */}
-          {TIER_PUZZLE_THRESHOLDS
+          {variant === "main" && TIER_PUZZLE_THRESHOLDS
             .filter((entry) => entry.minCount > 0) // skip stone (count = 0)
             .map((entry) => {
               // The milestone appears between node[count-1] and node[count]

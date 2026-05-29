@@ -14,12 +14,28 @@ export interface ActiveSkillSlot {
   charges: number;
 }
 
+/**
+ * Board square mechanics resolved after a piece lands on the square.
+ * - `explosive`: removes the landing piece and all adjacent pieces (kings immune); one-shot.
+ * - `trap`: removes the landing piece (kings immune); one-shot.
+ * - `tunnel`: teleports the landing piece to `linkTo` (captures an enemy there, blocked by an ally); reusable.
+ */
+export type SquareEffectType = "explosive" | "trap" | "tunnel";
+
+export interface SquareEffect {
+  square: string;
+  type: SquareEffectType;
+  /** Required for `tunnel`: destination square the piece is teleported to. */
+  linkTo?: string;
+}
+
 export interface FantasyRuleSet {
   enabledAbilities: PieceAbilityId[];
   objective?: FantasyObjective;
   objectiveSquare?: string;
   objectivePiece?: string;
   activeSkills?: ActiveSkillSlot[];
+  specialSquares?: SquareEffect[];
 }
 
 export interface FantasyMove {
@@ -33,4 +49,5 @@ export interface FantasyChessStateSnapshot {
   moveHistory: string[];
   usedAbilities: PieceAbilityId[];
   fantasyMovesUsed: number;
+  triggeredSquares?: string[];
 }

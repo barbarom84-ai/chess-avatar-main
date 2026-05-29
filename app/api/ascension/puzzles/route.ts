@@ -4,7 +4,14 @@ import {
   mapDbChampionCard,
   requireAscensionPremium,
 } from "@/lib/ascension/server-auth";
-import { dedupeCampaignPuzzlesByLevel, computeStandardPuzzleLocked } from "@/lib/ascension/campaign-puzzle-utils";
+import {
+  dedupeCampaignPuzzlesByLevel,
+  computeStandardPuzzleLocked,
+  computeFantasyTrackLocked,
+  isMainCampaignComplete,
+} from "@/lib/ascension/campaign-puzzle-utils";
+
+const FANTASY_TRACK_ELO_GATE = 3000;
 
 export const runtime = "nodejs";
 
@@ -53,14 +60,25 @@ export async function GET(request: NextRequest) {
   });
 
   const standardLocked = computeStandardPuzzleLocked(withCompletion);
+  const mainCampaignComplete = isMainCampaignComplete(withCompletion);
+  const fantasyTrackUnlocked =
+    playerElo >= FANTASY_TRACK_ELO_GATE || mainCampaignComplete;
+  const fantasyLocked = computeFantasyTrackLocked(withCompletion, fantasyTrackUnlocked);
 
-  const mapped = withCompletion.map((puzzle) => ({
-    ...puzzle,
-    locked: puzzle.kind === "standard" ? (standardLocked.get(puzzle.id) ?? false) : false,
-  }));
+  const mapped = withCompletion.map((puzzle) => {
+    let locked = false;
+    if (puzzle.track === "fantasy") {
+      locked = fantasyLocked.get(puzzle.id) ?? true;
+    } else if (puzzle.kind === "standard") {
+      locked = standardLocked.get(puzzle.id) ?? false;
+    }
+    return { ...puzzle, locked };
+  });
 
   return NextResponse.json({
     puzzles: mapped,
     playerElo,
+    fantasyTrackUnlocked,
+    mainCampaignComplete,
   });
 }

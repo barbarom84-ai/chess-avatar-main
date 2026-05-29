@@ -18,6 +18,11 @@ interface SimpleChessboardProps {
   arrows?: Array<{ from: string; to: string; color?: string }>;
   /** Émojis affichés sur des cases (ex. case d’arrivée d’un coup annoté) */
   squareEmojis?: Record<string, string>;
+  /** Cases spéciales Fantasy : anneau coloré + icône (explosive/trap/tunnel). */
+  squareEffects?: Record<
+    string,
+    { icon: string; variant: "explosive" | "trap" | "tunnel" }
+  >;
 }
 
 export default function SimpleChessboard({
@@ -27,6 +32,7 @@ export default function SimpleChessboard({
   lastMove,
   arrows = [],
   squareEmojis,
+  squareEffects,
 }: SimpleChessboardProps) {
   const { settings } = useChessboardSettings();
   const {
@@ -399,6 +405,21 @@ export default function SimpleChessboard({
                   >
                     {squareEmojis[square]}
                   </span>
+                )}
+
+                {squareEffects?.[square] && (
+                  <>
+                    <div
+                      className={`pointer-events-none absolute inset-0 z-[8] rounded-sm fantasy-sq fantasy-sq-${squareEffects[square].variant}`}
+                      aria-hidden
+                    />
+                    <span
+                      className="pointer-events-none absolute top-0.5 left-1 z-[26] text-[clamp(10px,2.8vw,18px)] leading-none select-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)]"
+                      aria-hidden
+                    >
+                      {squareEffects[square].icon}
+                    </span>
+                  </>
                 )}
 
                 {piece && (

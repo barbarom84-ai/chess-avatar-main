@@ -48,12 +48,19 @@ export async function updateChampionCard(
 export async function fetchAscensionPuzzles(): Promise<{
   puzzles: AscensionPuzzleListItem[];
   playerElo: number;
+  fantasyTrackUnlocked: boolean;
+  mainCampaignComplete: boolean;
 }> {
   const res = await fetch("/api/ascension/puzzles", {
     headers: await accountApiHeaders(false),
   });
   if (!res.ok) throw new Error(await readAccountApiError(res, "Puzzles failed"));
-  return (await res.json()) as { puzzles: AscensionPuzzleListItem[]; playerElo: number };
+  return (await res.json()) as {
+    puzzles: AscensionPuzzleListItem[];
+    playerElo: number;
+    fantasyTrackUnlocked: boolean;
+    mainCampaignComplete: boolean;
+  };
 }
 
 export async function completeAscensionPuzzle(

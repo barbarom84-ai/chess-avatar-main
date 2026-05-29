@@ -229,7 +229,8 @@ export async function POST(request: NextRequest) {
   // 3. Load existing puzzles for dedup + level assignment.
   const { data: existingRows, error: loadError } = await admin
     .from("campaign_puzzles")
-    .select("slug, sort_order, is_published");
+    .select("slug, sort_order, is_published")
+    .eq("track", "main");
   if (loadError) {
     return NextResponse.json({ error: loadError.message }, { status: 500 });
   }
@@ -283,6 +284,7 @@ export async function POST(request: NextRequest) {
       .from("campaign_puzzles")
       .update({ is_published: false })
       .eq("sort_order", level)
+      .eq("track", "main")
       .neq("id", String(upsertRes.data.id));
 
     imported++;
