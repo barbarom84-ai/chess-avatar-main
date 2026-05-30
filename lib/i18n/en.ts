@@ -1918,6 +1918,7 @@ export const en = {
       adminImportTitle: "Bulk import from Lichess",
       adminImportSubtitle:
         "Fetches, validates and auto-publishes standard puzzles onto consecutive free levels.",
+      adminImportTrack: "Target track",
       adminImportCount: "Number of puzzles",
       adminImportDifficulty: "Difficulty",
       adminImportStartLevel: "Start level",

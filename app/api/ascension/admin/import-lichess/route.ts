@@ -134,6 +134,7 @@ export async function POST(request: NextRequest) {
     typeof body.difficulty === "string" && DIFFICULTIES.has(body.difficulty)
       ? body.difficulty
       : undefined;
+  const track = body.track === "fantasy" ? "fantasy" : "main";
   const startLevelRaw = Number(body.startLevel);
 
   // 1. Fetch a batch of puzzles from Lichess.
@@ -226,18 +227,26 @@ export async function POST(request: NextRequest) {
     normalized.push(puzzle);
   }
 
-  // 3. Load existing puzzles for dedup + level assignment.
-  const { data: existingRows, error: loadError } = await admin
+  // 3. Load existing puzzles for level assignment (target track only) and dedup
+  //    (slug is globally unique, so dedup must look across every track).
+  const { data: trackRows, error: loadError } = await admin
     .from("campaign_puzzles")
-    .select("slug, sort_order, is_published")
-    .eq("track", "main");
+    .select("sort_order, is_published")
+    .eq("track", track);
   if (loadError) {
     return NextResponse.json({ error: loadError.message }, { status: 500 });
   }
-  const existing = (existingRows ?? []) as Array<
-    CampaignLevelSlot & { slug: string }
-  >;
-  const existingSlugs = new Set(existing.map((r) => r.slug));
+  const existing = (trackRows ?? []) as CampaignLevelSlot[];
+
+  const { data: slugRows, error: slugError } = await admin
+    .from("campaign_puzzles")
+    .select("slug");
+  if (slugError) {
+    return NextResponse.json({ error: slugError.message }, { status: 500 });
+  }
+  const existingSlugs = new Set(
+    (slugRows ?? []).map((r) => String((r as { slug: unknown }).slug))
+  );
 
   // 4. Deduplicate by slug (already imported or duplicated within the batch).
   const seen = new Set<string>();
@@ -268,7 +277,7 @@ export async function POST(request: NextRequest) {
   let imported = 0;
   let failed = 0;
   for (const { puzzle, level } of assignments) {
-    const row = lichessPuzzleToCampaignRow(puzzle, level);
+    const row = lichessPuzzleToCampaignRow(puzzle, level, track);
     const upsertRes = await admin
       .from("campaign_puzzles")
       .upsert(row, { onConflict: "slug" })
@@ -284,7 +293,7 @@ export async function POST(request: NextRequest) {
       .from("campaign_puzzles")
       .update({ is_published: false })
       .eq("sort_order", level)
-      .eq("track", "main")
+      .eq("track", track)
       .neq("id", String(upsertRes.data.id));
 
     imported++;
@@ -298,5 +307,6 @@ export async function POST(request: NextRequest) {
     failed,
     rateLimited,
     levels,
+    track,
   });
 }

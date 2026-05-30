@@ -1928,6 +1928,7 @@ export const fr = {
       adminImportTitle: "Import en lot depuis Lichess",
       adminImportSubtitle:
         "Récupère, valide et publie automatiquement des puzzles standard sur des niveaux consécutifs libres.",
+      adminImportTrack: "Piste cible",
       adminImportCount: "Nombre de puzzles",
       adminImportDifficulty: "Difficulté",
       adminImportStartLevel: "Niveau de départ",

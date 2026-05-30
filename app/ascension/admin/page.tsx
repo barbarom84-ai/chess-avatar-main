@@ -110,6 +110,7 @@ export default function AscensionAdminPage() {
   const [importCount, setImportCount] = useState(10);
   const [importDifficulty, setImportDifficulty] = useState("");
   const [importStartLevel, setImportStartLevel] = useState(0);
+  const [importTrack, setImportTrack] = useState<CampaignTrack>("main");
   const [importing, setImporting] = useState(false);
   const [importMsg, setImportMsg] = useState<string | null>(null);
 
@@ -136,9 +137,13 @@ export default function AscensionAdminPage() {
 
   useEffect(() => {
     if (puzzles.length > 0 && importStartLevel === 0) {
-      setImportStartLevel(nextFreeStandardLevel(puzzles));
+      setImportStartLevel(
+        nextFreeStandardLevel(
+          puzzles.filter((p) => (p.track ?? "main") === importTrack)
+        )
+      );
     }
-  }, [puzzles, importStartLevel]);
+  }, [puzzles, importStartLevel, importTrack]);
 
   const selectPuzzle = (p: DbCampaignPuzzle, level: number) => {
     setSelectedPuzzleId(p.id);
@@ -250,6 +255,7 @@ export default function AscensionAdminPage() {
           count: importCount,
           difficulty: importDifficulty || undefined,
           startLevel: importStartLevel || undefined,
+          track: importTrack,
         }),
       });
       if (res.status === 429) {
@@ -368,7 +374,21 @@ export default function AscensionAdminPage() {
             <p className="text-sm text-slate-400">{t.ascension.adminImportSubtitle}</p>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="space-y-1">
+                <Label>{t.ascension.adminImportTrack}</Label>
+                <select
+                  className="w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200"
+                  value={importTrack}
+                  onChange={(e) => {
+                    setImportTrack(e.target.value as CampaignTrack);
+                    setImportStartLevel(0);
+                  }}
+                >
+                  <option value="main">{t.ascension.adminTrackMain}</option>
+                  <option value="fantasy">{t.ascension.adminTrackFantasy}</option>
+                </select>
+              </div>
               <div className="space-y-1">
                 <Label>{t.ascension.adminImportCount}</Label>
                 <Input

@@ -1,11 +1,12 @@
 import { fenAfterInitialPly, type NormalizedLichessPuzzle } from "@/lib/lichess-puzzle";
 import { validateStandardPuzzleLine } from "@/lib/ascension/puzzle-validation";
-import type { LocalizedText } from "@/lib/ascension/types";
+import type { CampaignTrack, LocalizedText } from "@/lib/ascension/types";
 
 /** Row shape inserted into `campaign_puzzles` (matches the admin POST payload, minus id). */
 export interface CampaignPuzzleInsert {
   slug: string;
   kind: "standard";
+  track: CampaignTrack;
   fen: string;
   solution_ucis: string[];
   fantasy_rules: Record<string, never>;
@@ -114,12 +115,14 @@ export function buildInsight(p: NormalizedLichessPuzzle): LocalizedText {
 /** Convert a normalized Lichess puzzle into a publishable campaign_puzzles row. */
 export function lichessPuzzleToCampaignRow(
   p: NormalizedLichessPuzzle,
-  sortOrder: number
+  sortOrder: number,
+  track: CampaignTrack = "main"
 ): CampaignPuzzleInsert {
   const reward = rewardForRating(p.rating);
   return {
     slug: lichessPuzzleSlug(p.puzzleId),
     kind: "standard",
+    track,
     fen: p.fen,
     solution_ucis: p.solutionUci.map((u) => u.trim().toLowerCase()),
     fantasy_rules: {},
