@@ -26,10 +26,22 @@ import {
   type AscensionPuzzleListItem,
 } from "@/lib/ascension/client";
 import { firstOpenStandardPuzzleIndex } from "@/lib/ascension/progress-path";
+import {
+  applyPuzzleLocks,
+  isMainCampaignComplete,
+} from "@/lib/ascension/campaign-puzzle-utils";
 import type { ChampionTier, DbPlayerChampionCard } from "@/lib/ascension/types";
 import { useLanguage } from "@/lib/language-context";
 import { useSuperUser } from "@/hooks/useSuperUser";
 import { track } from "@/lib/track";
+
+const SKIP_PATH_ANIM_KEY = "ascension_skip_path_anim";
+
+function shouldSkipPathAnim(unlockedSkills: string[]): boolean {
+  if (!unlockedSkills.includes("skip_path_anim")) return false;
+  if (typeof window === "undefined") return false;
+  return localStorage.getItem(SKIP_PATH_ANIM_KEY) !== "0";
+}
 
 type PendingAdvance = {
   toIndex: number;
@@ -94,10 +106,12 @@ export default function AscensionPageClient() {
     setLoading(true);
     try {
       await initAscension();
-      const state = await fetchAscensionState();
+      const [state, puzzleData] = await Promise.all([
+        fetchAscensionState(),
+        fetchAscensionPuzzles(),
+      ]);
       setCard(state.card);
       setUnlockedSkills(state.unlockedSkills);
-      const puzzleData = await fetchAscensionPuzzles();
       setPuzzles(puzzleData.puzzles);
       setFantasyTrackUnlocked(puzzleData.fantasyTrackUnlocked);
       setMainCampaignComplete(puzzleData.mainCampaignComplete);
@@ -142,9 +156,20 @@ export default function AscensionPageClient() {
             eloAfter: result.card.elo,
           });
 
-          setPuzzles((prev) =>
-            prev.map((p) => (p.id === selectedPuzzle.id ? { ...p, completed: true } : p))
-          );
+          setPuzzles((prev) => {
+            const updated = prev.map((p) =>
+              p.id === selectedPuzzle.id ? { ...p, completed: true } : p
+            );
+            const newElo = result.rewards!.newElo;
+            const locked = applyPuzzleLocks(updated, newElo);
+            if (newElo >= 3000 || isMainCampaignComplete(locked)) {
+              setFantasyTrackUnlocked(true);
+            }
+            if (isMainCampaignComplete(locked)) {
+              setMainCampaignComplete(true);
+            }
+            return locked;
+          });
 
           setPendingReward({
             xpGain: result.rewards.xpGain,
@@ -153,6 +178,7 @@ export default function AscensionPageClient() {
             newXp: result.rewards.newXp,
             newTier: result.rewards.newTier as ChampionTier,
             previousTier,
+            achievement: result.achievement,
           });
 
           if (selectedPuzzle.track === "fantasy") {
@@ -180,7 +206,9 @@ export default function AscensionPageClient() {
             });
           }
 
-          void fetchAscensionPuzzles().then((data) => setPuzzles(data.puzzles));
+          if (unlockedSkills.includes("skip_path_anim") && typeof window !== "undefined") {
+            localStorage.setItem(SKIP_PATH_ANIM_KEY, "1");
+          }
           return true;
         }
         return false;
@@ -196,9 +224,12 @@ export default function AscensionPageClient() {
       sortedStandard,
       fantasyTrackPuzzles,
       progressNodeIndex,
+      unlockedSkills,
       t.ascension.completeError,
     ]
   );
+
+  const skipPathAnim = shouldSkipPathAnim(unlockedSkills);
 
   const handleSelectCampaign = useCallback(
     (next: "main" | "fantasy") => {
@@ -219,6 +250,19 @@ export default function AscensionPageClient() {
 
     setPendingReward(null);
     const { toIndex, nextPuzzleId } = pendingAdvance;
+
+    if (skipPathAnim || toIndex === progressNodeIndex) {
+      if (toIndex !== progressNodeIndex) {
+        setProgressNodeIndex(toIndex);
+      }
+      if (nextPuzzleId && nextPuzzleId !== selectedPuzzleId) {
+        setSelectedPuzzleId(nextPuzzleId);
+      } else {
+        setPuzzleSessionKey((k) => k + 1);
+      }
+      setPendingAdvance(null);
+      return;
+    }
 
     if (toIndex !== progressNodeIndex) {
       setAnimateToIndex(toIndex);

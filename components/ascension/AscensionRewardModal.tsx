@@ -20,6 +20,7 @@ export interface AscensionRewardData {
   newXp: number;
   newTier: ChampionTier;
   previousTier: ChampionTier;
+  achievement?: "elo_cap_3000";
 }
 
 interface AscensionRewardModalProps {
@@ -210,6 +211,15 @@ export default function AscensionRewardModal({
                 </span>
               </p>
               <Sparkles className="h-5 w-5 text-purple-300 drop-shadow-[0_0_8px_rgba(192,132,252,0.8)] animate-spin" style={{ animationDuration: "4s", animationDirection: "reverse" }} />
+            </div>
+          )}
+
+          {reward.achievement === "elo_cap_3000" && (
+            <div className="relative overflow-hidden flex flex-col items-center gap-1 rounded-xl border border-amber-500/50 bg-gradient-to-r from-amber-950/60 via-slate-900/60 to-amber-950/60 px-4 py-3 shadow-[0_0_20px_rgba(251,191,36,0.2)] text-center">
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-amber-400/8 to-transparent animate-[shimmer_1.5s_infinite]" />
+              <Trophy className="h-6 w-6 text-amber-300 drop-shadow-[0_0_8px_rgba(251,191,36,0.8)]" />
+              <p className="text-sm font-semibold text-amber-100">{t.ascension.achievementEloCapTitle}</p>
+              <p className="text-xs text-amber-200/80">{t.ascension.achievementEloCapDesc}</p>
             </div>
           )}
 

@@ -15,8 +15,12 @@ import {
 } from "@/components/ui/tooltip";
 import { FantasyChessEngine } from "@/lib/ascension/fantasy-chess/engine";
 import type { FantasyRuleSet } from "@/lib/ascension/fantasy-chess/types";
+import type { PieceAbilityId } from "@/lib/ascension/fantasy-chess/types";
 import type { AscensionPuzzleListItem } from "@/lib/ascension/client";
-import { playerFantasyAbilities } from "@/lib/ascension/skill-tree";
+import {
+  playerFantasyAbilities,
+  playerPassiveSkills,
+} from "@/lib/ascension/skill-tree";
 import { boardOrientationFromFen, getSideToMoveFromFen } from "@/lib/ascension/fen-utils";
 import {
   applyMoveToChess,
@@ -68,15 +72,31 @@ export default function AscensionPuzzlePlayer({
       objectiveSquare: puzzle.fantasy_rules.objectiveSquare,
       objectivePiece: puzzle.fantasy_rules.objectivePiece,
       specialSquares: puzzle.fantasy_rules.specialSquares,
+      passiveSkills: playerPassiveSkills(unlockedSkills),
     };
   }, [puzzle, unlockedSkills]);
 
-  const missingRequiredPower = useMemo(() => {
-    if (puzzle.kind !== "fantasy") return false;
-    const puzzleAbilities = puzzle.fantasy_rules.enabledAbilities ?? [];
-    const playerAbilities = playerFantasyAbilities(unlockedSkills);
-    return puzzleAbilities.some((a) => !playerAbilities.includes(a));
-  }, [puzzle, unlockedSkills]);
+  const requiredAbilities = useMemo(() => {
+    if (puzzle.kind !== "fantasy") return [] as PieceAbilityId[];
+    return (puzzle.fantasy_rules.enabledAbilities ?? []) as PieceAbilityId[];
+  }, [puzzle]);
+
+  const playerAbilities = useMemo(
+    () => playerFantasyAbilities(unlockedSkills),
+    [unlockedSkills]
+  );
+
+  const missingAbilities = useMemo(
+    () => requiredAbilities.filter((a) => !playerAbilities.includes(a)),
+    [requiredAbilities, playerAbilities]
+  );
+
+  const missingRequiredPower = missingAbilities.length > 0;
+  const blocked = missingRequiredPower || puzzle.locked;
+
+  const hasFantasyCodex =
+    unlockedSkills.includes("fantasy_codex") || puzzle.kind === "fantasy";
+  const hasTunnelSense = unlockedSkills.includes("tunnel_sense");
 
   const reset = useCallback(() => {
     setLineMoves([]);
@@ -279,6 +299,7 @@ export default function AscensionPuzzlePlayer({
   }, [puzzle, fantasyRules, lineMoves]);
 
   const greedyChainActive = fantasyEngine?.isGreedyChainActive() ?? false;
+  const queenSplitChainActive = fantasyEngine?.isQueenSplitChainActive() ?? false;
 
   const squareEffects = useMemo(() => {
     if (puzzle.kind !== "fantasy") return undefined;
@@ -319,13 +340,14 @@ export default function AscensionPuzzlePlayer({
 
   const tunnelArrows = useMemo(() => {
     if (puzzle.kind !== "fantasy") return undefined;
+    const color = hasTunnelSense ? "#67e8f9" : "#22d3ee";
     const arrows = (fantasyRules.specialSquares ?? [])
       .filter((e) => e.type === "tunnel" && e.linkTo)
-      .map((e) => ({ from: e.square, to: e.linkTo as string, color: "#22d3ee" }));
+      .map((e) => ({ from: e.square, to: e.linkTo as string, color }));
     return arrows.length > 0 ? arrows : undefined;
-  }, [puzzle.kind, fantasyRules]);
+  }, [puzzle.kind, fantasyRules, hasTunnelSense]);
 
-  const blocked = missingRequiredPower || puzzle.locked;
+  const fantasyRulesSummary = t.ascension.fantasyRulesSummary as string[];
   const expectedPlayerMoveCount = extractPlayerMoves(
     puzzle.fen,
     solution,
@@ -365,57 +387,102 @@ export default function AscensionPuzzlePlayer({
           <div className="flex flex-col items-center gap-3 rounded-lg border border-slate-700/60 bg-slate-900/60 px-4 py-6 text-center">
             <Lock className="h-8 w-8 text-slate-500" />
             <p className="text-sm font-semibold text-slate-200">{t.ascension.bonusLockedTitle}</p>
-            <p className="text-xs text-slate-400 max-w-xs">{t.ascension.bonusQuestMissingPower}</p>
+            <p className="text-xs text-slate-400 max-w-xs">{t.ascension.bonusQuestHint}</p>
+            <div className="flex flex-wrap justify-center gap-1.5">
+              {missingAbilities.map((a) => (
+                <Badge key={a} variant="outline" className="text-[10px] border-amber-600/40 text-amber-300">
+                  {t.ascension.abilities[a] ?? a}
+                </Badge>
+              ))}
+            </div>
           </div>
         )}
 
         {!blocked && puzzle.kind === "fantasy" && (
           <TooltipProvider delayDuration={150}>
-            <div className="flex flex-wrap items-center gap-2 rounded-lg border border-purple-500/35 bg-purple-950/30 px-3 py-2">
-              <span className="flex items-center gap-1 cursor-default">
-                <Star className="h-3.5 w-3.5 shrink-0 text-amber-400" />
-                <span className="text-[11px] font-semibold text-amber-300">
-                  {t.ascension.bonusQuestLabel}
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center gap-2 rounded-lg border border-purple-500/35 bg-purple-950/30 px-3 py-2">
+                <span className="flex items-center gap-1 cursor-default">
+                  <Star className="h-3.5 w-3.5 shrink-0 text-amber-400" />
+                  <span className="text-[11px] font-semibold text-amber-300">
+                    {t.ascension.bonusQuestLabel}
+                  </span>
                 </span>
-              </span>
 
-              <span className="text-purple-700">|</span>
+                <span className="text-purple-700">|</span>
 
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="flex items-center gap-1 cursor-default">
-                    <Sparkles className="h-3.5 w-3.5 text-purple-300 shrink-0" />
-                    <span className="text-[11px] text-purple-200">{t.ascension.fantasyBannerTitle}</span>
-                    <Info className="h-3 w-3 text-purple-500" />
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">
-                  {t.ascension.fantasyBannerDesc}
-                </TooltipContent>
-              </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="flex items-center gap-1 cursor-default">
+                      <Sparkles className="h-3.5 w-3.5 text-purple-300 shrink-0" />
+                      <span className="text-[11px] text-purple-200">{t.ascension.fantasyBannerTitle}</span>
+                      <Info className="h-3 w-3 text-purple-500" />
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    {t.ascension.fantasyBannerDesc}
+                  </TooltipContent>
+                </Tooltip>
 
-              {fantasyRules.enabledAbilities.length > 0 && (
-                <>
-                  <span className="text-purple-700">|</span>
-                  <span className="text-[10px] uppercase tracking-wider text-purple-400/70">
-                    {t.ascension.fantasyActivePowers}:
-                  </span>
-                  {fantasyRules.enabledAbilities.map((a) => (
-                    <Tooltip key={a}>
-                      <TooltipTrigger asChild>
-                        <Badge
-                          variant="secondary"
-                          className="text-[11px] cursor-default border-purple-500/30 bg-purple-950/60 text-purple-100 hover:bg-purple-900/60"
-                        >
-                          {t.ascension.abilities[a] ?? a}
-                        </Badge>
-                      </TooltipTrigger>
-                      <TooltipContent side="bottom">
+                {requiredAbilities.length > 0 && (
+                  <>
+                    <span className="text-purple-700">|</span>
+                    <span className="text-[10px] uppercase tracking-wider text-amber-400/80">
+                      {t.ascension.fantasyRequiredPowers}:
+                    </span>
+                    {requiredAbilities.map((a) => (
+                      <Badge
+                        key={`req-${a}`}
+                        variant="secondary"
+                        className={`text-[11px] border-amber-500/40 ${
+                          playerAbilities.includes(a)
+                            ? "bg-emerald-950/60 text-emerald-200"
+                            : "bg-amber-950/60 text-amber-200"
+                        }`}
+                      >
                         {t.ascension.abilities[a] ?? a}
-                      </TooltipContent>
-                    </Tooltip>
-                  ))}
-                </>
+                      </Badge>
+                    ))}
+                  </>
+                )}
+
+                {playerAbilities.length > 0 && (
+                  <>
+                    <span className="text-purple-700">|</span>
+                    <span className="text-[10px] uppercase tracking-wider text-purple-400/70">
+                      {t.ascension.fantasyYourPowers}:
+                    </span>
+                    {playerAbilities.map((a) => (
+                      <Tooltip key={`active-${a}`}>
+                        <TooltipTrigger asChild>
+                          <Badge
+                            variant="secondary"
+                            className="text-[11px] cursor-default border-purple-500/30 bg-purple-950/60 text-purple-100"
+                          >
+                            {t.ascension.abilities[a] ?? a}
+                          </Badge>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom">
+                          {t.ascension.abilities[a] ?? a}
+                        </TooltipContent>
+                      </Tooltip>
+                    ))}
+                  </>
+                )}
+              </div>
+
+              {hasFantasyCodex && (
+                <div className="rounded-lg border border-slate-700/60 bg-slate-900/50 px-3 py-2 text-[11px] text-slate-400 space-y-1">
+                  <p className="font-semibold text-slate-300">{t.ascension.fantasyRulesTitle}</p>
+                  <ul className="list-disc list-inside space-y-0.5">
+                    {fantasyRulesSummary.map((rule, i) => (
+                      <li key={i}>{rule}</li>
+                    ))}
+                  </ul>
+                  {(fantasyRules.specialSquares?.length ?? 0) > 0 && (
+                    <p className="text-[10px] text-slate-500 pt-1">{t.ascension.fantasySquaresHint}</p>
+                  )}
+                </div>
               )}
             </div>
           </TooltipProvider>
@@ -424,6 +491,12 @@ export default function AscensionPuzzlePlayer({
         {greedyChainActive && (
           <p className="text-sm font-medium text-amber-300/95 rounded-md border border-amber-500/30 bg-amber-950/30 px-3 py-2">
             {t.ascension.greedyPawnContinue}
+          </p>
+        )}
+
+        {queenSplitChainActive && (
+          <p className="text-sm font-medium text-purple-300/95 rounded-md border border-purple-500/30 bg-purple-950/30 px-3 py-2">
+            {t.ascension.queenSplitContinue}
           </p>
         )}
 

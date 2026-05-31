@@ -20,10 +20,11 @@ interface SkillTreePanelProps {
   unlocking?: string | null;
 }
 
-const BRANCHES = ["utility", "fantasy", "prestige"] as const;
+const BRANCHES = ["utility", "fantasy", "terrain", "prestige"] as const;
 const BRANCH_ICONS = {
   utility: Zap,
   fantasy: Sparkles,
+  terrain: Sparkles,
   prestige: Sparkles,
 } as const;
 
@@ -40,6 +41,7 @@ export default function SkillTreePanel({
     const map: Record<(typeof BRANCHES)[number], typeof SKILL_TREE> = {
       utility: [],
       fantasy: [],
+      terrain: [],
       prestige: [],
     };
     for (const skill of SKILL_TREE) map[skill.branch].push(skill);
@@ -50,6 +52,7 @@ export default function SkillTreePanel({
   const branchLabel = (branch: (typeof BRANCHES)[number]) => {
     if (branch === "utility") return t.ascension.skillBranchUtility;
     if (branch === "fantasy") return t.ascension.skillBranchFantasy;
+    if (branch === "terrain") return t.ascension.skillBranchTerrain;
     return t.ascension.skillBranchPrestige;
   };
 
@@ -64,7 +67,7 @@ export default function SkillTreePanel({
         </div>
 
         {/* Branches */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
           {BRANCHES.map((branch) => {
             const Icon = BRANCH_ICONS[branch];
             return (

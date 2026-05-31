@@ -36,6 +36,8 @@ export interface FantasyRuleSet {
   objectivePiece?: string;
   activeSkills?: ActiveSkillSlot[];
   specialSquares?: SquareEffect[];
+  /** Passive skill ids merged from the player's unlocks (blast_dodge, etc.). */
+  passiveSkills?: string[];
 }
 
 export interface FantasyMove {

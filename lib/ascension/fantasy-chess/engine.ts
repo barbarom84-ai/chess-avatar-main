@@ -206,6 +206,16 @@ function generatePawnChargeMoves(
   return [];
 }
 
+function getQueenSplitMoves(chess: Chess, from: Square): FantasyMove[] {
+  const piece = pieceAt(chess, from);
+  if (!piece || piece.type !== "q") return [];
+  return chess.moves({ square: from, verbose: true }).map((m) => ({
+    uci: `${m.from}${m.to}${m.promotion ?? ""}`,
+    isFantasy: false as const,
+    abilityId: "queen_split" as const,
+  }));
+}
+
 function getGreedyPawnCaptures(chess: Chess, from: Square): FantasyMove[] {
   const piece = pieceAt(chess, from);
   if (!piece || piece.type !== "p") return [];
@@ -242,6 +252,7 @@ export class FantasyChessEngine {
   private fantasyMoveFlags: boolean[] = [];
   private abilityByMoveIndex: (PieceAbilityId | undefined)[] = [];
   private greedyPawnSquare: Square | null = null;
+  private queenSplitSquare: Square | null = null;
   private triggeredSquares: Set<string> = new Set();
 
   constructor(fen: string, rules: FantasyRuleSet) {
@@ -269,8 +280,16 @@ export class FantasyChessEngine {
     return this.greedyPawnSquare !== null;
   }
 
+  isQueenSplitChainActive(): boolean {
+    return this.queenSplitSquare !== null;
+  }
+
   getGreedyPawnSquare(): Square | null {
     return this.greedyPawnSquare;
+  }
+
+  getQueenSplitSquare(): Square | null {
+    return this.queenSplitSquare;
   }
 
   private setSideToMove(color: "w" | "b") {
@@ -291,6 +310,23 @@ export class FantasyChessEngine {
       return;
     }
     this.greedyPawnSquare = null;
+  }
+
+  private continueQueenSplitIfPossible(landSquare: Square, queenColor: "w" | "b") {
+    if (!this.rules.enabledAbilities.includes("queen_split")) {
+      this.queenSplitSquare = null;
+      return;
+    }
+    this.setSideToMove(queenColor);
+    const moreMoves = getQueenSplitMoves(this.chess, landSquare);
+    if (moreMoves.length > 0) {
+      this.queenSplitSquare = landSquare;
+      return;
+    }
+    this.queenSplitSquare = null;
+    if (!this.usedAbilities.includes("queen_split")) {
+      this.usedAbilities.push("queen_split");
+    }
   }
 
   snapshot(): FantasyChessStateSnapshot {
@@ -344,14 +380,17 @@ export class FantasyChessEngine {
 
     if (effect.type === "trap") {
       const piece = this.chess.get(to);
-      if (piece && piece.type !== "k") this.chess.remove(to);
+      if (!piece) return;
+      if (piece.type === "k" && this.rules.enabledAbilities.includes("king_anchor")) return;
+      this.chess.remove(to);
       return;
     }
 
     if (effect.type === "explosive") {
       const { file, rank } = squareToCoords(to);
       const center = this.chess.get(to);
-      if (center && center.type !== "k") this.chess.remove(to);
+      const blastDodge = this.rules.passiveSkills?.includes("blast_dodge");
+      if (center && center.type !== "k" && !blastDodge) this.chess.remove(to);
       for (let df = -1; df <= 1; df++) {
         for (let dr = -1; dr <= 1; dr++) {
           if (df === 0 && dr === 0) continue;
@@ -369,6 +408,12 @@ export class FantasyChessEngine {
       const chainSquare = this.greedyPawnSquare;
       if (from && from !== chainSquare) return [];
       return getGreedyPawnCaptures(this.chess, chainSquare);
+    }
+
+    if (this.queenSplitSquare) {
+      const chainSquare = this.queenSplitSquare;
+      if (from && from !== chainSquare) return [];
+      return getQueenSplitMoves(this.chess, chainSquare);
     }
 
     const standard = this.chess.moves({ square: from, verbose: true }).map((m) => ({
@@ -447,6 +492,27 @@ export class FantasyChessEngine {
       return true;
     }
 
+    if (this.queenSplitSquare) {
+      if (from !== this.queenSplitSquare) return false;
+      const legal = getQueenSplitMoves(this.chess, from);
+      const match = legal.find((m) => m.uci === normalized);
+      if (!match || !pieceBefore) return false;
+
+      const next = new Chess(this.chess.fen());
+      if (!applyStandardMove(next, normalized)) return false;
+      this.chess = next;
+      this.resolveSquareEffects(to);
+
+      this.moveHistory.push(normalized);
+      this.fantasyMoveFlags.push(false);
+      this.abilityByMoveIndex.push("queen_split");
+      this.queenSplitSquare = null;
+      if (!this.usedAbilities.includes("queen_split")) {
+        this.usedAbilities.push("queen_split");
+      }
+      return true;
+    }
+
     const legal = this.getLegalMoves(from);
     const match = legal.find((m) => m.uci === normalized);
     if (!match) return false;
@@ -468,7 +534,11 @@ export class FantasyChessEngine {
     this.moveHistory.push(normalized);
     this.fantasyMoveFlags.push(match.isFantasy);
     this.abilityByMoveIndex.push(match.abilityId);
-    if (match.abilityId && !this.usedAbilities.includes(match.abilityId)) {
+    if (
+      match.abilityId &&
+      match.abilityId !== "queen_split" &&
+      !this.usedAbilities.includes(match.abilityId)
+    ) {
       this.usedAbilities.push(match.abilityId);
     }
 
@@ -476,8 +546,15 @@ export class FantasyChessEngine {
       pieceBefore?.type === "p" &&
       !!capturedBefore &&
       capturedBefore.color !== pieceBefore.color;
+    const wasQueenMove = pieceBefore?.type === "q";
     if (wasPawnCapture) {
       this.continueGreedyChainIfPossible(to, pieceBefore.color);
+    } else if (
+      wasQueenMove &&
+      this.rules.enabledAbilities.includes("queen_split") &&
+      !this.usedAbilities.includes("queen_split")
+    ) {
+      this.continueQueenSplitIfPossible(to, pieceBefore.color);
     } else {
       this.greedyPawnSquare = null;
     }

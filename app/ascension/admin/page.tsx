@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Download, Loader2, RotateCcw, Save } from "lucide-react";
+import { ArrowLeft, Download, Loader2, RotateCcw, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -105,6 +105,7 @@ export default function AscensionAdminPage() {
   const [adminTrack, setAdminTrack] = useState<CampaignTrack>("main");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [loadingPuzzles, setLoadingPuzzles] = useState(true);
   const [importCount, setImportCount] = useState(10);
@@ -113,6 +114,7 @@ export default function AscensionAdminPage() {
   const [importTrack, setImportTrack] = useState<CampaignTrack>("main");
   const [importing, setImporting] = useState(false);
   const [importMsg, setImportMsg] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const load = useCallback(async () => {
     setLoadingPuzzles(true);
@@ -124,6 +126,7 @@ export default function AscensionAdminPage() {
       const data = (await res.json()) as { puzzles: DbCampaignPuzzle[] };
       const sorted = [...data.puzzles].sort((a, b) => a.sort_order - b.sort_order);
       setPuzzles(sorted);
+      setSelectedIds((prev) => prev.filter((id) => sorted.some((p) => p.id === id)));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error");
     } finally {
@@ -243,6 +246,81 @@ export default function AscensionAdminPage() {
     }
   };
 
+  const deletePuzzles = async (
+    ids: string[],
+    confirmMsg: string,
+    options?: { level?: number; track?: CampaignTrack }
+  ) => {
+    const unique = [...new Set(ids.filter(Boolean))];
+    const deleteByLevel = options?.level != null && unique.length === 0;
+
+    if (!deleteByLevel && unique.length === 0) return;
+    if (!window.confirm(confirmMsg)) return;
+
+    setDeleting(true);
+    setError(null);
+    try {
+      const url = deleteByLevel
+        ? `/api/ascension/admin/puzzles?level=${options!.level}&track=${options!.track ?? adminTrack}`
+        : `/api/ascension/admin/puzzles?ids=${unique.map(encodeURIComponent).join(",")}`;
+
+      const res = await fetch(url, {
+        method: "DELETE",
+        headers: await accountApiHeaders(false),
+      });
+      if (!res.ok) throw new Error(await readAccountApiError(res, "Delete failed"));
+
+      const data = (await res.json()) as { deleted?: number };
+      const deletedCount = data.deleted ?? unique.length;
+      toast.success(t.ascension.adminDeleteDone.replace("{count}", String(deletedCount)));
+
+      const clearedForm =
+        form &&
+        (unique.includes(form.id ?? "") ||
+          (deleteByLevel && form.sort_order === options?.level));
+      if (clearedForm) {
+        setForm(null);
+        setSelectedPuzzleId(null);
+        setSelectedLevel(null);
+      }
+      setSelectedIds((prev) => prev.filter((id) => !unique.includes(id)));
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error");
+      toast.error(err instanceof Error ? err.message : "Error");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const deletePuzzle = async () => {
+    if (!form?.id) return;
+    const msg = t.ascension.adminDeleteConfirm
+      .replace("{slug}", form.slug)
+      .replace("{level}", String(form.sort_order));
+    await deletePuzzles([form.id], msg);
+  };
+
+  const deleteSelectedPuzzles = async () => {
+    if (selectedIds.length === 0) return;
+    const msg = t.ascension.adminDeleteBulkConfirm.replace(
+      "{count}",
+      String(selectedIds.length)
+    );
+    await deletePuzzles(selectedIds, msg);
+  };
+
+  const deleteAllAtLevel = async (level: number) => {
+    const atLevel = puzzles.filter(
+      (p) => (p.track ?? "main") === adminTrack && p.sort_order === level
+    );
+    if (atLevel.length === 0) return;
+    const msg = t.ascension.adminDeleteLevelConfirm
+      .replace("{level}", String(level))
+      .replace("{count}", String(atLevel.length));
+    await deletePuzzles([], msg, { level, track: adminTrack });
+  };
+
   const importFromLichess = async () => {
     setImporting(true);
     setImportMsg(null);
@@ -342,6 +420,23 @@ export default function AscensionAdminPage() {
     acc[p.sort_order] = (acc[p.sort_order] ?? 0) + 1;
     return acc;
   }, {});
+
+  const puzzlesAtSelectedLevel =
+    selectedLevel != null
+      ? trackPuzzles.filter((p) => p.sort_order === selectedLevel)
+      : [];
+
+  const toggleSelected = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
+  const selectAllTrack = () => {
+    setSelectedIds(trackPuzzles.map((p) => p.id));
+  };
+
+  const clearSelection = () => setSelectedIds([]);
 
   return (
     <main className="min-h-screen theme-gradient p-4 md:p-8">
@@ -489,6 +584,116 @@ export default function AscensionAdminPage() {
                     ))}
                   </div>
                 </div>
+
+                <div className="rounded-lg border border-slate-800 bg-slate-950/40 p-3 space-y-2">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-xs font-semibold text-slate-300">
+                      {t.ascension.adminPuzzleListTitle.replace(
+                        "{count}",
+                        String(trackPuzzles.length)
+                      )}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-xs"
+                        onClick={selectAllTrack}
+                        disabled={trackPuzzles.length === 0}
+                      >
+                        {t.ascension.adminSelectAll}
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-xs"
+                        onClick={clearSelection}
+                        disabled={selectedIds.length === 0}
+                      >
+                        {t.ascension.adminClearSelection}
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="destructive"
+                        className="h-7 text-xs gap-1"
+                        onClick={() => void deleteSelectedPuzzles()}
+                        disabled={deleting || selectedIds.length === 0}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                        {t.ascension.adminDeleteSelected.replace(
+                          "{count}",
+                          String(selectedIds.length)
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                  {trackPuzzles.length === 0 ? (
+                    <p className="text-xs text-slate-500 italic">{t.ascension.adminPuzzleListEmpty}</p>
+                  ) : (
+                    <ul className="max-h-48 overflow-y-auto space-y-1">
+                      {trackPuzzles.map((p) => {
+                        const checked = selectedIds.includes(p.id);
+                        const isActive = selectedPuzzleId === p.id;
+                        const dupCount = duplicateLevels[p.sort_order] ?? 0;
+                        return (
+                          <li
+                            key={p.id}
+                            className={`flex items-center gap-2 rounded-md border px-2 py-1.5 text-xs ${
+                              isActive
+                                ? "border-cyan-600/60 bg-cyan-950/30"
+                                : "border-slate-800 bg-slate-900/30"
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              className="accent-cyan-500 shrink-0"
+                              checked={checked}
+                              onChange={() => toggleSelected(p.id)}
+                              aria-label={p.slug}
+                            />
+                            <button
+                              type="button"
+                              className="flex-1 text-left min-w-0"
+                              onClick={() => selectPuzzle(p, p.sort_order)}
+                            >
+                              <span className="font-mono text-slate-500">#{p.sort_order}</span>{" "}
+                              <span className="text-slate-200 truncate">{p.slug}</span>{" "}
+                              <span className="text-slate-500">
+                                {p.kind === "fantasy" ? "F" : "S"}
+                                {p.is_published ? " · pub" : " · draft"}
+                              </span>
+                              {dupCount > 1 && (
+                                <span className="ml-1 text-amber-400">×{dupCount}</span>
+                              )}
+                            </button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              className="h-6 w-6 p-0 text-rose-400 hover:text-rose-300 shrink-0"
+                              title={t.ascension.adminDeletePuzzle}
+                              onClick={() =>
+                                void deletePuzzles(
+                                  [p.id],
+                                  t.ascension.adminDeleteConfirm
+                                    .replace("{slug}", p.slug)
+                                    .replace("{level}", String(p.sort_order))
+                                )
+                              }
+                              disabled={deleting}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </div>
+
                 <div className="flex flex-wrap gap-2">
                   {Array.from({ length: maxLevel }, (_, i) => i + 1).map((level) => {
                     const p = canonicalPuzzleAtLevel(trackPuzzles, level);
@@ -526,6 +731,33 @@ export default function AscensionAdminPage() {
 
                 {form && (
                   <div className="grid gap-4 border border-slate-800 rounded-lg p-4 bg-slate-950/40">
+                    {puzzlesAtSelectedLevel.length > 1 && (
+                      <div className="rounded-md border border-amber-600/40 bg-amber-950/20 px-3 py-2 space-y-2">
+                        <p className="text-xs text-amber-200">{t.ascension.adminDuplicateLevel}</p>
+                        <p className="text-[11px] text-amber-200/80">
+                          {t.ascension.adminDuplicatesAtLevel.replace(
+                            "{count}",
+                            String(puzzlesAtSelectedLevel.length)
+                          )}
+                        </p>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="destructive"
+                          className="h-7 text-xs gap-1"
+                          onClick={() =>
+                            selectedLevel != null && void deleteAllAtLevel(selectedLevel)
+                          }
+                          disabled={deleting || selectedLevel == null}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                          {t.ascension.adminDeleteLevelAll.replace(
+                            "{level}",
+                            String(selectedLevel ?? "")
+                          )}
+                        </Button>
+                      </div>
+                    )}
                     <div className="grid gap-3 sm:grid-cols-2">
                       <div className="space-y-1">
                         <Label>{t.ascension.adminSlug}</Label>
@@ -846,10 +1078,28 @@ export default function AscensionAdminPage() {
                         />
                         {t.ascension.adminPublished}
                       </label>
-                      <Button onClick={() => void savePuzzle()} disabled={saving} className="gap-2">
-                        {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                        {t.ascension.adminSave}
-                      </Button>
+                      <div className="flex flex-wrap gap-2">
+                        {form.id && (
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            onClick={() => void deletePuzzle()}
+                            disabled={deleting || saving}
+                            className="gap-2"
+                          >
+                            {deleting ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-4 w-4" />
+                            )}
+                            {t.ascension.adminDeletePuzzle}
+                          </Button>
+                        )}
+                        <Button onClick={() => void savePuzzle()} disabled={saving || deleting} className="gap-2">
+                          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                          {t.ascension.adminSave}
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 )}

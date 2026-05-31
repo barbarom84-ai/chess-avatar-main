@@ -11,7 +11,7 @@ export interface SkillDefinition {
   prerequisites: string[];
   effectKind: SkillEffectKind;
   abilityId?: PieceAbilityId;
-  branch: "utility" | "fantasy" | "prestige";
+  branch: "utility" | "fantasy" | "prestige" | "terrain";
   position: { x: number; y: number };
 }
 
@@ -117,6 +117,99 @@ export const SKILL_TREE: SkillDefinition[] = [
     position: { x: 2, y: 3 },
   },
   {
+    id: "queen_split",
+    name: { fr: "Reine scindée", en: "Split queen" },
+    description: {
+      fr: "En puzzles fantasy (1×/puzzle) : après un coup de dame, vous gardez la main et ne pouvez jouer que cette même dame encore.",
+      en: "In fantasy puzzles (once per puzzle): after a queen move, keep the turn and only that same queen may move again.",
+    },
+    cost: 140,
+    prerequisites: ["rook_tunnel"],
+    effectKind: "fantasy_ability",
+    abilityId: "queen_split",
+    branch: "fantasy",
+    position: { x: 1, y: 4 },
+  },
+  {
+    id: "king_anchor",
+    name: { fr: "Ancre du roi", en: "King anchor" },
+    description: {
+      fr: "En puzzles fantasy : le roi survit aux pièges sur la case d'arrivée (piège consommé).",
+      en: "In fantasy puzzles: the king survives trap squares on the landing square (trap consumed).",
+    },
+    cost: 130,
+    prerequisites: ["pawn_greedy"],
+    effectKind: "fantasy_ability",
+    abilityId: "king_anchor",
+    branch: "terrain",
+    position: { x: 3, y: 3 },
+  },
+  {
+    id: "blast_dodge",
+    name: { fr: "Esquive d'explosion", en: "Blast dodge" },
+    description: {
+      fr: "Passif : en puzzles fantasy, une pièce non-roi qui atterrit sur une case explosive survit (voisins toujours affectés).",
+      en: "Passive: in fantasy puzzles, a non-king landing on an explosive square survives (adjacent pieces still affected).",
+    },
+    cost: 100,
+    prerequisites: ["king_anchor"],
+    effectKind: "passive",
+    branch: "terrain",
+    position: { x: 3, y: 4 },
+  },
+  {
+    id: "tunnel_sense",
+    name: { fr: "Sens du tunnel", en: "Tunnel sense" },
+    description: {
+      fr: "Passif : surlignage renforcé des sorties de tunnel (flèches et repères visuels).",
+      en: "Passive: enhanced tunnel exit highlighting (arrows and visual markers).",
+    },
+    cost: 80,
+    prerequisites: ["king_anchor"],
+    effectKind: "passive",
+    branch: "terrain",
+    position: { x: 4, y: 4 },
+  },
+  {
+    id: "power_sight",
+    name: { fr: "Vision des pouvoirs", en: "Power sight" },
+    description: {
+      fr: "Sur le parcours : les quêtes bonus verrouillées indiquent quel pouvoir manque dans l'arbre.",
+      en: "On the path: locked bonus quests show which power is missing in the skill tree.",
+    },
+    cost: 70,
+    prerequisites: ["extra_hint"],
+    effectKind: "passive",
+    branch: "utility",
+    position: { x: -2, y: 1 },
+  },
+  {
+    id: "skip_path_anim",
+    name: { fr: "Chemin express", en: "Express path" },
+    description: {
+      fr: "Préférence locale : désactive l'animation du jeton sur le parcours (transitions plus rapides).",
+      en: "Local preference: disables the token animation on the path (faster transitions).",
+    },
+    cost: 60,
+    prerequisites: ["root"],
+    effectKind: "passive",
+    branch: "utility",
+    position: { x: -2, y: 2 },
+  },
+  {
+    id: "fantasy_codex",
+    name: { fr: "Codex fantasy", en: "Fantasy codex" },
+    description: {
+      fr: "Affiche le panneau de règles détaillé dans les puzzles fantasy.",
+      en: "Shows the detailed rules panel in fantasy puzzles.",
+    },
+    cost: 50,
+    prerequisites: ["root"],
+    effectKind: "passive",
+    branch: "utility",
+    position: { x: -2, y: 3 },
+  },
+  {
     id: "card_aura",
     name: { fr: "Aura de carte", en: "Card aura" },
     description: { fr: "Renforce l'effet visuel de votre carte.", en: "Enhances your card visual aura." },
@@ -162,4 +255,17 @@ export function playerFantasyAbilities(unlockedIds: string[]): PieceAbilityId[] 
 
 export function playerHasPassive(unlockedIds: string[], passiveId: string): boolean {
   return unlockedIds.includes(passiveId);
+}
+
+export function playerPassiveSkills(unlockedIds: string[]): string[] {
+  const passives: string[] = [];
+  for (const id of unlockedIds) {
+    const skill = getSkillById(id);
+    if (skill?.effectKind === "passive") passives.push(id);
+  }
+  return passives;
+}
+
+export function skillIdForAbility(abilityId: PieceAbilityId): string | undefined {
+  return SKILL_TREE.find((s) => s.abilityId === abilityId)?.id;
 }

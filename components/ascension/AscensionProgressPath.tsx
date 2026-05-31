@@ -13,7 +13,8 @@ import {
   NODE_SPACING_PX,
 } from "@/lib/ascension/progress-path";
 import { useLanguage } from "@/lib/language-context";
-import { playerFantasyAbilities } from "@/lib/ascension/skill-tree";
+import { playerFantasyAbilities, getSkillById, skillIdForAbility } from "@/lib/ascension/skill-tree";
+import type { PieceAbilityId } from "@/lib/ascension/fantasy-chess/types";
 import { TIER_PUZZLE_THRESHOLDS, resolveChampionTierByCount } from "@/lib/ascension/tiers";
 import type { ChampionTier } from "@/lib/ascension/types";
 
@@ -103,6 +104,7 @@ export default function AscensionProgressPath({
 }: AscensionProgressPathProps) {
   const { lang, t } = useLanguage();
   const playerAbilities = useMemo(() => playerFantasyAbilities(unlockedSkills), [unlockedSkills]);
+  const hasPowerSight = unlockedSkills.includes("power_sight");
   const uiLang = lang === "fr" ? "fr" : "en";
   const animationHandled = useRef(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -422,10 +424,25 @@ export default function AscensionProgressPath({
                 const isSelected = puzzle.id === selectedPuzzleId;
 
                 /** True if this bonus puzzle requires a power the player hasn't unlocked. */
-                const requiredAbilities = puzzle.fantasy_rules?.enabledAbilities ?? [];
-                const isLocked = !puzzle.completed && requiredAbilities.some(
-                  (a) => !playerAbilities.includes(a as never)
-                );
+                const requiredAbilities = (puzzle.fantasy_rules?.enabledAbilities ?? []) as PieceAbilityId[];
+                const missingPowers = requiredAbilities.filter((a) => !playerAbilities.includes(a));
+                const isLocked = !puzzle.completed && missingPowers.length > 0;
+
+                const lockedTooltip = (() => {
+                  if (!isLocked) return puzzle.prompt[uiLang] || puzzle.slug;
+                  const parts = missingPowers.map((a) => {
+                    const abilityLabel = t.ascension.abilities[a] ?? a;
+                    if (hasPowerSight) {
+                      const skillId = skillIdForAbility(a);
+                      const skill = skillId ? getSkillById(skillId) : undefined;
+                      if (skill) {
+                        return `${abilityLabel} → ${skill.name[uiLang]}`;
+                      }
+                    }
+                    return abilityLabel;
+                  });
+                  return `${t.ascension.bonusQuestHint}\n${parts.join(", ")}`;
+                })();
 
                 return (
                   <button
@@ -433,11 +450,7 @@ export default function AscensionProgressPath({
                     type="button"
                     onClick={() => !isLocked && onSelectPuzzle(puzzle.id)}
                     disabled={isLocked}
-                    title={
-                      isLocked
-                        ? t.ascension.bonusLockedTitle
-                        : (puzzle.prompt[uiLang] || puzzle.slug)
-                    }
+                    title={lockedTooltip}
                     className={`absolute -translate-x-1/2 -translate-y-1/2 group focus:outline-none rounded-full ${
                       isLocked ? "cursor-not-allowed" : ""
                     }`}

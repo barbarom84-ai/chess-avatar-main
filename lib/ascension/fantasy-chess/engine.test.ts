@@ -150,4 +150,56 @@ describe("FantasyChessEngine", () => {
     expect(engine.getLegalMoves("a4" as Square).some((m) => m.uci === "a4e4")).toBe(false);
     expect(engine.applyMove("a4e4")).toBe(false);
   });
+
+  it("chains queen split moves without yielding the turn", () => {
+    const rules: FantasyRuleSet = {
+      enabledAbilities: ["queen_split"],
+      objective: "reach_square",
+      objectiveSquare: "e8",
+    };
+    const engine = new FantasyChessEngine("8/8/8/8/4Q3/8/8/2K2k2 w - - 0 1", rules);
+    expect(engine.applyMove("e4e6")).toBe(true);
+    expect(engine.isQueenSplitChainActive()).toBe(true);
+    expect(engine.turn).toBe("w");
+    expect(engine.applyMove("e6e8")).toBe(true);
+    expect(engine.isQueenSplitChainActive()).toBe(false);
+    expect(engine.isObjectiveMet("reach_square")).toBe(true);
+  });
+
+  it("king anchor protects the king from trap squares", () => {
+    const rules: FantasyRuleSet = {
+      enabledAbilities: ["king_anchor"],
+      objective: "checkmate",
+      specialSquares: [{ square: "e4", type: "trap" }],
+    };
+    const engine = new FantasyChessEngine("6k1/8/8/8/8/4K3/8/8 w - - 0 1", rules);
+    expect(engine.applyMove("e3e4")).toBe(true);
+    const board = new Chess(engine.fen);
+    expect(board.get("e4" as Square)).toMatchObject({ type: "k", color: "w" });
+  });
+
+  it("removes king on trap without king anchor", () => {
+    const rules: FantasyRuleSet = {
+      enabledAbilities: [],
+      objective: "checkmate",
+      specialSquares: [{ square: "e4", type: "trap" }],
+    };
+    const engine = new FantasyChessEngine("6k1/8/8/8/8/4K3/8/8 w - - 0 1", rules);
+    expect(engine.applyMove("e3e4")).toBe(true);
+    expect(engine.getTriggeredSquares()).toContain("e4");
+  });
+
+  it("blast dodge lets the landing piece survive an explosive center", () => {
+    const rules: FantasyRuleSet = {
+      enabledAbilities: [],
+      passiveSkills: ["blast_dodge"],
+      objective: "checkmate",
+      specialSquares: [{ square: "e4", type: "explosive" }],
+    };
+    const engine = new FantasyChessEngine("6k1/8/8/3p4/R7/8/8/6K1 w - - 0 1", rules);
+    expect(engine.applyMove("a4e4")).toBe(true);
+    const board = new Chess(engine.fen);
+    expect(board.get("e4" as Square)).toMatchObject({ type: "r", color: "w" });
+    expect(board.get("d5" as Square)).toBeFalsy();
+  });
 });

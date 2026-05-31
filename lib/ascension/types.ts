@@ -21,6 +21,9 @@ export interface ChampionCardCustomization {
   frame?: string;
   background?: string;
   badge?: string;
+  achievements?: {
+    elo_cap_3000?: string;
+  };
 }
 
 export interface DbPlayerChampionCard {

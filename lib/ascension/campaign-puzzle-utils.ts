@@ -108,3 +108,26 @@ export function isMainCampaignComplete(puzzles: PuzzleWithCompletion[]): boolean
   if (mainStandards.length === 0) return false;
   return mainStandards.every((p) => p.completed);
 }
+
+const FANTASY_TRACK_ELO_GATE = 3000;
+
+/** Recompute sequential lock flags after a local completion update. */
+export function applyPuzzleLocks<T extends DbCampaignPuzzle & { completed: boolean; locked: boolean }>(
+  puzzles: T[],
+  playerElo: number
+): T[] {
+  const mainComplete = isMainCampaignComplete(puzzles);
+  const fantasyTrackUnlocked = playerElo >= FANTASY_TRACK_ELO_GATE || mainComplete;
+  const standardLocked = computeStandardPuzzleLocked(puzzles);
+  const fantasyLocked = computeFantasyTrackLocked(puzzles, fantasyTrackUnlocked);
+
+  return puzzles.map((p) => {
+    let locked = false;
+    if (p.track === "fantasy") {
+      locked = fantasyLocked.get(p.id) ?? true;
+    } else if (p.kind === "standard") {
+      locked = standardLocked.get(p.id) ?? false;
+    }
+    return { ...p, locked };
+  });
+}

@@ -70,6 +70,7 @@ export async function completeAscensionPuzzle(
 ): Promise<{
   solved: boolean;
   rewards?: { xpGain: number; eloGain: number; newElo: number; newXp: number; newTier: string };
+  achievement?: "elo_cap_3000";
   card?: DbPlayerChampionCard;
 }> {
   const res = await fetch("/api/ascension/puzzles/complete", {
@@ -81,6 +82,7 @@ export async function completeAscensionPuzzle(
   return (await res.json()) as {
     solved: boolean;
     rewards?: { xpGain: number; eloGain: number; newElo: number; newXp: number; newTier: string };
+    achievement?: "elo_cap_3000";
     card?: DbPlayerChampionCard;
   };
 }

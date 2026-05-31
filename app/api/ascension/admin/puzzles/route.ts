@@ -191,3 +191,99 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json({ puzzles: data ?? [] });
 }
+
+async function deletePuzzlesByIds(
+  admin: SupabaseClient,
+  ids: string[]
+): Promise<string[]> {
+  const unique = [...new Set(ids.filter(Boolean))];
+  if (unique.length === 0) return [];
+
+  const { data, error } = await admin
+    .from("campaign_puzzles")
+    .delete()
+    .in("id", unique)
+    .select("id");
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return (data ?? []).map((row) => String(row.id));
+}
+
+export async function DELETE(request: NextRequest) {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
+
+  if (!supabaseUrl || !anonKey || !serviceKey) {
+    return NextResponse.json({ error: "Supabase not configured" }, { status: 503 });
+  }
+
+  const user = await getAuthedUserFromRequest(request, supabaseUrl, anonKey);
+  if (!user) {
+    return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+  }
+
+  const admin = createServiceSupabase();
+  if (!admin) {
+    return NextResponse.json({ error: "Supabase not configured" }, { status: 503 });
+  }
+
+  if (!(await isSuperUserServer(admin, user.id))) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const params = request.nextUrl.searchParams;
+  const singleId = params.get("id")?.trim();
+  const idsParam = params.get("ids")?.trim();
+  const levelParam = params.get("level");
+  const trackParam = params.get("track") === "fantasy" ? "fantasy" : "main";
+
+  let idsToDelete: string[] = [];
+
+  if (idsParam) {
+    idsToDelete = idsParam.split(",").map((s) => s.trim()).filter(Boolean);
+  } else if (singleId) {
+    idsToDelete = [singleId];
+  } else if (levelParam != null && levelParam !== "") {
+    const level = Number(levelParam);
+    if (!Number.isFinite(level) || level < 0) {
+      return NextResponse.json({ error: "Invalid level" }, { status: 400 });
+    }
+    const { data, error } = await admin
+      .from("campaign_puzzles")
+      .select("id")
+      .eq("sort_order", level)
+      .eq("track", trackParam);
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    idsToDelete = (data ?? []).map((row) => String(row.id));
+  } else {
+    return NextResponse.json({ error: "Missing id, ids, or level" }, { status: 400 });
+  }
+
+  if (idsToDelete.length === 0) {
+    return NextResponse.json({ error: "No puzzles matched" }, { status: 404 });
+  }
+
+  try {
+    const deletedIds = await deletePuzzlesByIds(admin, idsToDelete);
+    if (deletedIds.length === 0) {
+      return NextResponse.json(
+        { error: "Delete had no effect — puzzle(s) may already be removed" },
+        { status: 404 }
+      );
+    }
+    return NextResponse.json({
+      ok: true,
+      deleted: deletedIds.length,
+      ids: deletedIds,
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Delete failed";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}

@@ -5,7 +5,9 @@ import type {
   FantasyObjective,
   SquareEffect,
 } from "@/lib/ascension/fantasy-chess/types";
-import { computePuzzleRewards } from "@/lib/ascension/progression";
+import { computePuzzleRewards, ELO_CAP } from "@/lib/ascension/progression";
+import { playerFantasyAbilities } from "@/lib/ascension/skill-tree";
+import type { ChampionCardCustomization } from "@/lib/ascension/types";
 import {
   mapDbCampaignPuzzle,
   mapDbChampionCard,
@@ -107,6 +109,22 @@ export async function POST(request: NextRequest) {
 
   const card = mapDbChampionCard(cardRes.data as Record<string, unknown>);
 
+  const skillsRes = await auth.ctx.admin
+    .from("player_skill_allocations")
+    .select("skill_id")
+    .eq("user_id", auth.ctx.user.id);
+  const unlockedSkills = (skillsRes.data ?? []).map((r) => String(r.skill_id));
+  const playerAbilities = playerFantasyAbilities(unlockedSkills);
+
+  // Main-track bonus fantasy puzzles require unlocked powers from the skill tree.
+  if (puzzle.kind === "fantasy" && puzzle.track === "main") {
+    const required = (puzzle.fantasy_rules.enabledAbilities ?? []) as PieceAbilityId[];
+    const missing = required.filter((a) => !playerAbilities.includes(a));
+    if (missing.length > 0) {
+      return NextResponse.json({ error: "Required fantasy power not unlocked" }, { status: 403 });
+    }
+  }
+
   // Sequential unlock check (per track) so a locked puzzle cannot be force-completed.
   if (puzzle.kind === "standard" || puzzle.track === "fantasy") {
     const allPuzzlesRes = await auth.ctx.admin
@@ -201,13 +219,30 @@ export async function POST(request: NextRequest) {
     completedPuzzleCount,
   });
 
+  const customization = (card.customization ?? {}) as ChampionCardCustomization;
+  let achievement: "elo_cap_3000" | undefined;
+  const achievements = { ...(customization.achievements ?? {}) };
+  if (
+    card.elo < ELO_CAP &&
+    rewards.newElo >= ELO_CAP &&
+    !achievements.elo_cap_3000
+  ) {
+    achievements.elo_cap_3000 = new Date().toISOString();
+    achievement = "elo_cap_3000";
+  }
+
+  const cardUpdatePayload: Record<string, unknown> = {
+    elo: rewards.newElo,
+    xp: rewards.newXp,
+    tier: rewards.newTier,
+  };
+  if (achievement) {
+    cardUpdatePayload.customization = { ...customization, achievements };
+  }
+
   const cardUpdate = await auth.ctx.admin
     .from("player_champion_cards")
-    .update({
-      elo: rewards.newElo,
-      xp: rewards.newXp,
-      tier: rewards.newTier,
-    })
+    .update(cardUpdatePayload)
     .eq("user_id", auth.ctx.user.id)
     .select("*")
     .single();
@@ -235,6 +270,7 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({
     solved: true,
     rewards,
+    achievement,
     card: cardUpdate.data ? mapDbChampionCard(cardUpdate.data as Record<string, unknown>) : null,
   });
 }
