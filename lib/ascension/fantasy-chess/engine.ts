@@ -244,6 +244,30 @@ function getGreedyPawnCaptures(chess: Chess, from: Square): FantasyMove[] {
   return moves;
 }
 
+/** Greedy pawn chain: captures first, then a forward promotion if on the 7th rank. */
+function getGreedyPawnChainMoves(chess: Chess, from: Square): FantasyMove[] {
+  const captures = getGreedyPawnCaptures(chess, from);
+  if (captures.length > 0) return captures;
+
+  const piece = pieceAt(chess, from);
+  if (!piece || piece.type !== "p") return [];
+
+  const { file, rank } = squareToCoords(from);
+  const dir = piece.color === "w" ? 1 : -1;
+  const promoRank = piece.color === "w" ? 7 : 0;
+  const landRank = rank + dir;
+  if (landRank !== promoRank) return [];
+
+  const to = coordsToSquare(file, landRank);
+  if (!to || pieceAt(chess, to)) return [];
+
+  return (["q", "r", "b", "n"] as const).map((promotion) => ({
+    uci: `${from}${to}${promotion}`,
+    isFantasy: false as const,
+    abilityId: "pawn_greedy" as const,
+  }));
+}
+
 export class FantasyChessEngine {
   private chess: Chess;
   private rules: FantasyRuleSet;
@@ -303,7 +327,7 @@ export class FantasyChessEngine {
       this.greedyPawnSquare = null;
       return;
     }
-    const moreCaptures = getGreedyPawnCaptures(this.chess, landSquare);
+    const moreCaptures = getGreedyPawnChainMoves(this.chess, landSquare);
     if (moreCaptures.length > 0) {
       this.greedyPawnSquare = landSquare;
       this.setSideToMove(pawnColor);
@@ -354,10 +378,12 @@ export class FantasyChessEngine {
 
   /**
    * Resolve a special square after a piece has landed on `to`. Kings are immune to
-   * explosive/trap. Tunnels relocate the piece (capturing an enemy at the exit).
-   * Uses chess.js board edits, which preserve the side to move set by the move.
+   * explosive blast (adjacent). Tunnels relocate the piece then resolve effects at
+   * the exit (explosive/trap chain). Uses chess.js board edits.
    */
-  private resolveSquareEffects(to: Square): void {
+  private resolveSquareEffects(to: Square, depth = 0): void {
+    if (depth > 6) return;
+
     const effect = this.squareEffectAt(to);
     if (!effect) return;
 
@@ -371,6 +397,7 @@ export class FantasyChessEngine {
       if (occupant) this.chess.remove(exit);
       this.chess.remove(to);
       this.chess.put({ type: piece.type, color: piece.color }, exit);
+      this.resolveSquareEffects(exit, depth + 1);
       return;
     }
 
@@ -407,7 +434,7 @@ export class FantasyChessEngine {
     if (this.greedyPawnSquare) {
       const chainSquare = this.greedyPawnSquare;
       if (from && from !== chainSquare) return [];
-      return getGreedyPawnCaptures(this.chess, chainSquare);
+      return getGreedyPawnChainMoves(this.chess, chainSquare);
     }
 
     if (this.queenSplitSquare) {
@@ -476,7 +503,7 @@ export class FantasyChessEngine {
 
     if (this.greedyPawnSquare) {
       if (from !== this.greedyPawnSquare) return false;
-      const legal = getGreedyPawnCaptures(this.chess, from);
+      const legal = getGreedyPawnChainMoves(this.chess, from);
       const match = legal.find((m) => m.uci === normalized);
       if (!match || !pieceBefore) return false;
 

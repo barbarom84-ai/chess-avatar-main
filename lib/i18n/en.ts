@@ -1918,6 +1918,13 @@ export const en = {
       adminMaxElo: "Max ELO",
       adminSolution: "Solution (UCI moves)",
       adminFantasyAbilities: "Fantasy abilities",
+      adminFantasyLineInvalid: "The fantasy solution line is invalid for this FEN and selected powers.",
+      adminNeedsFantasyType:
+        "This line requires fantasy rules (e.g. rook tunnel). Set puzzle type to Fantasy and enable the needed power.",
+      adminNeedsRookTunnel:
+        "Illegal move with current powers. Enable « rook_tunnel » — the rook must pass through a friendly piece on the file.",
+      adminRookTunnelPathBlocked:
+        "The rook tunnel path is blocked (e.g. enemy king on the file). Check the FEN — the white king must not be on h2 for h8h1.",
       adminTrackLabel: "Track",
       adminTrackMain: "Main",
       adminTrackFantasy: "Fantasy",

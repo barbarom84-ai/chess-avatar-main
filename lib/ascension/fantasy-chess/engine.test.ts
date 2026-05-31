@@ -62,6 +62,37 @@ describe("FantasyChessEngine", () => {
     ).toBe(true);
   });
 
+  it("allows greedy pawn promotion after a capture chain on the 7th rank", () => {
+    const rules: FantasyRuleSet = {
+      enabledAbilities: ["pawn_greedy"],
+      objective: "reach_square",
+      objectiveSquare: "c8",
+    };
+    const fen = "8/ppp5/3p4/3rp3/4kp2/2Pp2P1/PP1K3P/8 w - - 0 45";
+    const moves = ["g3f4", "f4e5", "e5d6", "d6c7", "c7c8q"];
+    const engine = new FantasyChessEngine(fen, rules);
+    for (const uci of moves) {
+      expect(engine.applyMove(uci)).toBe(true);
+    }
+    expect(engine.isObjectiveMet("reach_square")).toBe(true);
+    expect(
+      FantasyChessEngine.replaySolution(fen, rules, moves).ok
+    ).toBe(true);
+  });
+
+  it("allows rook tunnel through one ally on the h-file to h1", () => {
+    const fen = "2k4r/ppp2Q2/1bp2Np1/4P2p/6b1/2P3P1/PP3PK1/R1Br4 b - - 3 22";
+    const rules: FantasyRuleSet = {
+      enabledAbilities: ["rook_tunnel"],
+      objective: "checkmate",
+    };
+    const engine = new FantasyChessEngine(fen, rules);
+    const moves = engine.getLegalMoves("h8" as Square);
+    expect(moves.some((m) => m.uci === "h8h1" && m.isFantasy)).toBe(true);
+    expect(engine.applyMove("h8h1")).toBe(true);
+    expect(FantasyChessEngine.replaySolution(fen, rules, ["h8h1"]).ok).toBe(true);
+  });
+
   it("validates authored solution replay", () => {
     const result = FantasyChessEngine.replaySolution(
       "8/8/8/8/4R3/3P4/8/2K2k2 w - - 0 1",
@@ -138,6 +169,26 @@ describe("FantasyChessEngine", () => {
         ["a4e4"]
       ).ok
     ).toBe(true);
+  });
+
+  it("triggers explosive on tunnel exit when the exit square is explosive", () => {
+    const rules: FantasyRuleSet = {
+      enabledAbilities: [],
+      objective: "checkmate",
+      specialSquares: [
+        { square: "e4", type: "tunnel", linkTo: "e6" },
+        { square: "e6", type: "explosive" },
+      ],
+    };
+    // Rook tunnels e4→e6; explosive removes rook and adjacent d5 pawn; king on e3 survives.
+    const engine = new FantasyChessEngine("6k1/8/3p4/8/R7/4K3/8/8 w - - 0 1", rules);
+    expect(engine.applyMove("a4e4")).toBe(true);
+
+    const board = new Chess(engine.fen);
+    expect(board.get("e6" as Square)).toBeFalsy();
+    expect(board.get("d5" as Square)).toBeFalsy();
+    expect(board.get("e3" as Square)).toMatchObject({ type: "k", color: "w" });
+    expect(engine.getTriggeredSquares()).toContain("e6");
   });
 
   it("blocks moving into a tunnel whose exit is occupied by an ally", () => {

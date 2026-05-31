@@ -556,3 +556,49 @@ nextjs-portal {
   0%, 100% { opacity: 0.5; }
   50% { opacity: 0.95; }
 }
+
+/* Triggered explosion burst (center + neighbours) */
+.fantasy-sq-exploded {
+  color: #fb923c;
+  animation: fantasy-explosion-burst 0.75s ease-out forwards;
+  box-shadow:
+    inset 0 0 0 3px #fb923c,
+    0 0 18px 6px rgba(249, 115, 22, 0.55);
+  z-index: 12;
+}
+.fantasy-sq-blast-radius {
+  color: #fbbf24;
+  animation: fantasy-blast-radius 0.75s ease-out forwards;
+  box-shadow: inset 0 0 0 2px rgba(251, 191, 36, 0.7);
+  z-index: 11;
+}
+.fantasy-explosion-icon {
+  animation: fantasy-explosion-icon-pop 0.75s ease-out forwards;
+}
+@keyframes fantasy-explosion-burst {
+  0% {
+    opacity: 0.95;
+    transform: scale(0.85);
+    background: radial-gradient(circle, rgba(251, 146, 60, 0.85) 0%, rgba(239, 68, 68, 0.35) 55%, transparent 72%);
+  }
+  45% {
+    opacity: 1;
+    transform: scale(1.08);
+    background: radial-gradient(circle, rgba(254, 215, 170, 0.9) 0%, rgba(249, 115, 22, 0.5) 50%, transparent 75%);
+  }
+  100% {
+    opacity: 0.35;
+    transform: scale(1);
+    background: radial-gradient(circle, rgba(249, 115, 22, 0.25) 0%, transparent 70%);
+  }
+}
+@keyframes fantasy-blast-radius {
+  0% { opacity: 0.85; background: rgba(251, 191, 36, 0.35); }
+  50% { opacity: 0.65; background: rgba(249, 115, 22, 0.22); }
+  100% { opacity: 0.2; background: transparent; }
+}
+@keyframes fantasy-explosion-icon-pop {
+  0% { transform: scale(0.6); opacity: 0.5; }
+  35% { transform: scale(1.35); opacity: 1; }
+  100% { transform: scale(1); opacity: 0.85; }
+}

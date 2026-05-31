@@ -1929,6 +1929,14 @@ export const fr = {
       adminMaxElo: "ELO max.",
       adminSolution: "Solution (coups UCI)",
       adminFantasyAbilities: "Pouvoirs fantasy",
+      adminFantasyLineInvalid:
+        "La ligne de solution fantasy est invalide pour ce FEN et ces pouvoirs.",
+      adminNeedsFantasyType:
+        "Cette ligne nécessite les règles fantasy (ex. tunnel de tour). Passez le type en Fantasy et activez le pouvoir requis.",
+      adminNeedsRookTunnel:
+        "Coup illégal avec les pouvoirs actuels. Activez « rook_tunnel » — la tour doit traverser une pièce alliée sur la colonne.",
+      adminRookTunnelPathBlocked:
+        "Le tunnel de tour est bloqué (ex. roi adverse sur la colonne). Vérifiez le FEN — le roi blanc ne doit pas être en h2 pour h8h1.",
       adminTrackLabel: "Piste",
       adminTrackMain: "Principale",
       adminTrackFantasy: "Fantasy",

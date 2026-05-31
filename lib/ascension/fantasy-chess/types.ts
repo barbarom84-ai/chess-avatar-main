@@ -18,7 +18,7 @@ export interface ActiveSkillSlot {
  * Board square mechanics resolved after a piece lands on the square.
  * - `explosive`: removes the landing piece and all adjacent pieces (kings immune); one-shot.
  * - `trap`: removes the landing piece (kings immune); one-shot.
- * - `tunnel`: teleports the landing piece to `linkTo` (captures an enemy there, blocked by an ally); reusable.
+ * - `tunnel`: teleports the landing piece to `linkTo` (captures an enemy there, blocked by an ally); reusable; effects at exit also resolve (explosive/trap).
  */
 export type SquareEffectType = "explosive" | "trap" | "tunnel";
 

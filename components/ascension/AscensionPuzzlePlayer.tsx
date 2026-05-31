@@ -308,20 +308,67 @@ export default function AscensionPuzzlePlayer({
     const triggered = new Set(fantasyEngine?.getTriggeredSquares() ?? []);
     const map: Record<
       string,
-      { icon: string; variant: "explosive" | "trap" | "tunnel" }
+      {
+        icon: string;
+        variant: "explosive" | "trap" | "tunnel";
+        exploded?: boolean;
+        blastRadius?: boolean;
+      }
     > = {};
+
+    const adjacentSquares = (sq: string): string[] => {
+      const files = "abcdefgh";
+      const ranks = "12345678";
+      const fi = files.indexOf(sq[0] ?? "");
+      const ri = ranks.indexOf(sq[1] ?? "");
+      if (fi < 0 || ri < 0) return [];
+      const out: string[] = [];
+      for (let df = -1; df <= 1; df++) {
+        for (let dr = -1; dr <= 1; dr++) {
+          if (df === 0 && dr === 0) continue;
+          const f = fi + df;
+          const r = ri + dr;
+          if (f >= 0 && f <= 7 && r >= 0 && r <= 7) {
+            out.push(`${files[f]}${ranks[r]}`);
+          }
+        }
+      }
+      return out;
+    };
+
     for (const eff of specials) {
-      if (
-        (eff.type === "explosive" || eff.type === "trap") &&
-        triggered.has(eff.square)
-      ) {
+      if (eff.type === "explosive" && triggered.has(eff.square)) {
+        map[eff.square] = {
+          icon: "💥",
+          variant: "explosive",
+          exploded: true,
+        };
+        for (const adj of adjacentSquares(eff.square)) {
+          if (!map[adj]) {
+            map[adj] = { icon: "", variant: "explosive", blastRadius: true };
+          }
+        }
+        continue;
+      }
+      if (eff.type === "trap" && triggered.has(eff.square)) {
         continue;
       }
       const icon =
         eff.type === "explosive" ? "💣" : eff.type === "trap" ? "⚠️" : "🕳️";
       map[eff.square] = { icon, variant: eff.type };
-      if (eff.type === "tunnel" && eff.linkTo && !map[eff.linkTo]) {
-        map[eff.linkTo] = { icon: "🕳️", variant: "tunnel" };
+      if (eff.type === "tunnel" && eff.linkTo) {
+        const exitEff = specials.find((s) => s.square === eff.linkTo);
+        if (exitEff?.type === "explosive" && triggered.has(eff.linkTo)) {
+          if (!map[eff.linkTo]) {
+            map[eff.linkTo] = {
+              icon: "💥",
+              variant: "explosive",
+              exploded: true,
+            };
+          }
+        } else if (!map[eff.linkTo]) {
+          map[eff.linkTo] = { icon: "🕳️", variant: "tunnel" };
+        }
       }
     }
     return Object.keys(map).length > 0 ? map : undefined;

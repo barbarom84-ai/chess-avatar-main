@@ -21,7 +21,14 @@ interface SimpleChessboardProps {
   /** Cases spéciales Fantasy : anneau coloré + icône (explosive/trap/tunnel). */
   squareEffects?: Record<
     string,
-    { icon: string; variant: "explosive" | "trap" | "tunnel" }
+    {
+      icon: string;
+      variant: "explosive" | "trap" | "tunnel";
+      /** Center of a triggered explosion. */
+      exploded?: boolean;
+      /** Neighbour caught in blast radius. */
+      blastRadius?: boolean;
+    }
   >;
 }
 
@@ -410,15 +417,21 @@ export default function SimpleChessboard({
                 {squareEffects?.[square] && (
                   <>
                     <div
-                      className={`pointer-events-none absolute inset-0 z-[8] rounded-sm fantasy-sq fantasy-sq-${squareEffects[square].variant}`}
+                      className={`pointer-events-none absolute inset-0 z-[8] rounded-sm fantasy-sq fantasy-sq-${squareEffects[square].variant}${
+                        squareEffects[square].exploded ? " fantasy-sq-exploded" : ""
+                      }${squareEffects[square].blastRadius ? " fantasy-sq-blast-radius" : ""}`}
                       aria-hidden
                     />
-                    <span
-                      className="pointer-events-none absolute top-0.5 left-1 z-[26] text-[clamp(10px,2.8vw,18px)] leading-none select-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)]"
-                      aria-hidden
-                    >
-                      {squareEffects[square].icon}
-                    </span>
+                    {squareEffects[square].icon ? (
+                      <span
+                        className={`pointer-events-none absolute top-0.5 left-1 z-[26] text-[clamp(10px,2.8vw,18px)] leading-none select-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)]${
+                          squareEffects[square].exploded ? " fantasy-explosion-icon" : ""
+                        }`}
+                        aria-hidden
+                      >
+                        {squareEffects[square].icon}
+                      </span>
+                    ) : null}
                   </>
                 )}
 

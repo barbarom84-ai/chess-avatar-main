@@ -11,6 +11,9 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { accountApiHeaders, readAccountApiError } from "@/lib/account-api-auth";
 import type { CampaignTrack, DbCampaignPuzzle } from "@/lib/ascension/types";
+import { Chess, type Square } from "chess.js";
+import type { PieceAbilityId } from "@/lib/ascension/fantasy-chess/types";
+import { FantasyChessEngine } from "@/lib/ascension/fantasy-chess/engine";
 import type { SquareEffect, SquareEffectType } from "@/lib/ascension/fantasy-chess/types";
 import { validateStandardPuzzleLine } from "@/lib/ascension/puzzle-validation";
 import {
@@ -172,20 +175,12 @@ export default function AscensionAdminPage() {
         .map((s) => s.trim().toLowerCase())
         .filter(Boolean);
 
-      if (form.kind === "standard") {
-        const normalizedFen = normalizeFen(form.fen.trim(), form.side_to_move);
-        const validation = validateStandardPuzzleLine(normalizedFen, solution_ucis);
-        if (!validation.ok) {
-          setError(validation.error);
-          setSaving(false);
-          return;
-        }
-      }
+      const normalizedFen = normalizeFen(form.fen.trim(), form.side_to_move);
 
       const abilities = form.fantasy_abilities
         .split(/[,;\s]+/)
         .map((s) => s.trim())
-        .filter(Boolean);
+        .filter(Boolean) as PieceAbilityId[];
 
       const specialSquares = form.special_squares
         .map((eff) => {
@@ -198,6 +193,67 @@ export default function AscensionAdminPage() {
         .filter((eff) => /^[a-h][1-8]$/.test(eff.square))
         .filter((eff) => eff.type !== "tunnel" || /^[a-h][1-8]$/.test(eff.linkTo ?? ""));
 
+      if (form.kind === "standard") {
+        const validation = validateStandardPuzzleLine(normalizedFen, solution_ucis);
+        if (!validation.ok) {
+          const withTunnel = FantasyChessEngine.replaySolution(
+            normalizedFen,
+            { enabledAbilities: ["rook_tunnel"] },
+            solution_ucis
+          );
+          if (withTunnel.ok) {
+            setError(t.ascension.adminNeedsFantasyType);
+          } else {
+            setError(validation.error);
+          }
+          setSaving(false);
+          return;
+        }
+      }
+
+      if (form.kind === "fantasy") {
+        const fantasyRules = {
+          enabledAbilities: abilities,
+          objective: "reach_square" as const,
+          objectiveSquare: solution_ucis[solution_ucis.length - 1]?.slice(2, 4),
+          ...(specialSquares.length > 0 ? { specialSquares } : {}),
+        };
+        const replay = FantasyChessEngine.replaySolution(
+          normalizedFen,
+          fantasyRules,
+          solution_ucis
+        );
+        if (!replay.ok) {
+          const withTunnelOnly = FantasyChessEngine.replaySolution(
+            normalizedFen,
+            { enabledAbilities: ["rook_tunnel"] },
+            solution_ucis
+          );
+          if (!abilities.includes("rook_tunnel") && withTunnelOnly.ok) {
+            setError(t.ascension.adminNeedsRookTunnel);
+          } else if (abilities.includes("rook_tunnel") && !withTunnelOnly.ok) {
+            try {
+              const chess = new Chess(normalizedFen);
+              const blockers = ["h7", "h6", "h5", "h4", "h3", "h2", "h1"].filter((sq) => {
+                const p = chess.get(sq as Square);
+                return p && p.color === "w";
+              });
+              if (blockers.length > 0) {
+                setError(t.ascension.adminRookTunnelPathBlocked);
+              } else {
+                setError(replay.error ?? t.ascension.adminFantasyLineInvalid);
+              }
+            } catch {
+              setError(replay.error ?? t.ascension.adminFantasyLineInvalid);
+            }
+          } else {
+            setError(replay.error ?? t.ascension.adminFantasyLineInvalid);
+          }
+          setSaving(false);
+          return;
+        }
+      }
+
       const body = {
         id: form.id,
         slug: form.slug.trim(),
@@ -206,7 +262,7 @@ export default function AscensionAdminPage() {
         max_elo: form.max_elo,
         xp_reward: form.xp_reward,
         elo_reward: form.elo_reward,
-        fen: normalizeFen(form.fen.trim(), form.side_to_move),
+        fen: normalizedFen,
         solution_ucis,
         sort_order: form.sort_order,
         track: form.track,
