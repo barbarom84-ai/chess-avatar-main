@@ -97,6 +97,11 @@ export default function NavItemLinks({
               />
               <span className={compact ? "ml-1 text-xs" : "ml-2"}>
                 {label}
+                {item.premium && (
+                  <span className="ml-1.5 inline-block rounded px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wide bg-amber-500/25 text-amber-200">
+                    Premium
+                  </span>
+                )}
                 {badgeText && (
                   <span
                     className={`ml-1.5 inline-block rounded px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${

@@ -27,10 +27,8 @@ import { useLanguage } from "@/lib/language-context";
 import { usePremium } from "@/hooks/usePremium";
 import {
   buildAvatarCardModel,
-  derivePlayingStyle,
 } from "@/lib/avatar-card-model";
 import { getAvatarCardLabels } from "@/lib/avatar-card-labels";
-import { generateAIAnalysis } from "@/lib/ai-analysis";
 
 interface PersonaCardProps {
   stats: PersonaStats;
@@ -40,7 +38,7 @@ interface PersonaCardProps {
 
 export default function PersonaCard({ stats, config, profileId }: PersonaCardProps) {
   const router = useRouter();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const labels = useMemo(() => getAvatarCardLabels(t), [t]);
   const [showConfigDialog, setShowConfigDialog] = useState(false);
   const [configPanelNonce, setConfigPanelNonce] = useState(0);
@@ -71,15 +69,13 @@ export default function PersonaCard({ stats, config, profileId }: PersonaCardPro
   };
 
   const cardModel = useMemo(() => {
-    const playingStyle = derivePlayingStyle(customConfig);
-    const analysis = generateAIAnalysis(playingStyle, stats, stats.gameCount);
     return buildAvatarCardModel({
       stats,
       config: customConfig,
-      analysis,
       labels,
+      lang,
     });
-  }, [stats, customConfig, labels]);
+  }, [stats, customConfig, labels, lang]);
 
   const buildExportData = () => {
     const exportConfig = prepareConfigForExport(customConfig, {

@@ -6,10 +6,8 @@ import AvatarTradingCard from "@/components/AvatarTradingCard";
 import { Input } from "@/components/ui/input";
 import { useLanguage } from "@/lib/language-context";
 import type { ProfileOption } from "@/lib/arena-types";
-import { generateAIAnalysis } from "@/lib/ai-analysis";
 import {
   buildAvatarCardModel,
-  derivePlayingStyle,
   minimalPersonaStatsFromConfig,
 } from "@/lib/avatar-card-model";
 import { getAvatarCardLabels } from "@/lib/avatar-card-labels";
@@ -18,7 +16,8 @@ export const PLAYOFF_DRAG_KEY = "application/x-chess-avatar-playoff";
 
 function buildCardModelFromOption(
   option: ProfileOption,
-  labels: ReturnType<typeof getAvatarCardLabels>
+  labels: ReturnType<typeof getAvatarCardLabels>,
+  lang: "fr" | "en" = "fr"
 ) {
   const stats =
     option.stats && (option.stats.gameCount ?? 0) > 0
@@ -27,13 +26,11 @@ function buildCardModelFromOption(
           option.config,
           option.config.name || option.label
         );
-  const playingStyle = derivePlayingStyle(option.config);
-  const analysis = generateAIAnalysis(playingStyle, stats, stats.gameCount);
   return buildAvatarCardModel({
     stats,
     config: option.config,
-    analysis,
     labels,
+    lang,
   });
 }
 
@@ -60,7 +57,7 @@ export default function ArenaPlayoffRosterDeck({
   onDragEnd,
   placedKeys,
 }: ArenaPlayoffRosterDeckProps) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const labels = useMemo(() => getAvatarCardLabels(t), [t]);
 
   const rosterVisible = useMemo(() => {
@@ -105,7 +102,7 @@ export default function ArenaPlayoffRosterDeck({
             const picked = tapPickKey === opt.key;
             const placed = placedKeys.has(opt.key);
             const dragging = dragOptionKey === opt.key;
-            const model = buildCardModelFromOption(opt, labels);
+            const model = buildCardModelFromOption(opt, labels, lang);
 
             return (
               <div

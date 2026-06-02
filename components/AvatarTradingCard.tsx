@@ -353,7 +353,9 @@ function DefaultCardBack({
           </div>
           <div className="bg-slate-950/80 rounded p-2 border border-slate-800">
             <Cpu className="h-3.5 w-3.5 text-cyan-400 mb-0.5" />
-            <span className="text-slate-500 text-[10px] block">Niv.</span>
+            <span className="text-slate-500 text-[10px] block">
+              {labels.difficultyShort}
+            </span>
             <p className="font-bold text-sm">{model.difficulty}/5</p>
           </div>
           <div className="bg-slate-950/80 rounded p-2 border border-slate-800">

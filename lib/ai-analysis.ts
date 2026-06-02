@@ -1,5 +1,17 @@
 import type { PersonaStats } from './analysis';
 import type { PlayingStyle, ProfileMetadata } from '@/types/chess';
+import {
+  type TraitLang,
+  traitAlternativeLines,
+  WEAKNESS_POOLS,
+  STRENGTH_POOLS,
+  traitFastDecisions,
+  traitLongGameEndurance,
+  traitOffensiveIdentity,
+  traitOpeningMastery,
+  traitStructuralSolidity,
+  traitUnpredictablePlay,
+} from '@/lib/avatar-trait-pools';
 
 // ========================================
 // Types d'Analyse IA
@@ -381,48 +393,15 @@ function generateRecommendations(
   return recommendations.slice(0, 5);
 }
 
-/**
- * Axes d’amélioration — curseurs + stats (export pour cartes avatar / UI)
- */
-const WEAKNESS_POOL: Record<string, string[]> = {
-  endgame: [
-    "Finales techniques à consolider",
-    "Conversion en finale",
-    "Tours passives en finale",
-  ],
-  openingTheory: [
-    "Répertoire d’ouverture à structurer",
-    "Mémorisation des lignes critiques",
-    "Surprises en début de partie",
-  ],
-  timeManagement: [
-    "Zeitnot en fin de partie",
-    "Décisions trop lentes au milieu",
-    "Cadence rapide sous pression",
-  ],
-  positional: [
-    "Plans longs à affiner",
-    "Structure pion fragile",
-    "Cases faibles mal exploitées",
-  ],
-  tactical: [
-    "Calcul de variantes court",
-    "Combinaisons manquées",
-    "Défense tactique à renforcer",
-  ],
-  stats: [
-    "Efficacité en parties serrées",
-    "Trop de nuls passives",
-    "Résultats en retrait sur l’échantillon",
-    "Manque de mordant en milieu de jeu",
-  ],
-};
+
 
 export function findImprovementAreas(
   style: PlayingStyle,
   stats?: PersonaStats,
-  seed = 0
+  seed = 0,
+  lang: TraitLang = "fr"
 ): string[] {
+  const WEAKNESS_POOL = WEAKNESS_POOLS[lang];
   const areas: string[] = [];
   const weakPoints: { key: keyof PlayingStyle; poolKey: string; threshold: number }[] = [
     { key: "endgame", poolKey: "endgame", threshold: 62 },
@@ -449,7 +428,7 @@ export function findImprovementAreas(
     }
     const top = stats.topOpenings?.[0];
     if (top?.name && style.openingTheory < 70) {
-      areas.push(`Lignes alternatives à ${top.name}`);
+      areas.push(traitAlternativeLines(lang, top.name));
     }
   }
   if (areas.length < 2) {
@@ -460,58 +439,15 @@ export function findImprovementAreas(
   return [...new Set(areas)].slice(0, 3);
 }
 
-/**
- * Points forts (export pour cartes avatar / UI)
- */
-const STRENGTH_POOL: Record<string, string[]> = {
-  aggression: [
-    "Initiative dès l’ouverture",
-    "Pression constante sur le roi adverse",
-    "Sacrifices calculés",
-  ],
-  tactical: [
-    "Combinaisons nettes",
-    "Calcul de variantes profond",
-    "Défense tactique tenace",
-  ],
-  positional: [
-    "Structure pion supérieure",
-    "Plans stratégiques patientes",
-    "Domination des cases faibles",
-  ],
-  endgame: [
-    "Technique de finale solide",
-    "Conversion précise",
-    "Patience en finale gagnante",
-  ],
-  openingTheory: [
-    "Répertoire théorique rodé",
-    "Préparation d’ouverture pointue",
-    "Surprises en début de partie",
-  ],
-  timeManagement: [
-    "Horloge bien gérée",
-    "Décisions rapides en zeitnot",
-    "Rythme soutenu sans panique",
-  ],
-  stats: [
-    "Bilan positif sur l’échantillon",
-    "Résultats stables en tournoi",
-    "Style cohérent avec les stats plateforme",
-    "Polyvalence ouverture / milieu",
-  ],
-  elo: [
-    "Niveau élite (3000+)",
-    "Force blitz de haut niveau",
-    "Référence classement mondial",
-  ],
-};
+
 
 export function findStrengths(
   style: PlayingStyle,
   seed: number,
-  stats?: PersonaStats
+  stats?: PersonaStats,
+  lang: TraitLang = "fr"
 ): string[] {
+  const STRENGTH_POOL = STRENGTH_POOLS[lang];
   const strengths: string[] = [];
   const strongPoints: { key: keyof PlayingStyle; poolKey: string; threshold: number }[] = [
     { key: "aggression", poolKey: "aggression", threshold: 72 },
@@ -532,7 +468,7 @@ export function findStrengths(
   if (stats) {
     const top = stats.topOpenings?.[0];
     if (top?.name && top.count >= 2) {
-      strengths.push(`Maîtrise de ${top.name}`);
+      strengths.push(traitOpeningMastery(lang, top.name));
     }
     if (stats.winRate >= 54 && stats.gameCount >= 8) {
       strengths.push(
@@ -540,16 +476,16 @@ export function findStrengths(
       );
     }
     if (stats.style === "Agressif" && style.aggression >= 58) {
-      strengths.push("Identité offensive confirmée");
+      strengths.push(traitOffensiveIdentity(lang));
     } else if (stats.style === "Solide" && style.positional >= 65) {
-      strengths.push("Solidité structurelle");
+      strengths.push(traitStructuralSolidity(lang));
     } else if (stats.style === "Chaotique" && style.tactical >= 65) {
-      strengths.push("Jeu imprévisible et tranchant");
+      strengths.push(traitUnpredictablePlay(lang));
     }
     if (stats.avgMoves >= 42) {
-      strengths.push("Endurance en parties longues");
+      strengths.push(traitLongGameEndurance(lang));
     } else if (stats.avgMoves > 0 && stats.avgMoves <= 32) {
-      strengths.push("Décisions rapides, parties courtes");
+      strengths.push(traitFastDecisions(lang));
     }
   }
   if (strengths.length < 2) {
@@ -590,7 +526,8 @@ function calculateConfidence(
 export function generateAIAnalysis(
   style: PlayingStyle,
   stats?: PersonaStats,
-  gamesPlayed: number = 0
+  gamesPlayed: number = 0,
+  lang: TraitLang = "fr"
 ): AIAnalysis {
   const seed = seedFromContext(style, stats);
   const nGames = Math.max(gamesPlayed, stats?.gameCount ?? 0, 0);
@@ -601,8 +538,8 @@ export function generateAIAnalysis(
     summary: generateSummary(style, seed, stats),
     styleDescription: generateStyleDescription(style, seed, stats),
     recommendations: generateRecommendations(style, seed, stats),
-    improvementAreas: findImprovementAreas(style, stats, seed),
-    strengths: findStrengths(style, seed, stats),
+    improvementAreas: findImprovementAreas(style, stats, seed, lang),
+    strengths: findStrengths(style, seed, stats, lang),
     famousComparisons: findFamousComparisons(style),
     confidence: calculateConfidence(nGames, hasGoodData, stats),
     generatedAt: new Date().toISOString(),

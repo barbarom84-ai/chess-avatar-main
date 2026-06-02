@@ -20,8 +20,6 @@ import { getProfileMetadata } from "@/lib/profile-metadata";
 import type { ProfileMetadata } from "@/types/chess";
 import { buildAvatarCardModel } from "@/lib/avatar-card-model";
 import { getAvatarCardLabels } from "@/lib/avatar-card-labels";
-import { generateAIAnalysis } from "@/lib/ai-analysis";
-import { derivePlayingStyle } from "@/lib/avatar-card-model";
 
 interface ProfileDetailsModalProps {
   open: boolean;
@@ -46,9 +44,7 @@ export default function ProfileDetailsModal({
   onUpdate,
   onPlay
 }: ProfileDetailsModalProps) {
-  const { t } = useLanguage();
-
-  // Translate style names
+  const { t, lang } = useLanguage();
   const styleMap: Record<string, string> = {
     'Agressif': t.performanceCharts.styleAggressive,
     'Solide': t.performanceCharts.styleSolid,
@@ -94,20 +90,14 @@ export default function ProfileDetailsModal({
 
   const cardModel = useMemo(() => {
     if (!profile || !stats || !config) return null;
-    const playingStyle = derivePlayingStyle(config, metadata);
-    const analysis = generateAIAnalysis(
-      playingStyle,
-      stats,
-      metadata?.gamesPlayed ?? stats.gameCount
-    );
     return buildAvatarCardModel({
       stats,
       config,
       metadata: metadata ?? undefined,
-      analysis,
       labels,
+      lang,
     });
-  }, [profile, stats, config, metadata, labels]);
+  }, [profile, stats, config, metadata, labels, lang]);
 
   if (!profile || !stats || !config || !cardModel) return null;
 

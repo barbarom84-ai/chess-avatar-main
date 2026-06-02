@@ -16,7 +16,7 @@ export default function ArenaMatchupBanner({
   blackOption: ProfileOption | undefined;
   vsLabel: string;
 }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const labels = useMemo(() => getAvatarCardLabels(t), [t]);
 
   if (!whiteOption && !blackOption) return null;
@@ -25,7 +25,7 @@ export default function ArenaMatchupBanner({
     <div className="flex flex-col sm:flex-row items-center justify-center gap-3 py-4 px-2 rounded-xl border border-amber-500/25 bg-gradient-to-r from-slate-950 via-amber-950/20 to-slate-950">
       {whiteOption ? (
         <AvatarTradingCard
-          model={optionToCardModel(whiteOption, labels)}
+          model={optionToCardModel(whiteOption, labels, lang)}
           labels={labels}
           size="md"
           flippable
@@ -41,7 +41,7 @@ export default function ArenaMatchupBanner({
       </span>
       {blackOption ? (
         <AvatarTradingCard
-          model={optionToCardModel(blackOption, labels)}
+          model={optionToCardModel(blackOption, labels, lang)}
           labels={labels}
           size="md"
           flippable

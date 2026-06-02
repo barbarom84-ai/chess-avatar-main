@@ -5,6 +5,8 @@ export type NavItemDef = {
   piece: string;
   navPieceColor: NavPieceColor;
   label: { fr: string; en: string };
+  /** Fixed product rule: show a Premium badge in navigation (not configurable in site admin). */
+  premium?: boolean;
 };
 
 /** Canonical site navigation pages (used by Navigation + site admin). */
@@ -15,7 +17,13 @@ export const NAV_ITEMS: NavItemDef[] = [
   { href: "/arena", piece: "R", navPieceColor: "w", label: { fr: "Arène", en: "Arena" } },
   { href: "/learn", piece: "B", navPieceColor: "w", label: { fr: "Ouvertures", en: "Openings" } },
   { href: "/puzzles", piece: "P", navPieceColor: "w", label: { fr: "Puzzles", en: "Puzzles" } },
-  { href: "/ascension", piece: "Q", navPieceColor: "w", label: { fr: "Ascension", en: "Ascension" } },
+  {
+    href: "/ascension",
+    piece: "Q",
+    navPieceColor: "w",
+    label: { fr: "Ascension", en: "Ascension" },
+    premium: true,
+  },
   { href: "/profile", piece: "K", navPieceColor: "w", label: { fr: "Compte", en: "Account" } },
   { href: "/avatars", piece: "B", navPieceColor: "b", label: { fr: "Avatars", en: "Avatars" } },
   { href: "/games", piece: "Q", navPieceColor: "b", label: { fr: "Parties", en: "Games" } },

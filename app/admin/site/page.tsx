@@ -149,7 +149,14 @@ export default function AdminSitePage() {
                   className="flex flex-col sm:flex-row sm:items-center gap-3 border border-slate-800 rounded-lg p-3 bg-slate-950/40"
                 >
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-slate-200">{item.label[lang === "fr" ? "fr" : "en"]}</p>
+                    <p className="font-medium text-slate-200 flex flex-wrap items-center gap-2">
+                      {item.label[lang === "fr" ? "fr" : "en"]}
+                      {item.premium && (
+                        <span className="rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                          Premium
+                        </span>
+                      )}
+                    </p>
                     <p className="text-xs text-slate-500 font-mono">{item.href}</p>
                   </div>
                   <div className="flex flex-wrap items-center gap-4">

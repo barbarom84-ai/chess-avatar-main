@@ -6,7 +6,7 @@ import {
   seedFromContext,
 } from "@/lib/ai-analysis";
 import { createDefaultPlayingStyle } from "@/lib/profile-metadata";
-import type { AIAnalysis } from "@/lib/ai-analysis";
+import type { TraitLang } from "@/lib/avatar-trait-pools";
 import type { ProfileMetadata, PlayingStyle } from "@/types/chess";
 
 export type AvatarCardRarity = "common" | "rare" | "epic" | "legendary";
@@ -62,6 +62,13 @@ export type AvatarCardLabels = {
   openingTheory: string;
   timeControl: string;
   threads: string;
+  difficultyShort: string;
+  abilityRepertoireWithCount: string;
+  abilityRepertoire: string;
+  abilityOpeningFallback: string;
+  abilityAggression: string;
+  eloStrengthWorld3200: string;
+  eloStrengthSuperGm3000: string;
 };
 
 export function resolveCardRarity(
@@ -168,22 +175,29 @@ function resolveCardClassKey(
 
 function buildAbilityText(
   config: EngineConfig,
-  stats?: PersonaStats
+  stats: PersonaStats | undefined,
+  labels: AvatarCardLabels
 ): string {
   const opening =
     stats?.topOpenings?.[0]?.name ||
     config.favoriteOpening ||
     "";
-  const openingPart = opening
-    ? `Répertoire : ${opening}${
-        stats?.topOpenings?.[0]?.count
-          ? ` (${stats.topOpenings[0].count})`
-          : ""
-      }`
-    : config.favoriteOpening
-      ? `Ouverture : ${config.favoriteOpening}`
-      : "";
-  const aggPart = `Agressivité ${config.aggressiveness}%`;
+  const count = stats?.topOpenings?.[0]?.count;
+  let openingPart = "";
+  if (opening) {
+    openingPart =
+      count && count > 0
+        ? labels.abilityRepertoireWithCount
+            .replace("{opening}", opening)
+            .replace("{count}", String(count))
+        : config.favoriteOpening
+          ? labels.abilityOpeningFallback.replace("{opening}", opening)
+          : labels.abilityRepertoire.replace("{opening}", opening);
+  }
+  const aggPart = labels.abilityAggression.replace(
+    "{n}",
+    String(config.aggressiveness)
+  );
   return [openingPart, aggPart].filter(Boolean).join(" · ");
 }
 
@@ -212,41 +226,31 @@ export type BuildAvatarCardModelInput = {
   stats: PersonaStats;
   config: EngineConfig;
   metadata?: ProfileMetadata | null;
-  analysis?: AIAnalysis | null;
+  analysis?: import("@/lib/ai-analysis").AIAnalysis | null;
   labels: AvatarCardLabels;
+  lang?: TraitLang;
 };
 
 export function buildAvatarCardModel({
   stats,
   config,
   metadata,
-  analysis,
   labels,
+  lang = "fr",
 }: BuildAvatarCardModelInput): AvatarCardModel {
   let playingStyle = derivePlayingStyle(config, metadata);
   playingStyle = applyStatsToPlayingStyle(playingStyle, stats);
   const seed = seedFromContext(playingStyle, stats);
   const classKey = resolveCardClassKey(config, playingStyle, stats);
 
-  let strengths =
-    metadata?.strengths?.length
-      ? metadata.strengths.slice(0, 3)
-      : analysis?.strengths?.length
-        ? analysis.strengths.slice(0, 3)
-        : findStrengths(playingStyle, seed, stats).slice(0, 3);
-
-  let weaknesses =
-    metadata?.weaknesses?.length
-      ? metadata.weaknesses.slice(0, 3)
-      : analysis?.improvementAreas?.length
-        ? analysis.improvementAreas.slice(0, 3)
-        : findImprovementAreas(playingStyle, stats, seed).slice(0, 3);
+  let strengths = findStrengths(playingStyle, seed, stats, lang).slice(0, 3);
+  let weaknesses = findImprovementAreas(playingStyle, stats, seed, lang).slice(0, 3);
 
   if ((config.elo ?? 0) >= 3000) {
     const eloTag =
       config.elo >= 3200
-        ? "Force mondiale (3200+)"
-        : "Niveau super-GM (3000+)";
+        ? labels.eloStrengthWorld3200
+        : labels.eloStrengthSuperGm3000;
     if (!strengths.includes(eloTag)) {
       strengths = [eloTag, ...strengths].slice(0, 3);
     }
@@ -264,7 +268,7 @@ export function buildAvatarCardModel({
     difficulty: config.difficulty,
     classKey,
     element: playStyleToElement(config.playStyle),
-    abilityText: buildAbilityText(config, stats),
+    abilityText: buildAbilityText(config, stats, labels),
     strengths,
     weaknesses,
     topOpening,

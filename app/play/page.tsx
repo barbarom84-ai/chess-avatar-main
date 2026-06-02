@@ -41,7 +41,7 @@ const PlayableChessboard = dynamic(() => import("@/components/PlayableChessboard
 
 function PlayContent() {
   const searchParams = useSearchParams();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const cardLabels = useMemo(() => getAvatarCardLabels(t), [t]);
   const [config, setConfig] = useState<EngineConfig | null>(null);
   const [playerColor, setPlayerColor] = useState<'white' | 'black'>('white');
@@ -86,8 +86,8 @@ function PlayContent() {
   const playCardModel = useMemo(() => {
     if (!config) return null;
     const stats = minimalPersonaStatsFromConfig(config);
-    return buildAvatarCardModel({ stats, config, labels: cardLabels });
-  }, [config, cardLabels]);
+    return buildAvatarCardModel({ stats, config, labels: cardLabels, lang });
+  }, [config, cardLabels, lang]);
 
   if (error) {
     return (

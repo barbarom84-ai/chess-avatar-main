@@ -24,5 +24,12 @@ export function getAvatarCardLabels(t: TranslationKey): AvatarCardLabels {
     openingTheory: ac.openingTheory,
     timeControl: ac.timeControl,
     threads: ac.threads,
+    difficultyShort: ac.difficultyShort,
+    abilityRepertoireWithCount: ac.abilityRepertoireWithCount,
+    abilityRepertoire: ac.abilityRepertoire,
+    abilityOpeningFallback: ac.abilityOpeningFallback,
+    abilityAggression: ac.abilityAggression,
+    eloStrengthWorld3200: ac.eloStrengthWorld3200,
+    eloStrengthSuperGm3000: ac.eloStrengthSuperGm3000,
   };
 }

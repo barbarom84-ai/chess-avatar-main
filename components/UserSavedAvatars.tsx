@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,14 @@ import {
   type LibraryViewMode,
 } from "@/lib/library-view-mode";
 import type { ProfileMetadata } from "@/types/chess";
+import AvatarLibrarySearchFilters from "./AvatarLibrarySearchFilters";
+import {
+  filterAvatarProfiles,
+  type AvatarLibraryPlatformFilter,
+  type AvatarLibraryPlayStyleFilter,
+  type AvatarLibrarySort,
+  type AvatarLibraryVisibilityFilter,
+} from "@/lib/avatar-library-filters";
 import { toast } from "sonner";
 
 export default function UserSavedAvatars() {
@@ -38,6 +46,26 @@ export default function UserSavedAvatars() {
   const [metadataMap, setMetadataMap] = useState<
     Map<string, ProfileMetadata>
   >(new Map());
+  const [search, setSearch] = useState("");
+  const [platformFilter, setPlatformFilter] =
+    useState<AvatarLibraryPlatformFilter>("all");
+  const [playStyleFilter, setPlayStyleFilter] =
+    useState<AvatarLibraryPlayStyleFilter>("all");
+  const [visibilityFilter, setVisibilityFilter] =
+    useState<AvatarLibraryVisibilityFilter>("all");
+  const [sort, setSort] = useState<AvatarLibrarySort>("elo_desc");
+
+  const filteredProfiles = useMemo(
+    () =>
+      filterAvatarProfiles(profiles, {
+        search,
+        platform: platformFilter,
+        playStyle: playStyleFilter,
+        sort,
+        visibility: visibilityFilter,
+      }),
+    [profiles, search, platformFilter, playStyleFilter, sort, visibilityFilter]
+  );
 
   useEffect(() => {
     setViewMode(readLibraryViewMode());
@@ -243,13 +271,36 @@ export default function UserSavedAvatars() {
             </div>
           </div>
 
+          {profiles.length > 0 && (
+            <AvatarLibrarySearchFilters
+              search={search}
+              onSearchChange={setSearch}
+              platform={platformFilter}
+              onPlatformChange={setPlatformFilter}
+              playStyle={playStyleFilter}
+              onPlayStyleChange={setPlayStyleFilter}
+              sort={sort}
+              onSortChange={setSort}
+              visibility={visibilityFilter}
+              onVisibilityChange={setVisibilityFilter}
+              resultCount={filteredProfiles.length}
+              className="mb-4"
+            />
+          )}
+
           {profiles.length === 0 ? (
             <Alert className="bg-slate-950 border-slate-800">
               <AlertDescription className="text-slate-400 text-sm">{t.profile.noProfiles}</AlertDescription>
             </Alert>
+          ) : filteredProfiles.length === 0 ? (
+            <Alert className="bg-slate-950 border-slate-800">
+              <AlertDescription className="text-slate-400 text-sm">
+                {t.avatarsPage.noFilterResults}
+              </AlertDescription>
+            </Alert>
           ) : viewMode === "cards" ? (
             <AvatarTradingCardGrid>
-              {profiles.map((profile) => (
+              {filteredProfiles.map((profile) => (
                 <AvatarLibraryCard
                   key={profile.id}
                   profile={profile}
@@ -264,7 +315,7 @@ export default function UserSavedAvatars() {
             </AvatarTradingCardGrid>
           ) : (
             <div className="space-y-2">
-              {profiles.map((profile) => (
+              {filteredProfiles.map((profile) => (
                 <div
                   key={profile.id}
                   className="bg-slate-950 p-3 rounded border border-slate-800 hover:border-slate-700 transition-colors"

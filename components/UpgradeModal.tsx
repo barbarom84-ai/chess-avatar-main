@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Crown, Palette, ImageIcon, Users, Loader2, CreditCard, Sparkles, BarChart3, Brain } from "lucide-react";
+import { Crown, Palette, ImageIcon, Users, Loader2, CreditCard, Sparkles, BarChart3, Brain, Trophy } from "lucide-react";
 import { useLanguage } from "@/lib/language-context";
 import { supabase } from "@/lib/supabase";
 import { track } from "@/lib/track";
@@ -15,7 +15,7 @@ interface UpgradeModalProps {
   onOpenChange: (open: boolean) => void;
   userId: string | null;
   email: string | null;
-  reason?: 'theme' | 'pieces' | 'profiles' | 'coach' | 'review';
+  reason?: 'theme' | 'pieces' | 'profiles' | 'coach' | 'review' | 'ascension';
 }
 
 export default function UpgradeModal({ open, onOpenChange, userId, email, reason }: UpgradeModalProps) {
@@ -23,6 +23,12 @@ export default function UpgradeModal({ open, onOpenChange, userId, email, reason
   const [selectedCurrency, setSelectedCurrency] = useState<'eur' | 'chf' | 'usd'>('eur');
   const [error, setError] = useState('');
   const { t } = useLanguage();
+
+  useEffect(() => {
+    if (!open || !reason) return;
+    const el = document.getElementById(`upgrade-benefit-${reason}`);
+    el?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [open, reason]);
 
   const handleCheckout = async () => {
     if (!userId || !email) {
@@ -107,8 +113,10 @@ export default function UpgradeModal({ open, onOpenChange, userId, email, reason
 
         <div className="space-y-6 mt-4">
           {/* Benefits */}
-          <div className="space-y-3 max-h-[min(22rem,50vh)] overflow-y-auto pr-1">
-            <div className={`flex items-center gap-3 p-3 rounded-lg border ${
+          <div className="space-y-3 max-h-[min(30rem,62vh)] overflow-y-auto pr-1">
+            <div
+              id="upgrade-benefit-theme"
+              className={`flex items-center gap-3 p-3 rounded-lg border ${
               reason === 'theme' ? 'bg-amber-500/10 border-amber-500/30' : 'bg-slate-800/50 border-slate-700'
             }`}>
               <Palette className="h-5 w-5 text-amber-400 flex-shrink-0" />
@@ -119,7 +127,22 @@ export default function UpgradeModal({ open, onOpenChange, userId, email, reason
               <Badge className="ml-auto bg-amber-500/20 text-amber-300 border-amber-500/30">Premium</Badge>
             </div>
 
-            <div className={`flex items-center gap-3 p-3 rounded-lg border ${
+            <div
+              id="upgrade-benefit-ascension"
+              className={`flex items-center gap-3 p-3 rounded-lg border ${
+              reason === 'ascension' ? 'bg-amber-500/10 border-amber-500/30' : 'bg-slate-800/50 border-slate-700'
+            }`}>
+              <Trophy className="h-5 w-5 text-amber-400 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-semibold text-slate-200">{t.upgrade.ascensionMode}</p>
+                <p className="text-xs text-slate-400">{t.upgrade.ascensionModeDetail}</p>
+              </div>
+              <Badge className="ml-auto bg-amber-500/20 text-amber-300 border-amber-500/30">Premium</Badge>
+            </div>
+
+            <div
+              id="upgrade-benefit-pieces"
+              className={`flex items-center gap-3 p-3 rounded-lg border ${
               reason === 'pieces' ? 'bg-amber-500/10 border-amber-500/30' : 'bg-slate-800/50 border-slate-700'
             }`}>
               <ImageIcon className="h-5 w-5 text-amber-400 flex-shrink-0" />
@@ -130,7 +153,9 @@ export default function UpgradeModal({ open, onOpenChange, userId, email, reason
               <Badge className="ml-auto bg-amber-500/20 text-amber-300 border-amber-500/30">Premium</Badge>
             </div>
 
-            <div className={`flex items-center gap-3 p-3 rounded-lg border ${
+            <div
+              id="upgrade-benefit-profiles"
+              className={`flex items-center gap-3 p-3 rounded-lg border ${
               reason === 'profiles' ? 'bg-amber-500/10 border-amber-500/30' : 'bg-slate-800/50 border-slate-700'
             }`}>
               <Users className="h-5 w-5 text-amber-400 flex-shrink-0" />
@@ -141,7 +166,9 @@ export default function UpgradeModal({ open, onOpenChange, userId, email, reason
               <Badge className="ml-auto bg-amber-500/20 text-amber-300 border-amber-500/30">Premium</Badge>
             </div>
 
-            <div className={`flex items-center gap-3 p-3 rounded-lg border ${
+            <div
+              id="upgrade-benefit-review"
+              className={`flex items-center gap-3 p-3 rounded-lg border ${
               reason === 'review' ? 'bg-amber-500/10 border-amber-500/30' : 'bg-slate-800/50 border-slate-700'
             }`}>
               <BarChart3 className="h-5 w-5 text-amber-400 flex-shrink-0" />
@@ -152,7 +179,9 @@ export default function UpgradeModal({ open, onOpenChange, userId, email, reason
               <Badge className="ml-auto bg-amber-500/20 text-amber-300 border-amber-500/30">Premium</Badge>
             </div>
 
-            <div className={`flex items-center gap-3 p-3 rounded-lg border ${
+            <div
+              id="upgrade-benefit-coach"
+              className={`flex items-center gap-3 p-3 rounded-lg border ${
               reason === 'coach' ? 'bg-amber-500/10 border-amber-500/30' : 'bg-slate-800/50 border-slate-700'
             }`}>
               <Brain className="h-5 w-5 text-amber-400 flex-shrink-0" />

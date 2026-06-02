@@ -10,8 +10,6 @@ import { buildAvatarCardModel } from "@/lib/avatar-card-model";
 import { getAvatarCardLabels } from "@/lib/avatar-card-labels";
 import { useLanguage } from "@/lib/language-context";
 import type { ProfileMetadata } from "@/types/chess";
-import { generateAIAnalysis } from "@/lib/ai-analysis";
-import { derivePlayingStyle } from "@/lib/avatar-card-model";
 
 type AvatarLibraryCardProps = {
   profile: DbProfile;
@@ -38,26 +36,20 @@ export default function AvatarLibraryCard({
   compareMode = false,
   onSelectCompare,
 }: AvatarLibraryCardProps) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const labels = useMemo(() => getAvatarCardLabels(t), [t]);
 
   const cardModel = useMemo(() => {
     const stats = profile.stats as PersonaStats;
     const config = profile.config;
-    const playingStyle = derivePlayingStyle(config, metadata);
-    const analysis = generateAIAnalysis(
-      playingStyle,
-      stats,
-      metadata?.gamesPlayed ?? stats.gameCount
-    );
     return buildAvatarCardModel({
       stats,
       config,
       metadata: metadata ?? undefined,
-      analysis,
       labels,
+      lang,
     });
-  }, [profile, metadata, labels]);
+  }, [profile, metadata, labels, lang]);
 
   const footer = (
     <div className="grid grid-cols-3 gap-1" data-card-action>

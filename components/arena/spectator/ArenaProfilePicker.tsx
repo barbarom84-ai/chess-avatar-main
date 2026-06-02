@@ -36,7 +36,7 @@ export default function ArenaProfilePicker({
   listHint: string;
   cardsHint: string;
 }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const labels = useMemo(() => getAvatarCardLabels(t), [t]);
 
   const visible = useMemo(() => {
@@ -69,7 +69,7 @@ export default function ArenaProfilePicker({
         ) : (
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-2">
             {visible.map((o) => {
-              const model = optionToCardModel(o, labels);
+              const model = optionToCardModel(o, labels, lang);
               const selected = selectedKey === o.key;
               return (
                 <div

@@ -123,8 +123,8 @@ export default function ProfileEditor({
         createdAt: "",
         updatedAt: "",
       },
-      analysis: aiAnalysis,
       labels: cardLabels,
+      lang,
     });
   }, [
     personaStats,
@@ -133,9 +133,9 @@ export default function ProfileEditor({
     playingStyle,
     strengths,
     weaknesses,
-    aiAnalysis,
     cardLabels,
     profileId,
+    lang,
   ]);
 
   // Charger les données au montage

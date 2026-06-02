@@ -80,6 +80,7 @@ export default function AscensionGate({ children }: AscensionGateProps) {
           onOpenChange={setShowUpgrade}
           userId={userId}
           email={email}
+          reason="ascension"
         />
       </>
     );
