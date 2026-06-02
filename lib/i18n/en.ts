@@ -1805,6 +1805,8 @@ export const en = {
       lastSaved: "Last saved",
       navSection: "Navigation",
       navSectionDesc: "Control menu visibility and badges.",
+      navModeSection: "Navigation layout",
+      navModeSectionDesc: "Choose how the main menu is displayed (A/B test).",
       hidden: "Hide",
       badge: "Badge",
       badgeNone: "None",
@@ -1819,6 +1821,71 @@ export const en = {
       showCountdown: "Show countdown timer",
       showCountdownDesc: "Count down to the configured end time.",
       countdownEndsAt: "Maintenance ends at",
+    },
+
+    navigation: {
+      families: {
+        play: {
+          label: { fr: "Jouer", en: "Play" },
+          desc: {
+            fr: "Créer, jouer et affronter d'autres joueurs",
+            en: "Build bots, play vs AI, and compete online",
+          },
+        },
+        learn: {
+          label: { fr: "Apprendre", en: "Learn" },
+          desc: {
+            fr: "Ouvertures, puzzles et campagne Ascension",
+            en: "Openings, puzzles, and the Ascension quest",
+          },
+        },
+        account: {
+          label: { fr: "Mon espace", en: "My space" },
+          desc: {
+            fr: "Profil, avatars, parties et guide",
+            en: "Profile, avatars, games, and guide",
+          },
+        },
+      },
+      modes: {
+        classic: { fr: "Classique", en: "Classic" },
+        dock: { fr: "Dock latéral", en: "Side dock" },
+        radial: { fr: "Menu radial", en: "Radial menu" },
+        mega: { fr: "Mega-menu", en: "Mega menu" },
+      },
+      pageDesc: {
+        analyze: "Analyze games and build a custom bot",
+        play: "Play against saved avatars on the site",
+        online: "Lobby, invite link, live PvP games",
+        arena: "Watch avatar vs avatar matches",
+        learn: "Structured opening lessons and ideas",
+        puzzles: "Tactical puzzles to sharpen your game",
+        ascension: "Champion quest from 0 to 3000 ELO",
+        profile: "Account settings and subscription",
+        avatars: "Your saved bot library",
+        games: "Cloud archive, stats, and reviews",
+        guide: "Install your engine on desktop",
+      },
+      dock: {
+        pin: { fr: "Épingler le dock", en: "Pin dock" },
+        unpin: { fr: "Réduire le dock", en: "Collapse dock" },
+        more: { fr: "Plus", en: "More" },
+        menuTitle: { fr: "Navigation", en: "Navigation" },
+        groups: {
+          play: { fr: "Jouer", en: "Play" },
+          train: { fr: "S'entraîner", en: "Train" },
+          account: { fr: "Compte", en: "Account" },
+        },
+      },
+      radial: {
+        openMenu: { fr: "Ouvrir le menu de navigation", en: "Open navigation menu" },
+        closeMenu: { fr: "Fermer le menu", en: "Close menu" },
+        accountRing: { fr: "Mon espace", en: "My space" },
+      },
+      mega: {
+        openFamily: { fr: "Ouvrir le menu", en: "Open menu" },
+        mobileTitle: { fr: "Explorer Chess Avatar", en: "Explore Chess Avatar" },
+      },
     },
 
     ascension: {

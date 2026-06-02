@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Navigation from "@/components/Navigation";
+import NavContentOffset from "@/components/navigation/NavContentOffset";
 import SiteMaintenanceOverlay from "@/components/SiteMaintenanceOverlay";
 import { ChessboardSettingsProvider } from "@/contexts/ChessboardSettingsContext";
 import { SiteConfigProvider } from "@/contexts/SiteConfigContext";
@@ -55,7 +56,7 @@ export default function RootLayout({
           <SiteConfigProvider>
             <ChessboardSettingsProvider>
               <Navigation />
-              {children}
+              <NavContentOffset>{children}</NavContentOffset>
               <SiteMaintenanceOverlay />
               <MonitoringProviders />
             <Toaster

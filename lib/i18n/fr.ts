@@ -1815,6 +1815,8 @@ export const fr = {
       lastSaved: "Dernière sauvegarde",
       navSection: "Navigation",
       navSectionDesc: "Contrôle la visibilité et les badges affichés dans le menu.",
+      navModeSection: "Disposition du menu",
+      navModeSectionDesc: "Choisissez comment afficher la navigation principale (test A/B).",
       hidden: "Masquer",
       badge: "Badge",
       badgeNone: "Aucun",
@@ -1829,6 +1831,71 @@ export const fr = {
       showCountdown: "Afficher un compte à rebours",
       showCountdownDesc: "Chronomètre jusqu'à la date de fin configurée.",
       countdownEndsAt: "Fin de maintenance (date/heure)",
+    },
+
+    navigation: {
+      families: {
+        play: {
+          label: { fr: "Jouer", en: "Play" },
+          desc: {
+            fr: "Créer, jouer et affronter d'autres joueurs",
+            en: "Build bots, play vs AI, and compete online",
+          },
+        },
+        learn: {
+          label: { fr: "Apprendre", en: "Learn" },
+          desc: {
+            fr: "Ouvertures, puzzles et campagne Ascension",
+            en: "Openings, puzzles, and the Ascension quest",
+          },
+        },
+        account: {
+          label: { fr: "Mon espace", en: "My space" },
+          desc: {
+            fr: "Profil, avatars, parties et guide",
+            en: "Profile, avatars, games, and guide",
+          },
+        },
+      },
+      modes: {
+        classic: { fr: "Classique", en: "Classic" },
+        dock: { fr: "Dock latéral", en: "Side dock" },
+        radial: { fr: "Menu radial", en: "Radial menu" },
+        mega: { fr: "Mega-menu", en: "Mega menu" },
+      },
+      pageDesc: {
+        analyze: "Analysez vos parties et créez un bot sur mesure",
+        play: "Affrontez vos avatars sauvegardés sur le site",
+        online: "Salon, lien d'invitation, parties PvP en direct",
+        arena: "Regardez des duels avatar contre avatar",
+        learn: "Leçons d'ouvertures structurées et idées clés",
+        puzzles: "Puzzles tactiques pour affûter votre jeu",
+        ascension: "Quête du champion de 0 à 3000 ELO",
+        profile: "Paramètres du compte et abonnement",
+        avatars: "Votre bibliothèque de bots sauvegardés",
+        games: "Archive cloud, stats et revues de parties",
+        guide: "Installez votre moteur sur ordinateur",
+      },
+      dock: {
+        pin: { fr: "Épingler le dock", en: "Pin dock" },
+        unpin: { fr: "Réduire le dock", en: "Collapse dock" },
+        more: { fr: "Plus", en: "More" },
+        menuTitle: { fr: "Navigation", en: "Navigation" },
+        groups: {
+          play: { fr: "Jouer", en: "Play" },
+          train: { fr: "S'entraîner", en: "Train" },
+          account: { fr: "Compte", en: "Account" },
+        },
+      },
+      radial: {
+        openMenu: { fr: "Ouvrir le menu de navigation", en: "Open navigation menu" },
+        closeMenu: { fr: "Fermer le menu", en: "Close menu" },
+        accountRing: { fr: "Mon espace", en: "My space" },
+      },
+      mega: {
+        openFamily: { fr: "Ouvrir le menu", en: "Open menu" },
+        mobileTitle: { fr: "Explorer Chess Avatar", en: "Explore Chess Avatar" },
+      },
     },
 
     ascension: {
