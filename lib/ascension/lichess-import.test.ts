@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 import type { NormalizedLichessPuzzle } from "@/lib/lichess-puzzle";
+import { FantasyChessEngine } from "@/lib/ascension/fantasy-chess/engine";
 import { validateStandardPuzzleLine } from "@/lib/ascension/puzzle-validation";
 import {
   assignTargetLevels,
   buildPromptFromThemes,
   lichessPuzzleSlug,
   lichessPuzzleToCampaignRow,
+  lichessPuzzleToFantasyCampaignRow,
   nextFreeStandardLevel,
   resolveBatchFen,
   rewardForRating,
@@ -83,6 +85,27 @@ describe("lichessPuzzleToCampaignRow", () => {
   it("stays valid through validateStandardPuzzleLine", () => {
     const row = lichessPuzzleToCampaignRow(puzzle(), 1);
     expect(validateStandardPuzzleLine(row.fen, row.solution_ucis).ok).toBe(true);
+  });
+});
+
+describe("lichessPuzzleToFantasyCampaignRow", () => {
+  it("produces a fantasy row with zero elo reward", () => {
+    const row = lichessPuzzleToFantasyCampaignRow(puzzle(), 12);
+    expect(row.kind).toBe("fantasy");
+    expect(row.track).toBe("fantasy");
+    expect(row.sort_order).toBe(12);
+    expect(row.elo_reward).toBe(0);
+    expect(row.xp_reward).toBe(25);
+    expect(row.fantasy_rules.objective).toBe("checkmate");
+    expect(row.insight.fr).toContain("lichess.org/training/abc12");
+    expect(row.insight.fr).toContain("Puzzle fantasy");
+  });
+
+  it("validates through FantasyChessEngine.replaySolution", () => {
+    const row = lichessPuzzleToFantasyCampaignRow(puzzle(), 1);
+    expect(
+      FantasyChessEngine.replaySolution(row.fen, row.fantasy_rules, row.solution_ucis).ok
+    ).toBe(true);
   });
 });
 

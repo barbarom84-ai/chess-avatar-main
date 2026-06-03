@@ -207,6 +207,7 @@ describe("FantasyChessEngine", () => {
       enabledAbilities: ["queen_split"],
       objective: "reach_square",
       objectiveSquare: "e8",
+      fantasySide: "w",
     };
     const engine = new FantasyChessEngine("8/8/8/8/4Q3/8/8/2K2k2 w - - 0 1", rules);
     expect(engine.applyMove("e4e6")).toBe(true);
@@ -215,6 +216,27 @@ describe("FantasyChessEngine", () => {
     expect(engine.applyMove("e6e8")).toBe(true);
     expect(engine.isQueenSplitChainActive()).toBe(false);
     expect(engine.isObjectiveMet("reach_square")).toBe(true);
+  });
+
+  it("does not trigger queen split when the opponent queen captures", () => {
+    const rules: FantasyRuleSet = {
+      enabledAbilities: ["queen_split"],
+      fantasySide: "w",
+    };
+    const engine = new FantasyChessEngine("6k1/8/8/3q4/8/8/8/3QK3 b - - 0 1", rules);
+    expect(engine.applyMove("d5d1")).toBe(true);
+    expect(engine.isQueenSplitChainActive()).toBe(false);
+    expect(engine.turn).toBe("w");
+  });
+
+  it("does not grant fantasy moves to the opponent rook", () => {
+    const rules: FantasyRuleSet = {
+      enabledAbilities: ["rook_tunnel"],
+      fantasySide: "w",
+    };
+    const fen = "2k4r/ppp2Q2/1bp2Np1/4P2p/6b1/2P3P1/PP3PK1/R1Br4 b - - 3 22";
+    const engine = new FantasyChessEngine(fen, rules);
+    expect(engine.applyMove("h8h1")).toBe(false);
   });
 
   it("king anchor protects the king from trap squares", () => {

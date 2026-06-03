@@ -10,6 +10,17 @@ export function getSolverColor(fen: string): SolverColor {
   return getSideToMoveFromFen(fen);
 }
 
+/** Puzzle fantasy rules: abilities apply only to the solver, not the opponent. */
+export function withPuzzleFantasySide(
+  fen: string,
+  rules: FantasyRuleSet
+): FantasyRuleSet {
+  return {
+    ...rules,
+    fantasySide: rules.fantasySide ?? getSolverColor(fen),
+  };
+}
+
 export function applyMoveToChess(chess: Chess, uci: string): boolean {
   const normalized = uci.trim().toLowerCase();
   if (normalized.length < 4) return false;
@@ -31,7 +42,7 @@ function sideToMoveAfterLine(
 ): SolverColor | null {
   if (fantasyRules) {
     try {
-      const engine = new FantasyChessEngine(fen, fantasyRules);
+      const engine = new FantasyChessEngine(fen, withPuzzleFantasySide(fen, fantasyRules));
       for (const uci of lineMoves) {
         if (!engine.applyMove(uci)) return null;
       }
@@ -63,7 +74,7 @@ export function getPlayerMoveIndices(
   const indices: number[] = [];
 
   if (fantasyRules) {
-    const engine = new FantasyChessEngine(fen, fantasyRules);
+    const engine = new FantasyChessEngine(fen, withPuzzleFantasySide(fen, fantasyRules));
     for (let i = 0; i < solutionUcis.length; i++) {
       if (getSideToMoveFromFen(engine.fen) === solverColor) {
         indices.push(i);

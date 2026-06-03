@@ -53,6 +53,7 @@ function validateFantasyPlayerSolution(
     objectiveSquare: rules.objectiveSquare,
     objectivePiece: rules.objectivePiece,
     specialSquares: rules.specialSquares,
+    fantasySide: solverColor,
   });
 
   for (let i = 0; i < normalizedSolution.length; i++) {

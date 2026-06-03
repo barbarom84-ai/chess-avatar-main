@@ -1,15 +1,16 @@
 import { fenAfterInitialPly, type NormalizedLichessPuzzle } from "@/lib/lichess-puzzle";
+import { transformLichessToFantasy } from "@/lib/ascension/fantasy-puzzle-transform";
 import { validateStandardPuzzleLine } from "@/lib/ascension/puzzle-validation";
-import type { CampaignTrack, LocalizedText } from "@/lib/ascension/types";
+import type { CampaignPuzzleKind, CampaignTrack, DbCampaignPuzzle, LocalizedText } from "@/lib/ascension/types";
 
 /** Row shape inserted into `campaign_puzzles` (matches the admin POST payload, minus id). */
 export interface CampaignPuzzleInsert {
   slug: string;
-  kind: "standard";
+  kind: CampaignPuzzleKind;
   track: CampaignTrack;
   fen: string;
   solution_ucis: string[];
-  fantasy_rules: Record<string, never>;
+  fantasy_rules: DbCampaignPuzzle["fantasy_rules"];
   prompt: LocalizedText;
   hints: LocalizedText[];
   insight: LocalizedText;
@@ -133,6 +134,44 @@ export function lichessPuzzleToCampaignRow(
     max_elo: 3000,
     xp_reward: reward,
     elo_reward: reward,
+    sort_order: sortOrder,
+    is_published: true,
+  };
+}
+
+function appendMechanismInsight(
+  base: LocalizedText,
+  note: LocalizedText
+): LocalizedText {
+  return {
+    fr: `${base.fr} • ${note.fr}`,
+    en: `${base.en} • ${note.en}`,
+  };
+}
+
+/** Convert a Lichess puzzle into a Fantasy-track row with inferred rules and content. */
+export function lichessPuzzleToFantasyCampaignRow(
+  p: NormalizedLichessPuzzle,
+  sortOrder: number
+): CampaignPuzzleInsert {
+  const solution_ucis = p.solutionUci.map((u) => u.trim().toLowerCase());
+  const transformed = transformLichessToFantasy(p.fen, solution_ucis, p.themes);
+  const reward = rewardForRating(p.rating);
+
+  return {
+    slug: lichessPuzzleSlug(p.puzzleId),
+    kind: "fantasy",
+    track: "fantasy",
+    fen: p.fen,
+    solution_ucis,
+    fantasy_rules: transformed.fantasy_rules,
+    prompt: transformed.prompt,
+    hints: transformed.hints,
+    insight: appendMechanismInsight(buildInsight(p), transformed.mechanismNote),
+    min_elo: 0,
+    max_elo: 3000,
+    xp_reward: reward,
+    elo_reward: 0,
     sort_order: sortOrder,
     is_published: true,
   };

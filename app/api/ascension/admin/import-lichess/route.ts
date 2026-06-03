@@ -11,6 +11,7 @@ import {
   assignTargetLevels,
   lichessPuzzleSlug,
   lichessPuzzleToCampaignRow,
+  lichessPuzzleToFantasyCampaignRow,
   nextFreeStandardLevel,
   resolveBatchFen,
   type CampaignLevelSlot,
@@ -277,7 +278,10 @@ export async function POST(request: NextRequest) {
   let imported = 0;
   let failed = 0;
   for (const { puzzle, level } of assignments) {
-    const row = lichessPuzzleToCampaignRow(puzzle, level, track);
+    const row =
+      track === "fantasy"
+        ? lichessPuzzleToFantasyCampaignRow(puzzle, level)
+        : lichessPuzzleToCampaignRow(puzzle, level, track);
     const upsertRes = await admin
       .from("campaign_puzzles")
       .upsert(row, { onConflict: "slug" })

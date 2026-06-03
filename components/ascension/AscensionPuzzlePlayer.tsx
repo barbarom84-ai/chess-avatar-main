@@ -73,8 +73,9 @@ export default function AscensionPuzzlePlayer({
       objectivePiece: puzzle.fantasy_rules.objectivePiece,
       specialSquares: puzzle.fantasy_rules.specialSquares,
       passiveSkills: playerPassiveSkills(unlockedSkills),
+      fantasySide: solverColor,
     };
-  }, [puzzle, unlockedSkills]);
+  }, [puzzle, unlockedSkills, solverColor]);
 
   const requiredAbilities = useMemo(() => {
     if (puzzle.kind !== "fantasy") return [] as PieceAbilityId[];

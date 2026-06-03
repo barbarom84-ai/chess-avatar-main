@@ -7,6 +7,7 @@ import type {
   PieceAbilityId,
   SquareEffect,
 } from "@/lib/ascension/fantasy-chess/types";
+import { getSideToMoveFromFen } from "@/lib/ascension/fen-utils";
 
 const FILES = "abcdefgh";
 const RANKS = "12345678";
@@ -316,6 +317,35 @@ export class FantasyChessEngine {
     return this.queenSplitSquare;
   }
 
+  /** True when piece abilities may apply (solver side in puzzles). */
+  private isFantasyColor(color: "w" | "b"): boolean {
+    if (!this.rules.fantasySide) return true;
+    return color === this.rules.fantasySide;
+  }
+
+  private clearFantasyChains(): void {
+    this.greedyPawnSquare = null;
+    this.queenSplitSquare = null;
+  }
+
+  private applyStandardOnlyMove(
+    normalized: string,
+    from: Square,
+    to: Square,
+    moverColor: "w" | "b"
+  ): boolean {
+    this.clearFantasyChains();
+    const next = new Chess(this.chess.fen());
+    if (!applyStandardMove(next, normalized)) return false;
+    this.chess = next;
+    this.resolveSquareEffects(to, moverColor);
+
+    this.moveHistory.push(normalized);
+    this.fantasyMoveFlags.push(false);
+    this.abilityByMoveIndex.push(undefined);
+    return true;
+  }
+
   private setSideToMove(color: "w" | "b") {
     const parts = this.chess.fen().split(" ");
     parts[1] = color;
@@ -323,7 +353,10 @@ export class FantasyChessEngine {
   }
 
   private continueGreedyChainIfPossible(landSquare: Square, pawnColor: "w" | "b") {
-    if (!this.rules.enabledAbilities.includes("pawn_greedy")) {
+    if (
+      !this.isFantasyColor(pawnColor) ||
+      !this.rules.enabledAbilities.includes("pawn_greedy")
+    ) {
       this.greedyPawnSquare = null;
       return;
     }
@@ -337,7 +370,10 @@ export class FantasyChessEngine {
   }
 
   private continueQueenSplitIfPossible(landSquare: Square, queenColor: "w" | "b") {
-    if (!this.rules.enabledAbilities.includes("queen_split")) {
+    if (
+      !this.isFantasyColor(queenColor) ||
+      !this.rules.enabledAbilities.includes("queen_split")
+    ) {
       this.queenSplitSquare = null;
       return;
     }
@@ -381,7 +417,7 @@ export class FantasyChessEngine {
    * explosive blast (adjacent). Tunnels relocate the piece then resolve effects at
    * the exit (explosive/trap chain). Uses chess.js board edits.
    */
-  private resolveSquareEffects(to: Square, depth = 0): void {
+  private resolveSquareEffects(to: Square, moverColor: "w" | "b", depth = 0): void {
     if (depth > 6) return;
 
     const effect = this.squareEffectAt(to);
@@ -397,7 +433,7 @@ export class FantasyChessEngine {
       if (occupant) this.chess.remove(exit);
       this.chess.remove(to);
       this.chess.put({ type: piece.type, color: piece.color }, exit);
-      this.resolveSquareEffects(exit, depth + 1);
+      this.resolveSquareEffects(exit, piece.color, depth + 1);
       return;
     }
 
@@ -408,7 +444,13 @@ export class FantasyChessEngine {
     if (effect.type === "trap") {
       const piece = this.chess.get(to);
       if (!piece) return;
-      if (piece.type === "k" && this.rules.enabledAbilities.includes("king_anchor")) return;
+      if (
+        piece.type === "k" &&
+        this.rules.enabledAbilities.includes("king_anchor") &&
+        this.isFantasyColor(piece.color)
+      ) {
+        return;
+      }
       this.chess.remove(to);
       return;
     }
@@ -416,7 +458,9 @@ export class FantasyChessEngine {
     if (effect.type === "explosive") {
       const { file, rank } = squareToCoords(to);
       const center = this.chess.get(to);
-      const blastDodge = this.rules.passiveSkills?.includes("blast_dodge");
+      const blastDodge =
+        this.rules.passiveSkills?.includes("blast_dodge") &&
+        this.isFantasyColor(moverColor);
       if (center && center.type !== "k" && !blastDodge) this.chess.remove(to);
       for (let df = -1; df <= 1; df++) {
         for (let dr = -1; dr <= 1; dr++) {
@@ -433,14 +477,24 @@ export class FantasyChessEngine {
   getLegalMoves(from?: Square): FantasyMove[] {
     if (this.greedyPawnSquare) {
       const chainSquare = this.greedyPawnSquare;
-      if (from && from !== chainSquare) return [];
-      return getGreedyPawnChainMoves(this.chess, chainSquare);
+      const chainPiece = this.chess.get(chainSquare);
+      if (!chainPiece || !this.isFantasyColor(chainPiece.color)) {
+        this.greedyPawnSquare = null;
+      } else {
+        if (from && from !== chainSquare) return [];
+        return getGreedyPawnChainMoves(this.chess, chainSquare);
+      }
     }
 
     if (this.queenSplitSquare) {
       const chainSquare = this.queenSplitSquare;
-      if (from && from !== chainSquare) return [];
-      return getQueenSplitMoves(this.chess, chainSquare);
+      const chainPiece = this.chess.get(chainSquare);
+      if (!chainPiece || !this.isFantasyColor(chainPiece.color)) {
+        this.queenSplitSquare = null;
+      } else {
+        if (from && from !== chainSquare) return [];
+        return getQueenSplitMoves(this.chess, chainSquare);
+      }
     }
 
     const standard = this.chess.moves({ square: from, verbose: true }).map((m) => ({
@@ -449,6 +503,11 @@ export class FantasyChessEngine {
     }));
 
     if (!from) return standard;
+
+    const mover = this.chess.get(from);
+    if (!mover || !this.isFantasyColor(mover.color)) {
+      return standard;
+    }
 
     const fantasy: FantasyMove[] = [
       ...generateKnightCrazyHorseMoves(this.chess, from, this.rules, this.usedAbilities),
@@ -500,6 +559,11 @@ export class FantasyChessEngine {
     const to = normalized.slice(2, 4) as Square;
     const pieceBefore = this.chess.get(from);
     const capturedBefore = this.chess.get(to);
+    if (!pieceBefore) return false;
+
+    if (!this.isFantasyColor(pieceBefore.color)) {
+      return this.applyStandardOnlyMove(normalized, from, to, pieceBefore.color);
+    }
 
     if (this.greedyPawnSquare) {
       if (from !== this.greedyPawnSquare) return false;
@@ -510,7 +574,7 @@ export class FantasyChessEngine {
       const next = new Chess(this.chess.fen());
       if (!applyStandardMove(next, normalized)) return false;
       this.chess = next;
-      this.resolveSquareEffects(to);
+      this.resolveSquareEffects(to, pieceBefore.color);
 
       this.moveHistory.push(normalized);
       this.fantasyMoveFlags.push(false);
@@ -523,12 +587,12 @@ export class FantasyChessEngine {
       if (from !== this.queenSplitSquare) return false;
       const legal = getQueenSplitMoves(this.chess, from);
       const match = legal.find((m) => m.uci === normalized);
-      if (!match || !pieceBefore) return false;
+      if (!match) return false;
 
       const next = new Chess(this.chess.fen());
       if (!applyStandardMove(next, normalized)) return false;
       this.chess = next;
-      this.resolveSquareEffects(to);
+      this.resolveSquareEffects(to, pieceBefore.color);
 
       this.moveHistory.push(normalized);
       this.fantasyMoveFlags.push(false);
@@ -556,7 +620,7 @@ export class FantasyChessEngine {
       return false;
     }
 
-    this.resolveSquareEffects(to);
+    this.resolveSquareEffects(to, pieceBefore.color);
 
     this.moveHistory.push(normalized);
     this.fantasyMoveFlags.push(match.isFantasy);
@@ -628,8 +692,12 @@ export class FantasyChessEngine {
     solutionUcis: string[]
   ): { ok: boolean; error?: string } {
     let engine: FantasyChessEngine;
+    const puzzleRules = {
+      ...rules,
+      fantasySide: rules.fantasySide ?? getSideToMoveFromFen(fen),
+    };
     try {
-      engine = new FantasyChessEngine(fen, rules);
+      engine = new FantasyChessEngine(fen, puzzleRules);
     } catch {
       return { ok: false, error: `Invalid FEN: ${fen}` };
     }

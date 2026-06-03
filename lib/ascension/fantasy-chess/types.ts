@@ -38,6 +38,8 @@ export interface FantasyRuleSet {
   specialSquares?: SquareEffect[];
   /** Passive skill ids merged from the player's unlocks (blast_dodge, etc.). */
   passiveSkills?: string[];
+  /** When set, piece abilities (tunnel, split queen, etc.) apply only to this color. */
+  fantasySide?: "w" | "b";
 }
 
 export interface FantasyMove {
