@@ -16,6 +16,7 @@ import {
   resolveBatchFen,
   type CampaignLevelSlot,
 } from "@/lib/ascension/lichess-import";
+import { normalizeTrackSlug } from "@/lib/ascension/campaign-tracks";
 
 export const runtime = "nodejs";
 
@@ -135,7 +136,20 @@ export async function POST(request: NextRequest) {
     typeof body.difficulty === "string" && DIFFICULTIES.has(body.difficulty)
       ? body.difficulty
       : undefined;
-  const track = body.track === "fantasy" ? "fantasy" : "main";
+
+  const trackSlug = normalizeTrackSlug(
+    typeof body.track === "string" ? body.track : "main"
+  );
+  const trackCheck = await admin
+    .from("campaign_tracks")
+    .select("slug")
+    .eq("slug", trackSlug)
+    .maybeSingle();
+  if (!trackCheck.data) {
+    return NextResponse.json({ error: `Unknown track: ${trackSlug}` }, { status: 400 });
+  }
+  const track = trackSlug;
+
   const startLevelRaw = Number(body.startLevel);
 
   // 1. Fetch a batch of puzzles from Lichess.

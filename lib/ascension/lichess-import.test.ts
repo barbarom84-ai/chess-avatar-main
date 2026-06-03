@@ -86,6 +86,11 @@ describe("lichessPuzzleToCampaignRow", () => {
     const row = lichessPuzzleToCampaignRow(puzzle(), 1);
     expect(validateStandardPuzzleLine(row.fen, row.solution_ucis).ok).toBe(true);
   });
+
+  it("uses the requested campaign track slug", () => {
+    const row = lichessPuzzleToCampaignRow(puzzle(), 3, "hard");
+    expect(row.track).toBe("hard");
+  });
 });
 
 describe("lichessPuzzleToFantasyCampaignRow", () => {
