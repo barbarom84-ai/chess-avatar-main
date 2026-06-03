@@ -3,12 +3,11 @@
 import { useEffect, useRef, useState, type MutableRefObject } from "react";
 import type { Chess } from "chess.js";
 import type { PvpGameRow } from "@/lib/pvp-chess";
-import { formatClockMs, formatCorrespondenceMs, getPvpClockDisplayMs } from "@/lib/pvp-clock";
+import { formatClockMs, formatCorrespondenceMs, getPvpClockDisplayMs, isCorrespondenceTimeLow } from "@/lib/pvp-clock";
 import { playClockLowTimeWarning } from "@/lib/chess-sound";
 import type { Language } from "@/lib/i18n";
 
 const LOW_TIME_MS = 20_000;
-const CORRESPONDENCE_LOW_MS = 24 * 60 * 60 * 1000;
 
 export default function OnlinePvpClockBar({
   game,
@@ -46,7 +45,10 @@ export default function OnlinePvpClockBar({
       };
 
   const { whiteMs, blackMs, active, correspondence } = display;
-  const lowThreshold = correspondence ? CORRESPONDENCE_LOW_MS : LOW_TIME_MS;
+  const moveBudgetMs =
+    correspondence && game.clock_initial_sec
+      ? Math.max(0, Number(game.clock_initial_sec)) * 1000
+      : 0;
 
   useEffect(() => {
     if (!showClocks) return;
@@ -62,6 +64,12 @@ export default function OnlinePvpClockBar({
       return;
     }
 
+    const isLow = (ms: number, isActive: boolean) => {
+      if (!isActive) return false;
+      if (correspondence) return isCorrespondenceTimeLow(ms, moveBudgetMs);
+      return ms > 0 && ms <= LOW_TIME_MS;
+    };
+
     const updateSide = (
       ms: number,
       isActive: boolean,
@@ -73,7 +81,8 @@ export default function OnlinePvpClockBar({
         setLow(false);
         return;
       }
-      if (ms > 0 && ms <= lowThreshold) {
+      const low = isLow(ms, isActive);
+      if (low) {
         setLow(true);
         if (!correspondence && !warnedRef.current) {
           warnedRef.current = true;
@@ -81,7 +90,7 @@ export default function OnlinePvpClockBar({
         }
       } else {
         setLow(false);
-        if (ms > lowThreshold) {
+        if (!low) {
           warnedRef.current = false;
         }
       }
@@ -89,7 +98,7 @@ export default function OnlinePvpClockBar({
 
     updateSide(whiteMs, active === "w", myRole === "white", warnedWhiteRef, setWhiteLow);
     updateSide(blackMs, active === "b", myRole === "black", warnedBlackRef, setBlackLow);
-  }, [showClocks, whiteMs, blackMs, active, myRole, lowThreshold, correspondence]);
+  }, [showClocks, whiteMs, blackMs, active, myRole, correspondence, moveBudgetMs]);
 
   if (!showClocks) return null;
 

@@ -86,6 +86,20 @@ export function getPvpClockDisplayMs(
   };
 }
 
+export function correspondenceLowThresholdMs(budgetMs: number): number {
+  if (budgetMs <= 0) return 0;
+  const oneHour = 60 * 60 * 1000;
+  const sixHours = 6 * oneHour;
+  // Alerte uniquement dans les dernières 10 % du délai (entre 1 h et 6 h).
+  return Math.max(oneHour, Math.min(sixHours, Math.floor(budgetMs * 0.1)));
+}
+
+export function isCorrespondenceTimeLow(remainingMs: number, budgetMs: number): boolean {
+  if (remainingMs <= 0) return false;
+  const threshold = correspondenceLowThresholdMs(budgetMs);
+  return threshold > 0 && remainingMs <= threshold;
+}
+
 export function formatClockMs(ms: number): string {
   if (!Number.isFinite(ms) || ms <= 0) return "0:00";
   const totalSec = Math.ceil(ms / 1000);

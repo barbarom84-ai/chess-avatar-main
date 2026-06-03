@@ -26,6 +26,21 @@ function correspondenceGame(overrides: Partial<PvpGameRow> = {}): PvpGameRow {
   };
 }
 
+describe("correspondence display helpers", () => {
+  it("does not flag low time at start of 1-day move", async () => {
+    const { isCorrespondenceTimeLow } = await import("@/lib/pvp-clock");
+    const oneDay = 86_400 * 1000;
+    expect(isCorrespondenceTimeLow(oneDay, oneDay)).toBe(false);
+    expect(isCorrespondenceTimeLow(oneDay * 0.5, oneDay)).toBe(false);
+  });
+
+  it("flags low time in final fraction of move budget", async () => {
+    const { isCorrespondenceTimeLow } = await import("@/lib/pvp-clock");
+    const oneDay = 86_400 * 1000;
+    expect(isCorrespondenceTimeLow(oneDay * 0.05, oneDay)).toBe(true);
+  });
+});
+
 describe("correspondence clock", () => {
   it("flags timeout when move budget exceeded", () => {
     const row = correspondenceGame();
