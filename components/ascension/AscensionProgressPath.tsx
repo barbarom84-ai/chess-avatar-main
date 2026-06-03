@@ -183,13 +183,34 @@ export default function AscensionProgressPath({
     container.scrollTo({ top: Math.max(0, desired), behavior: "smooth" });
   }, [visualIndex, standardNodes]);
 
-  const visualNode = standardNodes[visualIndex] ?? standardNodes[0]!;
+  const visualNode = standardNodes[visualIndex] ?? standardNodes[0];
 
   const handleTokenTransitionEnd = () => {
     if (animateToIndex == null || animationHandled.current) return;
     animationHandled.current = true;
     onAnimationComplete?.();
   };
+
+  if (standardPuzzles.length === 0) {
+    return (
+      <div className="rounded-xl border border-cyan-500/20 bg-gradient-to-b from-slate-950/90 to-emerald-950/20 overflow-hidden flex flex-col">
+        <div className="p-4 border-b border-slate-800/80 space-y-3 shrink-0">
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="text-sm font-semibold text-slate-100 flex items-center gap-2">
+              <Crown className="h-4 w-4 text-amber-400" />
+              {t.ascension.progressPath}
+            </h3>
+            <span className="text-xs text-cyan-300 tabular-nums font-medium">
+              {card.elo} / 3000 ELO
+            </span>
+          </div>
+          <p className="text-xs text-slate-500 italic py-6 text-center">
+            {t.ascension.trackEmpty}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-xl border border-cyan-500/20 bg-gradient-to-b from-slate-950/90 to-emerald-950/20 overflow-hidden flex flex-col">
@@ -503,14 +524,16 @@ export default function AscensionProgressPath({
           )}
 
           {/* ── Champion token (standard path only) ── */}
-          <PathChampionToken
-            avatarUrl={card.avatarUrl ?? null}
-            displayName={card.displayName}
-            tier={card.tier}
-            node={visualNode}
-            isMoving={animateToIndex != null}
-            onTransitionEnd={handleTokenTransitionEnd}
-          />
+          {visualNode && (
+            <PathChampionToken
+              avatarUrl={card.avatarUrl ?? null}
+              displayName={card.displayName}
+              tier={card.tier}
+              node={visualNode}
+              isMoving={animateToIndex != null}
+              onTransitionEnd={handleTokenTransitionEnd}
+            />
+          )}
         </div>
 
         {/* Bottom fade */}

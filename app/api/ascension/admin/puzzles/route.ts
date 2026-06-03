@@ -6,6 +6,7 @@ import { isSuperUserServer } from "@/lib/is-super-user-server";
 import { FantasyChessEngine } from "@/lib/ascension/fantasy-chess/engine";
 import type { FantasyRuleSet } from "@/lib/ascension/fantasy-chess/types";
 import { validateStandardPuzzleLine } from "@/lib/ascension/puzzle-validation";
+import { normalizeTrackSlug } from "@/lib/ascension/campaign-tracks";
 
 export const runtime = "nodejs";
 
@@ -58,7 +59,16 @@ export async function POST(request: NextRequest) {
   const puzzleId = typeof body.id === "string" && body.id.trim() ? body.id.trim() : null;
   const slug = typeof body.slug === "string" ? body.slug.trim() : "";
   const kind = body.kind === "fantasy" ? "fantasy" : "standard";
-  const track = body.track === "fantasy" ? "fantasy" : "main";
+  const trackSlug = normalizeTrackSlug(typeof body.track === "string" ? body.track : "main");
+  const trackCheck = await admin
+    .from("campaign_tracks")
+    .select("slug")
+    .eq("slug", trackSlug)
+    .maybeSingle();
+  if (!trackCheck.data) {
+    return NextResponse.json({ error: `Unknown track: ${trackSlug}` }, { status: 400 });
+  }
+  const track = trackSlug;
   const fen = typeof body.fen === "string" ? body.fen : "";
   const solutionUcis = Array.isArray(body.solution_ucis)
     ? (body.solution_ucis as string[])
@@ -239,7 +249,7 @@ export async function DELETE(request: NextRequest) {
   const singleId = params.get("id")?.trim();
   const idsParam = params.get("ids")?.trim();
   const levelParam = params.get("level");
-  const trackParam = params.get("track") === "fantasy" ? "fantasy" : "main";
+  const trackParam = normalizeTrackSlug(params.get("track") ?? "main");
 
   let idsToDelete: string[] = [];
 

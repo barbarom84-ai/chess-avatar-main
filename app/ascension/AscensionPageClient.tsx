@@ -2,9 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { ChevronDown, Pencil, Settings2 } from "lucide-react";
+import { ChevronDown, Crown, Pencil, Settings2 } from "lucide-react";
 import AscensionLoadingScreen from "@/components/ascension/AscensionLoadingScreen";
+import UpgradeModal from "@/components/UpgradeModal";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import AscensionProgressPath from "@/components/ascension/AscensionProgressPath";
@@ -30,9 +32,19 @@ import {
   applyPuzzleLocks,
   isMainCampaignComplete,
 } from "@/lib/ascension/campaign-puzzle-utils";
+import {
+  isTrackUnlocked,
+  trackLabel,
+  type DbCampaignTrack,
+} from "@/lib/ascension/campaign-tracks";
+import {
+  ASCENSION_FREE_PUZZLES_PER_TRACK,
+  ASCENSION_PREMIUM_PUZZLES_PER_TRACK,
+} from "@/lib/ascension/constants";
 import type { ChampionTier, DbPlayerChampionCard } from "@/lib/ascension/types";
 import { useLanguage } from "@/lib/language-context";
 import { useSuperUser } from "@/hooks/useSuperUser";
+import { usePremium } from "@/hooks/usePremium";
 import { track } from "@/lib/track";
 
 const SKIP_PATH_ANIM_KEY = "ascension_skip_path_anim";
@@ -53,11 +65,16 @@ function sortPuzzles(puzzles: AscensionPuzzleListItem[]) {
 }
 
 export default function AscensionPageClient() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const { isSuperUser, loading: superLoading } = useSuperUser();
+  const { email, userId } = usePremium();
   const [card, setCard] = useState<DbPlayerChampionCard | null>(null);
   const [unlockedSkills, setUnlockedSkills] = useState<string[]>([]);
   const [puzzles, setPuzzles] = useState<AscensionPuzzleListItem[]>([]);
+  const [tracks, setTracks] = useState<DbCampaignTrack[]>([]);
+  const [trackUnlock, setTrackUnlock] = useState<Record<string, boolean>>({});
+  const [isPremium, setIsPremium] = useState(false);
+  const [showUpgrade, setShowUpgrade] = useState(false);
   const [selectedPuzzleId, setSelectedPuzzleId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [unlocking, setUnlocking] = useState<string | null>(null);
@@ -69,8 +86,7 @@ export default function AscensionPageClient() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [activeTab, setActiveTab] = useState("puzzles");
-  const [campaign, setCampaign] = useState<"main" | "fantasy">("main");
-  const [fantasyTrackUnlocked, setFantasyTrackUnlocked] = useState(false);
+  const [campaign, setCampaign] = useState<string>("main");
   const [mainCampaignComplete, setMainCampaignComplete] = useState(false);
   const progressInitialized = useRef(false);
 
@@ -81,26 +97,31 @@ export default function AscensionPageClient() {
   }, []);
 
   const sortedPuzzles = useMemo(() => sortPuzzles(puzzles), [puzzles]);
+  const activeTrack = useMemo(
+    () => tracks.find((tr) => tr.slug === campaign) ?? tracks[0],
+    [tracks, campaign]
+  );
   const mainTrackPuzzles = useMemo(
     () => sortedPuzzles.filter((p) => (p.track ?? "main") === "main"),
     [sortedPuzzles]
   );
-  const fantasyTrackPuzzles = useMemo(
-    () => sortedPuzzles.filter((p) => p.track === "fantasy"),
-    [sortedPuzzles]
+  const activePuzzles = useMemo(
+    () => sortedPuzzles.filter((p) => (p.track ?? "main") === campaign),
+    [sortedPuzzles, campaign]
   );
-  const activePuzzles = campaign === "fantasy" ? fantasyTrackPuzzles : mainTrackPuzzles;
-  const hasFantasyCampaign = fantasyTrackPuzzles.length > 0;
+  const hasMultipleTracks = tracks.length > 1;
+  const fantasyTrackUnlocked = trackUnlock.fantasy ?? false;
+  const isMainLayout = activeTrack?.layout === "main" && campaign === "main";
   /** Standard puzzles only — used for main-path progression tracking. */
   const sortedStandard = useMemo(
     () => mainTrackPuzzles.filter((p) => p.kind === "standard"),
     [mainTrackPuzzles]
   );
-  /** Frontier node for the Fantasy campaign token (first open puzzle). */
-  const fantasyFrontierIndex = useMemo(() => {
-    const idx = fantasyTrackPuzzles.findIndex((p) => !p.completed && !p.locked);
-    return idx >= 0 ? idx : Math.max(0, fantasyTrackPuzzles.length - 1);
-  }, [fantasyTrackPuzzles]);
+  /** Frontier node for sequential campaign tracks. */
+  const trackFrontierIndex = useMemo(() => {
+    const idx = activePuzzles.findIndex((p) => !p.completed && !p.locked);
+    return idx >= 0 ? idx : Math.max(0, activePuzzles.length - 1);
+  }, [activePuzzles]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -113,8 +134,13 @@ export default function AscensionPageClient() {
       setCard(state.card);
       setUnlockedSkills(state.unlockedSkills);
       setPuzzles(puzzleData.puzzles);
-      setFantasyTrackUnlocked(puzzleData.fantasyTrackUnlocked);
+      setTracks(puzzleData.tracks ?? []);
+      setTrackUnlock(puzzleData.trackUnlock);
+      setIsPremium(puzzleData.isPremium);
       setMainCampaignComplete(puzzleData.mainCampaignComplete);
+      if (puzzleData.tracks.length > 0 && !puzzleData.tracks.some((tr) => tr.slug === campaign)) {
+        setCampaign(puzzleData.tracks[0]!.slug);
+      }
       if (!selectedPuzzleId && puzzleData.puzzles[0]) {
         const sorted = sortPuzzles(puzzleData.puzzles);
         const standard = sorted.filter((p) => p.kind === "standard");
@@ -161,10 +187,14 @@ export default function AscensionPageClient() {
               p.id === selectedPuzzle.id ? { ...p, completed: true } : p
             );
             const newElo = result.rewards!.newElo;
-            const locked = applyPuzzleLocks(updated, newElo);
-            if (newElo >= 3000 || isMainCampaignComplete(locked)) {
-              setFantasyTrackUnlocked(true);
-            }
+            const locked = applyPuzzleLocks(updated, newElo, tracks, isPremium);
+            setTrackUnlock((prevUnlock) => {
+              const next = { ...prevUnlock };
+              for (const track of tracks) {
+                next[track.slug] = isTrackUnlocked(track, newElo, locked);
+              }
+              return next;
+            });
             if (isMainCampaignComplete(locked)) {
               setMainCampaignComplete(true);
             }
@@ -181,13 +211,16 @@ export default function AscensionPageClient() {
             achievement: result.achievement,
           });
 
-          if (selectedPuzzle.track === "fantasy") {
-            // Fantasy campaign: advance to the next sequential puzzle in the track.
-            const fantasyIdx = fantasyTrackPuzzles.findIndex(
-              (p) => p.id === selectedPuzzle.id
-            );
-            const nextFantasy = fantasyTrackPuzzles[fantasyIdx + 1] ?? null;
-            setPendingAdvance({ toIndex: progressNodeIndex, nextPuzzleId: nextFantasy?.id ?? null });
+          const trackPuzzles = sortedPuzzles.filter((p) => p.track === selectedPuzzle.track);
+          const trackDef = tracks.find((tr) => tr.slug === selectedPuzzle.track);
+
+          if (trackDef?.layout === "sequential" && selectedPuzzle.track !== "main") {
+            const trackIdx = trackPuzzles.findIndex((p) => p.id === selectedPuzzle.id);
+            const nextInTrack = trackPuzzles[trackIdx + 1] ?? null;
+            setPendingAdvance({
+              toIndex: progressNodeIndex,
+              nextPuzzleId: nextInTrack?.id ?? null,
+            });
           } else if (isFantasy) {
             // Bonus quest: don't advance the main path token, just reset the puzzle.
             setPendingAdvance({ toIndex: progressNodeIndex, nextPuzzleId: null });
@@ -222,7 +255,9 @@ export default function AscensionPageClient() {
       card,
       pendingReward,
       sortedStandard,
-      fantasyTrackPuzzles,
+      sortedPuzzles,
+      tracks,
+      isPremium,
       progressNodeIndex,
       unlockedSkills,
       t.ascension.completeError,
@@ -232,16 +267,15 @@ export default function AscensionPageClient() {
   const skipPathAnim = shouldSkipPathAnim(unlockedSkills);
 
   const handleSelectCampaign = useCallback(
-    (next: "main" | "fantasy") => {
-      setCampaign(next);
-      const list = next === "fantasy" ? fantasyTrackPuzzles : mainTrackPuzzles;
+    (slug: string) => {
+      setCampaign(slug);
+      const list = sortedPuzzles.filter((p) => (p.track ?? "main") === slug);
       const open = list.find((p) => !p.completed && !p.locked) ?? list[0];
       setSelectedPuzzleId(open?.id ?? null);
       setActiveTab("puzzles");
     },
-    [fantasyTrackPuzzles, mainTrackPuzzles]
+    [sortedPuzzles]
   );
-
   const handleRewardContinue = () => {
     if (!pendingAdvance) {
       setPendingReward(null);
@@ -341,31 +375,50 @@ export default function AscensionPageClient() {
           {loading || !card || !cardModel ? (
             <AscensionLoadingScreen />
           ) : (
-            /* ── 3-column layout on lg: path (wider) | puzzle | card ── */
+            <>
+            {!isPremium && (
+              <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-600/30 bg-amber-950/30 px-3 py-2">
+                <p className="text-xs text-amber-200/90">
+                  {t.ascension.freePlanBanner
+                    .replace("{free}", String(ASCENSION_FREE_PUZZLES_PER_TRACK))
+                    .replace("{premium}", String(ASCENSION_PREMIUM_PUZZLES_PER_TRACK))}
+                </p>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 text-xs border-amber-600/40 text-amber-200 hover:bg-amber-900/40"
+                  onClick={() => setShowUpgrade(true)}
+                >
+                  <Crown className="h-3 w-3 mr-1" />
+                  {t.ascension.upgradeCta}
+                </Button>
+              </div>
+            )}
+            {/* ── 3-column layout on lg: path (wider) | puzzle | card ── */}
             <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr_220px] xl:grid-cols-[380px_1fr_240px] 2xl:grid-cols-[420px_1fr_260px] gap-4">
 
               {/* LEFT: Parcours d'ascension */}
               <div className="lg:row-span-2 space-y-3">
-                {hasFantasyCampaign && (
-                  <div className="inline-flex w-full rounded-lg border border-slate-800 overflow-hidden">
-                    {(["main", "fantasy"] as const).map((c) => {
-                      const locked = c === "fantasy" && !fantasyTrackUnlocked;
+                {hasMultipleTracks && (
+                  <div className="inline-flex w-full rounded-lg border border-slate-800 overflow-hidden flex-wrap">
+                    {tracks.map((track) => {
+                      const locked = !trackUnlock[track.slug];
+                      const isFantasyTrack = track.slug === "fantasy";
                       return (
                         <button
-                          key={c}
+                          key={track.slug}
                           type="button"
-                          onClick={() => handleSelectCampaign(c)}
-                          className={`flex-1 px-3 py-2 text-xs font-medium transition-colors ${
-                            campaign === c
-                              ? c === "fantasy"
+                          onClick={() => handleSelectCampaign(track.slug)}
+                          className={`flex-1 min-w-[80px] px-3 py-2 text-xs font-medium transition-colors ${
+                            campaign === track.slug
+                              ? isFantasyTrack
                                 ? "bg-purple-800 text-purple-50"
                                 : "bg-cyan-700 text-white"
                               : "bg-slate-950/60 text-slate-400 hover:text-slate-200"
                           }`}
                         >
-                          {c === "main"
-                            ? t.ascension.campaignMain
-                            : `${t.ascension.campaignFantasy}${locked ? " 🔒" : ""}`}
+                          {trackLabel(track, lang)}
+                          {locked ? " 🔒" : ""}
                         </button>
                       );
                     })}
@@ -374,7 +427,7 @@ export default function AscensionPageClient() {
 
                 {mainCampaignComplete &&
                   campaign === "main" &&
-                  hasFantasyCampaign &&
+                  tracks.some((tr) => tr.slug === "fantasy") &&
                   fantasyTrackUnlocked && (
                     <button
                       type="button"
@@ -396,14 +449,10 @@ export default function AscensionPageClient() {
                   selectedPuzzleId={selectedPuzzle?.id ?? null}
                   onSelectPuzzle={handleSelectPuzzle}
                   unlockedSkills={unlockedSkills}
-                  variant={campaign === "fantasy" ? "fantasy" : "main"}
-                  progressNodeIndex={
-                    campaign === "fantasy" ? fantasyFrontierIndex : progressNodeIndex
-                  }
-                  animateToIndex={campaign === "fantasy" ? null : animateToIndex}
-                  onAnimationComplete={
-                    campaign === "fantasy" ? undefined : handlePathAnimationComplete
-                  }
+                  variant={isMainLayout ? "main" : "fantasy"}
+                  progressNodeIndex={isMainLayout ? progressNodeIndex : trackFrontierIndex}
+                  animateToIndex={isMainLayout ? animateToIndex : null}
+                  onAnimationComplete={isMainLayout ? handlePathAnimationComplete : undefined}
                 />
               </div>
 
@@ -415,7 +464,7 @@ export default function AscensionPageClient() {
                     <TabsTrigger value="skills" className="flex-1">{t.ascension.tabSkills}</TabsTrigger>
                   </TabsList>
                   <TabsContent value="puzzles" className="mt-3">
-                    {selectedPuzzle && (
+                    {selectedPuzzle ? (
                       <AscensionPuzzlePlayer
                         key={`${selectedPuzzle.id}-${puzzleSessionKey}`}
                         puzzle={selectedPuzzle}
@@ -423,6 +472,10 @@ export default function AscensionPageClient() {
                         onComplete={handleComplete}
                         frozen={!!pendingReward || animateToIndex != null}
                       />
+                    ) : (
+                      <div className="rounded-lg border border-slate-800 bg-slate-950/40 px-4 py-8 text-center">
+                        <p className="text-sm text-slate-400">{t.ascension.trackEmpty}</p>
+                      </div>
                     )}
                   </TabsContent>
                   <TabsContent value="skills" className="mt-3">
@@ -533,6 +586,7 @@ export default function AscensionPageClient() {
                 </div>
               </div>
             </div>
+            </>
           )}
         </div>
       </main>
@@ -542,6 +596,15 @@ export default function AscensionPageClient() {
         reward={pendingReward}
         onContinue={handleRewardContinue}
       />
+      {userId && (
+        <UpgradeModal
+          open={showUpgrade}
+          onOpenChange={setShowUpgrade}
+          userId={userId}
+          email={email}
+          reason="ascension"
+        />
+      )}
     </AscensionGate>
   );
 }

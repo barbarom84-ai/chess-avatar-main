@@ -13,7 +13,7 @@ export type ChampionTier =
 
 export type CampaignPuzzleKind = "standard" | "fantasy";
 
-export type CampaignTrack = "main" | "fantasy";
+export type CampaignTrack = string;
 
 export type LocalizedText = { fr: string; en: string };
 

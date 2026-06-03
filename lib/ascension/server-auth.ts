@@ -55,6 +55,37 @@ export async function requireAscensionPremium(
   return { ok: true, ctx: { user, admin, isPremium } };
 }
 
+/** Logged-in users (free or premium). Premium flag indicates full track access. */
+export async function requireAscensionAuth(
+  request: NextRequest
+): Promise<
+  | { ok: true; ctx: AscensionAuthContext }
+  | { ok: false; status: number; error: string }
+> {
+  const env = getAscensionSupabaseEnv();
+  if (!env) {
+    return { ok: false, status: 503, error: "Supabase not configured" };
+  }
+
+  const user = await getAuthedUserFromRequest(request, env.supabaseUrl, env.anonKey);
+  if (!user) {
+    return { ok: false, status: 401, error: "Authentication required" };
+  }
+
+  const admin = createClient(env.supabaseUrl, env.serviceKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+
+  const { data: subRow } = await admin
+    .from("subscriptions")
+    .select("plan, status")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  const isPremium = hasActivePremiumAccess(subRow?.plan, subRow?.status);
+  return { ok: true, ctx: { user, admin, isPremium } };
+}
+
 export function mapDbChampionCard(row: Record<string, unknown>) {
   return {
     user_id: String(row.user_id),
@@ -101,7 +132,7 @@ export function mapDbCampaignPuzzle(row: Record<string, unknown>) {
         ? (row.insight as { fr: string; en: string })
         : { fr: "", en: "" },
     sort_order: Number(row.sort_order ?? 0),
-    track: row.track === "fantasy" ? ("fantasy" as const) : ("main" as const),
+    track: typeof row.track === "string" && row.track.trim() ? String(row.track) : "main",
     is_published: Boolean(row.is_published),
     updated_at: typeof row.updated_at === "string" ? row.updated_at : undefined,
   };

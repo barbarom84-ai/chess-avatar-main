@@ -1,4 +1,5 @@
 import { accountApiHeaders, readAccountApiError } from "@/lib/account-api-auth";
+import type { DbCampaignTrack } from "@/lib/ascension/campaign-tracks";
 import type { DbCampaignPuzzle, DbPlayerChampionCard } from "@/lib/ascension/types";
 
 export interface AscensionCardResponse {
@@ -12,6 +13,20 @@ export interface AscensionPuzzleListItem extends DbCampaignPuzzle {
   attempts: number;
   /** True when the puzzle cannot be played yet (sequential lock for standard puzzles). */
   locked: boolean;
+  /** True when the puzzle exceeds the free plan limit for its track. */
+  premiumLocked?: boolean;
+}
+
+export interface AscensionPuzzlesResponse {
+  puzzles: AscensionPuzzleListItem[];
+  tracks: DbCampaignTrack[];
+  playerElo: number;
+  isPremium: boolean;
+  trackUnlock: Record<string, boolean>;
+  mainCampaignComplete: boolean;
+  fantasyTrackUnlocked: boolean;
+  premiumPuzzlesPerTrack: number;
+  freePuzzlesPerTrack: number;
 }
 
 export async function initAscension(): Promise<DbPlayerChampionCard> {
@@ -45,22 +60,12 @@ export async function updateChampionCard(
   return data.card;
 }
 
-export async function fetchAscensionPuzzles(): Promise<{
-  puzzles: AscensionPuzzleListItem[];
-  playerElo: number;
-  fantasyTrackUnlocked: boolean;
-  mainCampaignComplete: boolean;
-}> {
+export async function fetchAscensionPuzzles(): Promise<AscensionPuzzlesResponse> {
   const res = await fetch("/api/ascension/puzzles", {
     headers: await accountApiHeaders(false),
   });
   if (!res.ok) throw new Error(await readAccountApiError(res, "Puzzles failed"));
-  return (await res.json()) as {
-    puzzles: AscensionPuzzleListItem[];
-    playerElo: number;
-    fantasyTrackUnlocked: boolean;
-    mainCampaignComplete: boolean;
-  };
+  return (await res.json()) as AscensionPuzzlesResponse;
 }
 
 export async function completeAscensionPuzzle(

@@ -1,4 +1,11 @@
 import type { DbCampaignPuzzle } from "@/lib/ascension/types";
+import type { DbCampaignTrack } from "@/lib/ascension/campaign-tracks";
+import {
+  computeMainStandardLocked,
+  computeTrackSequentialLocked,
+  isPuzzleWithinPlanLimit,
+  isTrackUnlocked,
+} from "@/lib/ascension/campaign-tracks";
 
 type PuzzleRow = DbCampaignPuzzle & { updated_at?: string };
 
@@ -111,23 +118,50 @@ export function isMainCampaignComplete(puzzles: PuzzleWithCompletion[]): boolean
 
 const FANTASY_TRACK_ELO_GATE = 3000;
 
-/** Recompute sequential lock flags after a local completion update. */
-export function applyPuzzleLocks<T extends DbCampaignPuzzle & { completed: boolean; locked: boolean }>(
+/** Recompute sequential + plan lock flags after a local completion update. */
+export function applyPuzzleLocks<
+  T extends DbCampaignPuzzle & { completed: boolean; locked: boolean; premiumLocked?: boolean },
+>(
   puzzles: T[],
-  playerElo: number
+  playerElo: number,
+  tracks: DbCampaignTrack[],
+  isPremium: boolean
 ): T[] {
-  const mainComplete = isMainCampaignComplete(puzzles);
-  const fantasyTrackUnlocked = playerElo >= FANTASY_TRACK_ELO_GATE || mainComplete;
-  const standardLocked = computeStandardPuzzleLocked(puzzles);
-  const fantasyLocked = computeFantasyTrackLocked(puzzles, fantasyTrackUnlocked);
+  const trackUnlock = new Map<string, boolean>();
+  for (const track of tracks) {
+    trackUnlock.set(track.slug, isTrackUnlocked(track, playerElo, puzzles));
+  }
+
+  const mainStandardLocked = computeMainStandardLocked(puzzles);
+  const sequentialByTrack = new Map<string, Map<string, boolean>>();
+  for (const track of tracks) {
+    if (track.layout === "main" && track.slug === "main") continue;
+    sequentialByTrack.set(
+      track.slug,
+      computeTrackSequentialLocked(track.slug, puzzles, trackUnlock.get(track.slug) ?? false)
+    );
+  }
 
   return puzzles.map((p) => {
     let locked = false;
-    if (p.track === "fantasy") {
-      locked = fantasyLocked.get(p.id) ?? true;
-    } else if (p.kind === "standard") {
-      locked = standardLocked.get(p.id) ?? false;
+    let premiumLocked = false;
+
+    if (!isPuzzleWithinPlanLimit(p.sort_order, isPremium)) {
+      premiumLocked = true;
+      locked = true;
+    } else if (!trackUnlock.get(p.track)) {
+      locked = true;
+    } else if (p.track === "main" && p.kind === "standard") {
+      locked = mainStandardLocked.get(p.id) ?? false;
+    } else {
+      const track = tracks.find((t) => t.slug === p.track);
+      if (track?.layout === "main" && p.track === "main") {
+        locked = false;
+      } else {
+        locked = sequentialByTrack.get(p.track)?.get(p.id) ?? false;
+      }
     }
-    return { ...p, locked };
+
+    return { ...p, locked, premiumLocked };
   });
 }

@@ -25,6 +25,9 @@ import {
   type SideToMove,
 } from "@/lib/ascension/fen-utils";
 import { canonicalPuzzleAtLevel } from "@/lib/ascension/campaign-puzzle-utils";
+import { ASCENSION_ADMIN_MIN_LEVELS } from "@/lib/ascension/constants";
+import { trackLabel, type DbCampaignTrack } from "@/lib/ascension/campaign-tracks";
+import AdminTrackManager from "@/components/ascension/AdminTrackManager";
 import { nextFreeStandardLevel } from "@/lib/ascension/lichess-import";
 import SimpleChessboard from "@/components/SimpleChessboard";
 import { useLanguage } from "@/lib/language-context";
@@ -99,13 +102,14 @@ function emptyForm(level: number, track: CampaignTrack = "main"): PuzzleForm {
 }
 
 export default function AscensionAdminPage() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const { isSuperUser, loading } = useSuperUser();
   const [puzzles, setPuzzles] = useState<DbCampaignPuzzle[]>([]);
   const [selectedPuzzleId, setSelectedPuzzleId] = useState<string | null>(null);
   const [selectedLevel, setSelectedLevel] = useState<number | null>(null);
   const [form, setForm] = useState<PuzzleForm | null>(null);
   const [adminTrack, setAdminTrack] = useState<CampaignTrack>("main");
+  const [tracks, setTracks] = useState<DbCampaignTrack[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -118,6 +122,25 @@ export default function AscensionAdminPage() {
   const [importing, setImporting] = useState(false);
   const [importMsg, setImportMsg] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  const loadTracks = useCallback(async () => {
+    try {
+      const res = await fetch("/api/ascension/admin/tracks", {
+        headers: await accountApiHeaders(false),
+      });
+      if (!res.ok) throw new Error(await readAccountApiError(res, "Tracks failed"));
+      const data = (await res.json()) as { tracks: DbCampaignTrack[] };
+      const sorted = [...data.tracks].sort((a, b) => a.sort_order - b.sort_order);
+      setTracks(sorted);
+      setAdminTrack((current) =>
+        sorted.length > 0 && !sorted.some((tr) => tr.slug === current)
+          ? sorted[0]!.slug
+          : current
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error");
+    }
+  }, []);
 
   const load = useCallback(async () => {
     setLoadingPuzzles(true);
@@ -138,8 +161,11 @@ export default function AscensionAdminPage() {
   }, []);
 
   useEffect(() => {
-    if (isSuperUser) void load();
-  }, [isSuperUser, load]);
+    if (isSuperUser) {
+      void loadTracks();
+      void load();
+    }
+  }, [isSuperUser, load, loadTracks]);
 
   useEffect(() => {
     if (puzzles.length > 0 && importStartLevel === 0) {
@@ -467,7 +493,7 @@ export default function AscensionAdminPage() {
   const trackPuzzles = puzzles.filter((p) => (p.track ?? "main") === adminTrack);
 
   const maxLevel = Math.max(
-    9,
+    ASCENSION_ADMIN_MIN_LEVELS,
     ...trackPuzzles.map((p) => p.sort_order),
     selectedLevel ?? 0
   );
@@ -536,8 +562,11 @@ export default function AscensionAdminPage() {
                     setImportStartLevel(0);
                   }}
                 >
-                  <option value="main">{t.ascension.adminTrackMain}</option>
-                  <option value="fantasy">{t.ascension.adminTrackFantasy}</option>
+                  {tracks.map((track) => (
+                    <option key={track.slug} value={track.slug}>
+                      {trackLabel(track, lang)}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div className="space-y-1">
@@ -612,30 +641,51 @@ export default function AscensionAdminPage() {
               <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
             ) : (
               <>
+                <AdminTrackManager
+                  tracks={tracks}
+                  lang={lang}
+                  onTracksChange={async () => {
+                    await loadTracks();
+                    await load();
+                  }}
+                  t={{
+                    adminTracksTitle: t.ascension.adminTracksTitle,
+                    adminTracksAdd: t.ascension.adminTracksAdd,
+                    adminTracksSlug: t.ascension.adminTracksSlug,
+                    adminTracksLabelFr: t.ascension.adminTracksLabelFr,
+                    adminTracksLabelEn: t.ascension.adminTracksLabelEn,
+                    adminTracksSave: t.ascension.adminTracksSave,
+                    adminTracksDelete: t.ascension.adminTracksDelete,
+                    adminTracksDeleteConfirm: t.ascension.adminTracksDeleteConfirm,
+                    adminTracksSaved: t.ascension.adminTracksSaved,
+                    adminTracksDeleted: t.ascension.adminTracksDeleted,
+                    adminTracksSystem: t.ascension.adminTracksSystem,
+                    adminTracksDeleteBlocked: t.ascension.adminTracksDeleteBlocked,
+                  }}
+                />
+
                 <div className="flex items-center gap-2">
                   <span className="text-xs uppercase tracking-wider text-slate-500">
                     {t.ascension.adminTrackLabel}
                   </span>
-                  <div className="inline-flex rounded-md border border-slate-700 overflow-hidden">
-                    {(["main", "fantasy"] as const).map((tr) => (
+                  <div className="inline-flex rounded-md border border-slate-700 overflow-hidden flex-wrap">
+                    {tracks.map((tr) => (
                       <button
-                        key={tr}
+                        key={tr.slug}
                         type="button"
                         className={`px-3 py-1 text-xs font-medium transition-colors ${
-                          adminTrack === tr
+                          adminTrack === tr.slug
                             ? "bg-cyan-700 text-white"
                             : "bg-slate-900 text-slate-400 hover:text-slate-200"
                         }`}
                         onClick={() => {
-                          setAdminTrack(tr);
+                          setAdminTrack(tr.slug);
                           setForm(null);
                           setSelectedPuzzleId(null);
                           setSelectedLevel(null);
                         }}
                       >
-                        {tr === "main"
-                          ? t.ascension.adminTrackMain
-                          : t.ascension.adminTrackFantasy}
+                        {trackLabel(tr, lang)}
                       </button>
                     ))}
                   </div>

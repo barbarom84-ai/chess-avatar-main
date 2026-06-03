@@ -426,8 +426,17 @@ export default function AscensionPuzzlePlayer({
         {puzzle.locked && (
           <div className="flex flex-col items-center gap-3 rounded-lg border border-slate-700/60 bg-slate-900/60 px-4 py-6 text-center">
             <Lock className="h-8 w-8 text-slate-500" />
-            <p className="text-sm font-semibold text-slate-200">{t.ascension.puzzleLockedTitle}</p>
-            <p className="text-xs text-slate-400 max-w-xs">{t.ascension.puzzleLockedPrevious}</p>
+            <p className="text-sm font-semibold text-slate-200">
+              {puzzle.premiumLocked ? t.ascension.premiumLockedTitle : t.ascension.puzzleLockedTitle}
+            </p>
+            <p className="text-xs text-slate-400 max-w-xs">
+              {puzzle.premiumLocked
+                ? t.ascension.premiumLockedDesc.replace(
+                    "{free}",
+                    String(t.ascension.freePuzzlesPerTrack ?? 3)
+                  )
+                : t.ascension.puzzleLockedPrevious}
+            </p>
           </div>
         )}
 

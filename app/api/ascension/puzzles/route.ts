@@ -2,21 +2,28 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   mapDbCampaignPuzzle,
   mapDbChampionCard,
-  requireAscensionPremium,
+  requireAscensionAuth,
 } from "@/lib/ascension/server-auth";
 import {
   dedupeCampaignPuzzlesByLevel,
-  computeStandardPuzzleLocked,
-  computeFantasyTrackLocked,
   isMainCampaignComplete,
 } from "@/lib/ascension/campaign-puzzle-utils";
-
-const FANTASY_TRACK_ELO_GATE = 3000;
+import {
+  ASCENSION_FREE_PUZZLES_PER_TRACK,
+  ASCENSION_PREMIUM_PUZZLES_PER_TRACK,
+} from "@/lib/ascension/constants";
+import {
+  computeMainStandardLocked,
+  computeTrackSequentialLocked,
+  isPuzzleWithinPlanLimit,
+  isTrackUnlocked,
+  mapDbCampaignTrack,
+} from "@/lib/ascension/campaign-tracks";
 
 export const runtime = "nodejs";
 
 export async function GET(request: NextRequest) {
-  const auth = await requireAscensionPremium(request);
+  const auth = await requireAscensionAuth(request);
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
@@ -29,15 +36,25 @@ export async function GET(request: NextRequest) {
 
   const playerElo = Number(cardRes.data?.elo ?? 0);
 
-  const { data: puzzles, error } = await auth.ctx.admin
-    .from("campaign_puzzles")
-    .select("*")
-    .eq("is_published", true)
-    .order("sort_order", { ascending: true });
+  const [tracksRes, puzzlesRes] = await Promise.all([
+    auth.ctx.admin.from("campaign_tracks").select("*").order("sort_order", { ascending: true }),
+    auth.ctx.admin
+      .from("campaign_puzzles")
+      .select("*")
+      .eq("is_published", true)
+      .order("sort_order", { ascending: true }),
+  ]);
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  if (tracksRes.error) {
+    return NextResponse.json({ error: tracksRes.error.message }, { status: 500 });
   }
+  if (puzzlesRes.error) {
+    return NextResponse.json({ error: puzzlesRes.error.message }, { status: 500 });
+  }
+
+  const tracks = (tracksRes.data ?? []).map((row) =>
+    mapDbCampaignTrack(row as Record<string, unknown>)
+  );
 
   const completions = await auth.ctx.admin
     .from("player_puzzle_completions")
@@ -49,7 +66,7 @@ export async function GET(request: NextRequest) {
   );
 
   const withCompletion = dedupeCampaignPuzzlesByLevel(
-    (puzzles ?? []).map((p) => mapDbCampaignPuzzle(p as Record<string, unknown>))
+    (puzzlesRes.data ?? []).map((p) => mapDbCampaignPuzzle(p as Record<string, unknown>))
   ).map((puzzle) => {
     const completion = completionMap.get(puzzle.id);
     return {
@@ -59,26 +76,58 @@ export async function GET(request: NextRequest) {
     };
   });
 
-  const standardLocked = computeStandardPuzzleLocked(withCompletion);
   const mainCampaignComplete = isMainCampaignComplete(withCompletion);
-  const fantasyTrackUnlocked =
-    playerElo >= FANTASY_TRACK_ELO_GATE || mainCampaignComplete;
-  const fantasyLocked = computeFantasyTrackLocked(withCompletion, fantasyTrackUnlocked);
+  const trackUnlock: Record<string, boolean> = {};
+  for (const track of tracks) {
+    trackUnlock[track.slug] = isTrackUnlocked(track, playerElo, withCompletion);
+  }
+
+  const mainStandardLocked = computeMainStandardLocked(withCompletion);
+  const sequentialLocks = new Map<string, Map<string, boolean>>();
+  for (const track of tracks) {
+    sequentialLocks.set(
+      track.slug,
+      computeTrackSequentialLocked(
+        track.slug,
+        withCompletion,
+        trackUnlock[track.slug] ?? true
+      )
+    );
+  }
 
   const mapped = withCompletion.map((puzzle) => {
     let locked = false;
-    if (puzzle.track === "fantasy") {
-      locked = fantasyLocked.get(puzzle.id) ?? true;
-    } else if (puzzle.kind === "standard") {
-      locked = standardLocked.get(puzzle.id) ?? false;
+    let premiumLocked = false;
+
+    if (!isPuzzleWithinPlanLimit(puzzle.sort_order, auth.ctx.isPremium)) {
+      premiumLocked = true;
+      locked = true;
+    } else {
+      const track = tracks.find((t) => t.slug === puzzle.track);
+      if (puzzle.track === "main" && puzzle.kind === "standard") {
+        locked = mainStandardLocked.get(puzzle.id) ?? false;
+      } else if (track?.layout === "main" && puzzle.track === "main") {
+        locked = false;
+      } else if (track?.layout === "sequential" || puzzle.track === "fantasy") {
+        locked = sequentialLocks.get(puzzle.track)?.get(puzzle.id) ?? true;
+      }
+      if (!trackUnlock[puzzle.track]) {
+        locked = true;
+      }
     }
-    return { ...puzzle, locked };
+
+    return { ...puzzle, locked, premiumLocked };
   });
 
   return NextResponse.json({
     puzzles: mapped,
+    tracks,
     playerElo,
-    fantasyTrackUnlocked,
+    isPremium: auth.ctx.isPremium,
+    trackUnlock,
     mainCampaignComplete,
+    fantasyTrackUnlocked: trackUnlock.fantasy ?? false,
+    premiumPuzzlesPerTrack: ASCENSION_PREMIUM_PUZZLES_PER_TRACK,
+    freePuzzlesPerTrack: ASCENSION_FREE_PUZZLES_PER_TRACK,
   });
 }

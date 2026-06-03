@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   mapDbChampionCard,
-  requireAscensionPremium,
+  requireAscensionAuth,
 } from "@/lib/ascension/server-auth";
 
 export const runtime = "nodejs";
@@ -16,7 +16,7 @@ const ALLOWED_CLASSES = new Set([
 const ALLOWED_ELEMENTS = new Set(["fire", "earth", "water", "air", "neutral"]);
 
 export async function GET(request: NextRequest) {
-  const auth = await requireAscensionPremium(request);
+  const auth = await requireAscensionAuth(request);
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
-  const auth = await requireAscensionPremium(request);
+  const auth = await requireAscensionAuth(request);
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }

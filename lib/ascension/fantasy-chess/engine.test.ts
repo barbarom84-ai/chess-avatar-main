@@ -218,6 +218,48 @@ describe("FantasyChessEngine", () => {
     expect(engine.isObjectiveMet("reach_square")).toBe(true);
   });
 
+  it("ends queen split chain when the queen move puts the opponent king in check", () => {
+    const rules: FantasyRuleSet = {
+      enabledAbilities: ["queen_split"],
+      fantasySide: "w",
+    };
+    const engine = new FantasyChessEngine("8/6k1/8/8/4Q3/8/8/2K5 w - - 0 1", rules);
+    expect(engine.applyMove("e4e7")).toBe(true);
+    expect(engine.isQueenSplitChainActive()).toBe(false);
+    expect(engine.turn).toBe("b");
+  });
+
+  it("keeps queen split chain when the queen move does not give check", () => {
+    const rules: FantasyRuleSet = {
+      enabledAbilities: ["queen_split"],
+      fantasySide: "w",
+    };
+    const engine = new FantasyChessEngine("8/8/8/8/4Q3/8/8/2K2k2 w - - 0 1", rules);
+    expect(engine.applyMove("e4e6")).toBe(true);
+    expect(engine.isQueenSplitChainActive()).toBe(true);
+    expect(engine.turn).toBe("w");
+  });
+
+  it("replaySolution allows opponent response after queen split check", () => {
+    const rules: FantasyRuleSet = {
+      enabledAbilities: ["queen_split"],
+      fantasySide: "w",
+    };
+    const fen = "8/6k1/8/8/4Q3/8/8/2K5 w - - 0 1";
+    const result = FantasyChessEngine.replaySolution(fen, rules, ["e4e7", "g7g6"]);
+    expect(result.ok).toBe(true);
+  });
+
+  it("replaySolution rejects a second queen move after check", () => {
+    const rules: FantasyRuleSet = {
+      enabledAbilities: ["queen_split"],
+      fantasySide: "w",
+    };
+    const fen = "8/6k1/8/8/4Q3/8/8/2K5 w - - 0 1";
+    const result = FantasyChessEngine.replaySolution(fen, rules, ["e4e7", "e7e8"]);
+    expect(result.ok).toBe(false);
+  });
+
   it("does not trigger queen split when the opponent queen captures", () => {
     const rules: FantasyRuleSet = {
       enabledAbilities: ["queen_split"],

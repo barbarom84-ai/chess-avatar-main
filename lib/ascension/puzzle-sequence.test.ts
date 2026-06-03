@@ -13,6 +13,23 @@ const greedyRules: FantasyRuleSet = {
 };
 const greedySolution = ["b2c3", "c3d4", "d4e5", "e5f6", "f6g7"];
 
+describe("isSolverTurn with queen split", () => {
+  const queenSplitFen = "8/6k1/8/8/4Q3/8/8/2K5 w - - 0 1";
+  const queenSplitRules: FantasyRuleSet = {
+    enabledAbilities: ["queen_split"],
+    fantasySide: "w",
+  };
+
+  it("passes turn to opponent when queen move gives check", () => {
+    expect(isSolverTurn(queenSplitFen, [], queenSplitRules)).toBe(true);
+    expect(isSolverTurn(queenSplitFen, ["e4e7"], queenSplitRules)).toBe(false);
+  });
+
+  it("keeps solver turn when queen move does not give check", () => {
+    expect(isSolverTurn(queenSplitFen, ["e4e6"], queenSplitRules)).toBe(true);
+  });
+});
+
 describe("isSolverTurn with greedy pawn", () => {
   it("keeps solver turn active during capture chain", () => {
     expect(isSolverTurn(greedyPuzzleFen, [], greedyRules)).toBe(true);

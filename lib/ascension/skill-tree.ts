@@ -120,8 +120,8 @@ export const SKILL_TREE: SkillDefinition[] = [
     id: "queen_split",
     name: { fr: "Reine scindée", en: "Split queen" },
     description: {
-      fr: "En puzzles fantasy (1×/puzzle) : après un coup de dame, vous gardez la main et ne pouvez jouer que cette même dame encore.",
-      en: "In fantasy puzzles (once per puzzle): after a queen move, keep the turn and only that same queen may move again.",
+      fr: "En puzzles fantasy (1×/puzzle) : après un coup de dame, vous gardez la main pour rejouer la même dame, sauf si ce coup met le roi adverse en échec — l'adversaire doit alors répondre.",
+      en: "In fantasy puzzles (once per puzzle): after a queen move, keep the turn to move that same queen again, unless the move puts the opponent king in check — then they must respond.",
     },
     cost: 140,
     prerequisites: ["rook_tunnel"],

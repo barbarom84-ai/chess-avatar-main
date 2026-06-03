@@ -352,6 +352,22 @@ export class FantasyChessEngine {
     this.chess.load(parts.join(" "));
   }
 
+  /** True when the opponent of queenColor has their king in check (chess.js needs their turn set). */
+  private isOpponentInCheck(queenColor: "w" | "b"): boolean {
+    const opponentColor = queenColor === "w" ? "b" : "w";
+    const savedTurn = this.chess.turn();
+    this.setSideToMove(opponentColor);
+    const inCheck = this.chess.inCheck();
+    this.setSideToMove(savedTurn);
+    return inCheck;
+  }
+
+  private markQueenSplitUsed(): void {
+    if (!this.usedAbilities.includes("queen_split")) {
+      this.usedAbilities.push("queen_split");
+    }
+  }
+
   private continueGreedyChainIfPossible(landSquare: Square, pawnColor: "w" | "b") {
     if (
       !this.isFantasyColor(pawnColor) ||
@@ -377,6 +393,15 @@ export class FantasyChessEngine {
       this.queenSplitSquare = null;
       return;
     }
+
+    const opponentColor = queenColor === "w" ? "b" : "w";
+    if (this.isOpponentInCheck(queenColor)) {
+      this.queenSplitSquare = null;
+      this.setSideToMove(opponentColor);
+      this.markQueenSplitUsed();
+      return;
+    }
+
     this.setSideToMove(queenColor);
     const moreMoves = getQueenSplitMoves(this.chess, landSquare);
     if (moreMoves.length > 0) {
@@ -384,9 +409,7 @@ export class FantasyChessEngine {
       return;
     }
     this.queenSplitSquare = null;
-    if (!this.usedAbilities.includes("queen_split")) {
-      this.usedAbilities.push("queen_split");
-    }
+    this.markQueenSplitUsed();
   }
 
   snapshot(): FantasyChessStateSnapshot {
@@ -598,9 +621,7 @@ export class FantasyChessEngine {
       this.fantasyMoveFlags.push(false);
       this.abilityByMoveIndex.push("queen_split");
       this.queenSplitSquare = null;
-      if (!this.usedAbilities.includes("queen_split")) {
-        this.usedAbilities.push("queen_split");
-      }
+      this.markQueenSplitUsed();
       return true;
     }
 

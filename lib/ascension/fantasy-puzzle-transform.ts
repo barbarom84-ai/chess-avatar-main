@@ -73,8 +73,8 @@ const ABILITY_HINTS: Record<PieceAbilityId, LocalizedText[]> = {
   ],
   queen_split: [
     {
-      fr: "La dame peut enchaîner deux coups sans passer le tour.",
-      en: "The queen can chain two moves without yielding the turn.",
+      fr: "La dame peut enchaîner un second coup sans passer le tour, sauf si le premier met le roi adverse en échec.",
+      en: "The queen can chain a second move without yielding the turn, unless the first move puts the opponent king in check.",
     },
   ],
   king_anchor: [
