@@ -48,6 +48,10 @@ export async function POST(
     patch.white_remaining_ms = initMs;
     patch.black_remaining_ms = initMs;
     patch.clock_turn_started_at = new Date().toISOString();
+  } else if (game.clock_mode === "correspondence") {
+    patch.white_remaining_ms = null;
+    patch.black_remaining_ms = null;
+    patch.clock_turn_started_at = new Date().toISOString();
   } else {
     patch.white_remaining_ms = null;
     patch.black_remaining_ms = null;

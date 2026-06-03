@@ -787,6 +787,9 @@ export const en = {
       emailInviteBody: "Join me for a chess game:\n\n{url}",
       presets: {
         unlimited: "Unlimited",
+        correspondence_1d: "1 day / move",
+        correspondence_3d: "3 days / move",
+        correspondence_7d: "7 days / move",
         bullet_1_0: "1 min (bullet)",
         bullet_2_1: "2+1 (bullet)",
         blitz_3_0: "3 min (blitz)",
@@ -796,6 +799,10 @@ export const en = {
         blitz_10_0: "10 min (blitz)",
         rapid_15_10: "15+10 (rapid)",
         classical_30_0: "30 min (classical)",
+      },
+      presetGroups: {
+        correspondence: "Correspondence",
+        live: "Live",
       },
       resultModal: {
         titleWin: "Victory",

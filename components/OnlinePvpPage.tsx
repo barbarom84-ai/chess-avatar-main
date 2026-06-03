@@ -32,7 +32,7 @@ import AccountAvatar from "@/components/AccountAvatar";
 import type { AccountFriend, AccountProfile } from "@/lib/account-types";
 import { accountProfileInitials, fetchPublicAccountProfile } from "@/lib/account-profile";
 import { saveGameToCloud } from "@/lib/supabase-storage";
-import { PVP_TIME_PRESETS } from "@/lib/pvp-time-controls";
+import { PVP_CORRESPONDENCE_PRESETS, PVP_LIVE_PRESETS } from "@/lib/pvp-time-controls";
 import { pvpGameStatsFromUcis, formatDurationSec } from "@/lib/pvp-result-stats";
 import { fetchPvpHeadToHead } from "@/lib/pvp-head-to-head-client";
 import type { PvpHeadToHeadRecord } from "@/lib/pvp-head-to-head";
@@ -107,7 +107,7 @@ export default function OnlinePvpPage() {
       setFriendsLoading(false);
     }
   }, [userId]);
-  const [timePreset, setTimePreset] = useState("blitz_10_0");
+  const [timePreset, setTimePreset] = useState("correspondence_3d");
   const [creating, setCreating] = useState(false);
   const [joining, setJoining] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -471,11 +471,20 @@ export default function OnlinePvpPage() {
                     onChange={(e) => setTimePreset(e.target.value)}
                     className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200"
                   >
-                    {PVP_TIME_PRESETS.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {presetLabels[p.id] ?? p.id}
-                      </option>
-                    ))}
+                    <optgroup label={o.presetGroups.correspondence}>
+                      {PVP_CORRESPONDENCE_PRESETS.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {presetLabels[p.id] ?? p.id}
+                        </option>
+                      ))}
+                    </optgroup>
+                    <optgroup label={o.presetGroups.live}>
+                      {PVP_LIVE_PRESETS.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {presetLabels[p.id] ?? p.id}
+                        </option>
+                      ))}
+                    </optgroup>
                   </select>
                 </div>
               )}
@@ -918,6 +927,7 @@ export default function OnlinePvpPage() {
           game={g}
           chess={online.chess}
           myRole={online.role}
+          lang={lang}
           whiteLabel={`${wb.white} · ${o.whiteClock}`}
           blackLabel={`${wb.black} · ${o.blackClock}`}
         />

@@ -128,6 +128,8 @@ export async function POST(
     ongoingClock.white_remaining_ms = clock.white_remaining_ms;
     ongoingClock.black_remaining_ms = clock.black_remaining_ms;
     ongoingClock.clock_turn_started_at = clock.clock_turn_started_at;
+  } else if (row.clock_mode === "correspondence" && clock.kind === "tick") {
+    ongoingClock.clock_turn_started_at = clock.clock_turn_started_at;
   }
 
   const gameUpdate = {
@@ -152,6 +154,8 @@ export async function POST(
   if (row.clock_mode === "timed" && clock.kind === "tick") {
     gamePatch.white_remaining_ms = clock.white_remaining_ms;
     gamePatch.black_remaining_ms = clock.black_remaining_ms;
+    gamePatch.clock_turn_started_at = clock.clock_turn_started_at;
+  } else if (row.clock_mode === "correspondence" && clock.kind === "tick") {
     gamePatch.clock_turn_started_at = clock.clock_turn_started_at;
   }
 

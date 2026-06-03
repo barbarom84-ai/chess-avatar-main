@@ -791,6 +791,9 @@ export const fr = {
       emailInviteBody: "Rejoins-moi pour une partie aux échecs :\n\n{url}",
       presets: {
         unlimited: "Illimitée",
+        correspondence_1d: "1 jour / coup",
+        correspondence_3d: "3 jours / coup",
+        correspondence_7d: "7 jours / coup",
         bullet_1_0: "1 min (bullet)",
         bullet_2_1: "2 min + 1 s (bullet)",
         blitz_3_0: "3 min (blitz)",
@@ -800,6 +803,10 @@ export const fr = {
         blitz_10_0: "10 min (blitz)",
         rapid_15_10: "15 min + 10 s (rapide)",
         classical_30_0: "30 min (classique)",
+      },
+      presetGroups: {
+        correspondence: "En différé",
+        live: "En direct",
       },
       resultModal: {
         titleWin: "Victoire",

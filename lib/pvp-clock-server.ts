@@ -11,19 +11,48 @@ export type TimeoutPatch = {
   draw_offered_by: null;
 };
 
-/** Si le camp au trait a épuisé son temps, retourne la mise à jour à persister. */
-export function checkTimeoutForTimedGame(
+function moveBudgetMs(row: PvpGameRow): number {
+  if (row.clock_mode === "correspondence") {
+    return Math.max(0, Number(row.clock_initial_sec ?? 0)) * 1000;
+  }
+  return 0;
+}
+
+function timeoutPatchForSide(
   row: PvpGameRow,
   chess: Chess,
-  nowMs: number
+  nowMs: number,
+  elapsed: number,
+  budgetMs: number
 ): TimeoutPatch | null {
-  if (row.clock_mode !== "timed" || row.status !== "playing") return null;
-  const w = row.white_remaining_ms;
-  const b = row.black_remaining_ms;
-  const t0 = row.clock_turn_started_at;
-  if (w == null || b == null || !t0) return null;
-  const elapsed = Math.max(0, nowMs - new Date(t0).getTime());
   const stm = chess.turn();
+  const w = Number(row.white_remaining_ms ?? 0);
+  const b = Number(row.black_remaining_ms ?? 0);
+
+  if (row.clock_mode === "correspondence") {
+    if (elapsed < budgetMs) return null;
+    if (stm === "w") {
+      return {
+        status: "finished",
+        result: "0-1",
+        result_reason: "timeout",
+        white_remaining_ms: 0,
+        black_remaining_ms: b,
+        clock_turn_started_at: new Date(nowMs).toISOString(),
+        draw_offered_by: null,
+      };
+    }
+    return {
+      status: "finished",
+      result: "1-0",
+      result_reason: "timeout",
+      white_remaining_ms: w,
+      black_remaining_ms: 0,
+      clock_turn_started_at: new Date(nowMs).toISOString(),
+      draw_offered_by: null,
+    };
+  }
+
   if (stm === "w") {
     if (w - elapsed > 0) return null;
     return {
@@ -48,7 +77,33 @@ export function checkTimeoutForTimedGame(
   };
 }
 
-/** Décompte + incrément Fischer pour le camp qui vient de jouer ; timeout si temps ≤ 0 avant incrément. */
+/** Si le camp au trait a épuisé son temps, retourne la mise à jour à persister. */
+export function checkTimeoutForTimedGame(
+  row: PvpGameRow,
+  chess: Chess,
+  nowMs: number
+): TimeoutPatch | null {
+  if (row.status !== "playing") return null;
+  if (row.clock_mode !== "timed" && row.clock_mode !== "correspondence") return null;
+
+  const t0 = row.clock_turn_started_at;
+  if (!t0) return null;
+
+  const elapsed = Math.max(0, nowMs - new Date(t0).getTime());
+
+  if (row.clock_mode === "correspondence") {
+    const budgetMs = moveBudgetMs(row);
+    if (budgetMs <= 0) return null;
+    return timeoutPatchForSide(row, chess, nowMs, elapsed, budgetMs);
+  }
+
+  const w = row.white_remaining_ms;
+  const b = row.black_remaining_ms;
+  if (w == null || b == null) return null;
+  return timeoutPatchForSide(row, chess, nowMs, elapsed, 0);
+}
+
+/** Décompte + incrément Fischer (direct) ou reset du délai par coup (différé). */
 export function applyMoveClockUpdate(
   row: PvpGameRow,
   chessBeforeMove: Chess,
@@ -61,7 +116,7 @@ export function applyMoveClockUpdate(
       black_remaining_ms: number;
       clock_turn_started_at: string;
     } {
-  if (row.clock_mode !== "timed" || row.status !== "playing") {
+  if (row.status !== "playing") {
     return {
       kind: "tick",
       white_remaining_ms: Number(row.white_remaining_ms ?? 0),
@@ -69,6 +124,34 @@ export function applyMoveClockUpdate(
       clock_turn_started_at: new Date(nowMs).toISOString(),
     };
   }
+
+  if (row.clock_mode === "correspondence") {
+    const budgetMs = moveBudgetMs(row);
+    const t0 = row.clock_turn_started_at
+      ? new Date(row.clock_turn_started_at).getTime()
+      : nowMs;
+    const elapsed = Math.max(0, nowMs - t0);
+    const timeout = timeoutPatchForSide(row, chessBeforeMove, nowMs, elapsed, budgetMs);
+    if (timeout) {
+      return { kind: "timeout", patch: timeout };
+    }
+    return {
+      kind: "tick",
+      white_remaining_ms: Number(row.white_remaining_ms ?? 0),
+      black_remaining_ms: Number(row.black_remaining_ms ?? 0),
+      clock_turn_started_at: new Date(nowMs).toISOString(),
+    };
+  }
+
+  if (row.clock_mode !== "timed") {
+    return {
+      kind: "tick",
+      white_remaining_ms: Number(row.white_remaining_ms ?? 0),
+      black_remaining_ms: Number(row.black_remaining_ms ?? 0),
+      clock_turn_started_at: new Date(nowMs).toISOString(),
+    };
+  }
+
   const w0 = Number(row.white_remaining_ms ?? 0);
   const b0 = Number(row.black_remaining_ms ?? 0);
   const t0 = row.clock_turn_started_at

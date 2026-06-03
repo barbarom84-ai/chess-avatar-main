@@ -1,18 +1,30 @@
 /** Cadences PvP (stockage en base + création de partie). */
 
-export type PvpClockMode = "unlimited" | "timed";
+export type PvpClockMode = "unlimited" | "timed" | "correspondence";
 
 export interface PvpTimePreset {
   id: string;
   mode: PvpClockMode;
-  /** Secondes initiales par joueur (ignoré si unlimited). */
+  /** Secondes initiales par joueur (cadences en direct). */
   initialSec: number;
-  /** Incrément Fischer en secondes. */
+  /** Incrément Fischer en secondes (cadences en direct). */
   incrementSec: number;
+  /** Jours accordés pour jouer chaque coup (différé). */
+  daysPerMove?: number;
 }
 
+/** @deprecated Anciennes parties sans limite — conservé pour l’affichage legacy. */
+const LEGACY_UNLIMITED_PRESET: PvpTimePreset = {
+  id: "unlimited",
+  mode: "unlimited",
+  initialSec: 0,
+  incrementSec: 0,
+};
+
 export const PVP_TIME_PRESETS: readonly PvpTimePreset[] = [
-  { id: "unlimited", mode: "unlimited", initialSec: 0, incrementSec: 0 },
+  { id: "correspondence_1d", mode: "correspondence", initialSec: 0, incrementSec: 0, daysPerMove: 1 },
+  { id: "correspondence_3d", mode: "correspondence", initialSec: 0, incrementSec: 0, daysPerMove: 3 },
+  { id: "correspondence_7d", mode: "correspondence", initialSec: 0, incrementSec: 0, daysPerMove: 7 },
   { id: "bullet_2_1", mode: "timed", initialSec: 120, incrementSec: 1 },
   { id: "blitz_3_0", mode: "timed", initialSec: 180, incrementSec: 0 },
   { id: "blitz_3_2", mode: "timed", initialSec: 180, incrementSec: 2 },
@@ -25,11 +37,44 @@ export const PVP_TIME_PRESETS: readonly PvpTimePreset[] = [
 
 const PRESET_BY_ID = new Map(PVP_TIME_PRESETS.map((p) => [p.id, p]));
 
+export const PVP_LIVE_PRESETS = PVP_TIME_PRESETS.filter((p) => p.mode === "timed");
+export const PVP_CORRESPONDENCE_PRESETS = PVP_TIME_PRESETS.filter(
+  (p) => p.mode === "correspondence"
+);
+
 export function resolvePvpTimePreset(id: string | undefined | null): PvpTimePreset {
-  if (!id) return PVP_TIME_PRESETS[0];
-  return PRESET_BY_ID.get(id) ?? PVP_TIME_PRESETS[0];
+  if (!id) return PVP_CORRESPONDENCE_PRESETS[1] ?? PVP_TIME_PRESETS[0];
+  if (id === "unlimited") return LEGACY_UNLIMITED_PRESET;
+  return PRESET_BY_ID.get(id) ?? PVP_CORRESPONDENCE_PRESETS[1] ?? PVP_TIME_PRESETS[0];
 }
 
 export function isValidPvpTimePresetId(id: string): boolean {
   return PRESET_BY_ID.has(id);
+}
+
+/** Secondes stockées en base pour une cadence (budget par coup en différé). */
+export function presetStorageInitialSec(preset: PvpTimePreset): number {
+  if (preset.mode === "timed") return preset.initialSec;
+  if (preset.mode === "correspondence" && preset.daysPerMove) {
+    return preset.daysPerMove * 86_400;
+  }
+  return 0;
+}
+
+export function correspondenceDaysFromGame(row: {
+  clock_mode?: string | null;
+  clock_initial_sec?: number | null;
+  time_preset?: string | null;
+}): number | null {
+  if (row.clock_mode === "correspondence") {
+    const sec = Number(row.clock_initial_sec ?? 0);
+    if (sec > 0) return Math.round(sec / 86_400);
+    const preset = resolvePvpTimePreset(row.time_preset);
+    return preset.daysPerMove ?? null;
+  }
+  return null;
+}
+
+export function usesPvpMoveClock(clockMode: string | null | undefined): boolean {
+  return clockMode === "timed" || clockMode === "correspondence";
 }

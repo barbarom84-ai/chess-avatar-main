@@ -283,7 +283,7 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
     }
   }, [state.moves, pendingUci]);
 
-  const createLobby = useCallback(async (timePreset = "unlimited"): Promise<string | null> => {
+  const createLobby = useCallback(async (timePreset = "correspondence_3d"): Promise<string | null> => {
     if (!isSupabaseConfigured || !supabase) return null;
     const data = await fetchWithAuth("/api/pvp/games", {
       method: "POST",

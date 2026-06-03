@@ -3,10 +3,12 @@
 import { useEffect, useRef, useState, type MutableRefObject } from "react";
 import type { Chess } from "chess.js";
 import type { PvpGameRow } from "@/lib/pvp-chess";
-import { formatClockMs, getPvpClockDisplayMs } from "@/lib/pvp-clock";
+import { formatClockMs, formatCorrespondenceMs, getPvpClockDisplayMs } from "@/lib/pvp-clock";
 import { playClockLowTimeWarning } from "@/lib/chess-sound";
+import type { Language } from "@/lib/i18n";
 
 const LOW_TIME_MS = 20_000;
+const CORRESPONDENCE_LOW_MS = 24 * 60 * 60 * 1000;
 
 export default function OnlinePvpClockBar({
   game,
@@ -14,12 +16,14 @@ export default function OnlinePvpClockBar({
   whiteLabel,
   blackLabel,
   myRole,
+  lang,
 }: {
   game: PvpGameRow;
   chess: Chess;
   whiteLabel: string;
   blackLabel: string;
   myRole: "white" | "black" | null;
+  lang: Language;
 }) {
   const [now, setNow] = useState(() => Date.now());
   const [whiteLow, setWhiteLow] = useState(false);
@@ -27,17 +31,29 @@ export default function OnlinePvpClockBar({
   const warnedWhiteRef = useRef(false);
   const warnedBlackRef = useRef(false);
 
-  const showClocks = game.clock_mode === "timed" && game.status === "playing";
+  const showClocks =
+    (game.clock_mode === "timed" || game.clock_mode === "correspondence") &&
+    game.status === "playing";
   const stm = chess.turn();
-  const { whiteMs, blackMs, active } = showClocks
+  const display = showClocks
     ? getPvpClockDisplayMs(game, stm, now)
-    : { whiteMs: 0, blackMs: 0, active: null as "w" | "b" | null };
+    : {
+        whiteMs: 0,
+        blackMs: 0,
+        active: null as "w" | "b" | null,
+        correspondence: false,
+        daysPerMove: null,
+      };
+
+  const { whiteMs, blackMs, active, correspondence } = display;
+  const lowThreshold = correspondence ? CORRESPONDENCE_LOW_MS : LOW_TIME_MS;
 
   useEffect(() => {
     if (!showClocks) return;
-    const id = window.setInterval(() => setNow(Date.now()), 200);
+    const intervalMs = correspondence ? 60_000 : 200;
+    const id = window.setInterval(() => setNow(Date.now()), intervalMs);
     return () => window.clearInterval(id);
-  }, [showClocks]);
+  }, [showClocks, correspondence]);
 
   useEffect(() => {
     if (!showClocks) {
@@ -57,15 +73,15 @@ export default function OnlinePvpClockBar({
         setLow(false);
         return;
       }
-      if (ms > 0 && ms <= LOW_TIME_MS) {
+      if (ms > 0 && ms <= lowThreshold) {
         setLow(true);
-        if (!warnedRef.current) {
+        if (!correspondence && !warnedRef.current) {
           warnedRef.current = true;
           playClockLowTimeWarning();
         }
       } else {
         setLow(false);
-        if (ms > LOW_TIME_MS) {
+        if (ms > lowThreshold) {
           warnedRef.current = false;
         }
       }
@@ -73,9 +89,21 @@ export default function OnlinePvpClockBar({
 
     updateSide(whiteMs, active === "w", myRole === "white", warnedWhiteRef, setWhiteLow);
     updateSide(blackMs, active === "b", myRole === "black", warnedBlackRef, setBlackLow);
-  }, [showClocks, whiteMs, blackMs, active, myRole]);
+  }, [showClocks, whiteMs, blackMs, active, myRole, lowThreshold, correspondence]);
 
   if (!showClocks) return null;
+
+  const formatMs = (ms: number, isActive: boolean) => {
+    if (correspondence) {
+      if (!isActive && display.daysPerMove) {
+        return lang === "fr"
+          ? `${display.daysPerMove} j / coup`
+          : `${display.daysPerMove}d / move`;
+      }
+      return formatCorrespondenceMs(ms, lang);
+    }
+    return formatClockMs(ms);
+  };
 
   const whiteUrgent = whiteLow && active === "w";
   const blackUrgent = blackLow && active === "b";
@@ -93,11 +121,11 @@ export default function OnlinePvpClockBar({
       >
         <div className="text-[10px] uppercase tracking-wide text-slate-400">{whiteLabel}</div>
         <div
-          className={`font-mono text-xl tabular-nums ${
+          className={`font-mono text-lg sm:text-xl tabular-nums ${
             whiteUrgent ? "text-red-400 font-bold" : "text-cyan-50"
           }`}
         >
-          {formatClockMs(whiteMs)}
+          {formatMs(whiteMs, active === "w")}
         </div>
       </div>
       <div
@@ -111,11 +139,11 @@ export default function OnlinePvpClockBar({
       >
         <div className="text-[10px] uppercase tracking-wide text-slate-400">{blackLabel}</div>
         <div
-          className={`font-mono text-xl tabular-nums ${
+          className={`font-mono text-lg sm:text-xl tabular-nums ${
             blackUrgent ? "text-red-400 font-bold" : "text-violet-50"
           }`}
         >
-          {formatClockMs(blackMs)}
+          {formatMs(blackMs, active === "b")}
         </div>
       </div>
     </div>

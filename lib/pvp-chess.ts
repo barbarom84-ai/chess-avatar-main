@@ -14,7 +14,7 @@ export interface PvpGameRow {
   result: string | null;
   result_reason: string | null;
   draw_offered_by: string | null;
-  /** unlimited | timed */
+  /** unlimited | timed | correspondence */
   clock_mode?: string | null;
   clock_initial_sec?: number | null;
   clock_increment_sec?: number | null;

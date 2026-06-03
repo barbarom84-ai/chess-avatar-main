@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { rateLimit } from "@/lib/rate-limit";
 import { getAuthedUserFromRequest } from "@/lib/supabase-auth-request";
 import { createServiceSupabase } from "@/lib/supabase-service";
-import { isValidPvpTimePresetId, resolvePvpTimePreset } from "@/lib/pvp-time-controls";
+import { isValidPvpTimePresetId, presetStorageInitialSec, resolvePvpTimePreset } from "@/lib/pvp-time-controls";
 import { displayNameFromAuthUser } from "@/lib/pvp-display-name";
 import { fetchAccountSummariesByUserIds } from "@/lib/account-server";
 
@@ -158,8 +158,8 @@ export async function POST(request: NextRequest) {
   if (!sb) return jsonError("Server misconfigured", 503);
 
   const body = (await request.json().catch(() => null)) as { timePreset?: string } | null;
-  const rawPreset = typeof body?.timePreset === "string" ? body.timePreset : "unlimited";
-  const presetId = isValidPvpTimePresetId(rawPreset) ? rawPreset : "unlimited";
+  const rawPreset = typeof body?.timePreset === "string" ? body.timePreset : "correspondence_3d";
+  const presetId = isValidPvpTimePresetId(rawPreset) ? rawPreset : "correspondence_3d";
   const preset = resolvePvpTimePreset(presetId);
 
   const { data, error } = await sb
@@ -171,7 +171,7 @@ export async function POST(request: NextRequest) {
       white_display_name: displayNameFromAuthUser(user),
       time_preset: preset.id,
       clock_mode: preset.mode,
-      clock_initial_sec: preset.mode === "timed" ? preset.initialSec : 0,
+      clock_initial_sec: preset.mode === "unlimited" ? 0 : presetStorageInitialSec(preset),
       clock_increment_sec: preset.mode === "timed" ? preset.incrementSec : 0,
     })
     .select(
