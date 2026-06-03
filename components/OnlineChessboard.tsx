@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Chess, type Square } from "chess.js";
 import SimpleChessboard from "@/components/SimpleChessboard";
 import PromotionDialog from "@/components/PromotionDialog";
+import { LICHESS_ARROW_COLORS } from "@/lib/chess-arrows";
 interface OnlineChessboardProps {
   fen: string;
   orientation: "white" | "black";
@@ -25,6 +26,20 @@ export default function OnlineChessboard({
   const [promotionOpen, setPromotionOpen] = useState(false);
   const [pending, setPending] = useState<{ from: string; to: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  const lastMoveArrows = useMemo(
+    () =>
+      lastMove
+        ? [
+            {
+              from: lastMove.from,
+              to: lastMove.to,
+              color: LICHESS_ARROW_COLORS.shiftCtrlAltYellow,
+            },
+          ]
+        : [],
+    [lastMove]
+  );
 
   const trySubmit = useCallback(
     async (uci: string) => {
@@ -83,6 +98,7 @@ export default function OnlineChessboard({
         onDrop={onDrop}
         orientation={orientation}
         lastMove={lastMove}
+        arrows={lastMoveArrows}
       />
       <PromotionDialog
         open={promotionOpen}
