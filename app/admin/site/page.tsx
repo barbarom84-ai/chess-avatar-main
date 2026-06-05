@@ -12,7 +12,6 @@ import { accountApiHeaders, readAccountApiError } from "@/lib/account-api-auth";
 import { NAV_ITEMS } from "@/lib/nav-items";
 import {
   DEFAULT_SITE_CONFIG,
-  type NavMode,
   type NavPageBadge,
   type SiteConfig,
   type SiteNavPageConfig,
@@ -21,8 +20,6 @@ import { useLanguage } from "@/lib/language-context";
 import { useSuperUser } from "@/hooks/useSuperUser";
 
 const BADGE_OPTIONS: NavPageBadge[] = ["none", "beta", "maintenance"];
-
-const NAV_MODE_OPTIONS: NavMode[] = ["classic", "mega", "dock", "radial"];
 
 export default function AdminSitePage() {
   const { lang, t } = useLanguage();
@@ -137,41 +134,6 @@ export default function AdminSitePage() {
         </div>
 
         {error && <p className="text-rose-400 text-sm">{error}</p>}
-
-        <Card className="theme-bg-secondary border-cyan-500/20">
-          <CardHeader>
-            <CardTitle>{t.siteAdmin.navModeSection}</CardTitle>
-            <CardDescription>{t.siteAdmin.navModeSectionDesc}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-2 sm:grid-cols-2">
-              {NAV_MODE_OPTIONS.map((mode) => (
-                <label
-                  key={mode}
-                  className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-colors ${
-                    config.navMode === mode
-                      ? "border-cyan-500/50 bg-cyan-500/10"
-                      : "border-slate-800 bg-slate-950/40 hover:border-slate-700"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="navMode"
-                    value={mode}
-                    checked={config.navMode === mode}
-                    onChange={() =>
-                      setConfig((prev) => ({ ...prev, navMode: mode }))
-                    }
-                    className="accent-cyan-500"
-                  />
-                  <span className="text-sm text-slate-200">
-                    {t.navigation.modes[mode][lang === "fr" ? "fr" : "en"]}
-                  </span>
-                </label>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
 
         <Card className="theme-bg-secondary border-slate-700">
           <CardHeader>

@@ -24,65 +24,9 @@ import { usePremium } from "@/hooks/usePremium";
 import { useSuperUser } from "@/hooks/useSuperUser";
 import { NAV_ITEMS } from "@/lib/nav-items";
 import { useSiteConfig } from "@/contexts/SiteConfigContext";
-import { isNavItemActive } from "@/lib/nav-utils";
-import NavItemLinks from "@/components/navigation/NavItemLinks";
-import NavMegaMenu from "@/components/navigation/NavMegaMenu";
 import NavDock from "@/components/navigation/NavDock";
-import RadialNavMenu from "@/components/navigation/RadialNavMenu";
-import { NavPieceIcon } from "@/components/navigation/NavShared";
 import ChessboardSettingsModal from "./ChessboardSettingsModal";
 import AuthModal from "./AuthModal";
-
-function AdminNavLinks({
-  pathname,
-  lang,
-  opsLabel,
-  siteLabel,
-  compact,
-}: {
-  pathname: string;
-  lang: string;
-  opsLabel: string;
-  siteLabel: string;
-  compact?: boolean;
-}) {
-  return (
-    <>
-      <Link href="/admin/ops">
-        <Button
-          variant={pathname.startsWith("/admin/ops") ? "default" : "ghost"}
-          size="sm"
-          className={
-            pathname.startsWith("/admin/ops")
-              ? "bg-amber-700 text-white hover:bg-amber-600"
-              : "text-slate-300 hover:text-amber-300 hover:bg-slate-800"
-          }
-          title={
-            lang === "fr" ? "Monitoring temps réel" : "Live operations monitoring"
-          }
-        >
-          <Activity className="h-4 w-4" />
-          <span className={compact ? "ml-1 text-xs" : "ml-2"}>{opsLabel}</span>
-        </Button>
-      </Link>
-      <Link href="/admin/site">
-        <Button
-          variant={pathname.startsWith("/admin/site") ? "default" : "ghost"}
-          size="sm"
-          className={
-            pathname.startsWith("/admin/site")
-              ? "bg-amber-700 text-white hover:bg-amber-600"
-              : "text-slate-300 hover:text-amber-300 hover:bg-slate-800"
-          }
-          title={lang === "fr" ? "Configuration du site" : "Site configuration"}
-        >
-          <Settings2 className="h-4 w-4" />
-          <span className={compact ? "ml-1 text-xs" : "ml-2"}>{siteLabel}</span>
-        </Button>
-      </Link>
-    </>
-  );
-}
 
 export default function Navigation() {
   const pathname = usePathname();
@@ -92,19 +36,12 @@ export default function Navigation() {
   const [showSettings, setShowSettings] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [showRadialMenu, setShowRadialMenu] = useState(false);
   const { isPremium } = usePremium();
   const { isSuperUser, loading: superLoading } = useSuperUser();
   const { config: siteConfig } = useSiteConfig();
   const userMenuRef = useRef<HTMLDivElement>(null);
   const opsLabel = "Ops";
   const siteLabel = lang === "fr" ? "Site" : "Site";
-
-  const navMode = siteConfig.navMode;
-  const useClassicNav = navMode === "classic";
-  const useMegaNav = navMode === "mega";
-  const useDockNav = navMode === "dock";
-  const useRadialNav = navMode === "radial";
 
   const visibleNavItems = NAV_ITEMS.filter((item) => {
     if (isSuperUser) return true;
@@ -119,10 +56,6 @@ export default function Navigation() {
     t,
     navConfig: siteConfig.nav,
   };
-
-  const activeNavItem = visibleNavItems.find((item) =>
-    isNavItemActive(pathname, item.href)
-  );
 
   useEffect(() => {
     if (!isSupabaseConfigured || !supabase) return;
@@ -156,99 +89,28 @@ export default function Navigation() {
     setShowUserMenu(false);
   }, []);
 
-  const renderLogo = () => {
-    const logoContent = (
-      <>
-        <Image
-          src="/knight-logo.png"
-          alt=""
-          width={28}
-          height={28}
-          className="inline-block w-7 h-7"
-          unoptimized
-        />
-        <span>Chess Avatar</span>
-        {useRadialNav && activeNavItem && (
-          <span className="hidden md:inline-flex ml-1 opacity-80" aria-hidden>
-            <NavPieceIcon item={activeNavItem} pieceSet={settings.pieceSet} size={18} />
-          </span>
-        )}
-      </>
-    );
-
-    if (useRadialNav) {
-      return (
-        <button
-          type="button"
-          onClick={() => setShowRadialMenu((v) => !v)}
-          aria-expanded={showRadialMenu}
-          aria-haspopup="dialog"
-          aria-label={t.navigation.radial.openMenu[lang === "fr" ? "fr" : "en"]}
-          className="flex items-center gap-2 text-xl font-bold text-cyan-400 hover:text-cyan-300 transition-colors cursor-pointer"
-        >
-          {logoContent}
-        </button>
-      );
-    }
-
-    return (
-      <Link
-        href="/"
-        aria-label={
-          lang === "fr" ? "Accueil — Chess Avatar" : "Home — Chess Avatar"
-        }
-        className="flex items-center gap-2 text-xl font-bold text-cyan-400 hover:text-cyan-300 transition-colors"
-      >
-        {logoContent}
-      </Link>
-    );
-  };
-
-  const renderDesktopNav = () => {
-    if (useDockNav || useRadialNav || useMegaNav) return null;
-
-    return (
-      <div className="hidden md:flex flex-wrap items-center gap-x-1 gap-y-1">
-        <NavItemLinks {...navCommonProps} compact={false} />
-        {isSuperUser && !superLoading && (
-          <AdminNavLinks
-            pathname={pathname}
-            lang={lang}
-            opsLabel={opsLabel}
-            siteLabel={siteLabel}
-          />
-        )}
-      </div>
-    );
-  };
-
-  const showMobileClassicRow = useClassicNav;
-
   return (
     <>
       <nav className="bg-slate-950/80 backdrop-blur-sm border-b border-slate-800 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between min-h-16 gap-2">
-            {renderLogo()}
-
-            {useMegaNav && (
-              <div className="flex flex-1 justify-center min-w-0 px-2">
-                <NavMegaMenu {...navCommonProps} />
-              </div>
-            )}
-
-            {useMegaNav && isSuperUser && !superLoading && (
-              <div className="hidden md:flex items-center gap-1">
-                <AdminNavLinks
-                  pathname={pathname}
-                  lang={lang}
-                  opsLabel={opsLabel}
-                  siteLabel={siteLabel}
-                />
-              </div>
-            )}
-
-            {renderDesktopNav()}
+            <Link
+              href="/"
+              aria-label={
+                lang === "fr" ? "Accueil — Chess Avatar" : "Home — Chess Avatar"
+              }
+              className="flex items-center gap-2 text-xl font-bold text-cyan-400 hover:text-cyan-300 transition-colors"
+            >
+              <Image
+                src="/knight-logo.png"
+                alt=""
+                width={28}
+                height={28}
+                className="inline-block w-7 h-7"
+                unoptimized
+              />
+              <span className="hidden sm:inline">Chess Avatar</span>
+            </Link>
 
             <div className="flex items-center gap-2 shrink-0">
               {isSupabaseConfigured && (
@@ -377,83 +239,7 @@ export default function Navigation() {
             </div>
           </div>
 
-          {(useClassicNav || useMegaNav) && (
-            <div className="md:hidden flex items-center justify-between gap-2 pb-2">
-              {isSupabaseConfigured && (
-                <div className="flex items-center gap-2">
-                  {user ? (
-                    <>
-                      <Link href="/avatars">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-8 px-2 text-slate-200 hover:text-cyan-300"
-                          title={t.pages.avatars.nav}
-                        >
-                          <Bot className="h-3.5 w-3.5" />
-                        </Button>
-                      </Link>
-                      <Link href="/profile">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-8 px-2 text-slate-200 hover:text-cyan-300"
-                        >
-                          <User className="h-3.5 w-3.5 mr-1" />
-                          <span className="text-xs">{t.pages.profile.nav}</span>
-                          {isPremium && (
-                            <Crown className="h-3.5 w-3.5 text-amber-400 ml-1" />
-                          )}
-                        </Button>
-                      </Link>
-                      {isSuperUser && !superLoading && (
-                        <Link href="/admin/ops">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-8 px-2 text-amber-300 hover:text-amber-200"
-                            title={
-                              lang === "fr"
-                                ? "Monitoring temps réel"
-                                : "Live operations monitoring"
-                            }
-                          >
-                            <Activity className="h-3.5 w-3.5 mr-1" />
-                            <span className="text-xs">{opsLabel}</span>
-                          </Button>
-                        </Link>
-                      )}
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={handleSignOut}
-                        className="h-8 px-2 text-red-400 hover:text-red-300"
-                      >
-                        <LogOut className="h-3.5 w-3.5 mr-1" />
-                        <span className="text-xs">
-                          {lang === "fr" ? "Déconnexion" : "Sign Out"}
-                        </span>
-                      </Button>
-                    </>
-                  ) : (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setShowAuthModal(true)}
-                      className="h-8 px-3 border-slate-600 bg-slate-800 text-slate-200 hover:bg-slate-700"
-                    >
-                      <LogIn className="h-3.5 w-3.5 mr-1" />
-                      <span className="text-xs">
-                        {lang === "fr" ? "Connexion" : "Sign In"}
-                      </span>
-                    </Button>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-
-          {(useDockNav || useRadialNav) && isSupabaseConfigured && (
+          {isSupabaseConfigured && (
             <div className="md:hidden flex items-center justify-end gap-2 pb-2">
               {user ? (
                 <>
@@ -484,21 +270,6 @@ export default function Navigation() {
               )}
             </div>
           )}
-
-          {showMobileClassicRow && (
-            <div className="md:hidden flex items-center gap-1 pb-3 overflow-x-auto">
-              <NavItemLinks {...navCommonProps} compact />
-              {isSuperUser && !superLoading && (
-                <AdminNavLinks
-                  pathname={pathname}
-                  lang={lang}
-                  opsLabel={opsLabel}
-                  siteLabel={siteLabel}
-                  compact
-                />
-              )}
-            </div>
-          )}
         </div>
 
         <ChessboardSettingsModal
@@ -509,33 +280,7 @@ export default function Navigation() {
         <AuthModal open={showAuthModal} onOpenChange={setShowAuthModal} />
       </nav>
 
-      {useDockNav && <NavDock {...navCommonProps} />}
-
-      {useRadialNav && (
-        <>
-          <RadialNavMenu
-            {...navCommonProps}
-            open={showRadialMenu}
-            onOpenChange={setShowRadialMenu}
-            anchor="header"
-          />
-          <button
-            type="button"
-            className="md:hidden fixed bottom-4 right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full border-2 border-cyan-500/50 bg-slate-900 shadow-xl glow-cyan"
-            onClick={() => setShowRadialMenu(true)}
-            aria-label={t.navigation.radial.openMenu[lang === "fr" ? "fr" : "en"]}
-          >
-            <Image
-              src="/knight-logo.png"
-              alt=""
-              width={32}
-              height={32}
-              className="h-8 w-8"
-              unoptimized
-            />
-          </button>
-        </>
-      )}
+      <NavDock {...navCommonProps} />
     </>
   );
 }

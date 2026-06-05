@@ -18,10 +18,6 @@ export function isNavItemActive(pathname: string, href: string): boolean {
   );
 }
 
-export function isNavFamilyActive(pathname: string, items: NavItemDef[]): boolean {
-  return items.some((item) => isNavItemActive(pathname, item.href));
-}
-
 export function navItemLabel(item: NavItemDef, lang: Language, t: Translations): string {
   if (item.href === "/analyze") return t.pages.analyze.nav;
   if (item.href === "/play") return t.pages.play.nav;
@@ -35,30 +31,6 @@ export function navItemLabel(item: NavItemDef, lang: Language, t: Translations):
   if (item.href === "/games") return t.pages.games.nav;
   if (item.href === "/guide") return t.pages.guide.nav;
   return item.label[lang];
-}
-
-export function navItemDescription(item: NavItemDef, t: Translations): string {
-  const desc = t.navigation.pageDesc;
-  if (item.href === "/analyze") return desc.analyze;
-  if (item.href === "/play") return desc.play;
-  if (item.href === "/online") return desc.online;
-  if (item.href === "/arena") return desc.arena;
-  if (item.href === "/learn") return desc.learn;
-  if (item.href === "/puzzles") return desc.puzzles;
-  if (item.href === "/ascension") return desc.ascension;
-  if (item.href === "/profile") return desc.profile;
-  if (item.href === "/avatars") return desc.avatars;
-  if (item.href === "/games") return desc.games;
-  if (item.href === "/guide") return desc.guide;
-  return item.label.en;
-}
-
-export function navFamilyLabel(family: NavFamily, lang: Language, t: Translations): string {
-  return t.navigation.families[family].label[lang === "fr" ? "fr" : "en"];
-}
-
-export function navFamilyDescription(family: NavFamily, lang: Language, t: Translations): string {
-  return t.navigation.families[family].desc[lang === "fr" ? "fr" : "en"];
 }
 
 export function navBadgeLabel(badge: NavPageBadge, lang: Language): string | null {

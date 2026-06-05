@@ -14,18 +14,13 @@ export type SiteMaintenanceConfig = {
   countdownEndsAt: string | null;
 };
 
-/** Navigation layout mode (A/B testable via site admin). */
-export type NavMode = "classic" | "dock" | "radial" | "mega";
-
 export type SiteConfig = {
   nav: Record<string, SiteNavPageConfig>;
-  navMode: NavMode;
   maintenance: SiteMaintenanceConfig;
 };
 
 export const DEFAULT_SITE_CONFIG: SiteConfig = {
   nav: Object.fromEntries(NAV_HREFS.map((href) => [href, { hidden: false, badge: "none" as const }])),
-  navMode: "mega",
   maintenance: {
     overlayEnabled: false,
     message: {
@@ -39,10 +34,6 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
 
 function isNavBadge(v: unknown): v is NavPageBadge {
   return v === "none" || v === "beta" || v === "maintenance";
-}
-
-function isNavMode(v: unknown): v is NavMode {
-  return v === "classic" || v === "dock" || v === "radial" || v === "mega";
 }
 
 export function parseSiteConfig(raw: unknown): SiteConfig {
@@ -61,10 +52,6 @@ export function parseSiteConfig(raw: unknown): SiteConfig {
         badge: isNavBadge(p.badge) ? p.badge : "none",
       };
     }
-  }
-
-  if (typeof obj.navMode === "string" && isNavMode(obj.navMode)) {
-    base.navMode = obj.navMode;
   }
 
   if (obj.maintenance && typeof obj.maintenance === "object") {

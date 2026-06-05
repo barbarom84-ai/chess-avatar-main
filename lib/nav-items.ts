@@ -107,22 +107,3 @@ export function groupNavItemsByFamily(items: NavItemDef[]): Record<NavFamily, Na
     {} as Record<NavFamily, NavItemDef[]>
   );
 }
-
-/** Primary radial slots (outer ring) — most-used destinations. */
-export const RADIAL_PRIMARY_HREFS = [
-  "/analyze",
-  "/play",
-  "/online",
-  "/arena",
-  "/learn",
-  "/puzzles",
-  "/ascension",
-] as const;
-
-/** Secondary radial slots (inner ring) — account section. */
-export const RADIAL_SECONDARY_HREFS = [
-  "/profile",
-  "/avatars",
-  "/games",
-  "/guide",
-] as const;
