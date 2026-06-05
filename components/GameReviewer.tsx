@@ -1,7 +1,6 @@
 ﻿"use client";
 
 import {
-  Fragment,
   useCallback,
   useEffect,
   useMemo,
@@ -10,17 +9,14 @@ import {
 } from "react";
 import Link from "next/link";
 import {
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
   RotateCcw,
-  RotateCw,
   Undo2,
-  Square,
   Crown,
   AlertTriangle,
-  Download,
-  Pause,
-  Play,
   Sparkles,
   Loader2,
   MessageCircleQuestion,
@@ -30,7 +26,6 @@ import {
   Lock,
   LogOut,
   Bot,
-  Check,
   Save,
 } from "lucide-react";
 import { Chess, type Move, type Square as ChessSquare } from "chess.js";
@@ -45,15 +40,19 @@ import {
 } from "recharts";
 
 import SimpleChessboard from "./SimpleChessboard";
-import EvaluationBar from "./EvaluationBar";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Label } from "./ui/label";
 import { Badge } from "./ui/badge";
-import { Progress } from "./ui/progress";
-import { ScrollArea } from "./ui/scroll-area";
 import { Input } from "./ui/input";
 import { useGameReview, type ReviewStatus } from "@/hooks/useGameReview";
+import { useContinuousAnalysis } from "@/hooks/useContinuousAnalysis";
+import ReviewLayout from "./game-reviewer/ReviewLayout";
+import ReviewToolbar from "./game-reviewer/ReviewToolbar";
+import EngineModule from "./game-reviewer/EngineModule";
+import BoardNavigationBar from "./game-reviewer/BoardNavigationBar";
+import ReviewDetailsPanel from "./game-reviewer/ReviewDetailsPanel";
+import { isLegalUciMove } from "@/lib/continuous-analysis-utils";
 import {
   CLASSIFICATION_COLORS,
   hashReviewCacheKey,
@@ -187,6 +186,8 @@ interface GameReviewerProps {
   } | null;
   /** AprÃ¨s enregistrement rÃ©ussi dans `games`. */
   onSavedToGamesCloud?: () => void;
+  /** CSS length subtracted from 100dvh for viewport-fit layout (page header). */
+  viewportOffset?: string;
 }
 
 export default function GameReviewer({
@@ -202,6 +203,7 @@ export default function GameReviewer({
   reviewCloudSavePlayerHint = null,
   cloudSaveContext = null,
   onSavedToGamesCloud,
+  viewportOffset = "7rem",
 }: GameReviewerProps) {
   const { t, lang } = useLanguage();
 
@@ -349,6 +351,10 @@ export default function GameReviewer({
 
   const { cancel: cancelReview, reset: resetReview } = review;
 
+  const continuous = useContinuousAnalysis({
+    blocked: review.status === "running",
+  });
+
   // Persist completed reviews to the cache.
   useEffect(() => {
     if (!cacheUserId) return;
@@ -455,6 +461,7 @@ export default function GameReviewer({
   const [explorationBranchMode, setExplorationBranchMode] = useState<
     "line" | "sibling"
   >("line");
+  const [explorationOpen, setExplorationOpen] = useState(false);
 
   const explorationForest = useMemo(
     () => explorationByPly[currentIndex] ?? newExplorationForest(currentIndex),
@@ -516,6 +523,10 @@ export default function GameReviewer({
       return base;
     }
   }, [baseMainlineFenForExplore, explorationForest, explorationPath]);
+
+  useEffect(() => {
+    continuous.bindFen(displayFen);
+  }, [displayFen, continuous.bindFen]);
 
   const explorationSanLine = useMemo(() => {
     if (!baseMainlineFenForExplore || explorationPath.length === 0) return "";
@@ -965,10 +976,30 @@ export default function GameReviewer({
     }
   }
 
+  if (
+    arrows.length === 0 &&
+    continuous.enabled &&
+    continuous.display?.bestMoveUci &&
+    isLegalUciMove(displayFen, continuous.display.bestMoveUci)
+  ) {
+    const sq = uciToSquares(continuous.display.bestMoveUci);
+    if (sq) {
+      arrows.push({
+        from: sq.from,
+        to: sq.to,
+        color: "rgba(34, 197, 94, 0.85)",
+      });
+    }
+  }
+
   const evalForBar =
-    currentIndex === 0
-      ? 0
-      : effectiveMoves[currentIndex - 1]?.playerEval ?? null;
+    explorationPath.length > 0
+      ? null
+      : continuous.enabled && continuous.display
+        ? continuous.display.evalWhitePov
+        : currentIndex === 0
+          ? 0
+          : effectiveMoves[currentIndex - 1]?.playerEval ?? null;
 
   const goToKeyMoment = (direction: 1 | -1) => {
     if (!effectiveResult) return;
@@ -981,132 +1012,226 @@ export default function GameReviewer({
     if (target !== undefined) setCurrentIndex(target + 1);
   };
 
-  const strictnessSelectClass =
-    "mt-1 w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-1.5 text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500/40";
-
-  return (
-    <div className="space-y-3">
-      <Card className="bg-slate-900/70 border-cyan-500/25">
-        <CardHeader className="py-3 pb-2">
-          <CardTitle className="text-sm text-cyan-300 flex items-center gap-2">
-            <Sparkles className="h-4 w-4" />
-            {t.review.analysisSettings.title}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-0">
-          <div>
-            <Label className="text-[11px] uppercase tracking-wide text-slate-500">
-              {t.review.analysisSettings.strictnessLabel}
-            </Label>
-            <select
-              className={strictnessSelectClass}
-              value={analysisStrictness}
-              onChange={(e) =>
-                handleStrictnessChange(e.target.value as AnalysisStrictnessId)
-              }
-              aria-label={t.review.analysisSettings.strictnessLabel}
-            >
-              <option value="relaxed">{t.review.analysisSettings.strictnessRelaxed}</option>
-              <option value="standard">{t.review.analysisSettings.strictnessStandard}</option>
-              <option value="strict">{t.review.analysisSettings.strictnessStrict}</option>
-            </select>
-            <p className="mt-1 text-[10px] text-slate-500 leading-snug">
-              {analysisStrictness === "relaxed" && t.review.analysisSettings.strictnessHintRelaxed}
-              {analysisStrictness === "standard" && t.review.analysisSettings.strictnessHintStandard}
-              {analysisStrictness === "strict" && t.review.analysisSettings.strictnessHintStrict}
+  const explorationPanel =
+    effectiveStatus !== "running" ? (
+      <div className="rounded-lg border border-slate-700/80 bg-slate-950/60 overflow-hidden">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="w-full h-8 justify-between text-xs text-slate-400 hover:text-slate-200 rounded-none"
+          onClick={() => setExplorationOpen((o) => !o)}
+        >
+          <span>{t.review.explorationMoveListTitle}</span>
+          {explorationOpen ? (
+            <ChevronUp className="h-3.5 w-3.5" />
+          ) : (
+            <ChevronDown className="h-3.5 w-3.5" />
+          )}
+        </Button>
+        {explorationOpen && (
+          <div className="px-2 pb-2 space-y-2 border-t border-slate-700/60">
+            <p className="text-[10px] text-slate-500 leading-snug pt-2">
+              {t.review.explorationHint}
             </p>
-          </div>
-          <div>
-            <Label className="text-[11px] uppercase tracking-wide text-slate-500">
-              {t.review.analysisSettings.depthLabel}
-            </Label>
-            {isPremium ? (
-              <>
+            <div className="flex flex-wrap gap-1.5 items-center">
+              <Button
+                type="button"
+                size="sm"
+                variant={explorationBranchMode === "line" ? "default" : "outline"}
+                className="h-7 border-slate-600 text-xs"
+                onClick={() => setExplorationBranchMode("line")}
+                title={t.review.explorationBranchLineHint}
+              >
+                {t.review.explorationBranchLine}
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant={explorationBranchMode === "sibling" ? "default" : "outline"}
+                className="h-7 border-slate-600 text-xs"
+                onClick={() => setExplorationBranchMode("sibling")}
+                title={t.review.explorationBranchSiblingHint}
+              >
+                {t.review.explorationBranchSibling}
+              </Button>
+            </div>
+            {explorationPathOptions.length > 1 && baseMainlineFenForExplore && (
+              <div className="space-y-1">
+                <Label className="text-[10px] uppercase tracking-wide text-slate-500">
+                  {t.review.explorationLeafSelect}
+                </Label>
                 <select
-                  className={strictnessSelectClass}
-                  value={premiumDepth}
-                  onChange={(e) =>
-                    handlePremiumDepthChange(Number(e.target.value))
-                  }
-                  aria-label={t.review.analysisSettings.depthLabel}
+                  className="flex h-8 w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-xs text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/50"
+                  value={explorationSelectValue}
+                  onChange={(e) => {
+                    try {
+                      const p = JSON.parse(e.target.value) as number[];
+                      if (Array.isArray(p)) setExplorationPath(p.map(Number));
+                    } catch {
+                      /* ignore */
+                    }
+                  }}
                 >
-                  {PREMIUM_DEPTH_OPTIONS.map((d) => (
-                    <option key={d} value={d}>
-                      {t.review.analysisSettings.depthOption.replace("{n}", String(d))}
+                  {explorationPathOptions.map((p) => (
+                    <option key={JSON.stringify(p)} value={JSON.stringify(p)}>
+                      {p.length === 0
+                        ? t.review.explorationPathStart
+                        : sanLineFromPath(
+                            baseMainlineFenForExplore,
+                            explorationForest,
+                            p
+                          )}
                     </option>
                   ))}
                 </select>
-                <p className="mt-1 text-[10px] text-slate-500">
-                  {t.review.analysisSettings.depthHintPremium}
-                </p>
-              </>
-            ) : (
-              <p className="mt-1 text-xs text-slate-400">
-                {t.review.analysisSettings.depthLocked.replace(
-                  "{n}",
-                  String(FREE_ENGINE_DEPTH)
-                )}
-              </p>
+              </div>
             )}
-          </div>
-          <div>
-            <Label className="text-[11px] uppercase tracking-wide text-slate-500">
-              {t.review.analysisSettings.coachToneLabel}
-            </Label>
-            <select
-              className={strictnessSelectClass}
-              value={coachTone}
-              onChange={(e) =>
-                handleCoachToneChange(e.target.value as CoachToneId)
-              }
-              aria-label={t.review.analysisSettings.coachToneLabel}
-            >
-              <option value="pedagogical">{t.review.analysisSettings.coachTonePedagogical}</option>
-              <option value="concise">{t.review.analysisSettings.coachToneConcise}</option>
-              <option value="witty">{t.review.analysisSettings.coachToneWitty}</option>
-            </select>
-          </div>
-        </CardContent>
-      </Card>
-
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-      {/* LEFT â€” Move list */}
-      <div className="lg:col-span-3 order-2 lg:order-1">
-        <Card className="bg-slate-900/60 border-cyan-500/20 h-full">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs uppercase tracking-wider text-slate-400 font-bold">
-              {t.review.movesTitle}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-2">
-            <ScrollArea className="h-[55vh] lg:h-[600px] pr-2">
-              <MovesList
-                parsed={parsed}
-                moves={effectiveMoves}
-                verboseMainline={verboseMainline}
-                currentIndex={currentIndex}
-                openingByPly={openingByPly}
-                moveFlagsByPly={moveFlagsByPly}
-                exitTheoryPly={exitTheoryPly}
-                onSelect={(idx) => setCurrentIndex(idx)}
-                explorationByPly={explorationByPly}
-                explorationPathByPly={explorationPathByPly}
-                onExplorationPathSelect={(branchPly, path) => {
-                  setExplorationPathByPly((prev) => ({
-                    ...prev,
-                    [branchPly]: path,
-                  }));
-                  setCurrentIndex(branchPly);
+            <div className="flex flex-wrap gap-2 items-center">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="h-7 border-slate-600 text-slate-200 text-xs"
+                disabled={!hasExplorationTree}
+                onClick={() => {
+                  const { forest, newPath } = removeLastNodeOnPath(
+                    explorationForest,
+                    explorationPath
+                  );
+                  patchExplorationForest(forest);
+                  setExplorationPath(newPath);
                 }}
-              />
-            </ScrollArea>
-          </CardContent>
-        </Card>
+              >
+                <Undo2 className="h-3 w-3 mr-1" />
+                {t.review.explorationUndo}
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="h-7 border-slate-600 text-slate-200 text-xs"
+                disabled={!hasExplorationTree && !explorationForest.note.trim()}
+                onClick={() => {
+                  patchExplorationForest((f) => clearForest(f));
+                  setExplorationPath([]);
+                }}
+              >
+                {t.review.explorationClear}
+              </Button>
+              {explorationSanLine ? (
+                <span className="text-[10px] font-mono text-cyan-300/90">
+                  {explorationSanLine}
+                </span>
+              ) : null}
+            </div>
+            <textarea
+              value={explorationForest.note}
+              onChange={(e) =>
+                patchExplorationForest((f) => ({ ...f, note: e.target.value }))
+              }
+              placeholder={t.review.explorationNotePlaceholder}
+              rows={2}
+              className="w-full rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-200 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-cyan-500/40 resize-y min-h-[2rem]"
+            />
+          </div>
+        )}
       </div>
+    ) : undefined;
 
-      {/* CENTER â€” Board + Eval + Controls + per-move detail */}
-      <div className="lg:col-span-6 order-1 lg:order-2 space-y-3">
-        <ProgressHeader
+  const saveCloudPanel = (
+    <div className="space-y-2 text-sm">
+      <p className="text-xs font-semibold text-slate-200">{t.review.saveToCloudTitle}</p>
+      <p className="text-[11px] text-slate-500 leading-snug">{t.review.saveToCloudHint}</p>
+      {!authUserId ? (
+        <p className="text-[11px] text-amber-200/90">{t.review.saveToCloudNeedLogin}</p>
+      ) : (
+        <div className="space-y-2">
+          {savePlayerOptions.length > 0 ? (
+            <select
+              value={savePlayerName}
+              onChange={(e) => setSavePlayerName(e.target.value)}
+              disabled={saveBusy}
+              className="flex h-9 w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/50 disabled:opacity-50"
+            >
+              <option value="">{t.review.saveToCloudSelectPlaceholder}</option>
+              {savePlayerOptions.map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <Input
+              value={savePlayerName}
+              onChange={(e) => setSavePlayerName(e.target.value)}
+              placeholder={t.review.saveToCloudPlaceholder}
+              className="h-9 bg-slate-900 border-slate-700 text-slate-100 text-sm"
+              autoComplete="off"
+              disabled={saveBusy}
+            />
+          )}
+          <Button
+            type="button"
+            size="sm"
+            disabled={saveBusy}
+            onClick={() => void handleSaveGameToCloud()}
+            className="bg-cyan-700 hover:bg-cyan-600 text-white w-full"
+          >
+            {saveBusy ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            ) : (
+              <Save className="h-4 w-4 mr-2" />
+            )}
+            {t.review.saveToCloudButton}
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+
+  const evalGraphPanel =
+    evalSeries.length > 1 ? (
+      <div className="h-36 w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={evalSeries}>
+            <XAxis dataKey="ply" hide />
+            <YAxis domain={[-10, 10]} hide />
+            <ReferenceLine y={0} stroke="#475569" strokeDasharray="3 3" />
+            <ReTooltip
+              contentStyle={{
+                background: "#0f172a",
+                border: "1px solid #334155",
+                fontSize: 12,
+              }}
+              formatter={(value: number) => [value.toFixed(2), t.review.eval]}
+              labelFormatter={(label: number) => `${t.review.ply} ${label}`}
+            />
+            <Line
+              type="monotone"
+              dataKey="eval"
+              stroke="#22d3ee"
+              strokeWidth={2}
+              dot={false}
+              isAnimationActive={false}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+    ) : null;
+
+  return (
+    <ReviewLayout
+      viewportOffset={viewportOffset}
+      toolbar={
+        <ReviewToolbar
+          analysisStrictness={analysisStrictness}
+          onStrictnessChange={handleStrictnessChange}
+          isPremium={isPremium}
+          premiumDepth={premiumDepth}
+          onPremiumDepthChange={handlePremiumDepthChange}
+          coachTone={coachTone}
+          onCoachToneChange={handleCoachToneChange}
           effectiveStatus={effectiveStatus}
           reviewStatus={review.status}
           cacheChecked={cacheChecked}
@@ -1119,561 +1244,153 @@ export default function GameReviewer({
           onRelaunch={handleRelaunchAnalysis}
           onDownloadAnnotated={handleDownloadAnnotated}
           showSavedInGamesList={showSavedInGamesList}
+          continuousEnabled={continuous.enabled}
+          onContinuousToggle={continuous.toggle}
         />
-
-        {effectiveStatus === "done" && (
-          <Card className="bg-slate-950/70 border-slate-700/80">
-            <CardContent className="pt-3 pb-3 space-y-2">
-              <div className="flex items-start gap-2 flex-wrap">
-                <Save className="h-4 w-4 text-cyan-400 shrink-0 mt-0.5" />
-                <div className="space-y-1 min-w-0 flex-1">
-                  <p className="text-xs font-semibold text-slate-200">
-                    {t.review.saveToCloudTitle}
-                  </p>
-                  <p className="text-[11px] text-slate-500 leading-snug">
-                    {t.review.saveToCloudHint}
-                  </p>
-                </div>
-              </div>
-              {!authUserId ? (
-                <p className="text-[11px] text-amber-200/90">
-                  {t.review.saveToCloudNeedLogin}
-                </p>
-              ) : (
-                <div className="flex flex-col sm:flex-row gap-2 sm:items-end">
-                  <div className="flex-1 space-y-1">
-                    <Label
-                      htmlFor="review-save-player-select"
-                      className="text-[10px] uppercase tracking-wide text-slate-500"
-                    >
-                      {t.review.white} / {t.review.black}
-                    </Label>
-                    {savePlayerOptions.length > 0 ? (
-                      <select
-                        id="review-save-player-select"
-                        value={savePlayerName}
-                        onChange={(e) => setSavePlayerName(e.target.value)}
-                        disabled={saveBusy}
-                        className="flex h-9 w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/50 disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        <option value="">
-                          {t.review.saveToCloudSelectPlaceholder}
-                        </option>
-                        {savePlayerOptions.map((n) => (
-                          <option key={n} value={n}>
-                            {n}
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      <Input
-                        id="review-save-player-select"
-                        value={savePlayerName}
-                        onChange={(e) => setSavePlayerName(e.target.value)}
-                        placeholder={t.review.saveToCloudPlaceholder}
-                        className="h-9 bg-slate-900 border-slate-700 text-slate-100 text-sm"
-                        autoComplete="off"
-                      />
-                    )}
-                  </div>
-                  <Button
-                    type="button"
-                    size="sm"
-                    disabled={saveBusy}
-                    onClick={() => void handleSaveGameToCloud()}
-                    className="bg-cyan-700 hover:bg-cyan-600 text-white shrink-0"
-                  >
-                    {saveBusy ? (
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    ) : (
-                      <Save className="h-4 w-4 mr-2" />
-                    )}
-                    {t.review.saveToCloudButton}
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        <EvaluationBar
-          evaluation={explorationPath.length > 0 ? null : evalForBar}
+      }
+      board={
+        <SimpleChessboard
+          position={displayFen}
+          orientation={orientation}
+          lastMove={lastMoveForBoard}
+          arrows={arrows}
+          onDrop={
+            effectiveStatus === "running" ? undefined : handleExplorationDrop
+          }
         />
-
-        <div className="flex items-start gap-3">
-          <div className="flex-1 space-y-2">
-            <SimpleChessboard
-              position={displayFen}
-              orientation={orientation}
-              lastMove={lastMoveForBoard}
-              arrows={arrows}
-              onDrop={
-                effectiveStatus === "running" ? undefined : handleExplorationDrop
-              }
-            />
-            {effectiveStatus !== "running" && (
-              <Card className="bg-slate-950/70 border-slate-700/80">
-                <CardContent className="pt-2 pb-2 space-y-2">
-                  <p className="text-[11px] text-slate-500 leading-snug">
-                    {t.review.explorationHint}
-                  </p>
-                  <div className="flex flex-wrap gap-1.5 items-center">
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant={
-                        explorationBranchMode === "line" ? "default" : "outline"
-                      }
-                      className="h-8 border-slate-600 text-xs"
-                      onClick={() => setExplorationBranchMode("line")}
-                      title={t.review.explorationBranchLineHint}
-                    >
-                      {t.review.explorationBranchLine}
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant={
-                        explorationBranchMode === "sibling"
-                          ? "default"
-                          : "outline"
-                      }
-                      className="h-8 border-slate-600 text-xs"
-                      onClick={() => setExplorationBranchMode("sibling")}
-                      title={t.review.explorationBranchSiblingHint}
-                    >
-                      {t.review.explorationBranchSibling}
-                    </Button>
-                  </div>
-                  {explorationPathOptions.length > 1 &&
-                    baseMainlineFenForExplore && (
-                    <div className="space-y-1">
-                      <Label className="text-[10px] uppercase tracking-wide text-slate-500">
-                        {t.review.explorationLeafSelect}
-                      </Label>
-                      <select
-                        className="flex h-9 w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-xs text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/50"
-                        value={explorationSelectValue}
-                        onChange={(e) => {
-                          try {
-                            const p = JSON.parse(e.target.value) as number[];
-                            if (Array.isArray(p))
-                              setExplorationPath(p.map(Number));
-                          } catch {
-                            /* ignore */
-                          }
-                        }}
-                      >
-                        {explorationPathOptions.map((p) => (
-                          <option key={JSON.stringify(p)} value={JSON.stringify(p)}>
-                            {p.length === 0
-                              ? t.review.explorationPathStart
-                              : sanLineFromPath(
-                                  baseMainlineFenForExplore,
-                                  explorationForest,
-                                  p
-                                )}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-                  <div className="flex flex-wrap gap-2 items-center">
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      className="h-8 border-slate-600 text-slate-200"
-                      disabled={!hasExplorationTree}
-                      onClick={() => {
-                        const { forest, newPath } = removeLastNodeOnPath(
-                          explorationForest,
-                          explorationPath
-                        );
-                        patchExplorationForest(forest);
-                        setExplorationPath(newPath);
-                      }}
-                      title={t.review.explorationUndo}
-                    >
-                      <Undo2 className="h-3.5 w-3.5 mr-1.5" />
-                      {t.review.explorationUndo}
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      className="h-8 border-slate-600 text-slate-200"
-                      disabled={
-                        !hasExplorationTree && !explorationForest.note.trim()
-                      }
-                      onClick={() => {
-                        patchExplorationForest((f) => clearForest(f));
-                        setExplorationPath([]);
-                      }}
-                    >
-                      {t.review.explorationClear}
-                    </Button>
-                    {explorationSanLine ? (
-                      <span className="text-[11px] font-mono text-cyan-300/90 flex-1 min-w-[8rem]">
-                        <span className="text-slate-500 mr-1">
-                          {t.review.explorationLineLabel}:
-                        </span>
-                        {explorationSanLine}
-                      </span>
-                    ) : null}
-                  </div>
-                  <textarea
-                    value={explorationForest.note}
-                    onChange={(e) =>
-                      patchExplorationForest((f) => ({
-                        ...f,
-                        note: e.target.value,
-                      }))
-                    }
-                    placeholder={t.review.explorationNotePlaceholder}
-                    rows={2}
-                    className="w-full rounded-md border border-slate-700 bg-slate-900 px-2 py-1.5 text-xs text-slate-200 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-cyan-500/40 resize-y min-h-[2.5rem]"
-                  />
-                </CardContent>
-              </Card>
-            )}
-          </div>
-
-          <div className="flex flex-col gap-2 w-32 shrink-0">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={flipBoard}
-              className="w-full border-purple-500/40 bg-purple-500/10 text-purple-200 hover:bg-purple-500/20"
-              title={t.review.flipBoard}
-            >
-              <RotateCw className="h-4 w-4 mr-2" />
-              {t.review.flipShort}
-            </Button>
-            <Card className="p-2 bg-slate-950/60 border-slate-800">
-              <div className="space-y-2">
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={goStart}
-                  className="w-full hover:bg-slate-800"
-                  title={t.review.start}
-                >
-                  <RotateCcw className="h-4 w-4 mr-2" />
-                  {t.review.start}
-                </Button>
-                <div className="flex gap-1">
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onClick={goPrev}
-                    disabled={currentIndex === 0}
-                    className="flex-1"
-                    title={t.review.prev}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onClick={goNext}
-                    disabled={currentIndex >= totalPlies}
-                    className="flex-1"
-                    title={t.review.next}
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-                <div className="text-center text-[11px] font-mono text-slate-300 py-1 bg-slate-900 rounded">
-                  <span className="text-cyan-400 font-bold">
-                    {currentIndex}
-                  </span>
-                  <span className="text-slate-600 mx-1">/</span>
-                  <span>{totalPlies}</span>
-                </div>
-                <Button
-                  size="sm"
-                  variant={autoPlay ? "destructive" : "default"}
-                  onClick={() => setAutoPlay((p) => !p)}
-                  disabled={
-                    effectiveStatus === "running" || effectiveMoves.length === 0
-                  }
-                  className={`w-full ${!autoPlay ? "bg-green-600 hover:bg-green-500" : ""}`}
-                  title={autoPlay ? t.review.pause : t.review.playAuto}
-                >
-                  {autoPlay ? (
-                    <>
-                      <Pause className="h-4 w-4 mr-2" />
-                      {t.review.pause}
-                    </>
-                  ) : (
-                    <>
-                      <Play className="h-4 w-4 mr-2" />
-                      {t.review.playAuto}
-                    </>
-                  )}
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={goEnd}
-                  disabled={currentIndex >= totalPlies}
-                  className="w-full hover:bg-slate-800"
-                  title={t.review.end}
-                >
-                  {t.review.end}
-                </Button>
-              </div>
-            </Card>
-          </div>
-        </div>
-
-        <CurrentMoveDetail
-          move={currentMove}
-          explorerFen={displayFen}
-          fenBefore={
-            currentIndex > 0 ? parsed.fenBefore[currentIndex - 1] : undefined
+      }
+      boardNav={
+        <BoardNavigationBar
+          currentIndex={currentIndex}
+          totalPlies={totalPlies}
+          autoPlay={autoPlay}
+          onGoStart={goStart}
+          onGoPrev={goPrev}
+          onGoNext={goNext}
+          onGoEnd={goEnd}
+          onToggleAutoPlay={() => setAutoPlay((p) => !p)}
+          onFlipBoard={flipBoard}
+          autoPlayDisabled={
+            effectiveStatus === "running" || effectiveMoves.length === 0
           }
-          moveNumber={
-            currentIndex > 0 ? Math.floor((currentIndex - 1) / 2) + 1 : undefined
-          }
-          opening={
-            currentIndex > 0 ? openingByPly[currentIndex - 1] ?? null : null
-          }
-          previousOpening={
-            currentIndex > 1 ? openingByPly[currentIndex - 2] ?? null : null
-          }
-          flags={
-            currentIndex > 0
-              ? moveFlagsByPly[currentIndex - 1] ?? null
-              : null
-          }
-          isExitingTheory={
-            currentIndex > 0 && exitTheoryPly === currentIndex - 1
-          }
-          onRequestUpgrade={onRequestUpgrade}
-          coachTone={coachTone}
-          theorySnapshot={openingTheorySnapshot}
-          personaConfig={effectivePersona}
-          getPersonaStyleMove={review.getPersonaStyleMove}
-          reviewBlocked={effectiveStatus === "running"}
         />
-
-        {evalSeries.length > 1 && (
-          <Card className="bg-slate-900/60 border-cyan-500/20">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-xs uppercase tracking-wider text-slate-400 font-bold">
-                {t.review.evalGraph}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="h-32">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={evalSeries}>
-                  <XAxis dataKey="ply" hide />
-                  <YAxis domain={[-10, 10]} hide />
-                  <ReferenceLine y={0} stroke="#475569" strokeDasharray="3 3" />
-                  <ReTooltip
-                    contentStyle={{
-                      background: "#0f172a",
-                      border: "1px solid #334155",
-                      fontSize: 12,
-                    }}
-                    formatter={(value: number) => [value.toFixed(2), t.review.eval]}
-                    labelFormatter={(label: number) => `${t.review.ply} ${label}`}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="eval"
-                    stroke="#22d3ee"
-                    strokeWidth={2}
-                    dot={false}
-                    isAnimationActive={false}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        )}
-      </div>
-
-      {/* RIGHT â€” Summary + key moments */}
-      <div className="lg:col-span-3 order-3 space-y-3">
-        <SummaryCard
+      }
+      exploration={explorationPanel}
+      movesPanel={
+        <MovesList
           parsed={parsed}
-          review={effectiveResult}
-          status={effectiveStatus}
+          moves={effectiveMoves}
+          verboseMainline={verboseMainline}
+          currentIndex={currentIndex}
+          openingByPly={openingByPly}
+          moveFlagsByPly={moveFlagsByPly}
+          exitTheoryPly={exitTheoryPly}
+          onSelect={(idx) => setCurrentIndex(idx)}
+          explorationByPly={explorationByPly}
+          explorationPathByPly={explorationPathByPly}
+          onExplorationPathSelect={(branchPly, path) => {
+            setExplorationPathByPly((prev) => ({
+              ...prev,
+              [branchPly]: path,
+            }));
+            setCurrentIndex(branchPly);
+          }}
         />
-        <KeyMomentsCard
-          count={effectiveResult?.keyMoments.length ?? 0}
-          onPrev={() => goToKeyMoment(-1)}
-          onNext={() => goToKeyMoment(1)}
-          disabled={!effectiveResult || effectiveResult.keyMoments.length === 0}
+      }
+      enginePanel={
+        <EngineModule
+          evaluation={evalForBar}
+          continuousEnabled={continuous.enabled}
+          engineReady={continuous.engineReady}
+          isAnalyzing={continuous.isAnalyzing}
+          paused={continuous.paused}
+          display={continuous.display}
         />
-      </div>
-      </div>
-    </div>
+      }
+      detailsPanel={
+        <ReviewDetailsPanel
+          summary={
+            <div className="space-y-2">
+              <SummaryCard
+                parsed={parsed}
+                review={effectiveResult}
+                status={effectiveStatus}
+              />
+              <KeyMomentsCard
+                count={effectiveResult?.keyMoments.length ?? 0}
+                onPrev={() => goToKeyMoment(-1)}
+                onNext={() => goToKeyMoment(1)}
+                disabled={
+                  !effectiveResult || effectiveResult.keyMoments.length === 0
+                }
+              />
+            </div>
+          }
+          moveDetail={
+            <CurrentMoveDetail
+              move={currentMove}
+              explorerFen={displayFen}
+              fenBefore={
+                currentIndex > 0 ? parsed.fenBefore[currentIndex - 1] : undefined
+              }
+              moveNumber={
+                currentIndex > 0
+                  ? Math.floor((currentIndex - 1) / 2) + 1
+                  : undefined
+              }
+              opening={
+                currentIndex > 0 ? openingByPly[currentIndex - 1] ?? null : null
+              }
+              previousOpening={
+                currentIndex > 1 ? openingByPly[currentIndex - 2] ?? null : null
+              }
+              flags={
+                currentIndex > 0
+                  ? moveFlagsByPly[currentIndex - 1] ?? null
+                  : null
+              }
+              isExitingTheory={
+                currentIndex > 0 && exitTheoryPly === currentIndex - 1
+              }
+              onRequestUpgrade={onRequestUpgrade}
+              coachTone={coachTone}
+              theorySnapshot={openingTheorySnapshot}
+              personaConfig={effectivePersona}
+              getPersonaStyleMove={review.getPersonaStyleMove}
+              reviewBlocked={effectiveStatus === "running"}
+            />
+          }
+          evalGraph={evalGraphPanel}
+          savePanel={saveCloudPanel}
+          showGraphTab={evalSeries.length > 1}
+          showSaveTab={!!authUserId}
+        />
+      }
+    />
   );
 }
 
-// ---------------------------------------------------------------------------
-// Sub-components
-// ---------------------------------------------------------------------------
-
-function ProgressHeader({
-  effectiveStatus,
-  reviewStatus,
-  cacheChecked,
-  hasCachedResult,
-  engineReady,
-  progress,
-  total,
-  onCancel,
-  onStartAnalysis,
-  onRelaunch,
-  onDownloadAnnotated,
-  showSavedInGamesList,
-}: {
-  effectiveStatus: ReviewStatus;
-  reviewStatus: ReviewStatus;
-  cacheChecked: boolean;
-  hasCachedResult: boolean;
-  engineReady: boolean;
-  progress: number;
-  total: number;
-  onCancel: () => void;
-  onStartAnalysis: () => void;
-  onRelaunch: () => void;
-  onDownloadAnnotated: () => void;
-  showSavedInGamesList: boolean;
-}) {
+function ExplorerCollapsible({ fen }: { fen: string }) {
   const { t } = useLanguage();
-  const pct = total > 0 ? Math.round((progress / total) * 100) : 0;
-
-  if (effectiveStatus === "error") {
-    return <div className="text-xs text-red-300">{t.review.error}</div>;
-  }
-
-  if (effectiveStatus === "done") {
-    return (
-      <div className="flex flex-wrap items-center justify-between gap-2 w-full">
-        <div className="text-xs text-emerald-300 flex items-center gap-2 shrink-0">
-          <Crown className="h-3 w-3" /> {t.review.done}
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <Button
-            type="button"
-            size="sm"
-            variant="ghost"
-            className="h-7 px-2 text-cyan-300 hover:text-cyan-100 hover:bg-cyan-500/10"
-            onClick={onDownloadAnnotated}
-            title={t.review.downloadAnnotated}
-          >
-            <Download className="h-3 w-3 mr-1" />
-            {t.review.downloadAnnotated}
-          </Button>
-          {showSavedInGamesList && (
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              className="h-7 px-2 text-emerald-300 hover:text-emerald-200 hover:bg-emerald-500/10"
-              title={t.review.savedInGamesList}
-              disabled
-            >
-              <Check className="h-3 w-3 mr-1" />
-              {t.review.savedInGamesList}
-            </Button>
-          )}
-          <Button
-            type="button"
-            size="sm"
-            variant="ghost"
-            className="h-7 px-2 text-cyan-300 hover:text-cyan-100 hover:bg-cyan-500/10"
-            onClick={onRelaunch}
-          >
-            <RotateCcw className="h-3 w-3 mr-1" />
-            {t.review.relaunch}
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  if (!cacheChecked) {
-    return (
-      <div className="flex items-center gap-3 text-xs text-slate-400">
-        <Loader2 className="h-3 w-3 animate-spin text-cyan-400" />
-        {t.review.engineLoading}
-      </div>
-    );
-  }
-
-  if (!hasCachedResult) {
-    if (reviewStatus === "running") {
-      return (
-        <div className="space-y-1">
-          <div className="flex items-center justify-between text-xs text-slate-300">
-            <span>
-              {t.review.analyzing.replace("{n}", String(progress)).replace(
-                "{total}",
-                String(total)
-              )}
-            </span>
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-6 px-2 text-red-300 hover:text-red-100 hover:bg-red-500/10"
-              onClick={onCancel}
-            >
-              <Square className="h-3 w-3 mr-1" />
-              {t.review.stop}
-            </Button>
-          </div>
-          <Progress value={pct} className="h-1.5" />
-        </div>
-      );
-    }
-    if (reviewStatus === "cancelled") {
-      return (
-        <div className="text-xs text-yellow-300">{t.review.cancelled}</div>
-      );
-    }
-    if (reviewStatus === "idle" || reviewStatus === "engine-loading") {
-      if (!engineReady) {
-        return (
-          <div className="flex items-center gap-3 text-xs text-slate-400">
-            <div className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse" />
-            {t.review.engineLoading}
-          </div>
-        );
-      }
-      if (reviewStatus === "idle") {
-        return (
-          <div className="flex items-center justify-end">
-            <Button
-              size="sm"
-              className="h-8 bg-cyan-600 hover:bg-cyan-500 text-white"
-              onClick={onStartAnalysis}
-            >
-              <Play className="h-3.5 w-3.5 mr-1.5" />
-              {t.review.startAnalysis}
-            </Button>
-          </div>
-        );
-      }
-      return (
-        <div className="flex items-center gap-3 text-xs text-slate-400">
-          <Loader2 className="h-3 w-3 animate-spin text-cyan-400" />
-          {t.review.engineLoading}
-        </div>
-      );
-    }
-  }
+  const [open, setOpen] = useState(false);
 
   return (
-    <div className="flex items-center gap-3 text-xs text-slate-400">
-      <Loader2 className="h-3 w-3 animate-spin text-cyan-400" />
-      {t.review.engineLoading}
+    <div className="rounded border border-slate-700/60 overflow-hidden">
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="w-full h-7 justify-between text-[10px] text-slate-400 hover:text-slate-200 rounded-none px-2"
+        onClick={() => setOpen((o) => !o)}
+      >
+        <span>{t.review.opening.explorerTitle}</span>
+        {open ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+      </Button>
+      {open && (
+        <div className="border-t border-slate-700/60 px-1 pb-1">
+          <OpeningExplorerPanel fen={fen} />
+        </div>
+      )}
     </div>
   );
 }
@@ -1914,7 +1631,7 @@ function CurrentMoveDetail({
             )}
           </div>
         )}
-        <OpeningExplorerPanel fen={explorerFen} />
+        <ExplorerCollapsible fen={explorerFen} />
         {(flags?.isCheckmate ||
           flags?.isCheck ||
           flags?.isForced ||

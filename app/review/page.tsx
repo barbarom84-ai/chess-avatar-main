@@ -104,22 +104,23 @@ function ReviewContent() {
   const showAllBestArrows = isPremium;
 
   return (
-    <main className="min-h-screen theme-gradient theme-text-primary p-3 md:p-6">
-      <div className="max-w-[1500px] mx-auto space-y-4">
-        <div className="text-center space-y-2">
-          <Link href="/games" className="inline-block mb-2">
-            <Button variant="ghost" className="text-cyan-300 hover:text-cyan-100">
-              <ArrowLeft className="mr-2 h-4 w-4" />
+    <main className="min-h-screen theme-gradient theme-text-primary p-2 md:p-3">
+      <div className="max-w-[1500px] mx-auto space-y-2">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <Link href="/games">
+            <Button variant="ghost" size="sm" className="text-cyan-300 hover:text-cyan-100 h-8">
+              <ArrowLeft className="mr-1.5 h-4 w-4" />
               {t.games.backToHub}
             </Button>
           </Link>
-          <h1 className="text-xl md:text-2xl font-bold text-cyan-400">{t.pages.review.title}</h1>
-          <p className="text-slate-400 text-sm max-w-xl mx-auto">{t.pages.review.subtitle}</p>
+          <h1 className="text-sm md:text-base font-bold text-cyan-400 truncate">
+            {t.pages.review.title}
+          </h1>
         </div>
 
         {!isPremium && (
           <Card className="bg-amber-900/20 border-amber-500/30">
-            <CardContent className="py-3 flex items-center justify-between gap-3 flex-wrap">
+            <CardContent className="py-2 flex items-center justify-between gap-3 flex-wrap">
               <div className="text-xs text-amber-200">
                 {t.review.freeLimits
                   .replace("{depth}", String(12))
@@ -150,6 +151,7 @@ function ReviewContent() {
           cloudSaveContext={{
             emailLocalPart: email?.split("@")[0] ?? null,
           }}
+          viewportOffset={isPremium ? "5rem" : "7.5rem"}
         />
       </div>
 

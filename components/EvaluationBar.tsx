@@ -5,6 +5,8 @@ import { useLanguage } from "@/lib/language-context";
 interface EvaluationBarProps {
   /** Stockfish-style eval in pawns from White's perspective */
   evaluation: number | null;
+  /** Hide verdict row (Black / Equal / White labels) */
+  compact?: boolean;
 }
 
 type WhitePovVerdict =
@@ -26,7 +28,7 @@ function whitePovVerdict(evalWhite: number): WhitePovVerdict {
   return "equal";
 }
 
-export default function EvaluationBar({ evaluation }: EvaluationBarProps) {
+export default function EvaluationBar({ evaluation, compact = false }: EvaluationBarProps) {
   const { t } = useLanguage();
 
   if (evaluation === null) {
@@ -73,8 +75,8 @@ export default function EvaluationBar({ evaluation }: EvaluationBarProps) {
         : "text-slate-300";
 
   return (
-    <div className="space-y-2">
-      <div className="relative w-full h-8 bg-slate-950 rounded-lg overflow-hidden border border-slate-700">
+    <div className={compact ? "" : "space-y-2"}>
+      <div className={`relative w-full bg-slate-950 rounded-lg overflow-hidden border border-slate-700 ${compact ? "h-6" : "h-8"}`}>
         <div
           className="absolute top-0 left-0 h-full bg-gradient-to-r from-cyan-500 to-cyan-400 transition-all duration-300"
           style={{ width: `${percentage}%` }}
@@ -92,6 +94,7 @@ export default function EvaluationBar({ evaluation }: EvaluationBarProps) {
         </div>
       </div>
 
+      {!compact && (
       <div className="flex items-center justify-between text-xs">
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full bg-slate-700 border border-slate-600" />
@@ -115,6 +118,7 @@ export default function EvaluationBar({ evaluation }: EvaluationBarProps) {
           <div className="w-3 h-3 rounded-full bg-cyan-500 border border-cyan-400" />
         </div>
       </div>
+      )}
     </div>
   );
 }

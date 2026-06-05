@@ -455,8 +455,8 @@ export default function GamesPage() {
 
   if (reviewPgn) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 py-6 px-3 md:px-4">
-        <div className="max-w-[1500px] mx-auto space-y-4">
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 py-2 px-2 md:px-3">
+        <div className="max-w-[1500px] mx-auto space-y-2">
           <div className="flex items-center justify-between gap-2 flex-wrap">
             <Button
               onClick={closeReview}
@@ -477,7 +477,7 @@ export default function GamesPage() {
                 />
               )}
               <div className="min-w-0">
-                <h1 className="text-lg md:text-xl font-bold text-cyan-300 truncate">
+                <h1 className="text-sm md:text-base font-bold text-cyan-300 truncate">
                   {t.games.reviewing} · {reviewSourceLabel}
                 </h1>
                 {selectedGame && (
@@ -506,23 +506,23 @@ export default function GamesPage() {
 
           {!isPremium && (
             <Card className="bg-amber-900/20 border-amber-500/30">
-              <CardContent className="py-3 flex items-center justify-between gap-3 flex-wrap">
-                <div className="text-xs text-amber-200">
-                  {t.review.freeLimits
-                    .replace("{depth}", String(12))
-                    .replace("{plies}", String(FREE_MAX_PLIES))}
-                </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setShowUpgrade(true)}
-                  className="border-amber-500/50 text-amber-200 hover:bg-amber-500/10"
-                >
-                  <Crown className="h-4 w-4 mr-2" />
-                  {t.review.upgradeForFull}
-                </Button>
-              </CardContent>
-            </Card>
+            <CardContent className="py-2 flex items-center justify-between gap-3 flex-wrap">
+              <div className="text-xs text-amber-200">
+                {t.review.freeLimits
+                  .replace("{depth}", String(12))
+                  .replace("{plies}", String(FREE_MAX_PLIES))}
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setShowUpgrade(true)}
+                className="border-amber-500/50 text-amber-200 hover:bg-amber-500/10"
+              >
+                <Crown className="h-4 w-4 mr-2" />
+                {t.review.upgradeForFull}
+              </Button>
+            </CardContent>
+          </Card>
           )}
 
           <GameReviewer
@@ -544,6 +544,7 @@ export default function GamesPage() {
               void loadGames();
               void loadStats();
             }}
+            viewportOffset={isPremium ? "5.5rem" : "8rem"}
           />
         </div>
 

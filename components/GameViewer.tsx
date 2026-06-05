@@ -7,7 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import SimpleChessboard from "./SimpleChessboard";
 import EvaluationBar from "./EvaluationBar";
-import { useStockfish } from "@/hooks/useStockfish";
+import { useContinuousAnalysis } from "@/hooks/useContinuousAnalysis";
+import ContinuousAnalysisPanel from "./game-reviewer/ContinuousAnalysisPanel";
+import ContinuousAnalysisToggle from "./game-reviewer/ContinuousAnalysisToggle";
+import { uciToSquares } from "@/lib/game-review";
+import { isLegalUciMove } from "@/lib/continuous-analysis-utils";
 import { useLanguage } from "@/lib/language-context";
 
 interface GameViewerProps {
@@ -59,13 +63,14 @@ function GameViewerInner({ pgn }: GameViewerProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
 
-  const { isReady, currentEval, analyzePosition } = useStockfish();
+  const continuous = useContinuousAnalysis();
+
+  const currentFen =
+    gamePositions.length > 0 ? gamePositions[currentIndex] : new Chess().fen();
 
   useEffect(() => {
-    if (isReady && gamePositions.length > 0 && currentIndex < gamePositions.length) {
-      analyzePosition(gamePositions[currentIndex], 12);
-    }
-  }, [currentIndex, gamePositions, isReady, analyzePosition]);
+    continuous.bindFen(currentFen);
+  }, [currentFen, continuous.bindFen]);
 
   useEffect(() => {
     if (!isPlaying || currentIndex >= gamePositions.length - 1) return;
@@ -103,20 +108,54 @@ function GameViewerInner({ pgn }: GameViewerProps) {
     setIsPlaying(false);
   };
 
-  const currentFen =
-    gamePositions.length > 0 ? gamePositions[currentIndex] : "start";
+  const arrows: Array<{ from: string; to: string; color?: string }> = [];
+  if (
+    continuous.enabled &&
+    continuous.display?.bestMoveUci &&
+    isLegalUciMove(currentFen, continuous.display.bestMoveUci)
+  ) {
+    const sq = uciToSquares(continuous.display.bestMoveUci);
+    if (sq) {
+      arrows.push({
+        from: sq.from,
+        to: sq.to,
+        color: "rgba(34, 197, 94, 0.85)",
+      });
+    }
+  }
+
+  const evalForBar =
+    continuous.enabled && continuous.display
+      ? continuous.display.evalWhitePov
+      : currentIndex === 0
+        ? 0
+        : null;
 
   return (
     <div className="space-y-4">
-      {currentEval !== null && (
-        <EvaluationBar evaluation={currentEval} />
-      )}
+      <div className="flex items-center justify-end">
+        <ContinuousAnalysisToggle
+          enabled={continuous.enabled}
+          onToggle={continuous.toggle}
+        />
+      </div>
+
+      <EvaluationBar evaluation={evalForBar} />
+
+      <ContinuousAnalysisPanel
+        enabled={continuous.enabled}
+        engineReady={continuous.engineReady}
+        isAnalyzing={continuous.isAnalyzing}
+        paused={continuous.paused}
+        display={continuous.display}
+      />
 
       <div className="flex items-start gap-4">
         <Card className="p-6 bg-slate-900 border-slate-800 flex-1">
           <SimpleChessboard
             position={currentFen}
             orientation={boardOrientation}
+            arrows={arrows}
           />
         </Card>
 

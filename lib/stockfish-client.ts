@@ -23,6 +23,21 @@ export type StockfishSearchCtx<T> = {
   onLine: (handler: (line: string) => T | undefined) => void;
 };
 
+export type ContinuousPvLine = {
+  multipv: number;
+  evalPawns: number;
+  isMate?: boolean;
+  mateInMoves?: number;
+  pvUci: string[];
+  depth: number;
+};
+
+export type ContinuousAnalysisSnapshot = {
+  evalPawns: number;
+  depth: number;
+  lines: ContinuousPvLine[];
+};
+
 class StockfishClient {
   private worker: Worker | null = null;
   private ready = false;
@@ -32,6 +47,7 @@ class StockfishClient {
   private refCount = 0;
   private readyWaiters: Array<(ok: boolean) => void> = [];
   private idleEvalHandler: ((line: string) => void) | null = null;
+  private continuousSessionId = 0;
 
   acquire(): void {
     this.refCount += 1;
@@ -128,15 +144,129 @@ class StockfishClient {
     this.sendCommand("stop");
   }
 
+  stopContinuousAnalysis(): void {
+    this.continuousSessionId += 1;
+    if (this.idleEvalHandler) {
+      this.stop();
+      this.idleEvalHandler = null;
+    }
+  }
+
+  private canRunIdleAnalysis(): boolean {
+    return this.ready && !this.running && this.taskQueue.length === 0;
+  }
+
+  private parseInfoLine(line: string): {
+    depth: number;
+    multipv: number;
+    evalPawns: number;
+    isMate: boolean;
+    mateInMoves: number | null;
+    pvUci: string[];
+  } | null {
+    if (!line.startsWith("info ") || !line.includes(" pv ")) return null;
+
+    const depthMatch = line.match(/\bdepth\s+(\d+)/);
+    const multipvMatch = line.match(/\bmultipv\s+(\d+)/);
+    if (!depthMatch || !multipvMatch) return null;
+
+    let evalPawns = 0;
+    let isMate = false;
+    let mateInMoves: number | null = null;
+
+    const cpMatch = line.match(/\bscore\s+cp\s+(-?\d+)/);
+    if (cpMatch) {
+      evalPawns = parseInt(cpMatch[1], 10) / 100;
+    } else {
+      const mateMatch = line.match(/\bscore\s+mate\s+(-?\d+)/);
+      if (mateMatch) {
+        const mateIn = parseInt(mateMatch[1], 10);
+        evalPawns = mateIn > 0 ? 10 : -10;
+        isMate = true;
+        mateInMoves = mateIn;
+      }
+    }
+
+    const pvIndex = line.indexOf(" pv ");
+    const pvPart = line.slice(pvIndex + 4).trim();
+    const pvUci = pvPart.split(/\s+/).filter((m) => /^[a-h][1-8][a-h][1-8]/.test(m));
+
+    return {
+      depth: parseInt(depthMatch[1], 10),
+      multipv: parseInt(multipvMatch[1], 10),
+      evalPawns,
+      isMate,
+      mateInMoves,
+      pvUci,
+    };
+  }
+
+  private buildContinuousSnapshot(
+    lineMap: Map<number, ContinuousPvLine>
+  ): ContinuousAnalysisSnapshot | null {
+    const lines = [...lineMap.values()].sort((a, b) => a.multipv - b.multipv);
+    if (lines.length === 0) return null;
+    const primary = lines[0]!;
+    return {
+      evalPawns: primary.evalPawns,
+      depth: primary.depth,
+      lines,
+    };
+  }
+
+  requestContinuousAnalysis(
+    fen: string,
+    onUpdate: (snapshot: ContinuousAnalysisSnapshot) => void,
+    opts?: { multipv?: number }
+  ): boolean {
+    if (!this.canRunIdleAnalysis()) return false;
+
+    this.stopContinuousAnalysis();
+    const sessionId = this.continuousSessionId;
+    const multipv = opts?.multipv ?? 3;
+    const lineMap = new Map<number, ContinuousPvLine>();
+    let goSent = false;
+
+    this.idleEvalHandler = (line) => {
+      if (sessionId !== this.continuousSessionId) return;
+      if (!goSent && line.startsWith("bestmove")) return;
+
+      if (line.startsWith("bestmove")) {
+        this.idleEvalHandler = null;
+        return;
+      }
+
+      if (!goSent) return;
+
+      const parsed = this.parseInfoLine(line);
+      if (parsed) {
+        lineMap.set(parsed.multipv, {
+          multipv: parsed.multipv,
+          evalPawns: parsed.evalPawns,
+          isMate: parsed.isMate || undefined,
+          mateInMoves: parsed.mateInMoves ?? undefined,
+          pvUci: parsed.pvUci,
+          depth: parsed.depth,
+        });
+        const snapshot = this.buildContinuousSnapshot(lineMap);
+        if (snapshot) onUpdate(snapshot);
+      }
+    };
+
+    this.sendCommand(`setoption name MultiPV value ${multipv}`);
+    this.sendCommand(`position fen ${fen}`);
+    this.sendCommand("go infinite");
+    goSent = true;
+    return true;
+  }
+
   requestIdleAnalysis(
     fen: string,
     depth: number,
     onLine: (line: string) => void
   ): void {
-    if (!this.ready || this.running || this.taskQueue.length > 0) return;
-    if (this.idleEvalHandler) {
-      this.stop();
-    }
+    if (!this.canRunIdleAnalysis()) return;
+    this.stopContinuousAnalysis();
     let goSent = false;
     this.idleEvalHandler = (line) => {
       if (!goSent && line.startsWith("bestmove")) return;
@@ -161,7 +291,7 @@ class StockfishClient {
           return;
         }
 
-        this.idleEvalHandler = null;
+        this.stopContinuousAnalysis();
         this.sendCommand("stop");
 
         let settled = false;
