@@ -4,7 +4,6 @@ import {
   useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from "react";
 import Link from "next/link";
@@ -52,6 +51,7 @@ import ReviewToolbar from "./game-reviewer/ReviewToolbar";
 import EngineModule from "./game-reviewer/EngineModule";
 import BoardNavigationBar from "./game-reviewer/BoardNavigationBar";
 import ReviewDetailsPanel from "./game-reviewer/ReviewDetailsPanel";
+import SaveGameDialog from "./game-reviewer/SaveGameDialog";
 import { isLegalUciMove } from "@/lib/continuous-analysis-utils";
 import {
   CLASSIFICATION_COLORS,
@@ -96,10 +96,11 @@ import { toast } from "sonner";
 import { saveGameToCloud } from "@/lib/supabase-storage";
 import { track } from "@/lib/track";
 import {
-  tryBuildCloudSavePayloadFromPgn,
-  inferSavePlayerNameFromContext,
-  parsePgnFileForGames,
-  playerNamesFromPgnHeaders,
+  buildArchiveSavePayloadFromPgn,
+  tryBuildCloudSavePayloadFromSide,
+  inferDefaultSaveSide,
+  isPlaceholderPlayerName,
+  type PgnGameSavePayload,
 } from "@/lib/pgn-import";
 import {
   buildAnnotatedPgn,
@@ -216,8 +217,8 @@ export default function GameReviewer({
     useState<AnalysisStrictnessId>(readStoredStrictness);
   const [premiumDepth, setPremiumDepth] = useState(readStoredPremiumDepth);
   const [coachTone, setCoachTone] = useState<CoachToneId>(readStoredCoachTone);
-  const [savePlayerName, setSavePlayerName] = useState("");
   const [saveBusy, setSaveBusy] = useState(false);
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
 
   const engineDepth = isPremium ? premiumDepth : FREE_ENGINE_DEPTH;
 
@@ -250,48 +251,24 @@ export default function GameReviewer({
     [pgn]
   );
 
-  const savePlayerOptions = useMemo(
-    () => playerNamesFromPgnHeaders(parsed?.headers ?? {}),
-    [parsed?.headers]
+  const defaultSaveSide = useMemo(
+    () =>
+      inferDefaultSaveSide({
+        pgn,
+        hint: reviewCloudSavePlayerHint,
+        playerColor: cloudSaveContext?.playerColor ?? null,
+        emailLocalPart: cloudSaveContext?.emailLocalPart ?? null,
+      }),
+    [
+      pgn,
+      reviewCloudSavePlayerHint,
+      cloudSaveContext?.playerColor,
+      cloudSaveContext?.emailLocalPart,
+    ]
   );
 
-  useEffect(() => {
-    const inferred = inferSavePlayerNameFromContext({
-      pgn,
-      hint: reviewCloudSavePlayerHint,
-      playerColor: cloudSaveContext?.playerColor ?? null,
-      emailLocalPart: cloudSaveContext?.emailLocalPart ?? null,
-    });
-    let chosen = inferred ?? "";
-    if (!chosen && authUserId) {
-      try {
-        const stored = localStorage
-          .getItem(`chess-avatar.games.savePlayerName.${authUserId}`)
-          ?.trim();
-        if (stored) {
-          const { games } = parsePgnFileForGames(pgn, stored);
-          if (games.length > 0) chosen = stored;
-        }
-      } catch {
-        // ignore
-      }
-    }
-    if (savePlayerOptions.length > 0) {
-      const norm = chosen.trim().toLowerCase();
-      const match = norm
-        ? savePlayerOptions.find((o) => o.toLowerCase() === norm)
-        : undefined;
-      chosen = match ?? "";
-    }
-    setSavePlayerName(chosen);
-  }, [
-    pgn,
-    reviewCloudSavePlayerHint,
-    authUserId,
-    cloudSaveContext?.playerColor,
-    cloudSaveContext?.emailLocalPart,
-    savePlayerOptions,
-  ]);
+  const saveDialogWhiteName = parsed?.headers?.White?.trim() ?? "?";
+  const saveDialogBlackName = parsed?.headers?.Black?.trim() ?? "?";
 
   const [cachedResult, setCachedResult] = useState<GameReviewResult | null>(null);
   const [cacheChecked, setCacheChecked] = useState(false);
@@ -649,7 +626,7 @@ export default function GameReviewer({
     ]
   );
 
-  const handleSaveGameToCloud = useCallback(async () => {
+  const handleSaveClick = useCallback(() => {
     if (!parsed) {
       toast.error(t.review.invalidPgn);
       return;
@@ -662,69 +639,90 @@ export default function GameReviewer({
       toast.error(t.review.saveToCloudSupabase);
       return;
     }
-    const name =
-      savePlayerName.trim() ||
-      inferSavePlayerNameFromContext({
-        pgn,
-        hint: reviewCloudSavePlayerHint,
-        playerColor: cloudSaveContext?.playerColor ?? null,
-        emailLocalPart: cloudSaveContext?.emailLocalPart ?? null,
-      })?.trim() ||
-      "";
-    if (!name) {
-      toast.error(t.review.saveToCloudNeedName);
-      return;
-    }
-    const exportPgn = buildAnnotatedPgn(parsed, effectiveMoves ?? [], {
-      explorationsByPly: explorationByPly,
-    });
-    const payload = tryBuildCloudSavePayloadFromPgn(exportPgn, name);
-    if (!payload) {
-      toast.error(t.review.saveToCloudNoMatch);
-      return;
-    }
-    setSaveBusy(true);
-    try {
-      const row = await saveGameToCloud(payload);
-      if (!row) {
-        toast.error(t.review.saveToCloudNeedLogin);
-        return;
-      }
-      toast.success(t.review.saveToCloudSuccess);
-      track("review_completed", { saved_to_cloud: true });
-      try {
-        if (authUserId) {
-          localStorage.setItem(
-            `chess-avatar.games.savePlayerName.${authUserId}`,
-            name
-          );
-        }
-      } catch {
-        // ignore
-      }
-      onSavedToGamesCloud?.();
-    } catch {
-      toast.error(t.review.saveToCloudFailed);
-    } finally {
-      setSaveBusy(false);
-    }
+    setSaveDialogOpen(true);
   }, [
     authUserId,
-    effectiveMoves,
-    explorationByPly,
-    onSavedToGamesCloud,
     parsed,
-    savePlayerName,
-    cloudSaveContext?.playerColor,
-    cloudSaveContext?.emailLocalPart,
-    reviewCloudSavePlayerHint,
-    t.review.saveToCloudFailed,
+    t.review.invalidPgn,
     t.review.saveToCloudNeedLogin,
-    t.review.saveToCloudNeedName,
-    t.review.saveToCloudNoMatch,
-    t.review.saveToCloudSuccess,
     t.review.saveToCloudSupabase,
   ]);
+
+  const executeSave = useCallback(
+    async (mode: { kind: "player"; side: "white" | "black" } | { kind: "archive" }) => {
+      if (!parsed) {
+        toast.error(t.review.invalidPgn);
+        return;
+      }
+      let payload: PgnGameSavePayload | null =
+        mode.kind === "archive"
+          ? buildArchiveSavePayloadFromPgn(pgn)
+          : tryBuildCloudSavePayloadFromSide(pgn, mode.side);
+      if (!payload) {
+        toast.error(t.review.saveToCloudFailed);
+        return;
+      }
+      if (effectiveMoves && effectiveMoves.length > 0) {
+        payload.pgn = buildAnnotatedPgn(parsed, effectiveMoves, {
+          explorationsByPly: explorationByPly,
+        });
+      }
+      setSaveBusy(true);
+      try {
+        const row = await saveGameToCloud({
+          opponentName: payload.opponentName,
+          opponentPlatform: payload.opponentPlatform,
+          result: payload.result,
+          resultType: payload.resultType,
+          resultMessage: payload.resultMessage,
+          playerColor: payload.playerColor,
+          pgn: payload.pgn,
+          finalFen: payload.finalFen,
+          movesCount: payload.movesCount,
+        });
+        if (!row) {
+          toast.error(t.review.saveToCloudNeedLogin);
+          return;
+        }
+        toast.success(t.review.saveToCloudSuccess);
+        track("review_completed", { saved_to_cloud: true });
+        if (mode.kind === "player" && authUserId) {
+          const headerName =
+            mode.side === "white"
+              ? parsed.headers.White?.trim()
+              : parsed.headers.Black?.trim();
+          if (headerName && !isPlaceholderPlayerName(headerName)) {
+            try {
+              localStorage.setItem(
+                `chess-avatar.games.savePlayerName.${authUserId}`,
+                headerName
+              );
+            } catch {
+              // ignore
+            }
+          }
+        }
+        setSaveDialogOpen(false);
+        onSavedToGamesCloud?.();
+      } catch {
+        toast.error(t.review.saveToCloudFailed);
+      } finally {
+        setSaveBusy(false);
+      }
+    },
+    [
+      authUserId,
+      effectiveMoves,
+      explorationByPly,
+      onSavedToGamesCloud,
+      parsed,
+      pgn,
+      t.review.invalidPgn,
+      t.review.saveToCloudFailed,
+      t.review.saveToCloudNeedLogin,
+      t.review.saveToCloudSuccess,
+    ]
+  );
 
   // Keep the selected ply in range when analysis resets or move list shrinks.
   useEffect(() => {
@@ -1146,46 +1144,20 @@ export default function GameReviewer({
       {!authUserId ? (
         <p className="text-[11px] text-amber-200/90">{t.review.saveToCloudNeedLogin}</p>
       ) : (
-        <div className="space-y-2">
-          {savePlayerOptions.length > 0 ? (
-            <select
-              value={savePlayerName}
-              onChange={(e) => setSavePlayerName(e.target.value)}
-              disabled={saveBusy}
-              className="flex h-9 w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/50 disabled:opacity-50"
-            >
-              <option value="">{t.review.saveToCloudSelectPlaceholder}</option>
-              {savePlayerOptions.map((n) => (
-                <option key={n} value={n}>
-                  {n}
-                </option>
-              ))}
-            </select>
+        <Button
+          type="button"
+          size="sm"
+          disabled={saveBusy}
+          onClick={handleSaveClick}
+          className="bg-cyan-700 hover:bg-cyan-600 text-white w-full"
+        >
+          {saveBusy ? (
+            <Loader2 className="h-4 w-4 animate-spin mr-2" />
           ) : (
-            <Input
-              value={savePlayerName}
-              onChange={(e) => setSavePlayerName(e.target.value)}
-              placeholder={t.review.saveToCloudPlaceholder}
-              className="h-9 bg-slate-900 border-slate-700 text-slate-100 text-sm"
-              autoComplete="off"
-              disabled={saveBusy}
-            />
+            <Save className="h-4 w-4 mr-2" />
           )}
-          <Button
-            type="button"
-            size="sm"
-            disabled={saveBusy}
-            onClick={() => void handleSaveGameToCloud()}
-            className="bg-cyan-700 hover:bg-cyan-600 text-white w-full"
-          >
-            {saveBusy ? (
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-            ) : (
-              <Save className="h-4 w-4 mr-2" />
-            )}
-            {t.review.saveToCloudButton}
-          </Button>
-        </div>
+          {t.review.saveToCloudButton}
+        </Button>
       )}
     </div>
   );
@@ -1221,6 +1193,7 @@ export default function GameReviewer({
     ) : null;
 
   return (
+    <>
     <ReviewLayout
       viewportOffset={viewportOffset}
       toolbar={
@@ -1244,6 +1217,9 @@ export default function GameReviewer({
           onRelaunch={handleRelaunchAnalysis}
           onDownloadAnnotated={handleDownloadAnnotated}
           showSavedInGamesList={showSavedInGamesList}
+          canSaveToGames={!showSavedInGamesList}
+          onSaveToGames={handleSaveClick}
+          saveBusy={saveBusy}
           continuousEnabled={continuous.enabled}
           onContinuousToggle={continuous.toggle}
         />
@@ -1363,10 +1339,21 @@ export default function GameReviewer({
           evalGraph={evalGraphPanel}
           savePanel={saveCloudPanel}
           showGraphTab={evalSeries.length > 1}
-          showSaveTab={!!authUserId}
+          showSaveTab
         />
       }
     />
+    <SaveGameDialog
+      open={saveDialogOpen}
+      onOpenChange={setSaveDialogOpen}
+      whiteName={saveDialogWhiteName}
+      blackName={saveDialogBlackName}
+      defaultSide={defaultSaveSide}
+      busy={saveBusy}
+      onSaveAs={(side) => void executeSave({ kind: "player", side })}
+      onSaveArchive={() => void executeSave({ kind: "archive" })}
+    />
+    </>
   );
 }
 

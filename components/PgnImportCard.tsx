@@ -5,11 +5,8 @@ import { useRouter } from "next/navigation";
 import {
   ClipboardPaste,
   FileUp,
-  Globe,
   Sparkles,
   AlertCircle,
-  Loader2,
-  Crown,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -17,9 +14,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useLanguage } from "@/lib/language-context";
-import { usePremium } from "@/hooks/usePremium";
-import { supabase } from "@/lib/supabase";
 import { parsePgnForReview } from "@/lib/game-review";
+import { inferImportSavePlayerHint } from "@/lib/pgn-import";
 import { SAMPLE_GAMES } from "@/lib/sample-games";
 import {
   REVIEW_PGN_SESSION_KEY,
@@ -34,18 +30,20 @@ export interface PgnImportCardProps {
    * being persisted to sessionStorage and navigated to `/review`. Lets a
    * parent host the GameReviewer inline (e.g. the unified `/games` hub).
    */
-  onPgnReady?: (pgn: string) => void;
+  onPgnReady?: (pgn: string, playerHint?: string | null) => void;
+  /** Used to prefill the save-player hint from localStorage when headers match. */
+  authUserId?: string | null;
 }
 
-export default function PgnImportCard({ onPgnReady }: PgnImportCardProps = {}) {
+export default function PgnImportCard({
+  onPgnReady,
+  authUserId = null,
+}: PgnImportCardProps = {}) {
   const { t, lang } = useLanguage();
   const router = useRouter();
-  const { isPremium } = usePremium();
 
   const [pasted, setPasted] = useState("");
-  const [url, setUrl] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   /**
@@ -71,8 +69,9 @@ export default function PgnImportCard({ onPgnReady }: PgnImportCardProps = {}) {
         return false;
       }
       clearReviewSessionContext();
+      const playerHint = inferImportSavePlayerHint(trimmed, authUserId);
       if (onPgnReady) {
-        onPgnReady(trimmed);
+        onPgnReady(trimmed, playerHint);
         return true;
       }
       try {
@@ -84,7 +83,7 @@ export default function PgnImportCard({ onPgnReady }: PgnImportCardProps = {}) {
       router.push("/review");
       return true;
     },
-    [onPgnReady, router, t.review.import]
+    [authUserId, onPgnReady, router, t.review.import]
   );
 
   const handlePasteSubmit = useCallback(() => {
@@ -117,58 +116,6 @@ export default function PgnImportCard({ onPgnReady }: PgnImportCardProps = {}) {
     [handleFile]
   );
 
-  const handleUrlSubmit = useCallback(async () => {
-    setError(null);
-    if (!url.trim()) {
-      setError(t.review.import.errorUrl);
-      return;
-    }
-    if (!supabase) {
-      setError(t.review.import.errorAuthRequired);
-      return;
-    }
-    setLoading(true);
-    try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        setError(t.review.import.errorAuthRequired);
-        return;
-      }
-      const res = await fetch("/api/pgn-fetch", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ url: url.trim() }),
-      });
-      const json = await res.json().catch(() => null);
-      // Per project rule: null-check API responses before parsing.
-      if (!res.ok || !json) {
-        const code = typeof json?.error === "string" ? json.error : null;
-        if (code === "FORBIDDEN") {
-          setError(t.review.import.errorPremiumOnly);
-        } else if (code === "UNSUPPORTED_HOST") {
-          setError(t.review.import.errorUnsupportedHost);
-        } else {
-          setError(t.review.import.errorFetch);
-        }
-        return;
-      }
-      if (typeof json.pgn !== "string") {
-        setError(t.review.import.errorFetch);
-        return;
-      }
-      goReview(json.pgn);
-    } catch {
-      setError(t.review.import.errorFetch);
-    } finally {
-      setLoading(false);
-    }
-  }, [goReview, url, t.review.import]);
-
   return (
     <Card className="bg-slate-900/60 border-cyan-500/20 backdrop-blur-sm">
       <CardHeader>
@@ -189,13 +136,6 @@ export default function PgnImportCard({ onPgnReady }: PgnImportCardProps = {}) {
             <TabsTrigger value="file" className="flex-1">
               <FileUp className="h-4 w-4 mr-2" />
               {t.review.import.tabFile}
-            </TabsTrigger>
-            <TabsTrigger value="url" className="flex-1">
-              <Globe className="h-4 w-4 mr-2" />
-              {t.review.import.tabUrl}
-              {!isPremium && (
-                <Crown className="h-3 w-3 ml-1 text-amber-400" />
-              )}
             </TabsTrigger>
           </TabsList>
 
@@ -238,41 +178,6 @@ export default function PgnImportCard({ onPgnReady }: PgnImportCardProps = {}) {
                 className="hidden"
               />
             </div>
-          </TabsContent>
-
-          <TabsContent value="url" className="mt-4 space-y-3">
-            {!isPremium && (
-              <Alert className="bg-amber-500/10 border-amber-500/40 text-amber-200">
-                <Crown className="h-4 w-4" />
-                <AlertDescription className="text-xs">
-                  {t.review.import.urlPremiumNote}
-                </AlertDescription>
-              </Alert>
-            )}
-            <input
-              type="url"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              placeholder="https://lichess.org/abcd1234"
-              className="w-full bg-slate-950 border border-slate-700 rounded-md p-3 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-cyan-500"
-            />
-            <Button
-              onClick={handleUrlSubmit}
-              disabled={!url.trim() || loading}
-              className="w-full bg-cyan-600 hover:bg-cyan-500 text-white"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  {t.review.import.fetching}
-                </>
-              ) : (
-                <>
-                  <Globe className="h-4 w-4 mr-2" />
-                  {t.review.import.fetchButton}
-                </>
-              )}
-            </Button>
           </TabsContent>
         </Tabs>
 

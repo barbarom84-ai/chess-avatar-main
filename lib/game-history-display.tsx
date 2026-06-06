@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
 import type { DbGame } from "@/lib/supabase-storage";
-import { isArenaBotVsBotGame } from "@/lib/supabase-storage";
+import { isArenaBotVsBotGame, isPgnArchiveGame } from "@/lib/supabase-storage";
 
 type GamesCopy = {
   arenaOutcomeWhite: string;
@@ -11,7 +11,24 @@ type GamesCopy = {
   resultBadgeYouWon: string;
   resultBadgeYouLost: string;
   resultBadgeYouDraw: string;
+  archiveBadgeWhiteWins?: string;
+  archiveBadgeBlackWins?: string;
+  archiveBadgeDraw?: string;
+  archiveBadgeUnknown?: string;
 };
+
+export type GameHistoryBadgeCopy = GamesCopy;
+
+function archiveResultLabel(
+  game: DbGame,
+  t: GamesCopy
+): string {
+  const raw = (game.result_message ?? "").trim().replace(/\u2013/g, "-");
+  if (raw === "1-0") return t.archiveBadgeWhiteWins ?? "1-0";
+  if (raw === "0-1") return t.archiveBadgeBlackWins ?? "0-1";
+  if (raw === "1/2-1/2" || raw === "½-½") return t.archiveBadgeDraw ?? "½-½";
+  return t.archiveBadgeUnknown ?? (raw || "*");
+}
 
 export function formatGameHistoryDate(dateString: string, lang: "fr" | "en"): string {
   return new Date(dateString).toLocaleDateString(lang === "fr" ? "fr-FR" : "en-US", {
@@ -56,6 +73,14 @@ export function renderGameResultBadge(game: DbGame, t: GamesCopy): ReactNode {
         </Badge>
         {outcomeBadge}
       </div>
+    );
+  }
+
+  if (isPgnArchiveGame(game)) {
+    return (
+      <Badge variant="outline" className="border-slate-500 text-slate-300">
+        {archiveResultLabel(game, t)}
+      </Badge>
     );
   }
 

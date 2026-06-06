@@ -22,6 +22,7 @@ import {
   getGamesStats,
   deleteGame,
   saveGameToCloud,
+  isPgnArchiveGame,
   type DbGame,
   isArenaBotVsBotGame,
   isPvpOnlineGame,
@@ -80,6 +81,7 @@ export default function GamesPage() {
   const [selectedGame, setSelectedGame] = useState<DbGame | null>(null);
   // Active PGN being reviewed inline (either a saved game or an ad-hoc import).
   const [reviewPgn, setReviewPgn] = useState<string | null>(null);
+  const [reviewPlayerHint, setReviewPlayerHint] = useState<string | null>(null);
   const [reviewSourceLabel, setReviewSourceLabel] = useState<string>("");
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -95,16 +97,19 @@ export default function GamesPage() {
     setSelectedGame(game);
     setReviewSourceLabel(matchupTitleFromStoredGame(game));
     setReviewPgn(game.pgn);
+    setReviewPlayerHint(null);
   };
 
-  const openReviewForAdhoc = (pgn: string) => {
+  const openReviewForAdhoc = (pgn: string, playerHint?: string | null) => {
     setSelectedGame(null);
     setReviewSourceLabel(t.review.import.adhocLabel);
     setReviewPgn(pgn);
+    setReviewPlayerHint(playerHint ?? null);
   };
 
   const closeReview = () => {
     setReviewPgn(null);
+    setReviewPlayerHint(null);
     setSelectedGame(null);
     setReviewSourceLabel("");
   };
@@ -131,6 +136,7 @@ export default function GamesPage() {
     game: DbGame,
     filter: "win" | "loss" | "draw"
   ): boolean {
+    if (isPgnArchiveGame(game)) return false;
     if (isArenaBotVsBotGame(game)) {
       if (filter === "win") return game.result_type === "arena_white_wins";
       if (filter === "loss") return game.result_type === "arena_black_wins";
@@ -535,9 +541,13 @@ export default function GamesPage() {
             onRequestUpgrade={() => setShowUpgrade(true)}
             showSavedInGamesList={!!selectedGame}
             authUserId={userId}
-            reviewCloudSavePlayerHint={null}
+            reviewCloudSavePlayerHint={reviewPlayerHint}
             cloudSaveContext={{
-              playerColor: selectedGame?.player_color,
+              playerColor:
+                selectedGame?.player_color === "white" ||
+                selectedGame?.player_color === "black"
+                  ? selectedGame.player_color
+                  : undefined,
               emailLocalPart: email?.split("@")[0] ?? null,
             }}
             onSavedToGamesCloud={() => {
@@ -578,7 +588,7 @@ export default function GamesPage() {
               {t.games.quickReviewSectionHint}
             </p>
           </div>
-          <PgnImportCard onPgnReady={openReviewForAdhoc} />
+          <PgnImportCard onPgnReady={openReviewForAdhoc} authUserId={userId} />
         </section>
 
         {/* Statistiques */}

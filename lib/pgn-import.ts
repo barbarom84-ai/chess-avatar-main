@@ -8,11 +8,29 @@ export type PgnGameSavePayload = {
   opponentPlatform?: string;
   result: "win" | "loss" | "draw";
   resultType: string;
-  playerColor: "white" | "black";
+  resultMessage?: string;
+  playerColor: "white" | "black" | "none";
   pgn: string;
   finalFen: string;
   movesCount: number;
 };
+
+export function isPlaceholderPlayerName(s: string): boolean {
+  const t = s.trim();
+  return !t || t === "?" || t === "-";
+}
+
+/** Readable « White vs Black » title from a single PGN block. */
+export function matchupTitleFromPgnBlock(block: string): string {
+  const white = parsePgnTagInBlock(block, "White")?.trim();
+  const black = parsePgnTagInBlock(block, "Black")?.trim();
+  const w = white && !isPlaceholderPlayerName(white) ? white : null;
+  const b = black && !isPlaceholderPlayerName(black) ? black : null;
+  if (w && b) return `${w} vs ${b}`;
+  if (w) return w;
+  if (b) return b;
+  return "?";
+}
 
 export interface PgnImportParseResult {
   games: PgnGameSavePayload[];
@@ -168,9 +186,90 @@ export function tryBuildCloudSavePayloadFromPgn(
   return games[0] ?? null;
 }
 
-function isPlaceholderPlayerName(s: string): boolean {
-  const t = s.trim();
-  return !t || t === "?" || t === "-";
+/**
+ * Build a cloud row when the user picks a side (White/Black) in the save dialog.
+ */
+export function tryBuildCloudSavePayloadFromSide(
+  raw: string,
+  side: "white" | "black"
+): PgnGameSavePayload | null {
+  const block = splitPgnDatabase(raw.trim())[0];
+  if (!block) return null;
+  try {
+    const chess = new Chess();
+    chess.loadPgn(block);
+    const h = chess.getHeaders();
+    const white = (h.White ?? "?").trim();
+    const black = (h.Black ?? "?").trim();
+    const playerIsWhite = side === "white";
+    const resultTag = (h.Result ?? "*").trim();
+    const winner = outcomeFromResultTag(resultTag);
+    const result = playerResult(playerIsWhite, winner);
+    let opponentName = (playerIsWhite ? black : white) || "?";
+    if (isPlaceholderPlayerName(opponentName)) {
+      opponentName = playerIsWhite ? "Black" : "White";
+    }
+
+    return {
+      opponentName,
+      opponentPlatform: "pgn",
+      result,
+      resultType: "pgn_import",
+      playerColor: side,
+      pgn: block,
+      finalFen: chess.fen(),
+      movesCount: chess.history().length,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/** Archive save — no player side; excluded from personal win/loss stats. */
+export function buildArchiveSavePayloadFromPgn(raw: string): PgnGameSavePayload | null {
+  const block = splitPgnDatabase(raw.trim())[0];
+  if (!block) return null;
+  try {
+    const chess = new Chess();
+    chess.loadPgn(block);
+    const h = chess.getHeaders();
+    const resultTag = (h.Result ?? "*").trim().replace(/\u2013/g, "-");
+    return {
+      opponentName: matchupTitleFromPgnBlock(block),
+      opponentPlatform: "pgn",
+      result: "draw",
+      resultType: "pgn_archive",
+      resultMessage: resultTag,
+      playerColor: "none",
+      pgn: block,
+      finalFen: chess.fen(),
+      movesCount: chess.history().length,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/** Pre-select White/Black in the save dialog when context allows. */
+export function inferDefaultSaveSide(params: {
+  pgn: string;
+  hint?: string | null;
+  playerColor?: "white" | "black" | null;
+  emailLocalPart?: string | null;
+}): "white" | "black" | null {
+  const name = inferSavePlayerNameFromContext(params);
+  if (!name) return params.playerColor ?? null;
+  const block = splitPgnDatabase(params.pgn.trim())[0];
+  if (!block) return params.playerColor ?? null;
+  const white = parsePgnTagInBlock(block, "White")?.trim() ?? "";
+  const black = parsePgnTagInBlock(block, "Black")?.trim() ?? "";
+  if (!isPlaceholderPlayerName(white) && white.toLowerCase() === name.toLowerCase()) {
+    return "white";
+  }
+  if (!isPlaceholderPlayerName(black) && black.toLowerCase() === name.toLowerCase()) {
+    return "black";
+  }
+  return params.playerColor ?? null;
 }
 
 /**
@@ -215,4 +314,27 @@ export function inferSavePlayerNameFromContext(params: {
   if (!isPlaceholderPlayerName(black) && isPlaceholderPlayerName(white)) return black;
 
   return null;
+}
+
+/**
+ * Hint for cloud save when importing a PGN into Game Review (single named player
+ * or a stored player name that matches the headers).
+ */
+export function inferImportSavePlayerHint(
+  pgn: string,
+  authUserId?: string | null
+): string | null {
+  const fromHeaders = inferSavePlayerNameFromContext({ pgn });
+  if (fromHeaders) return fromHeaders;
+  if (!authUserId) return null;
+  try {
+    const stored = localStorage
+      .getItem(`chess-avatar.games.savePlayerName.${authUserId}`)
+      ?.trim();
+    if (!stored) return null;
+    const { games } = parsePgnFileForGames(pgn, stored);
+    return games.length > 0 ? stored : null;
+  } catch {
+    return null;
+  }
 }

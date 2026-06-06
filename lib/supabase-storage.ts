@@ -33,7 +33,7 @@ export interface DbGame {
   result: 'win' | 'loss' | 'draw';
   result_type: string;
   result_message?: string;
-  player_color: 'white' | 'black';
+  player_color: 'white' | 'black' | 'none';
   pgn: string;
   final_fen: string;
   moves_count: number;
@@ -61,6 +61,10 @@ export function isArenaBotVsBotGame(game: Pick<DbGame, 'game_kind'>): boolean {
 
 export function isPvpOnlineGame(game: Pick<DbGame, 'game_kind'>): boolean {
   return game.game_kind === 'pvp_human_vs_human';
+}
+
+export function isPgnArchiveGame(game: Pick<DbGame, 'result_type'>): boolean {
+  return game.result_type === 'pgn_archive';
 }
 
 /**
@@ -666,7 +670,7 @@ export async function saveGameToCloud(gameData: {
   result: 'win' | 'loss' | 'draw';
   resultType: string;
   resultMessage?: string;
-  playerColor: 'white' | 'black';
+  playerColor: 'white' | 'black' | 'none';
   pgn: string;
   finalFen: string;
   movesCount: number;
@@ -823,7 +827,7 @@ export async function getGamesStats(): Promise<{
 
     const { data, error } = await supabase
       .from('games')
-      .select('result, game_kind')
+      .select('result, game_kind, result_type')
       .eq('user_id', user.id);
 
     if (error || !data) {
@@ -831,8 +835,9 @@ export async function getGamesStats(): Promise<{
     }
 
     const rows = data.filter(
-      (g: { game_kind?: string | null }) =>
-        (g.game_kind ?? 'human_vs_bot') !== 'arena_bot_vs_bot'
+      (g: { game_kind?: string | null; result_type?: string | null }) =>
+        (g.game_kind ?? 'human_vs_bot') !== 'arena_bot_vs_bot' &&
+        g.result_type !== 'pgn_archive'
     );
 
     const total = rows.length;

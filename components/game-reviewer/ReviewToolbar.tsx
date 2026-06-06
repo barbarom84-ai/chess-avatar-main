@@ -10,6 +10,7 @@ import {
   Loader2,
   Play,
   RotateCcw,
+  Save,
   Settings2,
   Square,
 } from "lucide-react";
@@ -45,6 +46,9 @@ interface ReviewToolbarProps {
   onRelaunch: () => void;
   onDownloadAnnotated: () => void;
   showSavedInGamesList: boolean;
+  canSaveToGames: boolean;
+  onSaveToGames: () => void;
+  saveBusy: boolean;
   continuousEnabled: boolean;
   onContinuousToggle: () => void;
 }
@@ -69,6 +73,9 @@ export default function ReviewToolbar({
   onRelaunch,
   onDownloadAnnotated,
   showSavedInGamesList,
+  canSaveToGames,
+  onSaveToGames,
+  saveBusy,
   continuousEnabled,
   onContinuousToggle,
 }: ReviewToolbarProps) {
@@ -221,23 +228,49 @@ export default function ReviewToolbar({
   return (
     <div className="rounded-lg border border-cyan-500/25 bg-slate-900/80 backdrop-blur-sm">
       <div className="flex flex-wrap items-center justify-between gap-2 px-2 py-1.5">
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          className="h-8 text-slate-300 hover:text-cyan-200 hover:bg-slate-800"
-          onClick={() => setSettingsOpen((o) => !o)}
-        >
-          <Settings2 className="h-3.5 w-3.5 mr-1.5" />
-          <span className="text-xs">
-            {settingsOpen ? t.review.layout.settingsCollapse : t.review.layout.settingsToggle}
-          </span>
-          {settingsOpen ? (
-            <ChevronUp className="h-3.5 w-3.5 ml-1" />
-          ) : (
-            <ChevronDown className="h-3.5 w-3.5 ml-1" />
+        <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            className="h-8 text-slate-300 hover:text-cyan-200 hover:bg-slate-800"
+            onClick={() => setSettingsOpen((o) => !o)}
+          >
+            <Settings2 className="h-3.5 w-3.5 mr-1.5" />
+            <span className="text-xs">
+              {settingsOpen ? t.review.layout.settingsCollapse : t.review.layout.settingsToggle}
+            </span>
+            {settingsOpen ? (
+              <ChevronUp className="h-3.5 w-3.5 ml-1" />
+            ) : (
+              <ChevronDown className="h-3.5 w-3.5 ml-1" />
+            )}
+          </Button>
+          {canSaveToGames && !showSavedInGamesList && (
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              className="h-8 px-2 text-cyan-300 hover:text-cyan-100 hover:bg-cyan-500/10"
+              onClick={onSaveToGames}
+              disabled={saveBusy}
+              title={t.review.saveToCloudButton}
+            >
+              {saveBusy ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin sm:mr-1" />
+              ) : (
+                <Save className="h-3.5 w-3.5 sm:mr-1" />
+              )}
+              <span className="text-xs">{t.review.saveToCloudButton}</span>
+            </Button>
           )}
-        </Button>
+          {showSavedInGamesList && (
+            <span className="text-xs text-emerald-300 flex items-center gap-1 px-1">
+              <Check className="h-3.5 w-3.5" />
+              <span>{t.review.savedInGamesList}</span>
+            </span>
+          )}
+        </div>
         <div className="flex-1 flex justify-end min-w-0">{renderActions()}</div>
       </div>
 

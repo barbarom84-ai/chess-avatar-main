@@ -19,9 +19,11 @@ import {
   formatGameHistoryDate,
   formatGameHistoryDuration,
   renderGameResultBadge,
+  type GameHistoryBadgeCopy,
 } from "@/lib/game-history-display";
 import {
   isArenaBotVsBotGame,
+  isPgnArchiveGame,
   type DbGame,
 } from "@/lib/supabase-storage";
 import {
@@ -157,7 +159,13 @@ export default function GameHistoryList({
                 <GameHistoryHeader
                   compact={compact}
                   game={game}
-                  gamesCopy={gamesCopy}
+                  gamesCopy={{
+                    ...gamesCopy,
+                    archiveBadgeWhiteWins: t.review.saveDialog.archiveBadgeWhiteWins,
+                    archiveBadgeBlackWins: t.review.saveDialog.archiveBadgeBlackWins,
+                    archiveBadgeDraw: t.review.saveDialog.archiveBadgeDraw,
+                    archiveBadgeUnknown: t.review.saveDialog.archiveBadgeUnknown,
+                  }}
                 />
                 <div
                   className={`${compact ? "grid grid-cols-2 gap-x-3 gap-y-1" : "flex items-center gap-4"} text-xs text-slate-400`}
@@ -175,7 +183,9 @@ export default function GameHistoryList({
                   </span>
                   <span className="capitalize">
                     {gamesCopy.color}:{" "}
-                    {isArenaBotVsBotGame(game)
+                    {isPgnArchiveGame(game)
+                      ? t.review.saveDialog.colorArchive
+                      : isArenaBotVsBotGame(game)
                       ? gamesCopy.colorArenaBots
                       : game.player_color === "white"
                         ? gamesCopy.white
@@ -232,15 +242,7 @@ function GameHistoryHeader({
 }: {
   compact: boolean;
   game: DbGame;
-  gamesCopy: {
-    arenaOutcomeWhite: string;
-    arenaOutcomeBlack: string;
-    arenaOutcomeDraw: string;
-    badgeArenaBot: string;
-    resultBadgeYouWon: string;
-    resultBadgeYouLost: string;
-    resultBadgeYouDraw: string;
-  };
+  gamesCopy: GameHistoryBadgeCopy;
 }) {
   return (
     <div className={`flex items-center gap-2 mb-1 ${compact ? "flex-wrap" : ""}`}>
