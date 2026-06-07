@@ -20,8 +20,35 @@ async function ensureEngine() {
     }
     return engine;
 }
+async function loadNnueIntoEngine(eng, bytes) {
+    if (nnueLoaded) {
+        self.postMessage('nnue-ready');
+        return;
+    }
+    self.postMessage('nnue-loading');
+    try {
+        eng.load_nnue_bytes(bytes);
+        nnueLoaded = true;
+        self.postMessage('nnue-ready');
+    }
+    catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        self.postMessage(`error ${msg}`);
+        self.postMessage('nnue-failed');
+    }
+}
 self.onmessage = (ev) => {
-    const line = ev.data.trim();
+    const data = ev.data;
+    if (typeof data === 'object' && data !== null && data.type === 'load-nnue') {
+        enqueue(async () => {
+            const eng = await ensureEngine();
+            await loadNnueIntoEngine(eng, new Uint8Array(data.buffer));
+        });
+        return;
+    }
+    if (typeof data !== 'string')
+        return;
+    const line = data.trim();
     if (!line)
         return;
     enqueue(async () => {
@@ -38,24 +65,13 @@ self.onmessage = (ev) => {
         if (line.startsWith('load-nnue ')) {
             const url = line.slice('load-nnue '.length).trim();
             if (url && !nnueLoaded) {
-                self.postMessage('nnue-loading');
                 const resp = await fetch(url);
                 if (!resp.ok) {
                     self.postMessage(`error NNUE fetch failed: ${resp.status}`);
                     self.postMessage('nnue-failed');
                     return;
                 }
-                const bytes = new Uint8Array(await resp.arrayBuffer());
-                try {
-                    eng.load_nnue_bytes(bytes);
-                    nnueLoaded = true;
-                    self.postMessage('nnue-ready');
-                }
-                catch (e) {
-                    const msg = e instanceof Error ? e.message : String(e);
-                    self.postMessage(`error ${msg}`);
-                    self.postMessage('nnue-failed');
-                }
+                await loadNnueIntoEngine(eng, new Uint8Array(await resp.arrayBuffer()));
             }
             else if (nnueLoaded) {
                 self.postMessage('nnue-ready');

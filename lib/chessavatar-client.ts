@@ -47,7 +47,6 @@ class ChessAvatarClient {
   private nnueLoading = false;
   private nnueReady = false;
   private nnueFailed = false;
-  private pendingNnueBlobUrl: string | null = null;
   private lastSearchStats: ChessAvatarSearchStats | null = null;
 
   acquire(): void {
@@ -118,13 +117,6 @@ class ChessAvatarClient {
     waiters.forEach((w) => w(true));
   }
 
-  private revokePendingNnueBlob(): void {
-    if (this.pendingNnueBlobUrl) {
-      URL.revokeObjectURL(this.pendingNnueBlobUrl);
-      this.pendingNnueBlobUrl = null;
-    }
-  }
-
   private beginNnueLoad(): void {
     if (!this.nnueUrl || !this.worker || this.nnueReady || this.nnueLoading) return;
     this.nnueLoading = true;
@@ -138,15 +130,10 @@ class ChessAvatarClient {
 
     try {
       const bytes = await loadNnueWithCache(url);
-      const blob = new Blob([new Uint8Array(bytes)], {
-        type: "application/octet-stream",
-      });
-      this.revokePendingNnueBlob();
-      const blobUrl = URL.createObjectURL(blob);
-      this.pendingNnueBlobUrl = blobUrl;
-      worker.postMessage(`load-nnue ${blobUrl}`);
+      const copy = new Uint8Array(bytes);
+      worker.postMessage({ type: "load-nnue", buffer: copy.buffer }, [copy.buffer]);
     } catch (err) {
-      console.warn("ChessAvatar NNUE cache miss, loading from URL:", err);
+      console.warn("ChessAvatar NNUE cache load failed, using URL:", err);
       worker.postMessage(`load-nnue ${url}`);
     }
   }
@@ -155,15 +142,6 @@ class ChessAvatarClient {
     if (this.worker || this.initStarted) return;
     this.initStarted = true;
     this.lastError = null;
-
-    if (!isWasmSimdSupported()) {
-      this.lastError = "WASM_SIMD_UNSUPPORTED";
-      const waiters = this.readyWaiters.splice(0);
-      waiters.forEach((w) => w(false));
-      const playWaiters = this.playReadyWaiters.splice(0);
-      playWaiters.forEach((w) => w(false));
-      return;
-    }
 
     try {
       const worker = new Worker(WORKER_URL, { type: "module" });
@@ -188,7 +166,6 @@ class ChessAvatarClient {
           this.nnueLoading = false;
           this.nnueReady = true;
           this.nnueFailed = false;
-          this.revokePendingNnueBlob();
           this.resolvePlayReadyWaiters();
           return;
         }
@@ -196,7 +173,6 @@ class ChessAvatarClient {
         if (message === "nnue-failed") {
           this.nnueLoading = false;
           this.nnueFailed = true;
-          this.revokePendingNnueBlob();
           this.resolvePlayReadyWaiters();
           return;
         }
@@ -227,8 +203,11 @@ class ChessAvatarClient {
 
       worker.onerror = (err) => {
         console.error("ChessAvatar worker error:", err);
-        this.lastError = "Worker failed to start";
+        this.lastError = isWasmSimdSupported()
+          ? "Worker failed to start"
+          : "WASM_SIMD_UNSUPPORTED";
         this.ready = false;
+        this.initStarted = false;
         const waiters = this.readyWaiters.splice(0);
         waiters.forEach((w) => w(false));
         const playWaiters = this.playReadyWaiters.splice(0);
@@ -258,7 +237,6 @@ class ChessAvatarClient {
     this.nnueLoading = false;
     this.nnueReady = false;
     this.nnueFailed = false;
-    this.revokePendingNnueBlob();
     this.lastSearchStats = null;
     if (this.worker) {
       this.worker.terminate();
