@@ -697,7 +697,7 @@ export const en = {
         auto: "Auto (Stockfish for strong bots)",
         chessavatar: "ChessAvatar",
         stockfish: "Stockfish",
-        hint: "Which engine calculates bot moves. Live eval still uses Stockfish. In Auto, bots rated ≥ 2600 Elo use Stockfish.",
+        hint: "Which engine calculates bot moves. Stockfish mimics profile style (openings, human-like slips); ChessAvatar plays pure engine chess. Live eval still uses Stockfish. In Auto, bots rated ≥ 2600 Elo use Stockfish. The NNUE network is cached locally.",
         active: "Playing",
         planned: "Planned",
         fallback: "fallback",
@@ -706,6 +706,7 @@ export const en = {
         chessAvatarNnueLoading: "Loading NNUE network…",
         chessAvatarReady: "ChessAvatar ready (NNUE)",
         chessAvatarError: "ChessAvatar unavailable",
+        chessAvatarSimdError: "WebAssembly SIMD not supported — use Stockfish",
         searchStatsHint: "Last ChessAvatar search: depth, nodes/sec, elapsed time",
         chessAvatarWeakShort: "Strong bot — prefer Stockfish",
         chessAvatarWeakHint:

@@ -126,8 +126,8 @@ function handleGo(eng, line) {
             movetime = Number(parts[++i]);
         }
     }
-    maxDepth = Math.min(20, Math.max(4, maxDepth));
-    movetime = Math.min(10_000, Math.max(200, movetime));
+    maxDepth = Math.min(22, Math.max(4, maxDepth));
+    movetime = Math.min(30_000, Math.max(200, movetime));
     const result = eng.go_search(maxDepth, movetime);
     for (const part of result.split('\n')) {
         const trimmed = part.trim();
