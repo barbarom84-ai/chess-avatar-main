@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useStockfish } from "@/hooks/useStockfish";
+import BotEngineSelector from "@/components/BotEngineSelector";
 import { usePremium } from "@/hooks/usePremium";
 import { useLanguage } from "@/lib/language-context";
 import {
@@ -89,8 +90,18 @@ export default function ArenaPlayoffMode({
 }) {
   const { t, lang } = useLanguage();
   const { userId } = usePremium();
-  const { isReady, getBestMove, stopThinking, getPositionEvaluation } =
-    useStockfish();
+  const {
+    isReady,
+    isStockfishReady,
+    isChessAvatarReady,
+    isChessAvatarPlayReady,
+    isChessAvatarNnueLoading,
+    chessAvatarSearchStats,
+    lastBotEngineUsed,
+    getBestMove,
+    stopThinking,
+    getPositionEvaluation,
+  } = useStockfish();
 
   const [rawOptions, setRawOptions] = useState<
     import("@/lib/arena-types").ProfileOption[]
@@ -669,6 +680,23 @@ export default function ArenaPlayoffMode({
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 px-3 pb-3">
+            <BotEngineSelector
+              chessAvatarReady={isChessAvatarReady}
+              chessAvatarPlayReady={isChessAvatarPlayReady}
+              chessAvatarNnueLoading={isChessAvatarNnueLoading}
+              chessAvatarSearchStats={chessAvatarSearchStats}
+              stockfishReady={isStockfishReady}
+              lastBotEngineUsed={lastBotEngineUsed}
+              botElo={Math.max(
+                activeSides.white?.config.elo ?? 0,
+                activeSides.black?.config.elo ?? 0
+              ) || undefined}
+              botDifficulty={Math.max(
+                activeSides.white?.config.difficulty ?? 0,
+                activeSides.black?.config.difficulty ?? 0
+              ) || undefined}
+              compact
+            />
             {clock && activeSides.white && activeSides.black && (
               <ArenaBotClockBar
                 clock={clock}

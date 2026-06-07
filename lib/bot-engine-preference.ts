@@ -1,0 +1,98 @@
+export type BotEngineId = "chessavatar" | "stockfish" | "auto";
+export type BotEngineRuntime = "chessavatar" | "stockfish";
+
+export type BotEngineContext = {
+  elo?: number;
+  difficulty?: number;
+};
+
+export const BOT_ENGINE_STORAGE_KEY = "chessavatar.botEngine";
+
+/** Elo threshold above which Stockfish is preferred in Auto mode. */
+export const MASTER_BOT_ELO = 2600;
+
+const CHANGE_EVENT = "chessavatar-bot-engine-change";
+
+export function getBotEnginePreference(): BotEngineId {
+  if (typeof window === "undefined") return "auto";
+  const stored = localStorage.getItem(BOT_ENGINE_STORAGE_KEY);
+  if (stored === "chessavatar" || stored === "stockfish" || stored === "auto") {
+    return stored;
+  }
+  return "auto";
+}
+
+export function setBotEnginePreference(value: BotEngineId): void {
+  localStorage.setItem(BOT_ENGINE_STORAGE_KEY, value);
+  window.dispatchEvent(new CustomEvent(CHANGE_EVENT, { detail: value }));
+}
+
+export function subscribeBotEnginePreference(onChange: () => void): () => void {
+  const handler = () => onChange();
+  window.addEventListener(CHANGE_EVENT, handler);
+  window.addEventListener("storage", handler);
+  return () => {
+    window.removeEventListener(CHANGE_EVENT, handler);
+    window.removeEventListener("storage", handler);
+  };
+}
+
+export function isMasterBot(ctx?: BotEngineContext): boolean {
+  if (!ctx) return false;
+  return (ctx.elo ?? 0) >= MASTER_BOT_ELO || (ctx.difficulty ?? 0) >= 5;
+}
+
+/** Which engine will play bot moves given preference and worker readiness. */
+export function resolveBotEngine(
+  preference: BotEngineId,
+  chessAvatarReady: boolean,
+  stockfishReady: boolean,
+  chessAvatarPlayReady = chessAvatarReady,
+  ctx?: BotEngineContext
+): BotEngineRuntime | null {
+  const master = isMasterBot(ctx);
+
+  if (preference === "chessavatar") {
+    if (chessAvatarPlayReady) return "chessavatar";
+    if (stockfishReady) return "stockfish";
+    return null;
+  }
+  if (preference === "stockfish") {
+    if (stockfishReady) return "stockfish";
+    if (chessAvatarPlayReady) return "chessavatar";
+    return null;
+  }
+
+  // Auto: master-level bots use Stockfish (WASM ChessAvatar ~d9–12 is far below 2600+ Elo).
+  if (master && stockfishReady) return "stockfish";
+  if (chessAvatarPlayReady) return "chessavatar";
+  if (stockfishReady) return "stockfish";
+  return null;
+}
+
+export function isBotEngineFallback(
+  preference: BotEngineId,
+  runtime: BotEngineRuntime,
+  chessAvatarReady: boolean,
+  stockfishReady: boolean,
+  chessAvatarPlayReady = chessAvatarReady,
+  ctx?: BotEngineContext
+): boolean {
+  const master = isMasterBot(ctx);
+  const primary =
+    preference === "auto"
+      ? master && stockfishReady
+        ? "stockfish"
+        : chessAvatarPlayReady
+          ? "chessavatar"
+          : "stockfish"
+      : preference;
+  return primary !== runtime;
+}
+
+export function shouldWarnChessAvatarWeak(
+  preference: BotEngineId,
+  ctx?: BotEngineContext
+): boolean {
+  return preference === "chessavatar" && isMasterBot(ctx);
+}

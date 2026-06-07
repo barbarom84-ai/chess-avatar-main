@@ -23,6 +23,7 @@ import EngineConfigPanel from "./EngineConfigPanel";
 import GameResultModal from "./GameResultModal";
 import PromotionDialog from "./PromotionDialog";
 import { useStockfish } from "@/hooks/useStockfish";
+import BotEngineSelector from "@/components/BotEngineSelector";
 import { saveGameToCloud } from "@/lib/supabase-storage";
 import { track } from "@/lib/track";
 import { useLanguage } from "@/lib/language-context";
@@ -196,6 +197,13 @@ export default function PlayableChessboard({
 
   const {
     isReady,
+    isBotEngineReady,
+    isStockfishReady,
+    isChessAvatarReady,
+    isChessAvatarPlayReady,
+    isChessAvatarNnueLoading,
+    chessAvatarSearchStats,
+    lastBotEngineUsed,
     isThinking,
     getBestMove,
     getBestMoveAndEval,
@@ -484,10 +492,10 @@ export default function PlayableChessboard({
 
   // Si l'IA joue les blancs, elle commence
   useEffect(() => {
-    if (isArchiveMode || !isReady || playerColor !== "black" || gameOver) return;
+    if (isArchiveMode || !isBotEngineReady() || playerColor !== "black" || gameOver) return;
     if (gameRef.current.turn() !== "w") return;
     makeAIMove();
-  }, [isArchiveMode, isReady, playerColor, gameOver]);
+  }, [isArchiveMode, isBotEngineReady, isChessAvatarPlayReady, playerColor, gameOver]);
 
   // Synchroniser automatiquement l'orientation avec la couleur choisie par le joueur.
   // Si le joueur choisit noir, les noirs apparaissent en bas.
@@ -518,7 +526,7 @@ export default function PlayableChessboard({
   };
 
   const makeAIMove = () => {
-    if (isArchiveMode || gameOver || !isReady) return;
+    if (isArchiveMode || gameOver || !isBotEngineReady()) return;
     const g = gameRef.current;
     const hist = moveHistoryRef.current;
 
@@ -974,7 +982,7 @@ export default function PlayableChessboard({
     resetForcedLine();
 
     // Si l'IA joue les blancs, elle commence
-    if (playerColor === 'black' && isReady) {
+    if (playerColor === "black" && isBotEngineReady()) {
       setTimeout(makeAIMove, 500);
     }
   };
@@ -1205,6 +1213,7 @@ export default function PlayableChessboard({
   return (
     <div className="space-y-4">
       {/* Header compact avec actions */}
+      <div className="space-y-2">
       <div className="flex items-center justify-between flex-wrap gap-3">
         {/* Gauche: Statut */}
         <div className="flex items-center gap-3">
@@ -1296,6 +1305,20 @@ export default function PlayableChessboard({
             </Button>
           )}
         </div>
+      </div>
+
+      {!isArchiveMode && (
+        <BotEngineSelector
+          chessAvatarReady={isChessAvatarReady}
+          chessAvatarPlayReady={isChessAvatarPlayReady}
+          chessAvatarNnueLoading={isChessAvatarNnueLoading}
+          chessAvatarSearchStats={chessAvatarSearchStats}
+          stockfishReady={isStockfishReady}
+          lastBotEngineUsed={lastBotEngineUsed}
+          botElo={currentConfig.elo}
+          botDifficulty={currentConfig.difficulty}
+        />
+      )}
       </div>
 
       {/* Modal de configuration - COMPACT (masqué en consultation archive) */}

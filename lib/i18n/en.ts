@@ -692,6 +692,25 @@ export const en = {
       reviewMoveAtStart: "Starting position",
       reviewMoveAt: "Move {n} / {total}",
       onlinePvpCta: "Play a friend online (PvP)",
+      botEngine: {
+        label: "Bot engine",
+        auto: "Auto (Stockfish for strong bots)",
+        chessavatar: "ChessAvatar",
+        stockfish: "Stockfish",
+        hint: "Which engine calculates bot moves. Live eval still uses Stockfish. In Auto, bots rated ≥ 2600 Elo use Stockfish.",
+        active: "Playing",
+        planned: "Planned",
+        fallback: "fallback",
+        unavailable: "Unavailable",
+        chessAvatarLoading: "Loading ChessAvatar…",
+        chessAvatarNnueLoading: "Loading NNUE network…",
+        chessAvatarReady: "ChessAvatar ready (NNUE)",
+        chessAvatarError: "ChessAvatar unavailable",
+        searchStatsHint: "Last ChessAvatar search: depth, nodes/sec, elapsed time",
+        chessAvatarWeakShort: "Strong bot — prefer Stockfish",
+        chessAvatarWeakHint:
+          "ChessAvatar in WASM reaches ~depth 10–12 (≈1800–2200 Elo). For a 2600+ Elo bot, choose Stockfish or Auto.",
+      },
     },
 
     playOnline: {

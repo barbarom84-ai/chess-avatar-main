@@ -27,25 +27,77 @@ import {
   stockfishGetBestMoveForFen,
   stockfishGetPositionEvaluation,
 } from "@/lib/stockfish-client";
+import {
+  chessAvatarClient,
+  chessAvatarGetBestMove,
+  webSearchLimits,
+  type ChessAvatarSearchStats,
+} from "@/lib/chessavatar-client";
+import {
+  getBotEnginePreference,
+  resolveBotEngine,
+  type BotEngineContext,
+  type BotEngineRuntime,
+} from "@/lib/bot-engine-preference";
 
 const DEBUG = typeof window !== "undefined" && (window as unknown as { __CHESS_DEBUG?: boolean }).__CHESS_DEBUG;
 
+function botEngineContext(config: EngineConfig): BotEngineContext {
+  return { elo: config.elo, difficulty: config.difficulty };
+}
+
 export function useStockfish() {
   const [isReady, setIsReady] = useState(false);
+  const [isChessAvatarReady, setIsChessAvatarReady] = useState(false);
+  const [isChessAvatarPlayReady, setIsChessAvatarPlayReady] = useState(false);
+  const [isChessAvatarNnueLoading, setIsChessAvatarNnueLoading] = useState(false);
+  const [chessAvatarSearchStats, setChessAvatarSearchStats] =
+    useState<ChessAvatarSearchStats | null>(null);
+  const [lastBotEngineUsed, setLastBotEngineUsed] = useState<BotEngineRuntime | null>(
+    null
+  );
   const [isThinking, setIsThinking] = useState(false);
   const [currentEval, setCurrentEval] = useState<number | null>(null);
   const [remainingForcedMoves, setRemainingForcedMoves] = useState<string[]>([]);
 
   useEffect(() => {
     stockfishClient.acquire();
+    chessAvatarClient.acquire();
     let cancelled = false;
-    void stockfishClient.waitUntilReady().then((ok) => {
-      if (!cancelled) setIsReady(ok);
+
+    const syncReady = () => {
+      if (cancelled) return;
+      setIsChessAvatarReady(chessAvatarClient.isReady);
+      setIsChessAvatarPlayReady(chessAvatarClient.isPlayReady);
+      setIsChessAvatarNnueLoading(chessAvatarClient.isNnueLoading);
+      setChessAvatarSearchStats(chessAvatarClient.searchStats);
+    };
+
+    void Promise.all([
+      stockfishClient.waitUntilReady(),
+      chessAvatarClient.waitUntilReady(),
+      chessAvatarClient.waitUntilPlayReady(),
+    ]).then(([stockfishOk, chessAvatarOk, chessAvatarPlayOk]) => {
+      if (!cancelled) {
+        setIsReady(stockfishOk);
+        setIsChessAvatarReady(chessAvatarOk);
+        setIsChessAvatarPlayReady(chessAvatarPlayOk);
+        syncReady();
+      }
     });
+
+    const poll = setInterval(syncReady, 500);
+
     return () => {
       cancelled = true;
+      clearInterval(poll);
       stockfishClient.release();
+      chessAvatarClient.release();
       setIsReady(false);
+      setIsChessAvatarReady(false);
+      setIsChessAvatarPlayReady(false);
+      setIsChessAvatarNnueLoading(false);
+      setChessAvatarSearchStats(null);
     };
   }, []);
 
@@ -53,13 +105,24 @@ export function useStockfish() {
     stockfishClient.sendCommand(command);
   }, []);
 
+  const isBotEngineReady = useCallback((): boolean => {
+    const preference = getBotEnginePreference();
+    const resolved = resolveBotEngine(
+      preference,
+      isChessAvatarReady,
+      isReady,
+      isChessAvatarPlayReady
+    );
+    return resolved !== null;
+  }, [isReady, isChessAvatarReady, isChessAvatarPlayReady]);
+
   const getBestMove = (
     fen: string,
     config: EngineConfig,
     onMove: (move: string) => void,
     options?: { moveHistoryUci: string[]; playerColor: "white" | "black" }
   ) => {
-    if (!isReady) return;
+    if (!isBotEngineReady()) return;
 
     const moveHistoryUci = options?.moveHistoryUci ?? [];
     const playerColor = options?.playerColor ?? "white";
@@ -128,22 +191,40 @@ export function useStockfish() {
 
     const threads = Math.max(2, config.threads);
     const skill = skillLevelFromDifficulty(config.difficulty);
-    const baseMultiPv = multiPvCountForDifficulty(config.difficulty);
-    const hbInterval =
-      config.humanBlunderInterval === 0
-        ? 0
-        : (config.humanBlunderInterval ?? DEFAULT_HUMAN_BLUNDER_INTERVAL);
-    const botPlaysWhite = playerColor === "black";
-    const humanBlunder = shouldPlayHumanBlunderMove(
-      moveHistoryUci,
-      botPlaysWhite,
-      hbInterval
+    const hashMb = 64;
+    const botCtx = botEngineContext(config);
+    const searchLimits = webSearchLimits(
+      config.depth,
+      config.timeControl,
+      config.difficulty,
+      config.elo
     );
-    const multiPv = humanBlunder ? Math.max(baseMultiPv, 4) : baseMultiPv;
 
-    void stockfishClient
-      .enqueue<string>((ctx) => {
+    const playWithChessAvatar = () =>
+      chessAvatarGetBestMove(fen, {
+        skillLevel: skill,
+        depth: searchLimits.depth,
+        movetime: searchLimits.movetime,
+        hashMb,
+        difficulty: config.difficulty,
+        elo: config.elo,
+      });
+
+    const playWithStockfish = () =>
+      stockfishClient.enqueue<string>((ctx) => {
         const lineMoves = new Map<number, string>();
+        const baseMultiPv = multiPvCountForDifficulty(config.difficulty);
+        const hbInterval =
+          config.humanBlunderInterval === 0
+            ? 0
+            : (config.humanBlunderInterval ?? DEFAULT_HUMAN_BLUNDER_INTERVAL);
+        const botPlaysWhite = playerColor === "black";
+        const humanBlunder = shouldPlayHumanBlunderMove(
+          moveHistoryUci,
+          botPlaysWhite,
+          hbInterval
+        );
+        const multiPv = humanBlunder ? Math.max(baseMultiPv, 4) : baseMultiPv;
 
         const resetEngineOptions = () => {
           ctx.send("setoption name MultiPV value 1");
@@ -194,9 +275,48 @@ export function useStockfish() {
           ctx.send("setoption name MultiPV value 1");
         }
         ctx.send(`position fen ${fen}`);
-        ctx.send(`go depth ${config.depth} movetime ${config.timeControl}`);
-        setTimeout(() => ctx.stop(), 35_000);
-      })
+        ctx.send(
+          `go depth ${searchLimits.depth} movetime ${searchLimits.movetime}`
+        );
+        setTimeout(() => ctx.stop(), searchLimits.movetime + 5000);
+      });
+
+    const botMovePromise = (() => {
+      const preference = getBotEnginePreference();
+      const resolved = resolveBotEngine(
+        preference,
+        isChessAvatarReady,
+        isReady,
+        isChessAvatarPlayReady,
+        botCtx
+      );
+
+      const markChessAvatar = (move: string) => {
+        setLastBotEngineUsed("chessavatar");
+        return move;
+      };
+      const markStockfish = (move: string) => {
+        setLastBotEngineUsed("stockfish");
+        return move;
+      };
+
+      if (resolved === "chessavatar") {
+        return playWithChessAvatar()
+          .then(markChessAvatar)
+          .catch(() => {
+            if (preference === "stockfish" || !isReady) throw new Error("Bot move failed");
+            return playWithStockfish().then(markStockfish);
+          });
+      }
+
+      if (resolved === "stockfish") {
+        return playWithStockfish().then(markStockfish);
+      }
+
+      return Promise.reject(new Error("No bot engine ready"));
+    })();
+
+    void botMovePromise
       .then((move) => {
         setIsThinking(false);
         onMove(move);
@@ -204,7 +324,7 @@ export function useStockfish() {
       .catch(() => setIsThinking(false));
   };
 
-  const getPersonaStyleMove = useCallback(
+  const getPersonaStyleMoveWithStockfish = useCallback(
     (
       fen: string,
       config: EngineConfig,
@@ -212,12 +332,12 @@ export function useStockfish() {
     ): Promise<string> => {
       const depth = Math.min(opts?.depth ?? Math.min(config.depth, 14), 18);
       const movetime = Math.min(opts?.movetime ?? config.timeControl, 1200);
-      const threads = Math.max(2, config.threads);
       const skill = skillLevelFromDifficulty(config.difficulty);
+      const threads = Math.max(2, config.threads);
       const baseMulti = multiPvCountForDifficulty(config.difficulty);
       const multiPv = Math.max(2, baseMulti);
 
-      return stockfishClient.enqueue((ctx) => {
+      return stockfishClient.enqueue<string>((ctx) => {
         const lineMoves = new Map<number, string>();
 
         const resetEngineOptions = () => {
@@ -261,9 +381,71 @@ export function useStockfish() {
         ctx.send(`position fen ${fen}`);
         ctx.send(`go depth ${depth} movetime ${movetime}`);
         setTimeout(() => ctx.stop(), 35_000);
+      }).then((move) => {
+        setLastBotEngineUsed("stockfish");
+        return move;
       });
     },
     [isReady]
+  );
+
+  const getPersonaStyleMove = useCallback(
+    (
+      fen: string,
+      config: EngineConfig,
+      opts?: { depth?: number; movetime?: number }
+    ): Promise<string> => {
+      const depth = Math.min(opts?.depth ?? Math.min(config.depth, 14), 18);
+      const movetime = Math.min(opts?.movetime ?? config.timeControl, 1200);
+      const skill = skillLevelFromDifficulty(config.difficulty);
+      const hashMb = 64;
+      const preference = getBotEnginePreference();
+      const botCtx = botEngineContext(config);
+      const personaLimits = webSearchLimits(
+        depth,
+        movetime,
+        config.difficulty,
+        config.elo
+      );
+      const resolved = resolveBotEngine(
+        preference,
+        isChessAvatarReady,
+        isReady,
+        isChessAvatarPlayReady,
+        botCtx
+      );
+
+      if (resolved === "chessavatar") {
+        return chessAvatarGetBestMove(fen, {
+          skillLevel: skill,
+          depth: personaLimits.depth,
+          movetime: personaLimits.movetime,
+          hashMb,
+          difficulty: config.difficulty,
+          elo: config.elo,
+        })
+          .then((move) => {
+            setLastBotEngineUsed("chessavatar");
+            return move;
+          })
+          .catch(() => {
+            if (preference === "stockfish" || !isReady) {
+              return Promise.reject(new Error("ChessAvatar move failed"));
+            }
+            return stockfishGetBestMoveForFen(fen, depth).then((move) => {
+              setLastBotEngineUsed("stockfish");
+              return move;
+            });
+          });
+      }
+
+      if (resolved === "stockfish") {
+        return getPersonaStyleMoveWithStockfish(fen, config, { depth, movetime });
+      }
+
+      return Promise.reject(new Error("No bot engine ready"));
+    },
+    [isReady, isChessAvatarReady, isChessAvatarPlayReady, getPersonaStyleMoveWithStockfish]
   );
 
   const getBestMoveForFen = useCallback(
@@ -324,13 +506,21 @@ export function useStockfish() {
 
   const stopThinking = useCallback(() => {
     stockfishClient.stop();
+    chessAvatarClient.stop();
     setIsThinking(false);
   }, []);
 
   const resetForcedLine = () => setRemainingForcedMoves([]);
 
   return {
-    isReady,
+    isReady: isReady || isChessAvatarReady,
+    isBotEngineReady,
+    isStockfishReady: isReady,
+    isChessAvatarReady,
+    isChessAvatarPlayReady,
+    isChessAvatarNnueLoading,
+    chessAvatarSearchStats,
+    lastBotEngineUsed,
     isThinking,
     currentEval,
     getBestMove,

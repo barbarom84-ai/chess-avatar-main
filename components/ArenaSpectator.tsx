@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { useStockfish } from "@/hooks/useStockfish";
+import BotEngineSelector from "@/components/BotEngineSelector";
 import { saveArenaMatchToCloud } from "@/lib/arena-cloud-save";
 import {
   applyArenaCaps,
@@ -71,6 +72,12 @@ export default function ArenaSpectator({
   const { userId } = usePremium();
   const {
     isReady,
+    isStockfishReady,
+    isChessAvatarReady,
+    isChessAvatarPlayReady,
+    isChessAvatarNnueLoading,
+    chessAvatarSearchStats,
+    lastBotEngineUsed,
     getBestMove,
     stopThinking,
     getPositionEvaluation,
@@ -650,6 +657,18 @@ export default function ArenaSpectator({
                   </div>
                 </div>
               </div>
+
+              <BotEngineSelector
+                chessAvatarReady={isChessAvatarReady}
+                chessAvatarPlayReady={isChessAvatarPlayReady}
+                chessAvatarNnueLoading={isChessAvatarNnueLoading}
+                chessAvatarSearchStats={chessAvatarSearchStats}
+                stockfishReady={isStockfishReady}
+                lastBotEngineUsed={lastBotEngineUsed}
+                botElo={Math.max(whiteConfig?.elo ?? 0, blackConfig?.elo ?? 0) || undefined}
+                botDifficulty={Math.max(whiteConfig?.difficulty ?? 0, blackConfig?.difficulty ?? 0) || undefined}
+                compact
+              />
 
               {isSupabaseConfigured && userId ? (
                 <div className="flex items-center justify-between gap-3 rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-2.5">
