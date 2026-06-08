@@ -7,6 +7,7 @@ import {
   subscribeBotEnginePreference,
   type BotEngineId,
 } from "@/lib/bot-engine-preference";
+import { scheduleBotEnginePreferenceSync } from "@/lib/bot-engine-account-sync";
 
 export function useBotEnginePreference(): [
   BotEngineId,
@@ -20,6 +21,7 @@ export function useBotEnginePreference(): [
 
   const setPreference = useCallback((value: BotEngineId) => {
     setBotEnginePreference(value);
+    scheduleBotEnginePreferenceSync(value);
   }, []);
 
   return [preference, setPreference];

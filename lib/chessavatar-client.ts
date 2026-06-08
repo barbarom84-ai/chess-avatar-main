@@ -13,6 +13,7 @@ import {
   multiPvCountForDifficulty,
   pickPersonaBiasedMove,
 } from "@/lib/persona-engine-params";
+import { trackChessAvatarTelemetry } from "@/lib/chessavatar-telemetry";
 
 export { isWasmSimdSupported } from "@/lib/wasm-simd";
 
@@ -54,6 +55,7 @@ class ChessAvatarClient {
   private nnueReady = false;
   private nnueFailed = false;
   private lastSearchStats: ChessAvatarSearchStats | null = null;
+  private engineVersionLabel: string | null = null;
 
   acquire(): void {
     this.refCount += 1;
@@ -94,6 +96,18 @@ class ChessAvatarClient {
 
   get searchStats(): ChessAvatarSearchStats | null {
     return this.lastSearchStats;
+  }
+
+  /** Parsed from UCI `id name` (e.g. "ChessAvatar 0.1.0"). */
+  get engineVersion(): string | null {
+    return this.engineVersionLabel;
+  }
+
+  private parseUciIdentity(message: string): void {
+    for (const line of message.split("\n")) {
+      const match = line.match(/^id name (.+)/);
+      if (match) this.engineVersionLabel = match[1].trim();
+    }
   }
 
   setNnueUrl(url: string): void {
@@ -179,6 +193,7 @@ class ChessAvatarClient {
         if (message === "nnue-failed") {
           this.nnueLoading = false;
           this.nnueFailed = true;
+          trackChessAvatarTelemetry("chessavatar_nnue_failed");
           this.resolvePlayReadyWaiters();
           return;
         }
@@ -189,6 +204,7 @@ class ChessAvatarClient {
         }
 
         if (message.includes("uciok")) {
+          this.parseUciIdentity(message);
           worker.postMessage("isready");
           return;
         }
@@ -209,9 +225,12 @@ class ChessAvatarClient {
 
       worker.onerror = (err) => {
         console.error("ChessAvatar worker error:", err);
-        this.lastError = isWasmSimdSupported()
-          ? "Worker failed to start"
-          : "WASM_SIMD_UNSUPPORTED";
+        const simd = isWasmSimdSupported();
+        this.lastError = simd ? "Worker failed to start" : "WASM_SIMD_UNSUPPORTED";
+        trackChessAvatarTelemetry("chessavatar_init_failed", {
+          reason: this.lastError,
+          simdSupported: simd,
+        });
         this.ready = false;
         this.initStarted = false;
         const waiters = this.readyWaiters.splice(0);
@@ -244,6 +263,7 @@ class ChessAvatarClient {
     this.nnueReady = false;
     this.nnueFailed = false;
     this.lastSearchStats = null;
+    this.engineVersionLabel = null;
     if (this.worker) {
       this.worker.terminate();
       this.worker = null;

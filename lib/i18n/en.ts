@@ -708,6 +708,7 @@ export const en = {
         chessAvatarError: "ChessAvatar unavailable",
         chessAvatarSimdError: "WebAssembly SIMD not supported — use Stockfish",
         searchStatsHint: "Last ChessAvatar search: depth, nodes/sec, elapsed time",
+        engineVersionHint: "ChessAvatar WASM engine version (UCI id name)",
         personaOnboarding:
           "Stockfish mimics profile style; ChessAvatar plays engine moves with persona variance on lower levels.",
         dismissOnboarding: "Dismiss hint",

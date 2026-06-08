@@ -9,6 +9,7 @@ import { trackActivity } from "@/lib/activity-client";
 import { useAnalyticsIdentify } from "@/hooks/useAnalyticsIdentify";
 import { usePresence } from "@/hooks/usePresence";
 import PaymentSuccessTracker from "@/components/PaymentSuccessTracker";
+import BotEnginePreferenceSync from "@/components/BotEnginePreferenceSync";
 
 /** Routes that do not need presence or heavy auth side-effects. */
 function isLightweightRoute(pathname: string | null): boolean {
@@ -98,6 +99,7 @@ export default function MonitoringProviders() {
       <Suspense fallback={null}>
         <PaymentSuccessTracker />
       </Suspense>
+      <BotEnginePreferenceSync />
       <Analytics />
       <SpeedInsights />
     </>

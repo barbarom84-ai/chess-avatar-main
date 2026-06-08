@@ -712,6 +712,7 @@ export const fr = {
         chessAvatarError: "ChessAvatar indisponible",
         chessAvatarSimdError: "SIMD WebAssembly non supporté — utilisez Stockfish",
         searchStatsHint: "Dernière recherche ChessAvatar : profondeur, nœuds/s, durée",
+        engineVersionHint: "Version du moteur ChessAvatar WASM (UCI id name)",
         personaOnboarding:
           "Stockfish imite le style du profil ; ChessAvatar joue moteur pur avec variance persona aux niveaux bas.",
         dismissOnboarding: "Masquer l’astuce",

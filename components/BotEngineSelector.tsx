@@ -46,6 +46,7 @@ export default function BotEngineSelector({
   const { t } = useLanguage();
   const [preference, setPreference] = useBotEnginePreference();
   const [chessAvatarError, setChessAvatarError] = useState<string | null>(null);
+  const [engineVersion, setEngineVersion] = useState<string | null>(null);
   const [onboardingDismissed, setOnboardingDismissed] = useState(true);
   const showDevStats =
     process.env.NODE_ENV === "development" ||
@@ -72,7 +73,10 @@ export default function BotEngineSelector({
   const botCtx: BotEngineContext = { elo: botElo, difficulty: botDifficulty };
 
   useEffect(() => {
-    const sync = () => setChessAvatarError(chessAvatarClient.error);
+    const sync = () => {
+      setChessAvatarError(chessAvatarClient.error);
+      setEngineVersion(chessAvatarClient.engineVersion);
+    };
     sync();
     const id = setInterval(sync, 1000);
     return () => clearInterval(id);
@@ -141,6 +145,19 @@ export default function BotEngineSelector({
     return null;
   };
 
+  const engineVersionBadge = () => {
+    if (!engineVersion || !chessAvatarPlayReady) return null;
+    return (
+      <Badge
+        variant="outline"
+        className="text-[10px] font-mono border-cyan-800/40 text-cyan-400/90 bg-cyan-950/20"
+        title={t.play.botEngine.engineVersionHint}
+      >
+        {engineVersion}
+      </Badge>
+    );
+  };
+
   const searchStatsBadge = () => {
     const showStats =
       chessAvatarSearchStats &&
@@ -182,6 +199,7 @@ export default function BotEngineSelector({
         <option value="stockfish">{t.play.botEngine.stockfish}</option>
       </select>
       {readinessBadge()}
+      {engineVersionBadge()}
       {searchStatsBadge()}
       {weakChessAvatarWarning && (
         <Badge

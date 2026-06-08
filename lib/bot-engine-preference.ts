@@ -27,6 +27,15 @@ export function setBotEnginePreference(value: BotEngineId): void {
   window.dispatchEvent(new CustomEvent(CHANGE_EVENT, { detail: value }));
 }
 
+/** Apply remote value without re-syncing to server. */
+export function applyBotEnginePreferenceFromServer(value: BotEngineId): void {
+  if (typeof window === "undefined") return;
+  const current = getBotEnginePreference();
+  if (current === value) return;
+  localStorage.setItem(BOT_ENGINE_STORAGE_KEY, value);
+  window.dispatchEvent(new CustomEvent(CHANGE_EVENT, { detail: value }));
+}
+
 export function subscribeBotEnginePreference(onChange: () => void): () => void {
   const handler = () => onChange();
   window.addEventListener(CHANGE_EVENT, handler);

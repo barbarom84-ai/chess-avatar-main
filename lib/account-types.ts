@@ -1,3 +1,7 @@
+export type AccountPreferences = {
+  botEngine?: "chessavatar" | "stockfish" | "auto";
+};
+
 export type AccountProfile = {
   userId: string;
   displayName: string;
@@ -5,6 +9,7 @@ export type AccountProfile = {
   avatarUrl: string | null;
   memberSince: string | null;
   email?: string;
+  preferences?: AccountPreferences;
 };
 
 export type AccountFriend = {
@@ -19,4 +24,5 @@ export type AccountProfilePatch = {
   displayName?: string;
   bio?: string | null;
   avatarUrl?: string | null;
+  preferences?: AccountPreferences;
 };

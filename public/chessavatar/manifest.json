@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-06-08T16:40:55.153Z",
+  "generatedAt": "2026-06-08T17:19:55.142Z",
   "files": {
     "chessavatar_wasm.js": {
       "size": 14550,
       "sha256": "ca241392a429a47d5f0d2aea4ea73f55ecb75fa85b1a24d5140495bb55adf258"
     },
     "chessavatar_wasm_bg.wasm": {
-      "size": 2052587,
-      "sha256": "1d397902e56a830c1680fea85315708cccf3efce73bdeeacab06ec53e6b08f61"
+      "size": 2059355,
+      "sha256": "f7c3a06bae96b0540f4156abf2c936978945ddcb4e6de33348f17997837f1e0f"
     },
     "worker.js": {
       "size": 4779,

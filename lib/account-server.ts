@@ -1,7 +1,7 @@
 import type { User } from "@supabase/supabase-js";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { displayNameFromAuthUser } from "@/lib/pvp-display-name";
-import type { AccountFriend, AccountProfile, AccountProfilePatch } from "@/lib/account-types";
+import type { AccountFriend, AccountProfile, AccountProfilePatch, AccountPreferences } from "@/lib/account-types";
 
 export const MAX_ACCOUNT_BIO_LENGTH = 1000;
 export const MAX_ACCOUNT_DISPLAY_NAME_LENGTH = 80;
@@ -12,6 +12,7 @@ type AccountRow = {
   display_name: string | null;
   bio: string | null;
   avatar_url: string | null;
+  preferences: AccountPreferences | null;
   created_at: string;
   updated_at: string;
 };
@@ -68,6 +69,16 @@ export async function fetchAccountSummariesByUserIds(
   return map;
 }
 
+function parseAccountPreferences(raw: unknown): AccountPreferences {
+  if (!raw || typeof raw !== "object") return {};
+  const o = raw as Record<string, unknown>;
+  const prefs: AccountPreferences = {};
+  if (o.botEngine === "auto" || o.botEngine === "chessavatar" || o.botEngine === "stockfish") {
+    prefs.botEngine = o.botEngine;
+  }
+  return prefs;
+}
+
 function toProfile(
   row: AccountRow,
   memberSince: string | null,
@@ -80,6 +91,7 @@ function toProfile(
     bio: row.bio?.trim() ? row.bio.trim() : null,
     avatarUrl: row.avatar_url?.trim() ? row.avatar_url.trim() : null,
     memberSince,
+    preferences: parseAccountPreferences(row.preferences),
   };
   if (includeEmail && authUser?.email) {
     profile.email = authUser.email;
@@ -93,7 +105,7 @@ export async function getOrCreateAccountRow(
 ): Promise<AccountRow> {
   const { data, error } = await sb
     .from("user_accounts")
-    .select("user_id, display_name, bio, avatar_url, created_at, updated_at")
+    .select("user_id, display_name, bio, avatar_url, preferences, created_at, updated_at")
     .eq("user_id", userId)
     .maybeSingle();
 
@@ -103,7 +115,7 @@ export async function getOrCreateAccountRow(
   const { data: inserted, error: insertError } = await sb
     .from("user_accounts")
     .insert({ user_id: userId })
-    .select("user_id, display_name, bio, avatar_url, created_at, updated_at")
+    .select("user_id, display_name, bio, avatar_url, preferences, created_at, updated_at")
     .single();
 
   if (insertError || !inserted) {
@@ -118,7 +130,7 @@ export async function fetchAccountRow(
 ): Promise<AccountRow | null> {
   const { data, error } = await sb
     .from("user_accounts")
-    .select("user_id, display_name, bio, avatar_url, created_at, updated_at")
+    .select("user_id, display_name, bio, avatar_url, preferences, created_at, updated_at")
     .eq("user_id", userId)
     .maybeSingle();
 
@@ -182,6 +194,12 @@ export function normalizeProfilePatch(body: unknown): AccountProfilePatch {
     const url = typeof o.avatarUrl === "string" ? o.avatarUrl.trim() : null;
     patch.avatarUrl = url || null;
   }
+  if (o.preferences && typeof o.preferences === "object") {
+    const prefs = parseAccountPreferences(o.preferences);
+    if (prefs.botEngine) {
+      patch.preferences = { botEngine: prefs.botEngine };
+    }
+  }
   return patch;
 }
 
@@ -192,7 +210,7 @@ export async function applyAccountProfilePatch(
 ): Promise<AccountProfile> {
   await getOrCreateAccountRow(sb, user.id);
 
-  const updates: Record<string, string | null> = {};
+  const updates: Record<string, string | null | AccountPreferences> = {};
   if (patch.displayName !== undefined) {
     updates.display_name = patch.displayName || null;
   }
@@ -201,6 +219,19 @@ export async function applyAccountProfilePatch(
   }
   if (patch.avatarUrl !== undefined) {
     updates.avatar_url = patch.avatarUrl;
+  }
+  if (patch.preferences?.botEngine) {
+    const { data: existing, error: readError } = await sb
+      .from("user_accounts")
+      .select("preferences")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (readError) throw new Error(readError.message);
+    const merged = {
+      ...(parseAccountPreferences((existing as { preferences?: unknown } | null)?.preferences)),
+      botEngine: patch.preferences.botEngine,
+    };
+    updates.preferences = merged;
   }
 
   if (Object.keys(updates).length > 0) {

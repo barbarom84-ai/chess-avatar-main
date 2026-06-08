@@ -39,6 +39,10 @@ import {
   type BotEngineContext,
   type BotEngineRuntime,
 } from "@/lib/bot-engine-preference";
+import {
+  trackBotEngineFallback,
+  trackChessAvatarTelemetry,
+} from "@/lib/chessavatar-telemetry";
 
 const DEBUG = typeof window !== "undefined" && (window as unknown as { __CHESS_DEBUG?: boolean }).__CHESS_DEBUG;
 
@@ -310,6 +314,7 @@ export function useStockfish() {
 
       const markChessAvatar = (move: string) => {
         setLastBotEngineUsed("chessavatar");
+        trackChessAvatarTelemetry("chessavatar_move_ok", { context: "bot" });
         return move;
       };
       const markStockfish = (move: string) => {
@@ -322,6 +327,7 @@ export function useStockfish() {
           .then(markChessAvatar)
           .catch(() => {
             if (preference === "stockfish" || !isReady) throw new Error("Bot move failed");
+            trackBotEngineFallback(preference, "chessavatar", "stockfish", "move_failed");
             return playWithStockfish().then(markStockfish);
           });
       }
@@ -433,6 +439,7 @@ export function useStockfish() {
       );
 
       if (resolved === "chessavatar") {
+        const personaMultiPv = Math.max(2, multiPvCountForDifficulty(config.difficulty));
         return chessAvatarGetBestMove(fen, {
           skillLevel: skill,
           depth: personaLimits.depth,
@@ -440,15 +447,19 @@ export function useStockfish() {
           hashMb,
           difficulty: config.difficulty,
           elo: config.elo,
+          personaConfig: config,
+          multiPv: personaMultiPv,
         })
           .then((move) => {
             setLastBotEngineUsed("chessavatar");
+            trackChessAvatarTelemetry("chessavatar_move_ok", { context: "persona" });
             return move;
           })
           .catch(() => {
             if (preference === "stockfish" || !isReady) {
               return Promise.reject(new Error("ChessAvatar move failed"));
             }
+            trackBotEngineFallback(preference, "chessavatar", "stockfish", "persona_failed");
             return stockfishGetBestMoveForFen(fen, depth).then((move) => {
               setLastBotEngineUsed("stockfish");
               return move;

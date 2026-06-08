@@ -45,7 +45,11 @@ export type AnalyticsEventName =
   | "lesson_opened"
   | "lesson_completed"
   | "ascension_puzzle_complete"
-  | "page_view";
+  | "page_view"
+  | "chessavatar_init_failed"
+  | "chessavatar_nnue_failed"
+  | "chessavatar_move_ok"
+  | "bot_engine_fallback";
 
 export function trackEvent(
   name: AnalyticsEventName,

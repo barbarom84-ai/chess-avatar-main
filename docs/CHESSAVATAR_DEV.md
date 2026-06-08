@@ -63,9 +63,22 @@ La CI (`.github/workflows/ci.yml`) exécute `verify:chessavatar` après les test
 | Fonctionnalité | Où |
 |----------------|-----|
 | MultiPV + persona bot | `worker.ts` → `set_multipv`, `lib.rs` → info UCI complètes ; `chessAvatarGetBestMove` + `pickPersonaBiasedMove` |
+| Persona GameReviewer | `getPersonaStyleMove` → ChessAvatar avec MultiPV |
+| Préférence moteur compte | `user_accounts.preferences`, `BotEnginePreferenceSync` |
+| Télémétrie | `lib/chessavatar-telemetry.ts` → PostHog + Sentry |
+| Version moteur UI | badge UCI `id name` dans `BotEngineSelector` |
 | Cache NNUE IndexedDB | `lib/nnue-idb-cache.ts`, chargement via `postMessage` transferable |
 | SIMD128 wasm | build `--enable-simd`, détection `lib/wasm-simd.ts` |
-| Movegen sans alloc | `BoardState::for_each_legal_move` dans le hot path |
+| Movegen sans alloc | `BoardState::for_each_legal_move` + root MultiPV `MoveList` |
+
+## Validation avant deploy
+
+```bash
+npm run verify:chessavatar
+npm run smoke:chessavatar
+npm test
+npm run build
+```
 
 ## CSP production
 
