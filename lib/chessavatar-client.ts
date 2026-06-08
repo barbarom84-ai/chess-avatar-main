@@ -7,6 +7,12 @@
 
 import { loadNnueWithCache } from "@/lib/nnue-idb-cache";
 import { isWasmSimdSupported } from "@/lib/wasm-simd";
+import type { EngineConfig } from "@/lib/analysis";
+import { pickForcedHumanBlunder } from "@/lib/bot-move-count";
+import {
+  multiPvCountForDifficulty,
+  pickPersonaBiasedMove,
+} from "@/lib/persona-engine-params";
 
 export { isWasmSimdSupported } from "@/lib/wasm-simd";
 
@@ -346,6 +352,10 @@ class ChessAvatarClient {
 
           if (message.startsWith("info ")) {
             this.parseInfoLine(message);
+            if (lineHandler) {
+              const result = lineHandler(message);
+              if (result !== undefined) finish(result);
+            }
             return;
           }
 
@@ -406,7 +416,26 @@ export type ChessAvatarMoveOptions = {
   hashMb?: number;
   difficulty?: number;
   elo?: number;
+  /** Enables MultiPV persona biasing (same logic as Stockfish bot path). */
+  personaConfig?: EngineConfig;
+  multiPv?: number;
+  humanBlunder?: boolean;
 };
+
+/** @internal exported for unit tests */
+export function parseChessAvatarMultiPvLine(
+  line: string,
+  lineMoves: Map<number, string>
+): void {
+  if (!line.startsWith("info ") || !line.includes(" pv ")) return;
+  const mp = line.match(/\bmultipv\s+(\d+)/i);
+  const pvMatch = line.match(/\bpv\s+(\S+)/);
+  if (mp && pvMatch) {
+    const idx = parseInt(mp[1], 10);
+    const first = pvMatch[1];
+    if (first && /^[a-h][1-8][a-h][1-8]/.test(first)) lineMoves.set(idx, first);
+  }
+}
 
 /** Depth ceiling + think time (iterative deepening stops on movetime). */
 export function webSearchLimits(
@@ -442,24 +471,47 @@ export async function chessAvatarGetBestMove(
     opts.elo
   );
   const hashMb = Math.min(opts.hashMb ?? 64, 64);
+  const personaConfig = opts.personaConfig;
+  const baseMultiPv =
+    opts.multiPv ??
+    (personaConfig ? multiPvCountForDifficulty(personaConfig.difficulty) : 1);
+  const effectiveMultiPv = opts.humanBlunder ? Math.max(baseMultiPv, 4) : baseMultiPv;
 
   if (process.env.NODE_ENV === "development") {
     console.debug(
-      `[ChessAvatar] go depth ${depth} movetime ${movetime}ms hash ${hashMb}MB`
+      `[ChessAvatar] go depth ${depth} movetime ${movetime}ms hash ${hashMb}MB multipv ${effectiveMultiPv}`
     );
   }
 
   return chessAvatarClient.enqueue((ctx) => {
+    const lineMoves = new Map<number, string>();
+
     ctx.onLine((line) => {
+      if (effectiveMultiPv > 1) parseChessAvatarMultiPvLine(line, lineMoves);
+
       if (line.startsWith("bestmove")) {
         const parts = line.split(/\s+/);
-        return parts[1] && parts[1] !== "(none)" ? parts[1] : "";
+        let move = parts[1] && parts[1] !== "(none)" ? parts[1] : "";
+        if (effectiveMultiPv > 1 && move && personaConfig) {
+          move = opts.humanBlunder
+            ? pickForcedHumanBlunder(move, lineMoves)
+            : pickPersonaBiasedMove(move, lineMoves, personaConfig);
+        }
+        if (effectiveMultiPv > 1) {
+          ctx.send("setoption name MultiPV value 1");
+        }
+        return move;
       }
       return undefined;
     });
 
     ctx.send(`setoption name Skill Level value ${opts.skillLevel}`);
     ctx.send(`setoption name Hash value ${hashMb}`);
+    if (effectiveMultiPv > 1) {
+      ctx.send(`setoption name MultiPV value ${effectiveMultiPv}`);
+    } else {
+      ctx.send("setoption name MultiPV value 1");
+    }
     ctx.send(`position fen ${fen}`);
     ctx.send(`go depth ${depth} movetime ${movetime}`);
     setTimeout(() => ctx.send("stop"), movetime + 2000);

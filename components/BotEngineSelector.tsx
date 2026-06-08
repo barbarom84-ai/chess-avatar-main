@@ -30,6 +30,8 @@ type BotEngineSelectorProps = {
   compact?: boolean;
 };
 
+const ONBOARDING_KEY = "chessavatar-bot-engine-onboarding-dismissed";
+
 export default function BotEngineSelector({
   chessAvatarReady,
   chessAvatarPlayReady = chessAvatarReady,
@@ -44,10 +46,28 @@ export default function BotEngineSelector({
   const { t } = useLanguage();
   const [preference, setPreference] = useBotEnginePreference();
   const [chessAvatarError, setChessAvatarError] = useState<string | null>(null);
+  const [onboardingDismissed, setOnboardingDismissed] = useState(true);
   const showDevStats =
     process.env.NODE_ENV === "development" ||
     (typeof window !== "undefined" &&
       (window as unknown as { __CHESS_DEBUG?: boolean }).__CHESS_DEBUG);
+
+  useEffect(() => {
+    try {
+      setOnboardingDismissed(localStorage.getItem(ONBOARDING_KEY) === "1");
+    } catch {
+      setOnboardingDismissed(false);
+    }
+  }, []);
+
+  const dismissOnboarding = () => {
+    try {
+      localStorage.setItem(ONBOARDING_KEY, "1");
+    } catch {
+      /* ignore */
+    }
+    setOnboardingDismissed(true);
+  };
 
   const botCtx: BotEngineContext = { elo: botElo, difficulty: botDifficulty };
 
@@ -121,8 +141,11 @@ export default function BotEngineSelector({
     return null;
   };
 
-  const devStatsBadge = () => {
-    if (!showDevStats || !chessAvatarSearchStats) return null;
+  const searchStatsBadge = () => {
+    const showStats =
+      chessAvatarSearchStats &&
+      (lastBotEngineUsed === "chessavatar" || showDevStats);
+    if (!showStats || !chessAvatarSearchStats) return null;
     const s = chessAvatarSearchStats;
     return (
       <Badge
@@ -134,6 +157,10 @@ export default function BotEngineSelector({
       </Badge>
     );
   };
+
+  const showOnboarding =
+    !onboardingDismissed &&
+    (preference === "auto" || preference === "chessavatar");
 
   return (
     <div
@@ -155,7 +182,7 @@ export default function BotEngineSelector({
         <option value="stockfish">{t.play.botEngine.stockfish}</option>
       </select>
       {readinessBadge()}
-      {devStatsBadge()}
+      {searchStatsBadge()}
       {weakChessAvatarWarning && (
         <Badge
           variant="outline"
@@ -180,7 +207,20 @@ export default function BotEngineSelector({
           : `${t.play.botEngine.planned}: ${engineLabel(effective)}`}
         {fallback ? ` (${t.play.botEngine.fallback})` : ""}
       </Badge>
+      {showOnboarding && (
+        <p className="w-full text-[10px] leading-snug text-slate-500 flex items-start gap-1.5 basis-full">
+          <span>{t.play.botEngine.personaOnboarding}</span>
+          <button
+            type="button"
+            onClick={dismissOnboarding}
+            className="shrink-0 text-slate-400 hover:text-slate-200"
+            aria-label={t.play.botEngine.dismissOnboarding}
+          >
+            ×
+          </button>
+        </p>
+      )}
     </div>
   );
 }
-
+

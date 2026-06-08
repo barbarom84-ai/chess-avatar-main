@@ -200,15 +200,32 @@ export function useStockfish() {
       config.elo
     );
 
-    const playWithChessAvatar = () =>
-      chessAvatarGetBestMove(fen, {
+    const playWithChessAvatar = () => {
+      const baseMultiPv = multiPvCountForDifficulty(config.difficulty);
+      const hbInterval =
+        config.humanBlunderInterval === 0
+          ? 0
+          : (config.humanBlunderInterval ?? DEFAULT_HUMAN_BLUNDER_INTERVAL);
+      const botPlaysWhite = playerColor === "black";
+      const humanBlunder = shouldPlayHumanBlunderMove(
+        moveHistoryUci,
+        botPlaysWhite,
+        hbInterval
+      );
+      const multiPv = humanBlunder ? Math.max(baseMultiPv, 4) : baseMultiPv;
+
+      return chessAvatarGetBestMove(fen, {
         skillLevel: skill,
         depth: searchLimits.depth,
         movetime: searchLimits.movetime,
         hashMb,
         difficulty: config.difficulty,
         elo: config.elo,
+        personaConfig: config,
+        multiPv,
+        humanBlunder,
       });
+    };
 
     const playWithStockfish = () =>
       stockfishClient.enqueue<string>((ctx) => {

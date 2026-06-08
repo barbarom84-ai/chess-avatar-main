@@ -100,6 +100,11 @@ self.onmessage = (ev) => {
             eng.set_hash_mb(mb);
             return;
         }
+        if (line.startsWith('setoption name MultiPV value ')) {
+            const n = Number(line.split(' ').pop());
+            eng.set_multipv(n);
+            return;
+        }
     });
 };
 function handlePosition(eng, line) {

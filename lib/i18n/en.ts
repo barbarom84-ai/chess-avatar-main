@@ -708,6 +708,9 @@ export const en = {
         chessAvatarError: "ChessAvatar unavailable",
         chessAvatarSimdError: "WebAssembly SIMD not supported — use Stockfish",
         searchStatsHint: "Last ChessAvatar search: depth, nodes/sec, elapsed time",
+        personaOnboarding:
+          "Stockfish mimics profile style; ChessAvatar plays engine moves with persona variance on lower levels.",
+        dismissOnboarding: "Dismiss hint",
         chessAvatarWeakShort: "Strong bot — prefer Stockfish",
         chessAvatarWeakHint:
           "ChessAvatar in WASM reaches ~depth 10–12 (≈1800–2200 Elo). For a 2600+ Elo bot, choose Stockfish or Auto.",

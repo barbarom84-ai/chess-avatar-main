@@ -7,6 +7,7 @@
  * Optional env ENGINE_ROOT — defaults to sibling "../UCI Chess Engine".
  */
 import { cpSync, mkdirSync, readFileSync, writeFileSync, existsSync, statSync } from "node:fs";
+import { createHash } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -85,5 +86,29 @@ if (existsSync(nnueSrc)) {
   console.warn("NNUE not found (optional):", nnueSrc);
   console.warn("Bot will use classical eval until you run networks/download.ps1 in the engine repo.");
 }
+
+function sha256File(filePath) {
+  return createHash("sha256").update(readFileSync(filePath)).digest("hex");
+}
+
+const manifestFiles = {};
+for (const name of [
+  "chessavatar_wasm.js",
+  "chessavatar_wasm_bg.wasm",
+  "worker.js",
+  "nn-default.nnue",
+]) {
+  const p = path.join(outDir, name);
+  if (existsSync(p)) {
+    manifestFiles[name] = {
+      size: statSync(p).size,
+      sha256: sha256File(p),
+    };
+  }
+}
+writeFileSync(
+  path.join(outDir, "manifest.json"),
+  JSON.stringify({ generatedAt: new Date().toISOString(), files: manifestFiles }, null, 2)
+);
 
 console.log("ChessAvatar WASM synced to", outDir, "from", pkgDir);

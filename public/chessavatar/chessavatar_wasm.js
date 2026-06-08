@@ -124,6 +124,12 @@ export class WasmEngine {
         wasm.wasmengine_set_hash_mb(this.__wbg_ptr, mb);
     }
     /**
+     * @param {number} n
+     */
+    set_multipv(n) {
+        wasm.wasmengine_set_multipv(this.__wbg_ptr, n);
+    }
+    /**
      * @param {number} level
      */
     set_skill_level(level) {
