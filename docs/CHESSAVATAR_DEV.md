@@ -91,3 +91,44 @@ En dev ou avec `window.__CHESS_DEBUG = true` : logs `[ChessAvatar]` et stats de 
 ## Commit des binaires
 
 Après `sync:chessavatar`, committer `public/chessavatar/` **y compris** `manifest.json` pour que la CI passe sans accès au repo moteur.
+
+## Fritz / pack moteur UCI (hybride)
+
+Le site distribue un ZIP via `/api/engine-pack` :
+
+| Fichier | Rôle |
+|---------|------|
+| `AvatarEngine.exe` | Wrapper UCI (ouvertures, persona, MultiPV) |
+| `ChessAvatar.exe` | Moteur Rust natif — milieu de partie |
+| `nn-default.nnue` | Réseau NNUE (~20 Mo) |
+| `stockfish.exe` | Téléchargé par `install_engine.bat` si absent — **fallback** |
+
+### Build pack complet (mainteneurs)
+
+```powershell
+# 1. Moteur natif Windows
+cd "../UCI Chess Engine"
+.\scripts\build-release.ps1
+
+# 2. Copier exe + NNUE + recompiler le wrapper Python
+cd "../chess-avatar-main"
+npm run build:engine-pack
+```
+
+`build:engine-pack` = `sync:chessavatar-native` + PyInstaller `AvatarEngine.py` → `public/AvatarEngine.exe`.
+
+### Comportement AvatarEngine
+
+1. Ouvertures / lignes forcées / fallback Fritz noir  
+2. **ChessAvatar.exe** si présent (+ `nn-default.nnue`)  
+3. Sinon **Stockfish**
+
+Persona et blunders humains : MultiPV (aligné sur le site).
+
+### Web vs Fritz
+
+| | Web | Fritz |
+|---|-----|-------|
+| Moteur search | WASM | `ChessAvatar.exe` natif |
+| Stockfish | Analyse + bots forts + fallback | Fallback recherche seulement |
+| Persona | App + MultiPV | Wrapper Python + MultiPV |

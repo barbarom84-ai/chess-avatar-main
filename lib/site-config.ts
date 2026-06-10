@@ -14,13 +14,22 @@ export type SiteMaintenanceConfig = {
   countdownEndsAt: string | null;
 };
 
+export type SiteFeaturesConfig = {
+  /** When true, premium/standard users can use ChessAvatar (web + UCI pack). Super users always can. */
+  chessAvatarEnabled: boolean;
+};
+
 export type SiteConfig = {
   nav: Record<string, SiteNavPageConfig>;
   maintenance: SiteMaintenanceConfig;
+  features: SiteFeaturesConfig;
 };
 
 export const DEFAULT_SITE_CONFIG: SiteConfig = {
   nav: Object.fromEntries(NAV_HREFS.map((href) => [href, { hidden: false, badge: "none" as const }])),
+  features: {
+    chessAvatarEnabled: false,
+  },
   maintenance: {
     overlayEnabled: false,
     message: {
@@ -54,6 +63,13 @@ export function parseSiteConfig(raw: unknown): SiteConfig {
     }
   }
 
+  if (obj.features && typeof obj.features === "object") {
+    const f = obj.features as Record<string, unknown>;
+    base.features = {
+      chessAvatarEnabled: Boolean(f.chessAvatarEnabled),
+    };
+  }
+
   if (obj.maintenance && typeof obj.maintenance === "object") {
     const m = obj.maintenance as Record<string, unknown>;
     const msg = m.message;
@@ -78,6 +94,15 @@ export function parseSiteConfig(raw: unknown): SiteConfig {
   }
 
   return base;
+}
+
+/** Super users always have access (admin testing). Others depend on site toggle. */
+export function isChessAvatarAllowedForUser(
+  isSuperUser: boolean,
+  config: SiteConfig
+): boolean {
+  if (isSuperUser) return true;
+  return Boolean(config.features?.chessAvatarEnabled);
 }
 
 export function getVisibleNavHrefs(config: SiteConfig, isSuperUser: boolean): string[] {

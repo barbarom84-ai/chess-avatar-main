@@ -57,24 +57,27 @@ export function resolveBotEngine(
   chessAvatarReady: boolean,
   stockfishReady: boolean,
   chessAvatarPlayReady = chessAvatarReady,
-  ctx?: BotEngineContext
+  ctx?: BotEngineContext,
+  chessAvatarAllowed = true
 ): BotEngineRuntime | null {
   const master = isMasterBot(ctx);
+  const caPlayReady = chessAvatarAllowed && chessAvatarPlayReady;
+  const caReady = chessAvatarAllowed && chessAvatarReady;
 
   if (preference === "chessavatar") {
-    if (chessAvatarPlayReady) return "chessavatar";
+    if (caPlayReady) return "chessavatar";
     if (stockfishReady) return "stockfish";
     return null;
   }
   if (preference === "stockfish") {
     if (stockfishReady) return "stockfish";
-    if (chessAvatarPlayReady) return "chessavatar";
+    if (caPlayReady) return "chessavatar";
     return null;
   }
 
   // Auto: master-level bots use Stockfish (WASM ChessAvatar ~d9–12 is far below 2600+ Elo).
   if (master && stockfishReady) return "stockfish";
-  if (chessAvatarPlayReady) return "chessavatar";
+  if (caPlayReady) return "chessavatar";
   if (stockfishReady) return "stockfish";
   return null;
 }
@@ -85,17 +88,21 @@ export function isBotEngineFallback(
   chessAvatarReady: boolean,
   stockfishReady: boolean,
   chessAvatarPlayReady = chessAvatarReady,
-  ctx?: BotEngineContext
+  ctx?: BotEngineContext,
+  chessAvatarAllowed = true
 ): boolean {
   const master = isMasterBot(ctx);
+  const caPlayReady = chessAvatarAllowed && chessAvatarPlayReady;
   const primary =
     preference === "auto"
       ? master && stockfishReady
         ? "stockfish"
-        : chessAvatarPlayReady
+        : caPlayReady
           ? "chessavatar"
           : "stockfish"
-      : preference;
+      : preference === "chessavatar" && !chessAvatarAllowed
+        ? "stockfish"
+        : preference;
   return primary !== runtime;
 }
 

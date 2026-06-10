@@ -1890,6 +1890,11 @@ export const fr = {
       showCountdown: "Afficher un compte à rebours",
       showCountdownDesc: "Chronomètre jusqu'à la date de fin configurée.",
       countdownEndsAt: "Fin de maintenance (date/heure)",
+      featuresSection: "Fonctionnalités",
+      featuresSectionDesc: "Moteurs expérimentaux et options bêta.",
+      chessAvatarEnabled: "Activer ChessAvatar pour tous les utilisateurs",
+      chessAvatarEnabledDesc:
+        "Désactivé : seuls les Super Users voient et utilisent ChessAvatar (jeu web + pack UCI natif). Standard et Premium : Stockfish uniquement.",
     },
 
     navigation: {

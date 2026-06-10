@@ -3,7 +3,11 @@ import { promises as fs } from "fs";
 import path from "path";
 import JSZip from "jszip";
 import { rateLimit } from "@/lib/rate-limit";
-
+import { getAuthedUserFromRequest } from "@/lib/supabase-auth-request";
+import { createServiceSupabase } from "@/lib/supabase-service";
+import { isSuperUserServer } from "@/lib/is-super-user-server";
+import { isChessAvatarAllowedForUser } from "@/lib/site-config";
+import { loadSiteConfig } from "@/lib/site-config-server";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -18,7 +22,29 @@ function sanitizeName(raw: unknown, fallback = "ChessAvatar"): string {
   return cleaned || fallback;
 }
 
-function buildReadme(engineName: string, profileFileName: string): string {
+function buildReadme(engineName: string, profileFileName: string, includeChessAvatar: boolean): string {
+  const chessAvatarBlock = includeChessAvatar
+    ? `- ChessAvatar.exe         Moteur Rust natif (milieu de partie, si inclus)
+- nn-default.nnue         Reseau NNUE pour ChessAvatar (~20 Mo, si inclus)
+`
+    : "";
+  const chessAvatarInstall = includeChessAvatar
+    ? `   - copier ChessAvatar.exe + nn-default.nnue si presents
+`
+    : "";
+  const chessAvatarTrouble = includeChessAvatar
+    ? `  Verifiez que stockfish.exe, profile.json et (si pack complet)
+  ChessAvatar.exe + nn-default.nnue sont dans le dossier
+`
+    : `  Verifiez que stockfish.exe et profile.json sont dans le dossier
+`;
+  const chessAvatarMid = includeChessAvatar
+    ? `- Milieu de partie : ChessAvatar Rust est utilise si ChessAvatar.exe
+  et nn-default.nnue sont installes ; sinon Stockfish prend le relais.
+`
+    : `- Milieu de partie : Stockfish (AvatarEngine wrapper, style persona via profil).
+`;
+
   return `========================================
   Chess Avatar - Pack moteur UCI
 ========================================
@@ -42,7 +68,7 @@ avatar comme moteur UCI dans Fritz, ChessBase, Arena ou Cutechess.
    Acceptez l'invite UAC.
    Le script va :
    - verifier la presence d'AvatarEngine.exe
-   - telecharger Stockfish automatiquement s'il manque
+${chessAvatarInstall}   - telecharger Stockfish automatiquement s'il manque
    - generer engine.ini
    - copier tout dans :
      Documents\\ChessBase\\Engines\\${engineName}\\
@@ -91,7 +117,7 @@ automatiquement pour ne garder que profile.json ^(et profile.previous.json^).
 ----------------------------------------
 
 - AvatarEngine.exe        Moteur UCI pre-compile (aucun Python requis)
-- install_engine.bat      Script d'installation automatique
+${chessAvatarBlock}- install_engine.bat      Script d'installation automatique
 - swap_profile.bat        Outil de changement d'avatar (a copier dans
                           le dossier moteur final par install_engine.bat)
 - ${profileFileName}      Votre profil personnalise (genere depuis le site)
@@ -106,9 +132,8 @@ automatiquement pour ne garder que profile.json ^(et profile.previous.json^).
   Puis "Informations complementaires" > "Executer quand meme"
 
 - Le moteur ne reagit pas ?
-  Verifiez que stockfish.exe et profile.json sont bien dans le
-  dossier Documents\\ChessBase\\Engines\\${engineName}\\
-
+${chessAvatarTrouble}
+${chessAvatarMid}
 - Des fenetres noires (invite de commandes) qui s'ouvrent avec Fritz ?
   Re-telechargez un pack ZIP ou remplacez AvatarEngine.exe : la version recente
   ne cree plus de console pour le moteur ni pour Stockfish.
@@ -122,8 +147,23 @@ Pour plus d'infos : https://chessavatar.net/guide
 `;
 }
 
-export async function POST(req: NextRequest) {
-  const limited = await rateLimit(req, { windowMs: 60_000, max: 15 });
+async function includeNativeChessAvatar(request: NextRequest): Promise<boolean> {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
+  if (!supabaseUrl || !anonKey) return false;
+
+  const user = await getAuthedUserFromRequest(request, supabaseUrl, anonKey);
+  if (!user) return false;
+
+  const admin = createServiceSupabase();
+  if (!admin) return false;
+
+  const isSuper = await isSuperUserServer(admin, user.id);
+  const siteConfig = await loadSiteConfig(admin);
+  return isChessAvatarAllowedForUser(isSuper, siteConfig);
+}
+
+export async function POST(req: NextRequest) {  const limited = await rateLimit(req, { windowMs: 60_000, max: 15 });
   if (!limited.ok) {
     return NextResponse.json(
       { error: "Too many requests" },
@@ -148,15 +188,19 @@ export async function POST(req: NextRequest) {
     const profileFileName = `Bot_${safeName}.profile.json`;
     const engineName = `${safeName}_Avatar`;
     const zipName = `ChessAvatar_${safeName}_Pack.zip`;
-
+    const includeChessAvatar = await includeNativeChessAvatar(req);
     const exePath = path.join(PUBLIC_DIR, "AvatarEngine.exe");
     const installBatPath = path.join(PUBLIC_DIR, "install_engine.bat");
     const swapBatPath = path.join(PUBLIC_DIR, "swap_profile.bat");
+    const chessAvatarExePath = path.join(PUBLIC_DIR, "ChessAvatar.exe");
+    const nnuePath = path.join(PUBLIC_DIR, "nn-default.nnue");
 
-    const [exeBuf, installBat, swapBat] = await Promise.all([
+    const [exeBuf, installBat, swapBat, chessAvatarExe, nnueBuf] = await Promise.all([
       fs.readFile(exePath),
       fs.readFile(installBatPath, "utf8"),
       fs.readFile(swapBatPath, "utf8"),
+      fs.readFile(chessAvatarExePath).catch(() => null),
+      fs.readFile(nnuePath).catch(() => null),
     ]);
 
     const zip = new JSZip();
@@ -164,8 +208,13 @@ export async function POST(req: NextRequest) {
     zip.file("install_engine.bat", installBat);
     zip.file("swap_profile.bat", swapBat);
     zip.file(profileFileName, JSON.stringify(profile, null, 2));
-    zip.file("README.txt", buildReadme(engineName, profileFileName));
-
+    zip.file("README.txt", buildReadme(engineName, profileFileName, includeChessAvatar));
+    if (includeChessAvatar && chessAvatarExe) {
+      zip.file("ChessAvatar.exe", chessAvatarExe, { binary: true });
+    }
+    if (includeChessAvatar && nnueBuf) {
+      zip.file("nn-default.nnue", nnueBuf, { binary: true });
+    }
     const zipBuf = await zip.generateAsync({
       type: "nodebuffer",
       compression: "DEFLATE",

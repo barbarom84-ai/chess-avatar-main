@@ -20,7 +20,9 @@
     "analyze": "cross-env ANALYZE=true next build --webpack",
     "build:engine": "cd public && pyinstaller --onefile --noconsole --clean --distpath . --workpath ../.engine-build --specpath ../.engine-build --name AvatarEngine AvatarEngine.py",
     "sync:chessavatar": "node scripts/sync-chessavatar-wasm.mjs",
+    "sync:chessavatar-native": "node scripts/sync-chessavatar-native.mjs",
     "build:chessavatar": "node scripts/sync-chessavatar-wasm.mjs",
+    "build:engine-pack": "node scripts/sync-chessavatar-native.mjs && npm run build:engine",
     "verify:chessavatar": "node scripts/verify-chessavatar-wasm.mjs",
     "smoke:chessavatar": "node scripts/smoke-chessavatar.mjs"
   },

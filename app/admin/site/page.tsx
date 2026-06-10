@@ -285,6 +285,30 @@ export default function AdminSitePage() {
             </div>
           </CardContent>
         </Card>
+
+        <Card className="theme-bg-secondary border-cyan-500/30">
+          <CardHeader>
+            <CardTitle>{t.siteAdmin.featuresSection}</CardTitle>
+            <CardDescription>{t.siteAdmin.featuresSectionDesc}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <label className="flex items-center justify-between gap-4 rounded-lg border border-slate-800 p-3">
+              <div>
+                <p className="text-sm font-medium text-slate-200">{t.siteAdmin.chessAvatarEnabled}</p>
+                <p className="text-xs text-slate-500">{t.siteAdmin.chessAvatarEnabledDesc}</p>
+              </div>
+              <Switch
+                checked={config.features.chessAvatarEnabled}
+                onCheckedChange={(v) =>
+                  setConfig((prev) => ({
+                    ...prev,
+                    features: { ...prev.features, chessAvatarEnabled: v },
+                  }))
+                }
+              />
+            </label>
+          </CardContent>
+        </Card>
       </div>
     </main>
   );

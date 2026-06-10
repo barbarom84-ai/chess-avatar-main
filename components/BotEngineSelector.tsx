@@ -15,6 +15,7 @@ import {
   type BotEngineRuntime,
 } from "@/lib/bot-engine-preference";
 import { useBotEnginePreference } from "@/hooks/useBotEnginePreference";
+import { useChessAvatarAccess } from "@/hooks/useChessAvatarAccess";
 import { Cpu } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -44,6 +45,7 @@ export default function BotEngineSelector({
   compact = false,
 }: BotEngineSelectorProps) {
   const { t } = useLanguage();
+  const chessAvatarAllowed = useChessAvatarAccess();
   const [preference, setPreference] = useBotEnginePreference();
   const [chessAvatarError, setChessAvatarError] = useState<string | null>(null);
   const [engineVersion, setEngineVersion] = useState<string | null>(null);
@@ -73,6 +75,7 @@ export default function BotEngineSelector({
   const botCtx: BotEngineContext = { elo: botElo, difficulty: botDifficulty };
 
   useEffect(() => {
+    if (!chessAvatarAllowed) return;
     const sync = () => {
       setChessAvatarError(chessAvatarClient.error);
       setEngineVersion(chessAvatarClient.engineVersion);
@@ -80,14 +83,19 @@ export default function BotEngineSelector({
     sync();
     const id = setInterval(sync, 1000);
     return () => clearInterval(id);
-  }, [chessAvatarReady, chessAvatarPlayReady]);
+  }, [chessAvatarAllowed, chessAvatarReady, chessAvatarPlayReady]);
+
+  if (!chessAvatarAllowed) {
+    return null;
+  }
 
   const effective = resolveBotEngine(
     preference,
     chessAvatarReady,
     stockfishReady,
     chessAvatarPlayReady,
-    botCtx
+    botCtx,
+    chessAvatarAllowed
   );
   const displayEngine = lastBotEngineUsed ?? effective;
   const fallback =
@@ -99,7 +107,8 @@ export default function BotEngineSelector({
       chessAvatarReady,
       stockfishReady,
       chessAvatarPlayReady,
-      botCtx
+      botCtx,
+      chessAvatarAllowed
     );
   const weakChessAvatarWarning = shouldWarnChessAvatarWeak(preference, botCtx);
 

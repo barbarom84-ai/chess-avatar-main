@@ -53,6 +53,24 @@ if not exist "AvatarEngine.exe" (
 echo [OK] AvatarEngine.exe trouve
 
 :: =====================================================
+:: ETAPE 1b : ChessAvatar natif + NNUE (optionnel)
+:: =====================================================
+
+set CHESSAVATAR_FOUND=0
+if exist "ChessAvatar.exe" (
+    echo [OK] ChessAvatar.exe trouve ^(moteur Rust milieu de partie^)
+    set CHESSAVATAR_FOUND=1
+) else (
+    echo [INFO] ChessAvatar.exe absent — le pack utilisera Stockfish seul pour la recherche
+)
+
+if exist "nn-default.nnue" (
+    echo [OK] nn-default.nnue trouve
+) else if %CHESSAVATAR_FOUND%==1 (
+    echo [AVERTISSEMENT] nn-default.nnue manquant — ChessAvatar utilisera l'eval classique
+)
+
+:: =====================================================
 :: ETAPE 2 : Stockfish ^(auto-telechargement si absent^)
 :: =====================================================
 
@@ -237,6 +255,8 @@ copy /Y "AvatarEngine.exe" "!MOTOR_DIR!\" >nul
 copy /Y "!STOCKFISH_FILE!" "!MOTOR_DIR!\" >nul
 copy /Y "%PROFILE_FILE%" "!MOTOR_DIR!\profile.json" >nul
 copy /Y "engine.ini" "!MOTOR_DIR!\" >nul
+if exist "ChessAvatar.exe" copy /Y "ChessAvatar.exe" "!MOTOR_DIR!\" >nul
+if exist "nn-default.nnue" copy /Y "nn-default.nnue" "!MOTOR_DIR!\" >nul
 if exist "swap_profile.bat" copy /Y "swap_profile.bat" "!MOTOR_DIR!\" >nul
 
 if errorlevel 1 (
@@ -257,6 +277,8 @@ echo.
 echo Fichiers installes :
 echo - AvatarEngine.exe
 echo - !STOCKFISH_FILE!
+if exist "ChessAvatar.exe" echo - ChessAvatar.exe ^(moteur Rust^)
+if exist "nn-default.nnue" echo - nn-default.nnue ^(reseau NNUE^)
 echo - profile.json ^(profil actif ; copie depuis %PROFILE_FILE%^)
 echo - engine.ini ^(Nom: !ENGINE_NAME!, Auteur: !AUTHOR_NAME!^)
 if exist "swap_profile.bat" echo - swap_profile.bat ^(pour changer d'avatar plus tard^)

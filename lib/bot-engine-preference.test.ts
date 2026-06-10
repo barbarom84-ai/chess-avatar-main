@@ -59,6 +59,15 @@ describe("resolveBotEngine", () => {
   it("returns null when no engine is ready", () => {
     expect(resolveBotEngine("chessavatar", false, false, false)).toBe(null);
   });
+
+  it("uses Stockfish when ChessAvatar is disallowed", () => {
+    expect(
+      resolveBotEngine("chessavatar", ready.ca, ready.sf, ready.caPlay, undefined, false)
+    ).toBe("stockfish");
+    expect(
+      resolveBotEngine("auto", ready.ca, ready.sf, ready.caPlay, { elo: 1500 }, false)
+    ).toBe("stockfish");
+  });
 });
 
 describe("isBotEngineFallback", () => {

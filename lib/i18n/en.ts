@@ -1880,6 +1880,11 @@ export const en = {
       showCountdown: "Show countdown timer",
       showCountdownDesc: "Count down to the configured end time.",
       countdownEndsAt: "Maintenance ends at",
+      featuresSection: "Features",
+      featuresSectionDesc: "Experimental engines and beta capabilities.",
+      chessAvatarEnabled: "Enable ChessAvatar for all users",
+      chessAvatarEnabledDesc:
+        "When off, only Super Users see and use ChessAvatar (web play + native UCI pack). Standard and Premium users use Stockfish only.",
     },
 
     navigation: {

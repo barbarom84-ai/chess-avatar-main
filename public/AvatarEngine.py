@@ -1,16 +1,11 @@
 #!/usr/bin/env python3
 """
-AvatarEngine.py - UCI Chess Engine Wrapper with Opening Book Support
-Wraps Stockfish with avatar-based configuration, custom name/author, and opening repertoire
+AvatarEngine.py - UCI wrapper for Chess Avatar profiles (Fritz / ChessBase / Arena).
 
-Features:
-- Loads profile.json and engine.ini for configuration
-- Plays from opening repertoire for first 10-15 moves
-- Optional fritzBlackOpeningFallback: black replies keyed only on White's UCI moves (from exported profile)
-- Transitions to Stockfish engine after opening phase
-- Custom UCI name and author display
-
-Requirements: Python 3.7+, no external dependencies needed
+- Opening book, forced lines, Fritz black fallback (unchanged)
+- Middlegame: ChessAvatar.exe (Rust + NNUE) when present in the install folder
+- Fallback: Stockfish if ChessAvatar is missing or fails
+- Persona variance + periodic human blunders via MultiPV (aligned with the web app)
 """
 
 import sys
@@ -24,52 +19,112 @@ import re
 from pathlib import Path
 
 
+class UciBackend:
+    """One UCI subprocess (Stockfish or ChessAvatar)."""
+
+    def __init__(self, owner, path, key, label):
+        self.owner = owner
+        self.path = path
+        self.key = key
+        self.label = label
+        self.process = None
+        self.thread = None
+
+    def start(self):
+        if not self.path or not Path(self.path).exists():
+            if self.path and self.path not in ("stockfish", "stockfish.exe"):
+                print(
+                    f"info string {self.label} not found: {self.path}",
+                    file=sys.stderr,
+                )
+            return False
+        try:
+            popen_kw = dict(
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                bufsize=1,
+                cwd=str(self.owner.script_dir),
+            )
+            if sys.platform == "win32":
+                cnw = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+                if cnw:
+                    popen_kw["creationflags"] = cnw
+            self.process = subprocess.Popen([self.path], **popen_kw)
+            self.thread = threading.Thread(target=self._read_loop, daemon=True)
+            self.thread.start()
+            print(f"info string {self.label} started: {self.path}", file=sys.stderr)
+            return True
+        except OSError as e:
+            print(f"info string Failed to start {self.label}: {e}", file=sys.stderr)
+            self.process = None
+            return False
+
+    def send(self, command):
+        if self.process and self.process.stdin:
+            self.process.stdin.write(command + "\n")
+            self.process.stdin.flush()
+
+    def _read_loop(self):
+        if not self.process:
+            return
+        for line in self.process.stdout:
+            line = line.strip()
+            if line:
+                self.owner.on_backend_line(self.key, line)
+
+
 class AvatarEngine:
     def __init__(self):
-        # Determiner le dossier de travail (important pour .exe)
-        if getattr(sys, 'frozen', False):
-            # Si compile en .exe avec PyInstaller
+        if getattr(sys, "frozen", False):
             self.script_dir = Path(sys.executable).parent
         else:
-            # Si execute comme script Python
             self.script_dir = Path(__file__).parent
-        
-        self.engine_path = self.find_stockfish()
+
         self.config = self.load_engine_config()
         self.profile = self.load_profile()
-        self.engine_process = None
-        self.uci_options = []
+
+        self.stockfish_path = self.config.get("stockfish_path") or self.find_stockfish()
+        self.chessavatar_path = self.find_chessavatar()
+        self.has_chessavatar = False
+        self.has_stockfish = False
+        self._chessavatar_nnue_configured = False
+
+        self.backends = {}
+        self.forward_backend = "stockfish"
         self.waiting_for_uciok = False
-        
-        # Nom et auteur depuis engine.ini ou profile.json
-        self.name = self.config.get('name', self.profile.get('name', 'Avatar Engine'))
-        self.author = self.config.get('author', self.profile.get('username', 'Chess Avatar'))
-        
-        # Ligne forcée par couleur (comme le web) + intercalée pour logs / compat
+        self.uci_options = []
+        self.uci_source = "stockfish"
+
+        self.name = self.config.get("name", self.profile.get("name", "Avatar Engine"))
+        self.author = self.config.get("author", self.profile.get("username", "Chess Avatar"))
+
         self.forced_white, self.forced_black = self._load_forced_lines_by_color()
         self.forced_line = self._interleave_forced(self.forced_white, self.forced_black)
-        
-        # Répertoire d'ouvertures
-        self.opening_repertoire = self.profile.get('openingRepertoire', {})
-        self.white_openings = self.opening_repertoire.get('whiteOpenings', [])
-        self.black_openings = self.opening_repertoire.get('blackOpenings', [])
-        self.fritz_black_fallback = self.profile.get('fritzBlackOpeningFallback') or []
-        
-        # 🆕 État du jeu
-        self.current_position = []  # Liste des coups UCI joués
-        self.is_white_turn = True
-        self.opening_phase = True  # True si encore dans l'ouverture
-        self.max_opening_moves = 15  # Nombre max de coups pour l'ouverture
-        
-        # 🆕 Pour la ligne forcée : next ply = len(current_position) ; abandon si l'adversaire dévie
-        self.bot_color = None  # 'white' ou 'black'
-        self.forced_line_active = True  # False si le bot a dévié de sa ligne (pas le joueur humain)
 
-        # Erreurs « humaines » périodiques (MultiPV) — aligné sur lib/bot-move-count.ts
-        self._blunder_lock = threading.Lock()
-        self._blunder_search_active = False
-        self._blunder_line_moves = {}
-        _hb = self.profile.get('humanBlunderInterval')
+        self.opening_repertoire = self.profile.get("openingRepertoire", {})
+        self.white_openings = self.opening_repertoire.get("whiteOpenings", [])
+        self.black_openings = self.opening_repertoire.get("blackOpenings", [])
+        self.fritz_black_fallback = self.profile.get("fritzBlackOpeningFallback") or []
+
+        self.current_position = []
+        self.is_white_turn = True
+        self.opening_phase = True
+        self.max_opening_moves = 15
+
+        self.bot_color = None
+        self.forced_line_active = True
+
+        self._search_lock = threading.Lock()
+        self._multipv_active = False
+        self._multipv_blunder = False
+        self._line_moves = {}
+        self._go_epoch = 0
+        self._awaiting_go_epoch = None
+        self._analysis_go = False
+
+        _hb = self.profile.get("humanBlunderInterval")
         if _hb is None:
             self.human_blunder_interval = 10
         else:
@@ -77,37 +132,34 @@ class AvatarEngine:
                 self.human_blunder_interval = int(_hb)
             except (TypeError, ValueError):
                 self.human_blunder_interval = 10
-    
+
+    # --- helpers (unchanged logic) ---
+
     def _normalize_uci(self, uci):
-        """Normalise un coup UCI (minuscules) pour comparaisons."""
         if not uci or not isinstance(uci, str):
-            return ''
+            return ""
         s = uci.strip().lower()
-        return s[:4] + (s[4] if len(s) > 4 else '')
+        return s[:4] + (s[4] if len(s) > 4 else "")
 
     def _count_bot_moves_played(self):
-        """Nombre de coups déjà joués par le bot (historique UCI)."""
         if self.bot_color is None:
             return 0
         n = 0
         for i, _ in enumerate(self.current_position):
-            is_white_move = (i % 2 == 0)
-            is_bot = (is_white_move == (self.bot_color == 'white'))
+            is_white_move = i % 2 == 0
+            is_bot = is_white_move == (self.bot_color == "white")
             if is_bot:
                 n += 1
         return n
 
     def _should_play_human_blunder_move(self):
-        """Prochain coup bot = N, 2N… (cf. shouldPlayHumanBlunderMove côté web)."""
         iv = self.human_blunder_interval
         if not iv or iv < 1:
             return False
-        played = self._count_bot_moves_played()
-        return (played + 1) % iv == 0
+        return (self._count_bot_moves_played() + 1) % iv == 0
 
     @staticmethod
     def _pick_forced_human_blunder(best, line_moves):
-        """Choisit un coup parmi MultiPV rangs 2–4."""
         if not best or not line_moves:
             return best
         candidates = []
@@ -115,19 +167,59 @@ class AvatarEngine:
             m = line_moves.get(rank)
             if m and m != best:
                 candidates.append(m)
-        if not candidates:
+        return random.choice(candidates) if candidates else best
+
+    def _multi_pv_count_for_difficulty(self):
+        d = int(self.profile.get("difficulty", 3) or 3)
+        if d <= 1:
+            return 4
+        if d == 2:
+            return 3
+        if d == 3:
+            return 2
+        return 1
+
+    def _pick_persona_biased_move(self, best, line_moves):
+        n = len(line_moves)
+        if n < 2 or not best:
             return best
-        return random.choice(candidates)
-    
+        difficulty = int(self.profile.get("difficulty", 3) or 3)
+        style = self.profile.get("style") or {}
+        agg = min(100, max(0, int(style.get("aggression", style.get("aggressiveness", 0)) or 0))) / 100
+        bump = agg * 0.2
+        r = random.random()
+        pick_rank = 1
+        if difficulty <= 1:
+            if r < 0.12 + bump:
+                pick_rank = 4
+            elif r < 0.28 + bump * 0.7:
+                pick_rank = 3
+            elif r < 0.48 + bump * 0.5:
+                pick_rank = 2
+        elif difficulty == 2:
+            if r < 0.1 + bump:
+                pick_rank = 3
+            elif r < 0.3 + bump * 0.6:
+                pick_rank = 2
+        elif difficulty == 3:
+            if r < 0.14 + bump * 0.8:
+                pick_rank = 2
+        if pick_rank == 1:
+            return best
+        for rank in range(pick_rank, 1, -1):
+            alt = line_moves.get(rank)
+            if alt and alt != best:
+                return alt
+        return best
+
     def _load_forced_lines_by_color(self):
-        """Coups blancs / noirs séparés (forcedLineWhite/Black ou legacy forcedLine entrelacé)."""
-        white = self.profile.get('forcedLineWhite') or []
-        black = self.profile.get('forcedLineBlack') or []
+        white = self.profile.get("forcedLineWhite") or []
+        black = self.profile.get("forcedLineBlack") or []
         w = [self._normalize_uci(m) for m in white if m]
         b = [self._normalize_uci(m) for m in black if m]
         if w or b:
             return w, b
-        legacy = self.profile.get('forcedLine') or []
+        legacy = self.profile.get("forcedLine") or []
         if not isinstance(legacy, list) or not legacy:
             return [], []
         w2, b2 = [], []
@@ -138,7 +230,6 @@ class AvatarEngine:
         return w2, b2
 
     def _interleave_forced(self, white, black):
-        """Même ordre que le front (lib/forced-line-utils interleaveForcedLines)."""
         out = []
         n = max(len(white), len(black))
         for i in range(n):
@@ -149,7 +240,6 @@ class AvatarEngine:
         return out
 
     def _expected_forced_at_ply(self, ply):
-        """ply 0 = trait blanc, comme UCI startpos (e2e4 = ply 0)."""
         idx = ply // 2
         if ply % 2 == 0:
             raw = self.forced_white[idx] if idx < len(self.forced_white) else None
@@ -158,10 +248,9 @@ class AvatarEngine:
         return raw
 
     def _forced_prefix_matches_bot_only(self, history_uci):
-        """Ne compare que les coups du moteur : le joueur peut jouer 1.e4 même si le répertoire blanc est Réti."""
         if self.bot_color is None:
             return True
-        bot_plays_white = self.bot_color == 'white'
+        bot_plays_white = self.bot_color == "white"
         for i, mv in enumerate(history_uci):
             move_is_bot = (i % 2 == 0) if bot_plays_white else (i % 2 == 1)
             if not move_is_bot:
@@ -174,17 +263,15 @@ class AvatarEngine:
         return True
 
     def _next_forced_move_for_bot(self, next_ply):
-        """Coup forcé au trait `next_ply` si c'est le tour du bot."""
         if self.bot_color is None:
             return None
-        bot_plays_white = self.bot_color == 'white'
-        white_to_move = (next_ply % 2 == 0)
+        bot_plays_white = self.bot_color == "white"
+        white_to_move = next_ply % 2 == 0
         if bot_plays_white != white_to_move:
             return None
         return self._expected_forced_at_ply(next_ply)
 
     def _sync_forced_line_state(self, context):
-        """Abandon si le bot a dévié ; ignore les coups de l'adversaire vs répertoire."""
         if not (self.forced_white or self.forced_black):
             return
         if self.bot_color is None:
@@ -195,501 +282,559 @@ class AvatarEngine:
                 f"info string Forced line abandoned ({context}): engine move deviated from line",
                 file=sys.stderr,
             )
-        
+
     def find_stockfish(self):
-        """Find any stockfish*.exe in the current directory"""
-        # Chercher n'importe quel fichier qui commence par "stockfish"
-        stockfish_files = list(self.script_dir.glob('stockfish*.exe'))
-        
+        stockfish_files = list(self.script_dir.glob("stockfish*.exe"))
         if stockfish_files:
-            # Utiliser le premier trouve
-            stockfish_path = str(stockfish_files[0])
             print(f"info string Using Stockfish: {stockfish_files[0].name}", file=sys.stderr)
-            return stockfish_path
-        
-        # Fallback: chercher des noms classiques
-        possible_names = ['stockfish.exe', 'stockfish', 'stockfish_x64.exe']
-        for name in possible_names:
+            return str(stockfish_files[0])
+        for name in ("stockfish.exe", "stockfish", "stockfish_x64.exe"):
             path = self.script_dir / name
             if path.exists():
                 return str(path)
-        
-        # Dernier recours: essayer dans le PATH systeme
-        print("info string Warning: No Stockfish found locally, trying system PATH", file=sys.stderr)
-        return 'stockfish'
-    
+        print("info string No Stockfish in engine folder (optional if ChessAvatar.exe is present)", file=sys.stderr)
+        return None
+
+    def find_chessavatar(self):
+        for name in ("ChessAvatar.exe", "chessavatar.exe"):
+            path = self.script_dir / name
+            if path.exists():
+                print(f"info string ChessAvatar native engine found: {name}", file=sys.stderr)
+                return str(path)
+        print("info string ChessAvatar.exe not found — Stockfish only for search", file=sys.stderr)
+        return None
+
+    def find_nnue(self):
+        path = self.script_dir / "nn-default.nnue"
+        if path.exists():
+            return str(path.resolve())
+        nnue_files = list(self.script_dir.glob("*.nnue"))
+        if nnue_files:
+            return str(nnue_files[0].resolve())
+        return None
+
     def load_engine_config(self):
-        """Load engine.ini configuration"""
-        config_path = self.script_dir / 'engine.ini'
-        
+        config_path = self.script_dir / "engine.ini"
         config_dict = {}
-        
         if config_path.exists():
             try:
                 config = configparser.ConfigParser()
-                config.read(config_path, encoding='utf-8')
-                
-                if 'Engine' in config:
-                    config_dict['name'] = config['Engine'].get('Name', '')
-                    config_dict['author'] = config['Engine'].get('Author', '')
-                    config_dict['stockfish_path'] = config['Engine'].get('StockfishPath', '')
-                
-                print(f"info string Engine config loaded: {config_dict.get('name', 'N/A')}", file=sys.stderr)
+                config.read(config_path, encoding="utf-8")
+                if "Engine" in config:
+                    config_dict["name"] = config["Engine"].get("Name", "")
+                    config_dict["author"] = config["Engine"].get("Author", "")
+                    config_dict["stockfish_path"] = config["Engine"].get("StockfishPath", "")
+                if "Options" in config:
+                    config_dict["hash"] = config["Options"].get("Hash", "128")
+                    config_dict["threads"] = config["Options"].get("Threads", "4")
             except Exception as e:
                 print(f"info string Error loading engine.ini: {e}", file=sys.stderr)
-        else:
-            print("info string Warning: engine.ini not found, using defaults", file=sys.stderr)
-        
         return config_dict
-    
+
     def load_profile(self):
-        """Load profile configuration from any .json file"""
-        # Priorite 1: profile.json (nom standard)
-        profile_path = self.script_dir / 'profile.json'
-        
-        # Priorite 2: n'importe quel *.profile.json
+        profile_path = self.script_dir / "profile.json"
         if not profile_path.exists():
-            profile_files = list(self.script_dir.glob('*.profile.json'))
+            profile_files = list(self.script_dir.glob("*.profile.json"))
             if profile_files:
                 profile_path = profile_files[0]
-        
-        # Priorite 3: n'importe quel .json (sauf engine.ini ou fichiers systeme)
         if not profile_path.exists():
-            json_files = [f for f in self.script_dir.glob('*.json') if f.name not in ['engine.json', 'package.json']]
+            skip_names = {
+                "engine.json",
+                "package.json",
+                "engine-native-manifest.json",
+                "manifest.json",
+            }
+            json_files = [
+                f
+                for f in self.script_dir.glob("*.json")
+                if f.name not in skip_names and "manifest" not in f.name.lower()
+            ]
             if json_files:
                 profile_path = json_files[0]
-        
         if not profile_path.exists():
-            print("info string Warning: No JSON profile found, using defaults", file=sys.stderr)
-            return {
-                'name': 'Avatar Engine',
-                'username': 'Chess Avatar',
-                'skill': 15,
-                'depth': 16,
-                'elo': 2000
-            }
-        
+            return {"name": "Avatar Engine", "username": "Chess Avatar", "skill": 15, "depth": 16, "elo": 2000, "difficulty": 3}
         try:
-            with open(profile_path, 'r', encoding='utf-8') as f:
+            with open(profile_path, "r", encoding="utf-8") as f:
                 profile = json.load(f)
                 print(f"info string Profile loaded: {profile_path.name}", file=sys.stderr)
                 return profile
         except Exception as e:
             print(f"info string Error loading profile: {e}", file=sys.stderr)
-            return {
-                'name': 'Avatar Engine',
-                'username': 'Chess Avatar',
-                'skill': 15,
-                'depth': 16,
-                'elo': 2000
-            }
-    
+            return {"name": "Avatar Engine", "username": "Chess Avatar", "skill": 15, "depth": 16, "elo": 2000, "difficulty": 3}
+
+    # --- opening selection (unchanged) ---
+
     def select_opening_move(self, is_white):
-        """Sélectionne un coup d'ouverture selon le répertoire et les poids"""
         openings_list = self.white_openings if is_white else self.black_openings
-        
         if not openings_list:
             return None
-        
-        # Charger la base d'ouvertures depuis profile.json (si présente)
-        openings_db = self.profile.get('openingsDatabase', [])
+        openings_db = self.profile.get("openingsDatabase", [])
         if not openings_db:
             return None
-        
-        # Filtrer les ouvertures compatibles avec la position actuelle
         compatible_openings = []
         for opening_ref in openings_list:
-            opening_id = opening_ref.get('id')
-            weight = opening_ref.get('weight', 50)
-            
-            # Trouver l'ouverture dans la DB
-            opening_data = next((o for o in openings_db if o.get('id') == opening_id), None)
+            opening_id = opening_ref.get("id")
+            weight = opening_ref.get("weight", 50)
+            opening_data = next((o for o in openings_db if o.get("id") == opening_id), None)
             if not opening_data:
                 continue
-            
-            uci_moves = opening_data.get('uciMoves', [])
-            
-            # Vérifier si cette ouverture correspond à la position actuelle
+            uci_moves = opening_data.get("uciMoves", [])
             if self.matches_opening(uci_moves):
-                # Obtenir le prochain coup de l'ouverture
                 next_move_index = len(self.current_position)
                 if next_move_index < len(uci_moves):
-                    next_move = uci_moves[next_move_index]
-                    compatible_openings.append({
-                        'move': next_move,
-                        'weight': weight,
-                        'name': opening_data.get('name', 'Unknown')
-                    })
-        
+                    compatible_openings.append(
+                        {"move": uci_moves[next_move_index], "weight": weight, "name": opening_data.get("name", "?")}
+                    )
         if not compatible_openings:
             return None
-        
-        # Sélection pondérée
-        total_weight = sum(o['weight'] for o in compatible_openings)
+        total_weight = sum(o["weight"] for o in compatible_openings)
         random_value = random.uniform(0, total_weight)
-        
         current_sum = 0
         for opening in compatible_openings:
-            current_sum += opening['weight']
+            current_sum += opening["weight"]
             if random_value <= current_sum:
                 print(f"info string Opening: {opening['name']} -> {opening['move']}", file=sys.stderr)
-                return opening['move']
-        
-        return compatible_openings[0]['move']
-    
+                return opening["move"]
+        return compatible_openings[0]["move"]
+
     def _pick_fritz_black_fallback_move(self):
-        """Réponses noires indexées uniquement sur la séquence de coups blancs (export Chess Avatar)."""
         if not self.fritz_black_fallback or not self.opening_phase:
             return None
-        if self.bot_color != 'black':
+        if self.bot_color != "black":
             return None
         n = len(self.current_position)
         if n % 2 == 0:
             return None
         white_played = [self._normalize_uci(self.current_position[i]) for i in range(0, n, 2)]
         for entry in self.fritz_black_fallback:
-            wprefix = entry.get('whiteUci') or []
+            wprefix = entry.get("whiteUci") or []
             norm_p = [self._normalize_uci(m) for m in wprefix]
             if norm_p != white_played:
                 continue
-            choices = entry.get('choices') or []
+            choices = entry.get("choices") or []
             if not choices:
                 return None
-            total_weight = sum(max(1, c.get('weight', 50)) for c in choices)
+            total_weight = sum(max(1, c.get("weight", 50)) for c in choices)
             r = random.uniform(0, total_weight)
             s = 0
             for c in choices:
-                s += max(1, c.get('weight', 50))
+                s += max(1, c.get("weight", 50))
                 if r <= s:
-                    u = self._normalize_uci(c.get('uci', ''))
-                    if u:
-                        print(
-                            f"info string Fritz black fallback (white {' '.join(white_played)}): {u}",
-                            file=sys.stderr,
-                        )
+                    u = self._normalize_uci(c.get("uci", ""))
                     return u or None
-            u = self._normalize_uci(choices[-1].get('uci', ''))
-            return u or None
+            return self._normalize_uci(choices[-1].get("uci", "")) or None
         return None
-    
+
     def matches_opening(self, opening_moves):
-        """Vérifie si les coups joués correspondent au début d'une ouverture"""
         if len(self.current_position) > len(opening_moves):
             return False
-        
         for i, move in enumerate(self.current_position):
             if i >= len(opening_moves) or move != opening_moves[i]:
                 return False
-        
         return True
-    
-    def start_engine(self):
-        """Start Stockfish process"""
-        try:
-            print(f"info string Starting Stockfish: {self.engine_path}", file=sys.stderr)
-            
-            popen_kw = dict(
-                stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                bufsize=1,
-            )
-            # Evite une fenetre console noire pour Stockfish quand Fritz lance le moteur (Windows).
-            if sys.platform == "win32":
-                cnw = getattr(subprocess, "CREATE_NO_WINDOW", 0)
-                if cnw:
-                    popen_kw["creationflags"] = cnw
-            self.engine_process = subprocess.Popen([self.engine_path], **popen_kw)
-            
-            # Start thread to read engine output
-            self.output_thread = threading.Thread(target=self.read_engine_output, daemon=True)
-            self.output_thread.start()
-            
-            print(f"info string Stockfish started successfully", file=sys.stderr)
-            
-        except Exception as e:
-            print(f"info string FATAL: Error starting Stockfish: {e}", file=sys.stderr)
-            print(f"info string Engine path tried: {self.engine_path}", file=sys.stderr)
-            sys.exit(1)
-    
-    def read_engine_output(self):
-        """Read and forward engine output, with special handling for UCI"""
-        if not self.engine_process:
-            return
-            
-        for line in self.engine_process.stdout:
-            line = line.strip()
-            if not line:
-                continue
-            
-            if self.waiting_for_uciok:
-                # Mode UCI: collecter les options et filtrer les identifiants de Stockfish
-                if line.startswith('id name') or line.startswith('id author'):
-                    # Ignorer les identifiants de Stockfish
-                    continue
-                elif line.startswith('option'):
-                    # Collecter les options
-                    self.uci_options.append(line)
-                elif line == 'uciok':
-                    # Fin de la reponse UCI: envoyer tout dans le bon ordre
-                    # 1. Nos identifiants personnalises
-                    print(f"id name {self.name}", flush=True)
-                    print(f"id author {self.author}", flush=True)
-                    
-                    # 2. Toutes les options de Stockfish
-                    for option in self.uci_options:
-                        print(option, flush=True)
-                    
-                    # 3. uciok
-                    print("uciok", flush=True)
-                    
-                    # Reinitialiser
-                    self.waiting_for_uciok = False
-                    self.uci_options = []
-                else:
-                    # Autres lignes pendant UCI (info, etc.)
-                    self.uci_options.append(line)
-            else:
-                with self._blunder_lock:
-                    blunder = self._blunder_search_active
-                if blunder:
-                    if line.startswith('info ') and ' pv ' in line and 'multipv' in line.lower():
-                        mp = re.search(r'\bmultipv\s+(\d+)', line, re.I)
-                        pv_m = re.search(r'\bpv\s+(\S+)', line)
-                        if mp and pv_m:
-                            idx = int(mp.group(1))
-                            first = pv_m.group(1)
-                            if first and re.match(r'^[a-h][1-8][a-h][1-8]', first):
-                                with self._blunder_lock:
-                                    self._blunder_line_moves[idx] = first
-                        print(line, flush=True)
-                        continue
-                    if line.startswith('bestmove'):
-                        parts = line.split()
-                        raw = parts[1] if len(parts) > 1 else ''
-                        best = raw if raw and raw != '(none)' else ''
-                        with self._blunder_lock:
-                            lm = dict(self._blunder_line_moves)
-                            self._blunder_search_active = False
-                            self._blunder_line_moves.clear()
-                        if not best:
-                            print(line, flush=True)
-                            self.send_to_engine('setoption name MultiPV value 1')
-                            continue
-                        picked = self._pick_forced_human_blunder(best, lm)
-                        print(f'bestmove {picked}', flush=True)
-                        self.send_to_engine('setoption name MultiPV value 1')
-                        continue
-                    print(line, flush=True)
-                    continue
-                print(line, flush=True)
-    
-    def send_to_engine(self, command):
-        """Send command to Stockfish"""
-        if self.engine_process and self.engine_process.stdin:
-            self.engine_process.stdin.write(command + '\n')
-            self.engine_process.stdin.flush()
-    
-    def handle_uci(self):
-        """Handle UCI identification with custom name and author"""
-        # Activer le mode UCI pour bufferiser les reponses
-        self.waiting_for_uciok = True
-        self.uci_options = []
-        
-        # Envoyer UCI a Stockfish
-        # Le thread va collecter les reponses et les renvoyer dans le bon ordre
-        self.send_to_engine('uci')
-    
-    def handle_position(self, line):
-        """Gère la commande 'position' pour tracker les coups"""
-        # Exemples:
-        # position startpos moves e2e4 e7e5
-        # position fen ... moves ...
-        
-        self.current_position = []
-        self.is_white_turn = True
-        
-        if 'startpos' in line:
-            # Position initiale
-            if 'moves' in line:
-                moves_part = line.split('moves')[1].strip()
-                if moves_part:
-                    self.current_position = moves_part.split()
-                    print(f"info string Position: startpos with {len(self.current_position)} moves", file=sys.stderr)
-        elif 'fen' in line:
-            # Position FEN personnalisée
-            if 'moves' in line:
-                moves_part = line.split('moves')[1].strip()
-                if moves_part:
-                    self.current_position = moves_part.split()
-            
-            # Déterminer à qui le trait depuis le FEN
-            fen_parts = line.split('fen')[1].split('moves')[0].strip().split()
-            if len(fen_parts) > 1:
-                self.is_white_turn = (fen_parts[1] == 'w')
-        
-        # Déterminer à qui le trait après les coups
-        move_count = len(self.current_position)
-        self.is_white_turn = (move_count % 2 == 0)
-        
-        # Abandon seulement si le moteur a dévié (couleur connue après le 1er go)
-        self._sync_forced_line_state('position')
-        
-        # Sortir de la phase d'ouverture si trop de coups
-        if move_count >= self.max_opening_moves:
-            self.opening_phase = False
-            print(f"info string Exiting opening phase at move {move_count}", file=sys.stderr)
-        
-        print(f"info string Turn: {'White' if self.is_white_turn else 'Black'}, Opening phase: {self.opening_phase}", file=sys.stderr)
-        
-        # Forward à Stockfish
-        self.send_to_engine(line)
-    
-    def handle_go(self, line):
-        """Gère la commande 'go' - chercher le meilleur coup"""
-        
-        # Déterminer la couleur du bot au premier appel
-        if self.bot_color is None:
-            self.bot_color = 'white' if self.is_white_turn else 'black'
-            print(f"info string Bot playing as {self.bot_color}", file=sys.stderr)
 
-        self._sync_forced_line_state('go')
+    # --- engine lifecycle ---
 
-        # PRIORITÉ 1 (ABSOLUE): ligne forcée par couleur — le joueur n’a pas à suivre le répertoire adverse
-        if self.forced_line_active and (self.forced_white or self.forced_black):
-            next_ply = len(self.current_position)
-            forced_move = self._next_forced_move_for_bot(next_ply)
-            if forced_move:
-                print(
-                    f"info string Playing forced move ply {next_ply}: {forced_move}",
-                    file=sys.stderr,
-                )
-                print(f"bestmove {forced_move}", flush=True)
-                return
-        
-        # PRIORITÉ 2a: Table noire « Fritz » (coups blancs humains seuls comme clé)
-        if self.opening_phase:
-            fb_move = self._pick_fritz_black_fallback_move()
-            if fb_move:
-                print(f"bestmove {fb_move}", flush=True)
-                return
-        
-        # PRIORITÉ 2b: Répertoire d'ouvertures classique
-        if self.opening_phase and (self.white_openings or self.black_openings):
-            try:
-                opening_move = self.select_opening_move(self.is_white_turn)
-                if opening_move:
-                    print(f"info string Playing opening move: {opening_move}", file=sys.stderr)
-                    print(f"bestmove {opening_move}", flush=True)
-                    return
-                else:
-                    print(f"info string No opening move found, using Stockfish", file=sys.stderr)
-            except Exception as e:
-                print(f"info string Opening selection error: {e}, fallback to Stockfish", file=sys.stderr)
-        
-        # PRIORITÉ 3: Stockfish (optionnel : erreur « humaine » tous les N coups du bot)
-        do_blunder = self._should_play_human_blunder_move()
-        with self._blunder_lock:
-            self._blunder_line_moves.clear()
-            self._blunder_search_active = bool(do_blunder)
-        if do_blunder:
+    def start_engines(self):
+        if self.stockfish_path:
+            backend = UciBackend(self, self.stockfish_path, "stockfish", "Stockfish")
+            if backend.start():
+                self.backends["stockfish"] = backend
+                self.has_stockfish = True
+        if self.chessavatar_path:
+            backend = UciBackend(self, self.chessavatar_path, "chessavatar", "ChessAvatar")
+            if backend.start():
+                self.backends["chessavatar"] = backend
+                self.has_chessavatar = True
+
+        if not self.backends:
             print(
-                f"info string Human blunder move (MultiPV), interval={self.human_blunder_interval}",
+                "info string FATAL: No engine backend started. "
+                "Need ChessAvatar.exe or stockfish.exe in this folder.",
                 file=sys.stderr,
             )
-            self.send_to_engine('setoption name MultiPV value 4')
+            return
+
+        if self.has_chessavatar and not self.has_stockfish:
+            print(
+                "info string Stockfish not installed — ChessAvatar only (run install_engine.bat for fallback)",
+                file=sys.stderr,
+            )
+
+    def _ensure_chessavatar_nnue(self):
+        if self._chessavatar_nnue_configured or "chessavatar" not in self.backends:
+            return
+        nnue = self.find_nnue()
+        if nnue:
+            self.send_to("chessavatar", f"setoption name EvalFile value {nnue}")
+            self.send_to("chessavatar", "isready")
         else:
-            self.send_to_engine('setoption name MultiPV value 1')
-        print(f"info string Forwarding to Stockfish: {line}", file=sys.stderr)
-        self.send_to_engine(line)
-    
+            print(
+                "info string Warning: nn-default.nnue missing — ChessAvatar uses classical eval",
+                file=sys.stderr,
+            )
+        self._chessavatar_nnue_configured = True
+
+    def send_to(self, key, command):
+        backend = self.backends.get(key)
+        if backend:
+            backend.send(command)
+
+    def broadcast(self, command):
+        for backend in self.backends.values():
+            backend.send(command)
+
+    def _is_analysis_go(self, line):
+        """Fritz analysis pane uses go infinite / go depth without clock — not a game move."""
+        tokens = line.lower().split()
+        if "infinite" in tokens:
+            return True
+        has_clock = any(
+            t in tokens
+            for t in ("movetime", "wtime", "btime", "movestogo", "winc", "binc")
+        )
+        return "depth" in tokens and not has_clock
+
+    def _should_forward_info_line(self, line):
+        """Fritz mis-reads MultiPV 2+ scores as the main evaluation (shows +6, +12, etc.)."""
+        if not line.startswith("info "):
+            return True
+        mp = re.search(r"\bmultipv\s+(\d+)", line, re.I)
+        if mp and int(mp.group(1)) > 1:
+            return False
+        return True
+
+    def _normalize_info_for_gui(self, line):
+        """Single-PV info lines read cleaner in ChessBase/Fritz without a multipv tag."""
+        if re.search(r"\bmultipv\s+1\b", line, re.I):
+            line = re.sub(r"\s*multipv\s+1\b", "", line, flags=re.I)
+        return line
+
+    def _emit_engine_info(self, line):
+        if self._should_forward_info_line(line):
+            print(self._normalize_info_for_gui(line), flush=True)
+        """Abort in-flight search; ignore late bestmove (Fritz sends stop/position while thinking)."""
+        self._go_epoch += 1
+        self._awaiting_go_epoch = None
+        with self._search_lock:
+            self._multipv_active = False
+            self._line_moves.clear()
+        self.broadcast("stop")
+
+    def _begin_engine_search(self):
+        self.broadcast("stop")
+        self._go_epoch += 1
+        self._awaiting_go_epoch = self._go_epoch
+        return self._awaiting_go_epoch
+
+    def _is_stale_engine_output(self):
+        if self._awaiting_go_epoch is None:
+            return True
+        if self._awaiting_go_epoch != self._go_epoch:
+            return True
+        return False
+
+    def _accept_engine_bestmove(self):
+        self._awaiting_go_epoch = None
+
+    def on_backend_line(self, backend_key, line):
+        if self.waiting_for_uciok and backend_key == self.uci_source:
+            if line.startswith("id name") or line.startswith("id author"):
+                return
+            if line.startswith("option"):
+                self.uci_options.append(line)
+                return
+            if line == "uciok":
+                print(f"id name {self.name}", flush=True)
+                print(f"id author {self.author}", flush=True)
+                for option in self.uci_options:
+                    print(option, flush=True)
+                print("uciok", flush=True)
+                self.waiting_for_uciok = False
+                self.uci_options = []
+                return
+            self.uci_options.append(line)
+            return
+
+        if backend_key != self.forward_backend:
+            return
+
+        if self._is_stale_engine_output():
+            if line.startswith("bestmove"):
+                print(
+                    f"info string Ignoring stale bestmove (Fritz already moved on): {line}",
+                    file=sys.stderr,
+                )
+            return
+
+        with self._search_lock:
+            multipv = self._multipv_active
+
+        if multipv and line.startswith("info ") and " pv " in line and "multipv" in line.lower():
+            mp = re.search(r"\bmultipv\s+(\d+)", line, re.I)
+            pv_m = re.search(r"\bpv\s+(\S+)", line)
+            if mp and pv_m:
+                idx = int(mp.group(1))
+                first = pv_m.group(1)
+                if first and re.match(r"^[a-h][1-8][a-h][1-8]", first):
+                    with self._search_lock:
+                        self._line_moves[idx] = first
+            self._emit_engine_info(line)
+            return
+
+        if line.startswith("info "):
+            self._emit_engine_info(line)
+            return
+
+        if line.startswith("bestmove"):
+            parts = line.split()
+            raw = parts[1] if len(parts) > 1 else ""
+            best = raw if raw and raw != "(none)" else ""
+            self._accept_engine_bestmove()
+            if multipv:
+                with self._search_lock:
+                    lm = dict(self._line_moves)
+                    blunder = self._multipv_blunder
+                    self._multipv_active = False
+                    self._line_moves.clear()
+                if best:
+                    picked = (
+                        self._pick_forced_human_blunder(best, lm)
+                        if blunder
+                        else self._pick_persona_biased_move(best, lm)
+                    )
+                    print(f"bestmove {picked}", flush=True)
+                else:
+                    print(line, flush=True)
+                self.send_to(self.forward_backend, "setoption name MultiPV value 1")
+            else:
+                print(line, flush=True)
+            return
+
+    def _configure_analysis_backend(self, backend_key):
+        """Analysis in Fritz: single PV, no persona noise."""
+        skill = int(self.profile.get("skill", 15) or 15)
+        hash_mb = min(int(self.config.get("hash", 128) or 128), 512)
+        threads = max(1, int(self.config.get("threads", 4) or 4))
+        self.send_to(backend_key, "setoption name MultiPV value 1")
+        if backend_key == "chessavatar":
+            self.send_to("chessavatar", f"setoption name Skill Level value {skill}")
+            self.send_to("chessavatar", f"setoption name Hash value {hash_mb}")
+            self.send_to("chessavatar", f"setoption name Threads value {threads}")
+            nnue = self.find_nnue()
+            if nnue:
+                self.send_to("chessavatar", f"setoption name EvalFile value {nnue}")
+        else:
+            self.send_to("stockfish", f"setoption name Skill Level value {skill}")
+            self.send_to("stockfish", "setoption name UCI_LimitStrength value true")
+            elo = int(self.profile.get("elo", 2000) or 2000)
+            self.send_to("stockfish", f"setoption name UCI_Elo value {elo}")
+            self.send_to("stockfish", "setoption name MultiPV value 1")
+        with self._search_lock:
+            self._line_moves.clear()
+            self._multipv_active = False
+            self._multipv_blunder = False
+
+    def _configure_search_backend(self, backend_key, do_blunder):
+        skill = int(self.profile.get("skill", 15) or 15)
+        hash_mb = min(int(self.config.get("hash", 128) or 128), 512)
+        threads = max(1, int(self.config.get("threads", 4) or 4))
+
+        if backend_key == "chessavatar":
+            self.send_to("chessavatar", f"setoption name Skill Level value {skill}")
+            self.send_to("chessavatar", f"setoption name Hash value {hash_mb}")
+            self.send_to("chessavatar", f"setoption name Threads value {threads}")
+            nnue = self.find_nnue()
+            if nnue:
+                self.send_to("chessavatar", f"setoption name EvalFile value {nnue}")
+        else:
+            self.send_to("stockfish", f"setoption name Skill Level value {skill}")
+            self.send_to("stockfish", "setoption name UCI_LimitStrength value true")
+            elo = int(self.profile.get("elo", 2000) or 2000)
+            self.send_to("stockfish", f"setoption name UCI_Elo value {elo}")
+
+        with self._search_lock:
+            self._line_moves.clear()
+            self._multipv_blunder = do_blunder
+            if do_blunder:
+                self._multipv_active = True
+                mp = 4
+            else:
+                mp = self._multi_pv_count_for_difficulty()
+                self._multipv_active = mp > 1
+            if self._multipv_active:
+                self.send_to(backend_key, f"setoption name MultiPV value {mp}")
+            else:
+                self.send_to(backend_key, "setoption name MultiPV value 1")
+
+    def handle_uci(self):
+        if not self.backends:
+            print(f"id name {self.name}", flush=True)
+            print(f"id author {self.author}", flush=True)
+            print("option name Skill Level type spin default 15 min 0 max 20", flush=True)
+            print("uciok", flush=True)
+            return
+        self.waiting_for_uciok = True
+        self.uci_options = []
+        if self.has_chessavatar:
+            self.uci_source = "chessavatar"
+        elif self.has_stockfish:
+            self.uci_source = "stockfish"
+        else:
+            self.uci_source = next(iter(self.backends))
+        self.send_to(self.uci_source, "uci")
+
+    def handle_position(self, line):
+        self._invalidate_pending_search()
+        self.current_position = []
+        self.is_white_turn = True
+        if "startpos" in line:
+            if "moves" in line:
+                moves_part = line.split("moves")[1].strip()
+                if moves_part:
+                    self.current_position = moves_part.split()
+        elif "fen" in line:
+            if "moves" in line:
+                moves_part = line.split("moves")[1].strip()
+                if moves_part:
+                    self.current_position = moves_part.split()
+            fen_parts = line.split("fen")[1].split("moves")[0].strip().split()
+            if len(fen_parts) > 1:
+                self.is_white_turn = fen_parts[1] == "w"
+        move_count = len(self.current_position)
+        self.is_white_turn = move_count % 2 == 0
+        self._sync_forced_line_state("position")
+        if move_count >= self.max_opening_moves:
+            self.opening_phase = False
+        self.broadcast(line)
+
+    def handle_go(self, line):
+        self._analysis_go = self._is_analysis_go(line)
+
+        if not self._analysis_go:
+            if self.bot_color is None:
+                self.bot_color = "white" if self.is_white_turn else "black"
+                print(f"info string Bot playing as {self.bot_color}", file=sys.stderr)
+
+            self._sync_forced_line_state("go")
+
+            if self.forced_line_active and (self.forced_white or self.forced_black):
+                next_ply = len(self.current_position)
+                forced_move = self._next_forced_move_for_bot(next_ply)
+                if forced_move:
+                    print(f"info string Playing forced move ply {next_ply}: {forced_move}", file=sys.stderr)
+                    self._invalidate_pending_search()
+                    print(f"bestmove {forced_move}", flush=True)
+                    return
+
+            if self.opening_phase:
+                fb_move = self._pick_fritz_black_fallback_move()
+                if fb_move:
+                    self._invalidate_pending_search()
+                    print(f"bestmove {fb_move}", flush=True)
+                    return
+
+            if self.opening_phase and (self.white_openings or self.black_openings):
+                try:
+                    opening_move = self.select_opening_move(self.is_white_turn)
+                    if opening_move:
+                        print(f"info string Playing opening move: {opening_move}", file=sys.stderr)
+                        self._invalidate_pending_search()
+                        print(f"bestmove {opening_move}", flush=True)
+                        return
+                except Exception as e:
+                    print(f"info string Opening error: {e}", file=sys.stderr)
+
+        do_blunder = False if self._analysis_go else self._should_play_human_blunder_move()
+        self._begin_engine_search()
+
+        if self.has_chessavatar and "chessavatar" in self.backends:
+            self.forward_backend = "chessavatar"
+            if self._analysis_go:
+                self._ensure_chessavatar_nnue()
+                print("info string Search: ChessAvatar analysis (MultiPV 1)", file=sys.stderr)
+                self._configure_analysis_backend("chessavatar")
+            else:
+                self._ensure_chessavatar_nnue()
+                print("info string Search: ChessAvatar (Stockfish fallback available)", file=sys.stderr)
+                self._configure_search_backend("chessavatar", do_blunder)
+            self.send_to("chessavatar", line)
+            return
+
+        if self.has_stockfish and "stockfish" in self.backends:
+            self.forward_backend = "stockfish"
+            if self._analysis_go:
+                print("info string Search: Stockfish analysis (MultiPV 1)", file=sys.stderr)
+                self._configure_analysis_backend("stockfish")
+            else:
+                print("info string Search: Stockfish", file=sys.stderr)
+                self._configure_search_backend("stockfish", do_blunder)
+            self.send_to("stockfish", line)
+            return
+
+        print("bestmove 0000", flush=True)
+
     def handle_setoption(self, line):
-        """Handle setoption commands with profile overrides"""
-        # Apply profile-based configurations
-        if 'name Skill Level' in line:
-            skill = self.profile.get('skill', 15)
-            self.send_to_engine(f'setoption name Skill Level value {skill}')
-        elif 'name UCI_LimitStrength' in line:
-            self.send_to_engine('setoption name UCI_LimitStrength value true')
-        elif 'name UCI_Elo' in line:
-            elo = self.profile.get('elo', 2000)
-            self.send_to_engine(f'setoption name UCI_Elo value {elo}')
+        if "name Skill Level" in line:
+            skill = self.profile.get("skill", 15)
+            self.broadcast(f"setoption name Skill Level value {skill}")
+        elif "name UCI_LimitStrength" in line:
+            self.send_to("stockfish", "setoption name UCI_LimitStrength value true")
+        elif "name UCI_Elo" in line:
+            elo = self.profile.get("elo", 2000)
+            self.send_to("stockfish", f"setoption name UCI_Elo value {elo}")
         else:
-            # Forward other options
-            self.send_to_engine(line)
-    
+            self.broadcast(line)
+
     def run(self):
-        """Main UCI loop"""
-        self.start_engine()
-        
-        print(f"info string AvatarEngine initialized", flush=True)
+        self.start_engines()
+
+        print("info string AvatarEngine initialized", flush=True)
         print(f"info string Name: {self.name}", flush=True)
         print(f"info string Author: {self.author}", flush=True)
-        
-        # 🆕 Afficher info sur la ligne forcée (par couleur + aperçu entrelacé)
-        if self.forced_white or self.forced_black:
-            print(
-                f"info string Forced line: W={len(self.forced_white)} B={len(self.forced_black)} moves",
-                flush=True,
-            )
-            preview = self.forced_line[:6]
-            if preview:
-                print(
-                    f"info string Forced (interleaved preview): {' '.join(preview)}{'...' if len(self.forced_line) > 6 else ''}",
-                    flush=True,
-                )
-        
-        # 🆕 Afficher info sur les ouvertures
-        if self.white_openings:
-            print(f"info string White openings: {len(self.white_openings)} loaded", flush=True)
-        if self.black_openings:
-            print(f"info string Black openings: {len(self.black_openings)} loaded", flush=True)
-        if self.fritz_black_fallback:
-            print(
-                f"info string Fritz black fallback: {len(self.fritz_black_fallback)} entries",
-                flush=True,
-            )
-        
+        if self.has_chessavatar and self.has_stockfish:
+            print("info string Backend: ChessAvatar + Stockfish fallback", flush=True)
+        elif self.has_chessavatar:
+            print("info string Backend: ChessAvatar (install stockfish.exe for fallback)", flush=True)
+        elif self.has_stockfish:
+            print("info string Backend: Stockfish only", flush=True)
+        else:
+            print("info string Backend: NONE — add ChessAvatar.exe or stockfish.exe", flush=True)
+
         for line in sys.stdin:
             line = line.strip()
-            
             if not line:
                 continue
-            
-            if line == 'uci':
+            if line == "uci":
                 self.handle_uci()
-            elif line == 'quit':
-                self.send_to_engine('quit')
-                if self.engine_process:
-                    self.engine_process.wait()
+            elif line == "quit":
+                self.broadcast("quit")
                 sys.exit(0)
-            elif line.startswith('position'):
+            elif line.startswith("position"):
                 self.handle_position(line)
-            elif line.startswith('go'):
+            elif line.startswith("go"):
                 self.handle_go(line)
-            elif line == 'ucinewgame':
-                # Nouvelle partie - réinitialiser l'état
+            elif line == "ucinewgame":
+                self._invalidate_pending_search()
                 self.current_position = []
                 self.is_white_turn = True
                 self.opening_phase = True
                 self.bot_color = None
-                self.forced_line_active = True  # 🆕 Réactiver la ligne forcée
-                with self._blunder_lock:
-                    self._blunder_search_active = False
-                    self._blunder_line_moves.clear()
-                self.send_to_engine(line)
-            elif line.startswith('setoption'):
+                self.forced_line_active = True
+                self.broadcast(line)
+            elif line.startswith("setoption"):
                 self.handle_setoption(line)
+            elif line == "isready":
+                self.broadcast(line)
+            elif line == "stop":
+                self._invalidate_pending_search()
             else:
-                # Forward all other commands
-                self.send_to_engine(line)
+                self.broadcast(line)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     try:
-        engine = AvatarEngine()
-        engine.run()
+        AvatarEngine().run()
     except KeyboardInterrupt:
         sys.exit(0)
     except Exception as e:

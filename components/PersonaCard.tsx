@@ -20,6 +20,7 @@ import { saveRecentConfig } from "@/lib/storage";
 import { toast } from "sonner";
 import { saveProfileToCloud, isAuthenticated } from "@/lib/supabase-storage";
 import { prepareConfigForExport } from "@/lib/forced-line-utils";
+import { accountApiHeaders } from "@/lib/account-api-auth";
 import { OPENINGS_DATABASE } from "@/lib/openings-library";
 import AuthModal from "./AuthModal";
 import UpgradeModal from "./UpgradeModal";
@@ -110,7 +111,7 @@ export default function PersonaCard({ stats, config, profileId }: PersonaCardPro
       const exportData = buildExportData();
       const res = await fetch("/api/engine-pack", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: await accountApiHeaders(),
         body: JSON.stringify(exportData),
       });
 

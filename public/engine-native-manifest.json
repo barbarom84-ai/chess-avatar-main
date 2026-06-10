@@ -1,0 +1,14 @@
+{
+  "generatedAt": "2026-06-09T18:22:05.095Z",
+  "sourceExe": "C:\\Users\\marco\\Cursor Workplace\\UCI Chess Engine\\target\\release\\ChessAvatar.exe",
+  "files": {
+    "ChessAvatar.exe": {
+      "size": 2857984,
+      "sha256": "2866cdf96bdd3dcbe434ae45cb9d57ce32d0a21d85f85377f4b6391d60db0ed3"
+    },
+    "nn-default.nnue": {
+      "size": 21022697,
+      "sha256": "c157e0a5755b63e97c227b09f368876fdfb4b1d104122336e0f3d4639e33a4b1"
+    }
+  }
+}

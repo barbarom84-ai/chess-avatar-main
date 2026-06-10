@@ -43,6 +43,7 @@ import {
   trackBotEngineFallback,
   trackChessAvatarTelemetry,
 } from "@/lib/chessavatar-telemetry";
+import { useChessAvatarAccess } from "@/hooks/useChessAvatarAccess";
 
 const DEBUG = typeof window !== "undefined" && (window as unknown as { __CHESS_DEBUG?: boolean }).__CHESS_DEBUG;
 
@@ -51,6 +52,7 @@ function botEngineContext(config: EngineConfig): BotEngineContext {
 }
 
 export function useStockfish() {
+  const chessAvatarAllowed = useChessAvatarAccess();
   const [isReady, setIsReady] = useState(false);
   const [isChessAvatarReady, setIsChessAvatarReady] = useState(false);
   const [isChessAvatarPlayReady, setIsChessAvatarPlayReady] = useState(false);
@@ -66,28 +68,36 @@ export function useStockfish() {
 
   useEffect(() => {
     stockfishClient.acquire();
-    chessAvatarClient.acquire();
+    if (chessAvatarAllowed) {
+      chessAvatarClient.acquire();
+    }
     let cancelled = false;
 
     const syncReady = () => {
       if (cancelled) return;
-      setIsChessAvatarReady(chessAvatarClient.isReady);
-      setIsChessAvatarPlayReady(chessAvatarClient.isPlayReady);
-      setIsChessAvatarNnueLoading(chessAvatarClient.isNnueLoading);
-      setChessAvatarSearchStats(chessAvatarClient.searchStats);
+      setIsChessAvatarReady(chessAvatarAllowed && chessAvatarClient.isReady);
+      setIsChessAvatarPlayReady(chessAvatarAllowed && chessAvatarClient.isPlayReady);
+      setIsChessAvatarNnueLoading(chessAvatarAllowed && chessAvatarClient.isNnueLoading);
+      setChessAvatarSearchStats(chessAvatarAllowed ? chessAvatarClient.searchStats : null);
     };
 
-    void Promise.all([
-      stockfishClient.waitUntilReady(),
-      chessAvatarClient.waitUntilReady(),
-      chessAvatarClient.waitUntilPlayReady(),
-    ]).then(([stockfishOk, chessAvatarOk, chessAvatarPlayOk]) => {
-      if (!cancelled) {
-        setIsReady(stockfishOk);
-        setIsChessAvatarReady(chessAvatarOk);
-        setIsChessAvatarPlayReady(chessAvatarPlayOk);
-        syncReady();
-      }
+    const readyPromise = chessAvatarAllowed
+      ? Promise.all([
+          stockfishClient.waitUntilReady(),
+          chessAvatarClient.waitUntilReady(),
+          chessAvatarClient.waitUntilPlayReady(),
+        ])
+      : Promise.all([stockfishClient.waitUntilReady()]);
+
+    void readyPromise.then((results) => {
+      if (cancelled) return;
+      const stockfishOk = results[0];
+      const chessAvatarOk = chessAvatarAllowed ? (results[1] ?? false) : false;
+      const chessAvatarPlayOk = chessAvatarAllowed ? (results[2] ?? false) : false;
+      setIsReady(stockfishOk);
+      setIsChessAvatarReady(chessAvatarOk);
+      setIsChessAvatarPlayReady(chessAvatarPlayOk);
+      syncReady();
     });
 
     const poll = setInterval(syncReady, 500);
@@ -96,14 +106,16 @@ export function useStockfish() {
       cancelled = true;
       clearInterval(poll);
       stockfishClient.release();
-      chessAvatarClient.release();
+      if (chessAvatarAllowed) {
+        chessAvatarClient.release();
+      }
       setIsReady(false);
       setIsChessAvatarReady(false);
       setIsChessAvatarPlayReady(false);
       setIsChessAvatarNnueLoading(false);
       setChessAvatarSearchStats(null);
     };
-  }, []);
+  }, [chessAvatarAllowed]);
 
   const sendCommand = useCallback((command: string) => {
     stockfishClient.sendCommand(command);
@@ -115,10 +127,12 @@ export function useStockfish() {
       preference,
       isChessAvatarReady,
       isReady,
-      isChessAvatarPlayReady
+      isChessAvatarPlayReady,
+      undefined,
+      chessAvatarAllowed
     );
     return resolved !== null;
-  }, [isReady, isChessAvatarReady, isChessAvatarPlayReady]);
+  }, [isReady, isChessAvatarReady, isChessAvatarPlayReady, chessAvatarAllowed]);
 
   const getBestMove = (
     fen: string,
@@ -309,7 +323,8 @@ export function useStockfish() {
         isChessAvatarReady,
         isReady,
         isChessAvatarPlayReady,
-        botCtx
+        botCtx,
+        chessAvatarAllowed
       );
 
       const markChessAvatar = (move: string) => {
@@ -435,7 +450,8 @@ export function useStockfish() {
         isChessAvatarReady,
         isReady,
         isChessAvatarPlayReady,
-        botCtx
+        botCtx,
+        chessAvatarAllowed
       );
 
       if (resolved === "chessavatar") {
@@ -473,7 +489,7 @@ export function useStockfish() {
 
       return Promise.reject(new Error("No bot engine ready"));
     },
-    [isReady, isChessAvatarReady, isChessAvatarPlayReady, getPersonaStyleMoveWithStockfish]
+    [isReady, isChessAvatarReady, isChessAvatarPlayReady, getPersonaStyleMoveWithStockfish, chessAvatarAllowed]
   );
 
   const getBestMoveForFen = useCallback(
