@@ -242,6 +242,8 @@ Le guide complet fournit :
 5. **Fenêtres noires avec Fritz** : Les versions récentes d'`AvatarEngine.exe` sont compilées sans console et lancent Stockfish sans fenêtre visible ; si vous voyez encore des invites de commandes, remplacez l'exécutable par celui d'un pack récent.
 6. **Minimum 15 parties** : Pour un profil précis.
 7. **Recompilation côté dev** : Si vous modifiez `public/AvatarEngine.py`, lancez `npm run build:engine` pour régénérer `public/AvatarEngine.exe` puis commitez-le.
+8. **Recompilation après mise à jour du pack** : Si le moteur joue deux coups d’affilée ou des coups très faibles dès les premières profondeurs, remplacez `AvatarEngine.exe` par une version recompilée depuis le `AvatarEngine.py` le plus récent (`npm run build:engine` ou `public/compile_avatar_engine.bat`), puis redémarrez Fritz.
+9. **Coups « imprécis » volontaires vs bug** : À difficulté 1–3, le moteur peut choisir une 2e–4e ligne d’analyse (MultiPV) pour imiter un joueur humain. Tous les N coups du bot, un blunder périodique est possible (`humanBlunderInterval` dans `profile.json`, défaut 10 ; mettre `0` pour désactiver). Pour un jeu plus fort dans Fritz, utilisez `"difficulty": 4` ou `5` dans `profile.json`.
 
 ## 🔄 Mises à Jour Futures
 

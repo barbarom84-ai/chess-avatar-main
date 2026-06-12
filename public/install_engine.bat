@@ -182,14 +182,20 @@ if "!ENGINE_NAME!"=="" set ENGINE_NAME=ChessAvatar
 set ENGINE_NAME=!ENGINE_NAME!_Avatar
 
 set AUTHOR_NAME=Chess Avatar
+for /f "tokens=2 delims=:," %%a in ('type "%PROFILE_FILE%" ^| findstr /i "author"') do (
+    set temp=%%a
+    set temp=!temp:"=!
+    set temp=!temp: =!
+    if not "!temp!"=="" set AUTHOR_NAME=!temp!
+)
 
 echo.
 echo ========================================
 echo Configuration automatique detectee
 echo ========================================
 echo [INFO] Fichier de profil : %PROFILE_FILE%
-echo [INFO] Nom du moteur     : !ENGINE_NAME!
-echo [INFO] Auteur            : !AUTHOR_NAME!
+echo [INFO] Nom du moteur     : !ENGINE_NAME! ^(affiche dans Fritz^)
+echo [INFO] Auteur            : !AUTHOR_NAME! ^(id author UCI^)
 echo [INFO] Stockfish         : !STOCKFISH_FILE!
 echo.
 
@@ -200,6 +206,8 @@ if /i "!CUSTOMIZE!"=="O" (
     echo ========================================
     echo Personnalisation
     echo ========================================
+    echo [INFO] Le NOM apparait dans la liste des modules Fritz et lors du chargement.
+    echo [INFO] L'AUTEUR apparait dans les proprietes du moteur ^(id author^).
 
     set /p CUSTOM_ENGINE_NAME="Nom du moteur [!ENGINE_NAME!]: "
     if not "!CUSTOM_ENGINE_NAME!"=="" set ENGINE_NAME=!CUSTOM_ENGINE_NAME!
@@ -221,6 +229,7 @@ echo Name=!ENGINE_NAME!
 echo Author=!AUTHOR_NAME!
 echo Protocol=UCI
 echo StockfishPath=!STOCKFISH_FILE!
+echo UseChessAvatar=false
 echo.
 echo [Options]
 echo Hash=128
@@ -255,8 +264,6 @@ copy /Y "AvatarEngine.exe" "!MOTOR_DIR!\" >nul
 copy /Y "!STOCKFISH_FILE!" "!MOTOR_DIR!\" >nul
 copy /Y "%PROFILE_FILE%" "!MOTOR_DIR!\profile.json" >nul
 copy /Y "engine.ini" "!MOTOR_DIR!\" >nul
-if exist "ChessAvatar.exe" copy /Y "ChessAvatar.exe" "!MOTOR_DIR!\" >nul
-if exist "nn-default.nnue" copy /Y "nn-default.nnue" "!MOTOR_DIR!\" >nul
 if exist "swap_profile.bat" copy /Y "swap_profile.bat" "!MOTOR_DIR!\" >nul
 
 if errorlevel 1 (
@@ -280,8 +287,11 @@ echo - !STOCKFISH_FILE!
 if exist "ChessAvatar.exe" echo - ChessAvatar.exe ^(moteur Rust^)
 if exist "nn-default.nnue" echo - nn-default.nnue ^(reseau NNUE^)
 echo - profile.json ^(profil actif ; copie depuis %PROFILE_FILE%^)
-echo - engine.ini ^(Nom: !ENGINE_NAME!, Auteur: !AUTHOR_NAME!^)
+echo - engine.ini ^(Nom: !ENGINE_NAME!, Auteur: !AUTHOR_NAME!, Stockfish uniquement^)
 if exist "swap_profile.bat" echo - swap_profile.bat ^(pour changer d'avatar plus tard^)
+echo.
+echo [INFO] Milieu de partie : Stockfish uniquement ^(UseChessAvatar=false^).
+echo [INFO] Supprimez ChessAvatar.exe du dossier Fritz si une ancienne install l'a laisse.
 echo.
 echo Prochaines etapes :
 echo.

@@ -81,7 +81,7 @@ echo ========================================
 echo.
 
 REM Compiler avec PyInstaller
-pyinstaller --onefile --noconsole --clean --name AvatarEngine AvatarEngine.py
+pyinstaller --onefile --console --clean --name AvatarEngine AvatarEngine.py
 
 if errorlevel 1 (
     echo.

@@ -70,13 +70,22 @@ if "!ENGINE_NAME!"=="" set ENGINE_NAME=ChessAvatar
 :: Ajouter suffixe _Avatar
 set ENGINE_NAME=!ENGINE_NAME!_Avatar
 
-:: Auteur fixe
+:: Auteur : profile.json (author) ou Chess Avatar
 set AUTHOR_NAME=Chess Avatar
+for /f "tokens=2 delims=:," %%a in ('type "profile.json" ^| findstr /i "author"') do (
+    set temp=%%a
+    set temp=!temp:"=!
+    set temp=!temp: =!
+    if not "!temp!"=="" set AUTHOR_NAME=!temp!
+)
 
 echo.
 echo [INFO] Nom du moteur : !ENGINE_NAME!
 echo [INFO] Auteur : !AUTHOR_NAME!
 echo.
+
+set /p CUSTOM_AUTHOR="Nom de l'auteur [!AUTHOR_NAME!]: "
+if not "!CUSTOM_AUTHOR!"=="" set AUTHOR_NAME=!CUSTOM_AUTHOR!
 
 :: Detecter Stockfish
 set STOCKFISH_FILE=stockfish.exe
@@ -96,6 +105,7 @@ echo Name=!ENGINE_NAME!
 echo Author=!AUTHOR_NAME!
 echo Protocol=UCI
 echo StockfishPath=%STOCKFISH_FILE%
+echo UseChessAvatar=false
 echo.
 echo [Options]
 echo Hash=128

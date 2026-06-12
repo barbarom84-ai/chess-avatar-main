@@ -3,8 +3,8 @@
 AvatarEngine.py - UCI wrapper for Chess Avatar profiles (Fritz / ChessBase / Arena).
 
 - Opening book, forced lines, Fritz black fallback (unchanged)
-- Middlegame: ChessAvatar.exe (Rust + NNUE) when present in the install folder
-- Fallback: Stockfish if ChessAvatar is missing or fails
+- Middlegame: Stockfish by default (ChessAvatar.exe optional via engine.ini UseChessAvatar=true)
+- Fallback: ChessAvatar only when Stockfish missing and UseChessAvatar enabled
 - Persona variance + periodic human blunders via MultiPV (aligned with the web app)
 """
 
@@ -42,7 +42,7 @@ class UciBackend:
             popen_kw = dict(
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
+                stderr=subprocess.DEVNULL,
                 text=True,
                 bufsize=1,
                 cwd=str(self.owner.script_dir),
@@ -84,21 +84,31 @@ class AvatarEngine:
 
         self.config = self.load_engine_config()
         self.profile = self.load_profile()
+        self.use_chessavatar = self._read_use_chessavatar()
 
         self.stockfish_path = self.config.get("stockfish_path") or self.find_stockfish()
-        self.chessavatar_path = self.find_chessavatar()
+        self.chessavatar_path = self.find_chessavatar() if self.use_chessavatar else None
         self.has_chessavatar = False
         self.has_stockfish = False
         self._chessavatar_nnue_configured = False
+        self._backend_ready_count = 0
+        self._backend_ready_target = 0
+        self._backend_ready_event = threading.Event()
 
         self.backends = {}
         self.forward_backend = "stockfish"
-        self.waiting_for_uciok = False
-        self.uci_options = []
         self.uci_source = "stockfish"
 
-        self.name = self.config.get("name", self.profile.get("name", "Avatar Engine"))
-        self.author = self.config.get("author", self.profile.get("username", "Chess Avatar"))
+        self.name = self._resolve_engine_identity(
+            "name",
+            ("name", "username"),
+            "Avatar Engine",
+        )
+        self.author = self._resolve_engine_identity(
+            "author",
+            ("author", "username"),
+            "Chess Avatar",
+        )
 
         self.forced_white, self.forced_black = self._load_forced_lines_by_color()
         self.forced_line = self._interleave_forced(self.forced_white, self.forced_black)
@@ -123,6 +133,11 @@ class AvatarEngine:
         self._go_epoch = 0
         self._awaiting_go_epoch = None
         self._analysis_go = False
+        self._initial_side_white = True
+        self._go_sent = False
+        self._bestmove_sent_epoch = None
+        self._pending_stop_bestmove = False
+        self._uci_move_re = re.compile(r"^[a-h][1-8][a-h][1-8][qrbn]?$")
 
         _hb = self.profile.get("humanBlunderInterval")
         if _hb is None:
@@ -135,18 +150,59 @@ class AvatarEngine:
 
     # --- helpers (unchanged logic) ---
 
+    @staticmethod
+    def _clean_identity(value):
+        if not isinstance(value, str):
+            return ""
+        return value.strip()
+
+    def _resolve_engine_identity(self, config_key, profile_keys, default):
+        configured = self._clean_identity(self.config.get(config_key, ""))
+        if configured:
+            return configured
+        for key in profile_keys:
+            candidate = self._clean_identity(self.profile.get(key, ""))
+            if candidate:
+                return candidate
+        return default
+
+    def _read_use_chessavatar(self):
+        raw = self.config.get("use_chessavatar", "")
+        if isinstance(raw, bool):
+            return raw
+        if isinstance(raw, str):
+            return raw.strip().lower() in ("1", "true", "yes", "on")
+        return False
+
     def _normalize_uci(self, uci):
         if not uci or not isinstance(uci, str):
             return ""
         s = uci.strip().lower()
-        return s[:4] + (s[4] if len(s) > 4 else "")
+        if len(s) >= 5 and s[4] in "qrbn":
+            return s[:5]
+        return s[:4]
+
+    def _is_valid_uci_move(self, uci):
+        normalized = self._normalize_uci(uci)
+        return bool(normalized and self._uci_move_re.match(normalized))
+
+    def _white_to_move_at_ply(self, ply):
+        return self._initial_side_white if ply % 2 == 0 else not self._initial_side_white
+
+    def _is_bot_turn(self):
+        if self.bot_color is None:
+            return True
+        white_to_move = self._white_to_move_at_ply(len(self.current_position))
+        if self.bot_color == "white":
+            return white_to_move
+        return not white_to_move
 
     def _count_bot_moves_played(self):
         if self.bot_color is None:
             return 0
         n = 0
         for i, _ in enumerate(self.current_position):
-            is_white_move = i % 2 == 0
+            is_white_move = self._white_to_move_at_ply(i)
             is_bot = is_white_move == (self.bot_color == "white")
             if is_bot:
                 n += 1
@@ -252,7 +308,8 @@ class AvatarEngine:
             return True
         bot_plays_white = self.bot_color == "white"
         for i, mv in enumerate(history_uci):
-            move_is_bot = (i % 2 == 0) if bot_plays_white else (i % 2 == 1)
+            white_to_move = self._white_to_move_at_ply(i)
+            move_is_bot = white_to_move if bot_plays_white else not white_to_move
             if not move_is_bot:
                 continue
             exp = self._expected_forced_at_ply(i)
@@ -266,7 +323,7 @@ class AvatarEngine:
         if self.bot_color is None:
             return None
         bot_plays_white = self.bot_color == "white"
-        white_to_move = next_ply % 2 == 0
+        white_to_move = self._white_to_move_at_ply(next_ply)
         if bot_plays_white != white_to_move:
             return None
         return self._expected_forced_at_ply(next_ply)
@@ -319,11 +376,12 @@ class AvatarEngine:
         if config_path.exists():
             try:
                 config = configparser.ConfigParser()
-                config.read(config_path, encoding="utf-8")
+                config.read(config_path, encoding="utf-8-sig")
                 if "Engine" in config:
                     config_dict["name"] = config["Engine"].get("Name", "")
                     config_dict["author"] = config["Engine"].get("Author", "")
                     config_dict["stockfish_path"] = config["Engine"].get("StockfishPath", "")
+                    config_dict["use_chessavatar"] = config["Engine"].get("UseChessAvatar", "")
                 if "Options" in config:
                     config_dict["hash"] = config["Options"].get("Hash", "128")
                     config_dict["threads"] = config["Options"].get("Threads", "4")
@@ -446,6 +504,11 @@ class AvatarEngine:
             if backend.start():
                 self.backends["chessavatar"] = backend
                 self.has_chessavatar = True
+        elif self.use_chessavatar:
+            print(
+                "info string UseChessAvatar=true but ChessAvatar.exe not found — Stockfish only",
+                file=sys.stderr,
+            )
 
         if not self.backends:
             print(
@@ -460,6 +523,13 @@ class AvatarEngine:
                 "info string Stockfish not installed — ChessAvatar only (run install_engine.bat for fallback)",
                 file=sys.stderr,
             )
+        elif self.has_stockfish and not self.use_chessavatar:
+            print("info string Search backend: Stockfish (ChessAvatar disabled in engine.ini)", file=sys.stderr)
+        elif self.has_stockfish and self.has_chessavatar:
+            print(
+                "info string Search backend: Stockfish default (set UseChessAvatar=true in engine.ini for ChessAvatar)",
+                file=sys.stderr,
+            )
 
     def _ensure_chessavatar_nnue(self):
         if self._chessavatar_nnue_configured or "chessavatar" not in self.backends:
@@ -467,13 +537,27 @@ class AvatarEngine:
         nnue = self.find_nnue()
         if nnue:
             self.send_to("chessavatar", f"setoption name EvalFile value {nnue}")
-            self.send_to("chessavatar", "isready")
         else:
             print(
                 "info string Warning: nn-default.nnue missing — ChessAvatar uses classical eval",
                 file=sys.stderr,
             )
         self._chessavatar_nnue_configured = True
+
+    def _wait_for_backend_ready(self, backend_keys, timeout=30):
+        if not backend_keys:
+            return True
+        self._backend_ready_count = 0
+        self._backend_ready_target = len(backend_keys)
+        self._backend_ready_event.clear()
+        for key in backend_keys:
+            self.send_to(key, "isready")
+        return self._backend_ready_event.wait(timeout)
+
+    def _note_backend_ready(self):
+        self._backend_ready_count += 1
+        if self._backend_ready_count >= self._backend_ready_target > 0:
+            self._backend_ready_event.set()
 
     def send_to(self, key, command):
         backend = self.backends.get(key)
@@ -513,9 +597,13 @@ class AvatarEngine:
     def _emit_engine_info(self, line):
         if self._should_forward_info_line(line):
             print(self._normalize_info_for_gui(line), flush=True)
+
+    def _invalidate_pending_search(self):
         """Abort in-flight search; ignore late bestmove (Fritz sends stop/position while thinking)."""
         self._go_epoch += 1
         self._awaiting_go_epoch = None
+        self._go_sent = False
+        self._bestmove_sent_epoch = None
         with self._search_lock:
             self._multipv_active = False
             self._line_moves.clear()
@@ -523,11 +611,20 @@ class AvatarEngine:
 
     def _begin_engine_search(self):
         self.broadcast("stop")
+        self._pending_stop_bestmove = True
         self._go_epoch += 1
+        self._awaiting_go_epoch = None
+        self._go_sent = False
+        self._bestmove_sent_epoch = None
+        return self._go_epoch
+
+    def _mark_go_sent(self):
         self._awaiting_go_epoch = self._go_epoch
-        return self._awaiting_go_epoch
+        self._go_sent = True
 
     def _is_stale_engine_output(self):
+        if not self._go_sent:
+            return True
         if self._awaiting_go_epoch is None:
             return True
         if self._awaiting_go_epoch != self._go_epoch:
@@ -536,24 +633,28 @@ class AvatarEngine:
 
     def _accept_engine_bestmove(self):
         self._awaiting_go_epoch = None
+        self._go_sent = False
+
+    def _emit_game_bestmove(self, move, source="engine"):
+        move = self._normalize_uci(move)
+        if not self._is_valid_uci_move(move):
+            print(f"info string Rejected invalid bestmove from {source}: {move!r}", file=sys.stderr)
+            return False
+        if self._bestmove_sent_epoch == self._go_epoch:
+            print(
+                f"info string Ignoring duplicate bestmove for go epoch {self._go_epoch}: {move}",
+                file=sys.stderr,
+            )
+            return False
+        self._bestmove_sent_epoch = self._go_epoch
+        self._accept_engine_bestmove()
+        self._pending_stop_bestmove = False
+        print(f"bestmove {move}", flush=True)
+        return True
 
     def on_backend_line(self, backend_key, line):
-        if self.waiting_for_uciok and backend_key == self.uci_source:
-            if line.startswith("id name") or line.startswith("id author"):
-                return
-            if line.startswith("option"):
-                self.uci_options.append(line)
-                return
-            if line == "uciok":
-                print(f"id name {self.name}", flush=True)
-                print(f"id author {self.author}", flush=True)
-                for option in self.uci_options:
-                    print(option, flush=True)
-                print("uciok", flush=True)
-                self.waiting_for_uciok = False
-                self.uci_options = []
-                return
-            self.uci_options.append(line)
+        if line == "readyok":
+            self._note_backend_ready()
             return
 
         if backend_key != self.forward_backend:
@@ -567,6 +668,19 @@ class AvatarEngine:
                 )
             return
 
+        if line.startswith("info ") and self._go_sent:
+            self._pending_stop_bestmove = False
+
+        if line.startswith("bestmove"):
+            if self._analysis_go:
+                return
+            if self._pending_stop_bestmove:
+                print(
+                    f"info string Ignoring post-stop bestmove before search info: {line}",
+                    file=sys.stderr,
+                )
+                return
+
         with self._search_lock:
             multipv = self._multipv_active
 
@@ -575,8 +689,8 @@ class AvatarEngine:
             pv_m = re.search(r"\bpv\s+(\S+)", line)
             if mp and pv_m:
                 idx = int(mp.group(1))
-                first = pv_m.group(1)
-                if first and re.match(r"^[a-h][1-8][a-h][1-8]", first):
+                first = self._normalize_uci(pv_m.group(1))
+                if self._is_valid_uci_move(first):
                     with self._search_lock:
                         self._line_moves[idx] = first
             self._emit_engine_info(line)
@@ -589,8 +703,7 @@ class AvatarEngine:
         if line.startswith("bestmove"):
             parts = line.split()
             raw = parts[1] if len(parts) > 1 else ""
-            best = raw if raw and raw != "(none)" else ""
-            self._accept_engine_bestmove()
+            best = self._normalize_uci(raw) if raw and raw != "(none)" else ""
             if multipv:
                 with self._search_lock:
                     lm = dict(self._line_moves)
@@ -603,12 +716,23 @@ class AvatarEngine:
                         if blunder
                         else self._pick_persona_biased_move(best, lm)
                     )
-                    print(f"bestmove {picked}", flush=True)
+                    if not self._emit_game_bestmove(picked, "persona"):
+                        self._emit_game_bestmove(best, "engine-fallback")
                 else:
-                    print(line, flush=True)
+                    self._accept_engine_bestmove()
+                    print("bestmove (none)", flush=True)
                 self.send_to(self.forward_backend, "setoption name MultiPV value 1")
+            elif best:
+                if not self._emit_game_bestmove(best, "engine"):
+                    print(
+                        f"info string Engine bestmove rejected by wrapper: {best}",
+                        file=sys.stderr,
+                    )
+                    self._accept_engine_bestmove()
+                    print("bestmove (none)", flush=True)
             else:
-                print(line, flush=True)
+                self._accept_engine_bestmove()
+                print("bestmove (none)", flush=True)
             return
 
     def _configure_analysis_backend(self, backend_key):
@@ -667,28 +791,24 @@ class AvatarEngine:
             else:
                 self.send_to(backend_key, "setoption name MultiPV value 1")
 
+    def _print_uci_identity(self):
+        print(f"id name {self.name}", flush=True)
+        print(f"id author {self.author}", flush=True)
+        skill = int(self.profile.get("skill", 15) or 15)
+        print(f"option name Skill Level type spin default {skill} min 0 max 20", flush=True)
+
     def handle_uci(self):
-        if not self.backends:
-            print(f"id name {self.name}", flush=True)
-            print(f"id author {self.author}", flush=True)
-            print("option name Skill Level type spin default 15 min 0 max 20", flush=True)
-            print("uciok", flush=True)
-            return
-        self.waiting_for_uciok = True
-        self.uci_options = []
-        if self.has_chessavatar:
-            self.uci_source = "chessavatar"
-        elif self.has_stockfish:
-            self.uci_source = "stockfish"
-        else:
-            self.uci_source = next(iter(self.backends))
-        self.send_to(self.uci_source, "uci")
+        self._print_uci_identity()
+        print("uciok", flush=True)
+        for key in self.backends:
+            self.send_to(key, "uci")
 
     def handle_position(self, line):
         self._invalidate_pending_search()
         self.current_position = []
-        self.is_white_turn = True
+        fen_side_white = True
         if "startpos" in line:
+            self._initial_side_white = True
             if "moves" in line:
                 moves_part = line.split("moves")[1].strip()
                 if moves_part:
@@ -700,9 +820,14 @@ class AvatarEngine:
                     self.current_position = moves_part.split()
             fen_parts = line.split("fen")[1].split("moves")[0].strip().split()
             if len(fen_parts) > 1:
-                self.is_white_turn = fen_parts[1] == "w"
+                fen_side_white = fen_parts[1] == "w"
+            self._initial_side_white = fen_side_white
         move_count = len(self.current_position)
-        self.is_white_turn = move_count % 2 == 0
+        if move_count == 0 and "fen" in line:
+            self.is_white_turn = fen_side_white
+        else:
+            base_white = self._initial_side_white
+            self.is_white_turn = base_white if move_count % 2 == 0 else not base_white
         self._sync_forced_line_state("position")
         if move_count >= self.max_opening_moves:
             self.opening_phase = False
@@ -724,15 +849,25 @@ class AvatarEngine:
                 if forced_move:
                     print(f"info string Playing forced move ply {next_ply}: {forced_move}", file=sys.stderr)
                     self._invalidate_pending_search()
-                    print(f"bestmove {forced_move}", flush=True)
-                    return
+                    self._begin_engine_search()
+                    if self._emit_game_bestmove(forced_move, "forced-line"):
+                        return
+                    print(
+                        "info string Forced move rejected, falling back to engine search",
+                        file=sys.stderr,
+                    )
 
             if self.opening_phase:
                 fb_move = self._pick_fritz_black_fallback_move()
                 if fb_move:
                     self._invalidate_pending_search()
-                    print(f"bestmove {fb_move}", flush=True)
-                    return
+                    self._begin_engine_search()
+                    if self._emit_game_bestmove(fb_move, "fritz-fallback"):
+                        return
+                    print(
+                        "info string Fritz fallback move rejected, falling back to engine search",
+                        file=sys.stderr,
+                    )
 
             if self.opening_phase and (self.white_openings or self.black_openings):
                 try:
@@ -740,26 +875,18 @@ class AvatarEngine:
                     if opening_move:
                         print(f"info string Playing opening move: {opening_move}", file=sys.stderr)
                         self._invalidate_pending_search()
-                        print(f"bestmove {opening_move}", flush=True)
-                        return
+                        self._begin_engine_search()
+                        if self._emit_game_bestmove(opening_move, "opening"):
+                            return
+                        print(
+                            "info string Opening move rejected, falling back to engine search",
+                            file=sys.stderr,
+                        )
                 except Exception as e:
                     print(f"info string Opening error: {e}", file=sys.stderr)
 
         do_blunder = False if self._analysis_go else self._should_play_human_blunder_move()
         self._begin_engine_search()
-
-        if self.has_chessavatar and "chessavatar" in self.backends:
-            self.forward_backend = "chessavatar"
-            if self._analysis_go:
-                self._ensure_chessavatar_nnue()
-                print("info string Search: ChessAvatar analysis (MultiPV 1)", file=sys.stderr)
-                self._configure_analysis_backend("chessavatar")
-            else:
-                self._ensure_chessavatar_nnue()
-                print("info string Search: ChessAvatar (Stockfish fallback available)", file=sys.stderr)
-                self._configure_search_backend("chessavatar", do_blunder)
-            self.send_to("chessavatar", line)
-            return
 
         if self.has_stockfish and "stockfish" in self.backends:
             self.forward_backend = "stockfish"
@@ -770,9 +897,36 @@ class AvatarEngine:
                 print("info string Search: Stockfish", file=sys.stderr)
                 self._configure_search_backend("stockfish", do_blunder)
             self.send_to("stockfish", line)
+            self._mark_go_sent()
             return
 
-        print("bestmove 0000", flush=True)
+        if self.use_chessavatar and self.has_chessavatar and "chessavatar" in self.backends:
+            self.forward_backend = "chessavatar"
+            if self._analysis_go:
+                self._ensure_chessavatar_nnue()
+                print("info string Search: ChessAvatar analysis (MultiPV 1)", file=sys.stderr)
+                self._configure_analysis_backend("chessavatar")
+            else:
+                self._ensure_chessavatar_nnue()
+                print("info string Search: ChessAvatar (Stockfish unavailable)", file=sys.stderr)
+                self._configure_search_backend("chessavatar", do_blunder)
+            self.send_to("chessavatar", line)
+            self._mark_go_sent()
+            return
+
+        if not self._analysis_go:
+            print("bestmove 0000", flush=True)
+
+    def handle_isready(self):
+        if self.use_chessavatar and self.has_chessavatar:
+            self._ensure_chessavatar_nnue()
+        elif self.backends:
+            if not self._wait_for_backend_ready(list(self.backends.keys()), timeout=30):
+                print(
+                    "info string Warning: backend isready timeout — replying readyok to Fritz anyway",
+                    file=sys.stderr,
+                )
+        print("readyok", flush=True)
 
     def handle_setoption(self, line):
         if "name Skill Level" in line:
@@ -787,15 +941,24 @@ class AvatarEngine:
             self.broadcast(line)
 
     def run(self):
+        if getattr(sys, "frozen", False) and hasattr(sys.stdout, "reconfigure"):
+            try:
+                sys.stdout.reconfigure(line_buffering=True, encoding="utf-8", errors="replace")
+            except Exception:
+                pass
+
         self.start_engines()
 
         print("info string AvatarEngine initialized", flush=True)
         print(f"info string Name: {self.name}", flush=True)
         print(f"info string Author: {self.author}", flush=True)
         if self.has_chessavatar and self.has_stockfish:
-            print("info string Backend: ChessAvatar + Stockfish fallback", flush=True)
+            if self.use_chessavatar:
+                print("info string Backend: Stockfish + ChessAvatar (UseChessAvatar=true)", flush=True)
+            else:
+                print("info string Backend: Stockfish (ChessAvatar present but disabled)", flush=True)
         elif self.has_chessavatar:
-            print("info string Backend: ChessAvatar (install stockfish.exe for fallback)", flush=True)
+            print("info string Backend: ChessAvatar only", flush=True)
         elif self.has_stockfish:
             print("info string Backend: Stockfish only", flush=True)
         else:
@@ -818,6 +981,7 @@ class AvatarEngine:
                 self._invalidate_pending_search()
                 self.current_position = []
                 self.is_white_turn = True
+                self._initial_side_white = True
                 self.opening_phase = True
                 self.bot_color = None
                 self.forced_line_active = True
@@ -825,7 +989,7 @@ class AvatarEngine:
             elif line.startswith("setoption"):
                 self.handle_setoption(line)
             elif line == "isready":
-                self.broadcast(line)
+                self.handle_isready()
             elif line == "stop":
                 self._invalidate_pending_search()
             else:

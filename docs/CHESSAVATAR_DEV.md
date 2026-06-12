@@ -99,9 +99,9 @@ Le site distribue un ZIP via `/api/engine-pack` :
 | Fichier | Rôle |
 |---------|------|
 | `AvatarEngine.exe` | Wrapper UCI (ouvertures, persona, MultiPV) |
-| `ChessAvatar.exe` | Moteur Rust natif — milieu de partie |
-| `nn-default.nnue` | Réseau NNUE (~20 Mo) |
-| `stockfish.exe` | Téléchargé par `install_engine.bat` si absent — **fallback** |
+| `stockfish.exe` | Téléchargé par `install_engine.bat` — **recherche milieu de partie** |
+| `ChessAvatar.exe` | *(dev local uniquement)* — non inclus dans le ZIP exporté |
+| `nn-default.nnue` | *(dev local)* — activer avec `UseChessAvatar=true` dans `engine.ini` |
 
 ### Build pack complet (mainteneurs)
 
@@ -120,8 +120,8 @@ npm run build:engine-pack
 ### Comportement AvatarEngine
 
 1. Ouvertures / lignes forcées / fallback Fritz noir  
-2. **ChessAvatar.exe** si présent (+ `nn-default.nnue`)  
-3. Sinon **Stockfish**
+2. **Stockfish** par défaut (`UseChessAvatar=false` dans `engine.ini`)  
+3. **ChessAvatar.exe** seulement si `UseChessAvatar=true` et binaires présents (tests locaux)
 
 Persona et blunders humains : MultiPV (aligné sur le site).
 

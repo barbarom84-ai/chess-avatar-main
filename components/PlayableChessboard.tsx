@@ -195,6 +195,7 @@ export default function PlayableChessboard({
   const [showEvalBar, setShowEvalBar] = useState(false);
   const [showTheoryHints, setShowTheoryHints] = useState(false);
   const liveEvalRequestRef = useRef(0);
+  const isThinkingRef = useRef(false);
 
   const {
     isReady,
@@ -213,6 +214,10 @@ export default function PlayableChessboard({
     remainingForcedMoves,
     stopThinking,
   } = useStockfish();
+
+  useEffect(() => {
+    isThinkingRef.current = isThinking;
+  }, [isThinking]);
   const { t, lang } = useLanguage();
   const { settings: boardUiSettings } = useChessboardSettings();
 
@@ -527,9 +532,14 @@ export default function PlayableChessboard({
   };
 
   const makeAIMove = () => {
-    if (isArchiveMode || gameOver || !isBotEngineReady()) return;
+    if (isArchiveMode || gameOver || !isBotEngineReady() || isThinkingRef.current) return;
     const g = gameRef.current;
     const hist = moveHistoryRef.current;
+    const botPlaysWhite = playerColor === "black";
+    const botTurn = (g.turn() === "w") === botPlaysWhite;
+    if (!botTurn) return;
+
+    isThinkingRef.current = true;
 
     getBestMove(
       g.fen(),
@@ -559,6 +569,8 @@ export default function PlayableChessboard({
           }
         } catch (error) {
           console.error("Erreur lors du coup de l'IA:", error);
+        } finally {
+          isThinkingRef.current = false;
         }
       },
       { moveHistoryUci: getMoveHistoryUciFrom(hist), playerColor }
@@ -981,11 +993,6 @@ export default function PlayableChessboard({
     setReviewVariantsByAnchor({});
     setMoveAnnotations({});
     resetForcedLine();
-
-    // Si l'IA joue les blancs, elle commence
-    if (playerColor === "black" && isBotEngineReady()) {
-      setTimeout(makeAIMove, 500);
-    }
   };
 
   // Abandonner
