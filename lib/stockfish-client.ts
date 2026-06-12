@@ -448,9 +448,15 @@ export async function stockfishGetPositionEvaluation(
   return stockfishClient.enqueue((ctx) => {
     let lastEval: number | null = null;
     ctx.onLine((line) => {
-      if (line.includes("score cp")) {
-        const match = line.match(/score cp (-?\d+)/);
-        if (match) lastEval = parseInt(match[1], 10) / 100;
+      const cpMatch = line.match(/\bscore\s+cp\s+(-?\d+)/);
+      if (cpMatch) {
+        lastEval = parseInt(cpMatch[1], 10) / 100;
+      } else {
+        const mateMatch = line.match(/\bscore\s+mate\s+(-?\d+)/);
+        if (mateMatch) {
+          const mateIn = parseInt(mateMatch[1], 10);
+          lastEval = mateIn > 0 ? 10 : -10;
+        }
       }
       if (line.startsWith("bestmove")) {
         return lastEval ?? 0;

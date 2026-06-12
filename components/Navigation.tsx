@@ -91,8 +91,8 @@ export default function Navigation() {
 
   return (
     <>
-      <nav className="bg-slate-950/80 backdrop-blur-sm border-b border-slate-800 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4">
+      <nav className="bg-slate-950/80 backdrop-blur-sm border-b border-slate-800 sticky top-0 z-[100]">
+        <div className="max-w-7xl mx-auto px-4 overflow-visible">
           <div className="flex items-center justify-between min-h-16 gap-2">
             <Link
               href="/"

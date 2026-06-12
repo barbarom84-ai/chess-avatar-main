@@ -157,7 +157,7 @@ function PlayContent() {
       <div className="max-w-[1600px] mx-auto">
         
         {/* Barre de contrôle compacte en haut - Position fixe */}
-        <div className="lg:sticky lg:top-0 z-50 bg-gradient-to-b from-slate-950 to-slate-950/95 backdrop-blur-sm border-b theme-border px-2 md:px-4 py-2 space-y-1.5">
+        <div className="lg:sticky lg:top-16 z-30 bg-gradient-to-b from-slate-950 to-slate-950/95 backdrop-blur-sm border-b theme-border px-2 md:px-4 py-2 space-y-1.5">
           <div className="flex items-center justify-between gap-2">
             {/* Gauche: carte compacte adversaire */}
             <div className="flex items-center gap-2 min-w-0">

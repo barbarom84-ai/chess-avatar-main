@@ -51,6 +51,7 @@ import {
   PLAY_EVAL_BAR_STORAGE_KEY,
   PLAY_THEORY_ARROWS_STORAGE_KEY,
 } from "@/lib/play-opening-hints";
+import { stmEvalToWhitePov } from "@/lib/arena-spectator-helpers";
 
 const REVIEW_EMOJI_CHOICES = ["💡", "🔥", "❓", "!!", "!?", "⭐", "👍", "📌"];
 
@@ -274,7 +275,7 @@ export default function PlayableChessboard({
       getPositionEvaluation(fen, LIVE_EVAL_DEPTH)
         .then((v) => {
           if (cancelled || id !== liveEvalRequestRef.current) return;
-          setLiveEval(v);
+          setLiveEval(stmEvalToWhitePov(fen, v));
         })
         .catch(() => {
           if (cancelled || id !== liveEvalRequestRef.current) return;
