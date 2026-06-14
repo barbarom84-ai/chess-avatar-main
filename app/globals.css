@@ -530,6 +530,31 @@ nextjs-portal {
   }
 }
 
+/* PvP — lobby & game layouts (Chess.com-inspired) */
+.pvp-lobby-layout {
+  width: 100%;
+}
+
+.pvp-game-layout {
+  width: 100%;
+  align-items: start;
+}
+
+.pvp-player-bar {
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.pvp-sidebar {
+  min-height: 0;
+}
+
+@media (max-width: 1279px) {
+  .pvp-game-layout .pvp-sidebar {
+    position: static;
+    max-height: none;
+  }
+}
+
 /* Ascension reward modal shimmer */
 @keyframes shimmer {
   0%   { background-position: -200% center; }
