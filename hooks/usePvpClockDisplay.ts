@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type MutableRefObject } from "react";
 import type { Chess } from "chess.js";
 import type { PvpGameRow } from "@/lib/pvp-chess";
 import {
-  formatClockMs,
+  formatClockMsPrecise,
   formatCorrespondenceMs,
   getPvpClockDisplayMs,
   isCorrespondenceTimeLow,
@@ -53,7 +53,7 @@ export function usePvpClockDisplay({
 
   useEffect(() => {
     if (!showClocks) return;
-    const intervalMs = correspondence ? 60_000 : 200;
+    const intervalMs = correspondence ? 60_000 : 50;
     const id = window.setInterval(() => setNow(Date.now()), intervalMs);
     return () => window.clearInterval(id);
   }, [showClocks, correspondence]);
@@ -111,7 +111,7 @@ export function usePvpClockDisplay({
       }
       return formatCorrespondenceMs(ms, lang);
     }
-    return formatClockMs(ms);
+    return formatClockMsPrecise(ms);
   };
 
   return {

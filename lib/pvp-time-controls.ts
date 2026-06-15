@@ -78,3 +78,41 @@ export function correspondenceDaysFromGame(row: {
 export function usesPvpMoveClock(clockMode: string | null | undefined): boolean {
   return clockMode === "timed" || clockMode === "correspondence";
 }
+
+/** Libellé court type Chess.com : 3+0, 5+3, 15+10 */
+export function formatPvpTimedControlLabel(initialSec: number, incrementSec: number): string {
+  const totalSec = Math.max(0, Number(initialSec) || 0);
+  const inc = Math.max(0, Number(incrementSec) || 0);
+  const mins = Math.floor(totalSec / 60);
+  const remSec = totalSec % 60;
+  const base =
+    remSec === 0 ? String(mins) : `${mins}:${remSec.toString().padStart(2, "0")}`;
+  return `${base}+${inc}`;
+}
+
+export function formatPvpGameTimeControlLabel(
+  row: {
+    clock_mode?: string | null;
+    clock_initial_sec?: number | null;
+    clock_increment_sec?: number | null;
+    time_preset?: string | null;
+  },
+  presetLabels?: Record<string, string>
+): string {
+  if (row.clock_mode === "timed") {
+    return formatPvpTimedControlLabel(
+      Number(row.clock_initial_sec ?? 0),
+      Number(row.clock_increment_sec ?? 0)
+    );
+  }
+  if (row.clock_mode === "correspondence") {
+    const days = correspondenceDaysFromGame(row);
+    if (days != null) return `${days}d`;
+    const preset = resolvePvpTimePreset(row.time_preset);
+    if (preset.daysPerMove) return `${preset.daysPerMove}d`;
+  }
+  if (row.time_preset && presetLabels?.[row.time_preset]) {
+    return presetLabels[row.time_preset];
+  }
+  return row.time_preset ?? "—";
+}

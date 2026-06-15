@@ -7,6 +7,7 @@ import { useLanguage } from "@/lib/language-context";
 import {
   PVP_CORRESPONDENCE_PRESETS,
   PVP_LIVE_PRESETS,
+  formatPvpTimedControlLabel,
 } from "@/lib/pvp-time-controls";
 
 type OnlinePvpTimeControlGridProps = {
@@ -24,6 +25,16 @@ export default function OnlinePvpTimeControlGrid({
   const o = t.playOnline;
   const presetLabels = o.presets as Record<string, string>;
 
+  const timedLabel = (preset: (typeof PVP_LIVE_PRESETS)[number]) => {
+    const short = formatPvpTimedControlLabel(preset.initialSec, preset.incrementSec);
+    const category = preset.id.startsWith("bullet")
+      ? o.presetCategory.bullet
+      : preset.id.startsWith("rapid") || preset.id.startsWith("classical")
+        ? o.presetCategory.rapid
+        : o.presetCategory.blitz;
+    return { short, category };
+  };
+
   return (
     <div className="space-y-4">
       <div className="space-y-2">
@@ -34,6 +45,7 @@ export default function OnlinePvpTimeControlGrid({
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           {PVP_LIVE_PRESETS.map((p) => {
             const selected = value === p.id;
+            const { short, category } = timedLabel(p);
             return (
               <Button
                 key={p.id}
@@ -47,7 +59,8 @@ export default function OnlinePvpTimeControlGrid({
                 }
                 onClick={() => onChange(p.id)}
               >
-                <span className="text-sm font-semibold">{presetLabels[p.id] ?? p.id}</span>
+                <span className="text-sm font-semibold tabular-nums">{short}</span>
+                <span className="text-[10px] text-slate-400 font-normal">{category}</span>
               </Button>
             );
           })}

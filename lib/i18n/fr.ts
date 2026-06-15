@@ -845,6 +845,12 @@ export const fr = {
       moveListTitle: "Coups",
       moveListEmpty: "Aucun coup pour l'instant.",
       showEvalBar: "Barre d'évaluation",
+      showEvalBarSpectator: "Barre d'évaluation (spectateurs uniquement)",
+      presetCategory: {
+        bullet: "Bullet",
+        blitz: "Blitz",
+        rapid: "Rapide / Classique",
+      },
       chat: {
         empty: "Aucun message. Dites bonjour !",
         placeholder: "Écrire un message…",

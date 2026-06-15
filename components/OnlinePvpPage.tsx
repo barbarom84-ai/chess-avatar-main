@@ -24,6 +24,7 @@ import {
 import type { AccountFriend, AccountProfile } from "@/lib/account-types";
 import { fetchPublicAccountProfile } from "@/lib/account-profile";
 import { saveGameToCloud } from "@/lib/supabase-storage";
+import { formatPvpGameTimeControlLabel } from "@/lib/pvp-time-controls";
 import { pvpGameStatsFromUcis, formatDurationSec } from "@/lib/pvp-result-stats";
 import { fetchPvpHeadToHead } from "@/lib/pvp-head-to-head-client";
 import type { PvpHeadToHeadRecord } from "@/lib/pvp-head-to-head";
@@ -67,7 +68,7 @@ export default function OnlinePvpPage() {
       setFriendsLoading(false);
     }
   }, [userId]);
-  const [timePreset, setTimePreset] = useState("correspondence_3d");
+  const [timePreset, setTimePreset] = useState("blitz_3_0");
   const [creating, setCreating] = useState(false);
   const [joining, setJoining] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -468,7 +469,12 @@ export default function OnlinePvpPage() {
     g.status === "playing" &&
     Boolean(online.role) &&
     online.isMyTurn &&
+    !online.isSideToMoveTimedOut &&
     !gameOver;
+
+  const isSpectator = Boolean(
+    userId && !online.role && !online.canJoin && g.status === "playing"
+  );
 
   const whiteAvatarUrl =
     g.white_user_id === userId
@@ -500,9 +506,10 @@ export default function OnlinePvpPage() {
         onSubmitUci={online.submitMove}
         joining={joining}
         inviteUrl={inviteUrl}
-        presetLabel={g.time_preset ? (presetLabels[g.time_preset] ?? g.time_preset) : null}
+        presetLabel={formatPvpGameTimeControlLabel(g, presetLabels)}
         waitingOpponent={waitingOpponent}
         gameOver={gameOver}
+        isSpectator={isSpectator}
         onJoin={() => void handleJoin()}
         onCopyInvite={() => void copyInvite()}
         onCancelLobby={() => void handleCancelLobby()}

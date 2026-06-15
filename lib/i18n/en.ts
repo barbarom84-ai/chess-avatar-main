@@ -841,6 +841,12 @@ export const en = {
       moveListTitle: "Moves",
       moveListEmpty: "No moves yet.",
       showEvalBar: "Evaluation bar",
+      showEvalBarSpectator: "Evaluation bar (spectators only)",
+      presetCategory: {
+        bullet: "Bullet",
+        blitz: "Blitz",
+        rapid: "Rapid / Classical",
+      },
       chat: {
         empty: "No messages yet. Say hello!",
         placeholder: "Type a message…",

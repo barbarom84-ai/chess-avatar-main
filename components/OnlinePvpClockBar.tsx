@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type MutableRefObject } from "react";
 import type { Chess } from "chess.js";
 import type { PvpGameRow } from "@/lib/pvp-chess";
-import { formatClockMs, formatCorrespondenceMs, getPvpClockDisplayMs, isCorrespondenceTimeLow } from "@/lib/pvp-clock";
+import { formatClockMsPrecise, formatCorrespondenceMs, getPvpClockDisplayMs, isCorrespondenceTimeLow } from "@/lib/pvp-clock";
 import { playClockLowTimeWarning } from "@/lib/chess-sound";
 import type { Language } from "@/lib/i18n";
 
@@ -52,7 +52,7 @@ export default function OnlinePvpClockBar({
 
   useEffect(() => {
     if (!showClocks) return;
-    const intervalMs = correspondence ? 60_000 : 200;
+    const intervalMs = correspondence ? 60_000 : 50;
     const id = window.setInterval(() => setNow(Date.now()), intervalMs);
     return () => window.clearInterval(id);
   }, [showClocks, correspondence]);
@@ -111,7 +111,7 @@ export default function OnlinePvpClockBar({
       }
       return formatCorrespondenceMs(ms, lang);
     }
-    return formatClockMs(ms);
+    return formatClockMsPrecise(ms);
   };
 
   const whiteUrgent = whiteLow && active === "w";
@@ -120,7 +120,7 @@ export default function OnlinePvpClockBar({
   return (
     <div className="flex justify-center gap-3 sm:gap-6 text-center px-2">
       <div
-        className={`min-w-[5.5rem] rounded-lg px-3 py-2 transition-colors ${
+        className={`min-w-[6.5rem] rounded-lg px-3 py-2 transition-colors ${
           whiteUrgent
             ? "bg-red-950/80 ring-2 ring-red-500/80 animate-pvp-clock-shake"
             : active === "w"
@@ -138,7 +138,7 @@ export default function OnlinePvpClockBar({
         </div>
       </div>
       <div
-        className={`min-w-[5.5rem] rounded-lg px-3 py-2 transition-colors ${
+        className={`min-w-[6.5rem] rounded-lg px-3 py-2 transition-colors ${
           blackUrgent
             ? "bg-red-950/80 ring-2 ring-red-500/80 animate-pvp-clock-shake"
             : active === "b"

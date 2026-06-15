@@ -69,7 +69,7 @@ export default function OnlinePvpPlayerBar({
         </div>
       </div>
       <div
-        className={`shrink-0 rounded px-2.5 py-1 font-mono text-base tabular-nums ${
+        className={`shrink-0 rounded px-2.5 py-1 font-mono text-sm sm:text-base tabular-nums min-w-[5.25rem] text-right ${
           urgent
             ? "bg-red-900/60 text-red-300 font-bold"
             : isActive && clock.showClocks

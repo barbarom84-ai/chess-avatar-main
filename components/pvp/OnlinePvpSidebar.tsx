@@ -43,6 +43,7 @@ type OnlinePvpSidebarProps = {
   onSendChat: (body: string) => Promise<void>;
   chatUnreadCount: number;
   onChatTabVisible: (visible: boolean) => void;
+  canShowEvalBar: boolean;
   showEvalBar: boolean;
   onShowEvalBarChange: (v: boolean) => void;
   sidebarTab: string;
@@ -75,6 +76,7 @@ export default function OnlinePvpSidebar({
   onSendChat,
   chatUnreadCount,
   onChatTabVisible,
+  canShowEvalBar,
   showEvalBar,
   onShowEvalBarChange,
   sidebarTab,
@@ -191,14 +193,16 @@ export default function OnlinePvpSidebar({
         </TabsList>
 
         <TabsContent value="game" className="flex-1 m-0 p-3 space-y-3 overflow-y-auto">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-xs text-slate-300">{o.showEvalBar}</span>
-            <Switch
-              checked={showEvalBar}
-              onCheckedChange={onShowEvalBarChange}
-              aria-label={o.showEvalBar}
-            />
-          </div>
+          {canShowEvalBar && (
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs text-slate-300">{o.showEvalBarSpectator}</span>
+              <Switch
+                checked={showEvalBar}
+                onCheckedChange={onShowEvalBarChange}
+                aria-label={o.showEvalBarSpectator}
+              />
+            </div>
+          )}
 
           <OnlinePvpMoveList moves={moves} />
 

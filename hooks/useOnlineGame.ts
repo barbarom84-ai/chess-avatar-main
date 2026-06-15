@@ -9,6 +9,7 @@ import {
   uciToLastMoveSquares,
   validateUciForPlayer,
 } from "@/lib/pvp-chess";
+import { isPvpSideToMoveTimedOut } from "@/lib/pvp-clock";
 import { playChessMoveSound } from "@/lib/chess-sound";
 import { track } from "@/lib/track";
 
@@ -55,6 +56,8 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
     error: null,
   });
   const [pendingUci, setPendingUci] = useState<string | null>(null);
+  const [clockNow, setClockNow] = useState(() => Date.now());
+  const timeoutClaimInFlightRef = useRef(false);
 
   const channelRef = useRef<ReturnType<NonNullable<typeof supabase>["channel"]> | null>(
     null
@@ -276,6 +279,33 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
     );
   }, [chess, state.game, state.role, pendingUci]);
 
+  const usesMoveClock =
+    state.game?.status === "playing" &&
+    (state.game.clock_mode === "timed" || state.game.clock_mode === "correspondence");
+
+  useEffect(() => {
+    if (!usesMoveClock) return;
+    const intervalMs = state.game?.clock_mode === "correspondence" ? 60_000 : 200;
+    const id = window.setInterval(() => setClockNow(Date.now()), intervalMs);
+    return () => window.clearInterval(id);
+  }, [usesMoveClock, state.game?.clock_mode]);
+
+  const isSideToMoveTimedOut = useMemo(() => {
+    if (!state.game || state.game.status !== "playing") return false;
+    return isPvpSideToMoveTimedOut(state.game, chess.turn(), clockNow);
+  }, [state.game, chess, clockNow]);
+
+  useEffect(() => {
+    if (!gameId || !isParticipant || !isSideToMoveTimedOut || !state.game) return;
+    if (state.game.status !== "playing") return;
+    if (timeoutClaimInFlightRef.current) return;
+
+    timeoutClaimInFlightRef.current = true;
+    void refreshSilent().finally(() => {
+      timeoutClaimInFlightRef.current = false;
+    });
+  }, [gameId, isParticipant, isSideToMoveTimedOut, state.game, refreshSilent]);
+
   useEffect(() => {
     if (!pendingUci) return;
     if (state.moves.some((m) => m.uci === pendingUci)) {
@@ -310,8 +340,13 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
     async (uci: string) => {
       if (!gameId) return;
       const role = state.role;
-      if (!role || state.game?.status !== "playing") {
+      const game = state.game;
+      if (!role || !game || game.status !== "playing") {
         throw new Error("Game is not active");
+      }
+      if (isPvpSideToMoveTimedOut(game, chess.turn(), Date.now())) {
+        void refreshSilent();
+        throw new Error("Time expired");
       }
       if (pendingUci) {
         throw new Error("Move in progress");
@@ -367,7 +402,7 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
         throw e;
       }
     },
-    [gameId, state.role, state.game?.status, state.moves, pendingUci, fetchWithAuth, userId]
+    [gameId, state.role, state.game, state.moves, pendingUci, fetchWithAuth, userId, chess, refreshSilent]
   );
 
   const resign = useCallback(async () => {
@@ -395,6 +430,7 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
     pendingUci,
     isMyTurn,
     isParticipant,
+    isSideToMoveTimedOut,
     refresh,
     refreshSilent,
     createLobby,

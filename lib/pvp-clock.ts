@@ -86,6 +86,20 @@ export function getPvpClockDisplayMs(
   };
 }
 
+/** True when the side to move has no time left (client display / pre-claim). */
+export function isPvpSideToMoveTimedOut(
+  game: PvpGameRow,
+  sideToMove: Color,
+  nowMs: number
+): boolean {
+  if (game.status !== "playing") return false;
+  if (game.clock_mode !== "timed" && game.clock_mode !== "correspondence") return false;
+  const display = getPvpClockDisplayMs(game, sideToMove, nowMs);
+  if (!display.active) return false;
+  const activeMs = display.active === "w" ? display.whiteMs : display.blackMs;
+  return activeMs <= 0;
+}
+
 export function correspondenceLowThresholdMs(budgetMs: number): number {
   if (budgetMs <= 0) return 0;
   const oneHour = 60 * 60 * 1000;
@@ -106,6 +120,16 @@ export function formatClockMs(ms: number): string {
   const m = Math.floor(totalSec / 60);
   const s = totalSec % 60;
   return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+/** Horloge en direct avec millisecondes (M:SS.mmm). */
+export function formatClockMsPrecise(ms: number): string {
+  if (!Number.isFinite(ms) || ms <= 0) return "0:00.000";
+  const totalMs = Math.max(0, Math.floor(ms));
+  const m = Math.floor(totalMs / 60_000);
+  const s = Math.floor((totalMs % 60_000) / 1000);
+  const msPart = totalMs % 1000;
+  return `${m}:${s.toString().padStart(2, "0")}.${msPart.toString().padStart(3, "0")}`;
 }
 
 export function formatCorrespondenceMs(ms: number, lang: "fr" | "en"): string {

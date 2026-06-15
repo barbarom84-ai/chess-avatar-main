@@ -48,6 +48,7 @@ type OnlinePvpGameLayoutProps = {
   onFriendsChange: (friends: AccountFriend[]) => void;
   whiteAvatarUrl?: string | null;
   blackAvatarUrl?: string | null;
+  isSpectator?: boolean;
 };
 
 export default function OnlinePvpGameLayout({
@@ -80,7 +81,10 @@ export default function OnlinePvpGameLayout({
   onFriendsChange,
   whiteAvatarUrl,
   blackAvatarUrl,
+  isSpectator = false,
 }: OnlinePvpGameLayoutProps) {
+  const isParticipant = Boolean(role);
+  const canShowEvalBar = isSpectator && !isParticipant;
   const [showEvalBar, setShowEvalBar] = useState(false);
   const [liveEval, setLiveEval] = useState<number | null>(null);
   const [sidebarTab, setSidebarTab] = useState("game");
@@ -97,6 +101,10 @@ export default function OnlinePvpGameLayout({
     g.status === "aborted";
 
   useEffect(() => {
+    if (!canShowEvalBar) {
+      setShowEvalBar(false);
+      return;
+    }
     try {
       if (localStorage.getItem(PVP_EVAL_BAR_STORAGE_KEY) === "1") {
         setShowEvalBar(true);
@@ -104,10 +112,10 @@ export default function OnlinePvpGameLayout({
     } catch {
       /* ignore */
     }
-  }, []);
+  }, [canShowEvalBar]);
 
   useEffect(() => {
-    if (!showEvalBar || gameOver || !isReady) {
+    if (!canShowEvalBar || !showEvalBar || gameOver || !isReady) {
       setLiveEval(null);
       return;
     }
@@ -129,7 +137,7 @@ export default function OnlinePvpGameLayout({
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [showEvalBar, gameOver, isReady, chess, getPositionEvaluation, moves.length]);
+  }, [canShowEvalBar, showEvalBar, gameOver, isReady, chess, getPositionEvaluation, moves.length]);
 
   const wb = useMemo(() => whiteBlackDisplayNames(g), [g]);
 
@@ -154,7 +162,7 @@ export default function OnlinePvpGameLayout({
           lang={lang}
         />
 
-        {showEvalBar && (
+        {canShowEvalBar && showEvalBar && (
           <EvaluationBar evaluation={liveEval} compact />
         )}
 
@@ -206,6 +214,7 @@ export default function OnlinePvpGameLayout({
         onSendChat={chat.sendMessage}
         chatUnreadCount={chat.unreadCount}
         onChatTabVisible={chat.markChatVisible}
+        canShowEvalBar={canShowEvalBar}
         showEvalBar={showEvalBar}
         onShowEvalBarChange={(v) => {
           setShowEvalBar(v);
