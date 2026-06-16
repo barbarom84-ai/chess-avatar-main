@@ -25,6 +25,7 @@ export const PVP_TIME_PRESETS: readonly PvpTimePreset[] = [
   { id: "correspondence_1d", mode: "correspondence", initialSec: 0, incrementSec: 0, daysPerMove: 1 },
   { id: "correspondence_3d", mode: "correspondence", initialSec: 0, incrementSec: 0, daysPerMove: 3 },
   { id: "correspondence_7d", mode: "correspondence", initialSec: 0, incrementSec: 0, daysPerMove: 7 },
+  { id: "bullet_1_0", mode: "timed", initialSec: 60, incrementSec: 0 },
   { id: "bullet_2_1", mode: "timed", initialSec: 120, incrementSec: 1 },
   { id: "blitz_3_0", mode: "timed", initialSec: 180, incrementSec: 0 },
   { id: "blitz_3_2", mode: "timed", initialSec: 180, incrementSec: 2 },

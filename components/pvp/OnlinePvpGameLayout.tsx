@@ -24,6 +24,7 @@ type OnlinePvpGameLayoutProps = {
   moves: PvpMoveRow[];
   role: "white" | "black" | null;
   canJoin: boolean;
+  canAcceptRematch?: boolean;
   userId: string | null;
   gameId: string;
   lang: Language;
@@ -57,6 +58,7 @@ export default function OnlinePvpGameLayout({
   moves,
   role,
   canJoin,
+  canAcceptRematch = false,
   userId,
   gameId,
   lang,
@@ -88,7 +90,15 @@ export default function OnlinePvpGameLayout({
   const [showEvalBar, setShowEvalBar] = useState(false);
   const [liveEval, setLiveEval] = useState<number | null>(null);
   const [sidebarTab, setSidebarTab] = useState("game");
+  const [boardFlipped, setBoardFlipped] = useState(false);
   const liveEvalRequestRef = useRef(0);
+
+  const effectiveOrientation: "white" | "black" =
+    boardFlipped && isSpectator
+      ? orientation === "white"
+        ? "black"
+        : "white"
+      : orientation;
 
   const { isReady, getPositionEvaluation } = useStockfish();
 
@@ -141,8 +151,8 @@ export default function OnlinePvpGameLayout({
 
   const wb = useMemo(() => whiteBlackDisplayNames(g), [g]);
 
-  const topSide: "white" | "black" = orientation === "white" ? "black" : "white";
-  const bottomSide: "white" | "black" = orientation === "white" ? "white" : "black";
+  const topSide: "white" | "black" = effectiveOrientation === "white" ? "black" : "white";
+  const bottomSide: "white" | "black" = effectiveOrientation === "white" ? "white" : "black";
 
   const topName = topSide === "white" ? wb.white : wb.black;
   const bottomName = bottomSide === "white" ? wb.white : wb.black;
@@ -169,7 +179,7 @@ export default function OnlinePvpGameLayout({
         <div className="w-full aspect-square max-h-[min(72dvh,calc(100vw-1rem))] xl:max-h-[min(78dvh,100%)]">
           <OnlineChessboard
             fen={chess.fen()}
-            orientation={orientation}
+            orientation={effectiveOrientation}
             lastMove={lastMove}
             canMove={canMove}
             onSubmitUci={onSubmitUci}
@@ -194,6 +204,7 @@ export default function OnlinePvpGameLayout({
         userId={userId}
         role={role}
         canJoin={canJoin}
+        canAcceptRematch={canAcceptRematch}
         joining={joining}
         inviteUrl={inviteUrl}
         presetLabel={presetLabel}
@@ -226,6 +237,9 @@ export default function OnlinePvpGameLayout({
         }}
         sidebarTab={sidebarTab}
         onSidebarTabChange={setSidebarTab}
+        isSpectator={isSpectator}
+        boardFlipped={boardFlipped}
+        onFlipBoard={() => setBoardFlipped((v) => !v)}
       />
     </div>
   );

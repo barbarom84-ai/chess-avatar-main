@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
-import { Copy, Handshake, Loader2, Mail, MessageSquare, Swords } from "lucide-react";
+import { Copy, FlipVertical, Handshake, Loader2, Mail, MessageSquare, Swords } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +23,7 @@ type OnlinePvpSidebarProps = {
   userId: string | null;
   role: "white" | "black" | null;
   canJoin: boolean;
+  canAcceptRematch?: boolean;
   joining: boolean;
   inviteUrl: string;
   presetLabel: string | null;
@@ -48,6 +49,9 @@ type OnlinePvpSidebarProps = {
   onShowEvalBarChange: (v: boolean) => void;
   sidebarTab: string;
   onSidebarTabChange: (tab: string) => void;
+  isSpectator?: boolean;
+  boardFlipped?: boolean;
+  onFlipBoard?: () => void;
 };
 
 export default function OnlinePvpSidebar({
@@ -56,6 +60,7 @@ export default function OnlinePvpSidebar({
   userId,
   role,
   canJoin,
+  canAcceptRematch = false,
   joining,
   inviteUrl,
   presetLabel,
@@ -81,6 +86,9 @@ export default function OnlinePvpSidebar({
   onShowEvalBarChange,
   sidebarTab,
   onSidebarTabChange,
+  isSpectator = false,
+  boardFlipped = false,
+  onFlipBoard,
 }: OnlinePvpSidebarProps) {
   const { t } = useLanguage();
   const o = t.playOnline;
@@ -123,6 +131,10 @@ export default function OnlinePvpSidebar({
           </p>
         )}
 
+        {isSpectator && (
+          <p className="text-xs text-cyan-300/90">{o.spectatorView}</p>
+        )}
+
         {waitingOpponent && role === "white" && (
           <div className="space-y-2 pt-1 border-t border-slate-800">
             <p className="text-xs text-slate-300">{o.waitingOpponent}</p>
@@ -152,6 +164,15 @@ export default function OnlinePvpSidebar({
                 {o.cancelLobby}
               </Button>
             </div>
+          </div>
+        )}
+
+        {canAcceptRematch && userId && (
+          <div className="space-y-2 pt-1 border-t border-slate-800">
+            <p className="text-xs text-slate-200">{o.acceptRematch}</p>
+            <Button type="button" size="sm" onClick={onJoin} disabled={joining} className="w-full">
+              {joining ? <Loader2 className="h-4 w-4 animate-spin" /> : o.acceptRematch}
+            </Button>
           </div>
         )}
 
@@ -202,6 +223,20 @@ export default function OnlinePvpSidebar({
                 aria-label={o.showEvalBarSpectator}
               />
             </div>
+          )}
+
+          {isSpectator && onFlipBoard && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="w-full border-slate-600"
+              onClick={onFlipBoard}
+            >
+              <FlipVertical className="h-3.5 w-3.5 mr-1" />
+              {o.flipBoard}
+              {boardFlipped ? " ✓" : ""}
+            </Button>
           )}
 
           <OnlinePvpMoveList moves={moves} />
@@ -271,7 +306,11 @@ export default function OnlinePvpSidebar({
                   type="button"
                   variant="destructive"
                   size="sm"
-                  onClick={() => void onResign()}
+                  onClick={() => {
+                    if (window.confirm(o.resignConfirm)) {
+                      void onResign();
+                    }
+                  }}
                 >
                   {o.resign}
                 </Button>

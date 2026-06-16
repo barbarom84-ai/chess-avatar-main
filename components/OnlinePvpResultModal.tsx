@@ -20,6 +20,7 @@ import {
   Home,
   Loader2,
   User,
+  RotateCcw,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/language-context";
@@ -44,6 +45,8 @@ export default function OnlinePvpResultModal({
   headToHead,
   headToHeadLoading,
   onNewGame,
+  onRematch,
+  rematchLoading,
   onDownloadPgn,
   onSaveCloud,
   canSave,
@@ -65,6 +68,8 @@ export default function OnlinePvpResultModal({
   headToHead?: PvpHeadToHeadRecord | null;
   headToHeadLoading?: boolean;
   onNewGame: () => void;
+  onRematch?: () => void;
+  rematchLoading?: boolean;
   onDownloadPgn: () => void;
   onSaveCloud?: () => void;
   canSave: boolean;
@@ -206,13 +211,35 @@ export default function OnlinePvpResultModal({
           </Card>
 
           <div className="space-y-2">
+            {onRematch && (
+              <Button
+                type="button"
+                onClick={() => void onRematch()}
+                disabled={rematchLoading}
+                className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-bold"
+                size="sm"
+              >
+                {rematchLoading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <RotateCcw className="mr-2 h-4 w-4" />
+                )}
+                {o.rematch}
+              </Button>
+            )}
+
             <Button
               type="button"
               onClick={() => {
                 onOpenChange(false);
                 onNewGame();
               }}
-              className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-bold"
+              variant={onRematch ? "outline" : "default"}
+              className={
+                onRematch
+                  ? "w-full border-2 border-slate-600 bg-slate-900 text-slate-100 hover:bg-slate-800"
+                  : "w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-bold"
+              }
               size="sm"
             >
               {o.newGame}

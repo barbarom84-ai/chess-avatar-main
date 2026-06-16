@@ -12,6 +12,7 @@ import {
 import { isPvpSideToMoveTimedOut } from "@/lib/pvp-clock";
 import { playChessMoveSound } from "@/lib/chess-sound";
 import { track } from "@/lib/track";
+import { useChessboardSettings } from "@/contexts/ChessboardSettingsContext";
 
 type Role = "white" | "black" | null;
 
@@ -20,6 +21,8 @@ export interface OnlineGameState {
   moves: PvpMoveRow[];
   role: Role;
   canJoin: boolean;
+  canAcceptRematch: boolean;
+  isSpectator: boolean;
   loading: boolean;
   error: string | null;
 }
@@ -47,11 +50,19 @@ function mergeGameRow(game: PvpGameRow, patch: Partial<PvpGameRow>): PvpGameRow 
 }
 
 export function useOnlineGame(gameId: string | null, userId: string | null) {
+  const { settings } = useChessboardSettings();
+  const soundEnabledRef = useRef(settings.soundEnabled);
+  useEffect(() => {
+    soundEnabledRef.current = settings.soundEnabled;
+  }, [settings.soundEnabled]);
+
   const [state, setState] = useState<OnlineGameState>({
     game: null,
     moves: [],
     role: null,
     canJoin: false,
+    canAcceptRematch: false,
+    isSpectator: false,
     loading: false,
     error: null,
   });
@@ -119,12 +130,16 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
       moves: PvpMoveRow[];
       role: Role;
       canJoin: boolean;
+      canAcceptRematch?: boolean;
+      isSpectator?: boolean;
     }) => {
       setState({
         game: payload.game,
         moves: payload.moves,
         role: payload.role,
         canJoin: payload.canJoin,
+        canAcceptRematch: Boolean(payload.canAcceptRematch),
+        isSpectator: Boolean(payload.isSpectator),
         loading: false,
         error: null,
       });
@@ -142,6 +157,8 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
         moves: (data.moves as PvpMoveRow[]) ?? [],
         role: (data.role as Role) ?? null,
         canJoin: Boolean(data.canJoin),
+        canAcceptRematch: Boolean(data.canAcceptRematch),
+        isSpectator: Boolean(data.isSpectator),
       });
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Unknown error";
@@ -158,6 +175,8 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
         moves: (data.moves as PvpMoveRow[]) ?? [],
         role: (data.role as Role) ?? null,
         canJoin: Boolean(data.canJoin),
+        canAcceptRematch: Boolean(data.canAcceptRematch),
+        isSpectator: Boolean(data.isSpectator),
       });
     } catch {
       /* background resync only */
@@ -171,6 +190,8 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
         moves: [],
         role: null,
         canJoin: false,
+        canAcceptRematch: false,
+        isSpectator: false,
         loading: false,
         error: null,
       });
@@ -189,8 +210,10 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
     );
   }, [state.game, userId]);
 
+  const canUseRealtime = isParticipant || (state.isSpectator && Boolean(userId));
+
   useEffect(() => {
-    if (!gameId || !isSupabaseConfigured || !supabase || !userId || !isParticipant) {
+    if (!gameId || !isSupabaseConfigured || !supabase || !userId || !canUseRealtime) {
       if (channelRef.current && supabase) {
         void supabase.removeChannel(channelRef.current);
         channelRef.current = null;
@@ -212,6 +235,9 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
         (payload: RealtimePostgresChangesPayload<{ [key: string]: unknown }>) => {
           const row = payload.new as PvpMoveRow | null;
           if (!row?.ply) return;
+          if (soundEnabledRef.current && row.played_by && row.played_by !== userId) {
+            playChessMoveSound();
+          }
           setState((s) => ({
             ...s,
             moves: mergeMovesByPly(s.moves, row),
@@ -241,7 +267,7 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
       void client.removeChannel(ch);
       channelRef.current = null;
     };
-  }, [gameId, userId, isParticipant]);
+  }, [gameId, userId, canUseRealtime]);
 
   const prevPvpStatusRef = useRef<string | null>(null);
   useEffect(() => {
@@ -362,7 +388,7 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
       }
 
       setPendingUci(validation.uci);
-      playChessMoveSound();
+      if (soundEnabledRef.current) playChessMoveSound();
 
       try {
         const data = (await fetchWithAuth(`/api/pvp/games/${gameId}/move`, {
@@ -423,6 +449,27 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
     [gameId, refresh, fetchWithAuth]
   );
 
+  const requestRematch = useCallback(
+    async (swapColors = true): Promise<{ gameId: string; inviteUrl?: string }> => {
+      if (!gameId) throw new Error("No game");
+      const data = await fetchWithAuth(`/api/pvp/games/${gameId}/rematch`, {
+        method: "POST",
+        body: JSON.stringify({ swapColors }),
+      });
+      const newId =
+        typeof data.gameId === "string"
+          ? data.gameId
+          : (data.game as { id?: string } | undefined)?.id;
+      if (!newId) throw new Error("Rematch failed");
+      track("pvp_rematch_created", { from_game_id: gameId, swap_colors: swapColors });
+      return {
+        gameId: newId,
+        inviteUrl: typeof data.inviteUrl === "string" ? data.inviteUrl : undefined,
+      };
+    },
+    [gameId, fetchWithAuth]
+  );
+
   return {
     ...state,
     chess,
@@ -439,5 +486,6 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
     submitMove,
     resign,
     drawAction,
+    requestRematch,
   };
 }

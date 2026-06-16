@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAuthedUserFromRequest } from "@/lib/supabase-auth-request";
 import { createServiceSupabase } from "@/lib/supabase-service";
 import type { PvpGameRow } from "@/lib/pvp-chess";
+import { pvpRateLimitOrResponse } from "@/lib/pvp-api-rate-limit";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
@@ -16,6 +17,9 @@ export async function POST(
   request: NextRequest,
   context: { params: Promise<{ gameId: string }> }
 ) {
+  const limited = await pvpRateLimitOrResponse(request, { windowMs: 60_000, max: 30 });
+  if (limited) return limited;
+
   const user = await getAuthedUserFromRequest(request, supabaseUrl, supabaseAnonKey);
   if (!user) return jsonError("Unauthorized", 401);
 

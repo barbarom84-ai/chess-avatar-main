@@ -5,6 +5,7 @@ import { createServiceSupabase } from "@/lib/supabase-service";
 import type { PvpGameRow, PvpMoveRow } from "@/lib/pvp-chess";
 import { replayGameFromUcis } from "@/lib/pvp-chess";
 import { checkTimeoutForTimedGame } from "@/lib/pvp-clock-server";
+import { canAccessPvpGameAsSpectator } from "@/lib/pvp-access";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
@@ -49,10 +50,23 @@ export async function GET(
     row.black_user_id == null &&
     row.white_user_id !== user.id;
 
-  if (!isParticipant && !canJoin) return jsonError("Forbidden", 403);
+  const canAcceptRematch =
+    row.status === "waiting" &&
+    row.black_user_id != null &&
+    row.white_user_id === user.id;
+
+  const isSpectator = canAccessPvpGameAsSpectator(
+    row.status,
+    isParticipant,
+    canJoin || canAcceptRematch
+  );
+
+  if (!isParticipant && !canJoin && !canAcceptRematch && !isSpectator) {
+    return jsonError("Forbidden", 403);
+  }
 
   let moves: PvpMoveRow[] = [];
-  if (isParticipant) {
+  if (isParticipant || isSpectator) {
     const { data: mvs, error: mErr } = await sb
       .from("pvp_moves")
       .select("*")
@@ -78,6 +92,8 @@ export async function GET(
     moves,
     role: isWhite ? "white" : isBlack ? "black" : null,
     canJoin,
+    canAcceptRematch,
+    isSpectator,
   });
 }
 

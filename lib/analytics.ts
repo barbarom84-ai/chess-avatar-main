@@ -40,6 +40,7 @@ export type AnalyticsEventName =
   | "pvp_game_joined"
   | "pvp_move_played"
   | "pvp_game_ended"
+  | "pvp_rematch_created"
   | "checkout_started"
   | "premium_activated"
   | "lesson_opened"

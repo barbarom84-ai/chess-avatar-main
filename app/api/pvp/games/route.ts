@@ -3,6 +3,7 @@ import { rateLimit } from "@/lib/rate-limit";
 import { getAuthedUserFromRequest } from "@/lib/supabase-auth-request";
 import { createServiceSupabase } from "@/lib/supabase-service";
 import { isValidPvpTimePresetId, presetStorageInitialSec, resolvePvpTimePreset } from "@/lib/pvp-time-controls";
+import { pvpRateLimitOrResponse } from "@/lib/pvp-api-rate-limit";
 import { displayNameFromAuthUser } from "@/lib/pvp-display-name";
 import { fetchAccountSummariesByUserIds } from "@/lib/account-server";
 
@@ -151,6 +152,9 @@ export async function GET(request: NextRequest) {
 
 /** Create a new PvP lobby: creator plays White until an opponent joins as Black. */
 export async function POST(request: NextRequest) {
+  const limited = await pvpRateLimitOrResponse(request, { windowMs: 60_000, max: 10 });
+  if (limited) return limited;
+
   const user = await getAuthedUserFromRequest(request, supabaseUrl, supabaseAnonKey);
   if (!user) return jsonError("Unauthorized", 401);
 

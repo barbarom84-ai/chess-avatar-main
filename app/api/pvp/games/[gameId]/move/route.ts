@@ -6,6 +6,7 @@ import type { PvpGameRow, PvpMoveRow } from "@/lib/pvp-chess";
 import { replayGameFromUcis, normalizeUci } from "@/lib/pvp-chess";
 import { applyUciMove } from "@/lib/learn-chess-utils";
 import { applyMoveClockUpdate, checkTimeoutForTimedGame } from "@/lib/pvp-clock-server";
+import { pvpRateLimitOrResponse } from "@/lib/pvp-api-rate-limit";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
@@ -18,6 +19,9 @@ export async function POST(
   request: NextRequest,
   context: { params: Promise<{ gameId: string }> }
 ) {
+  const limited = await pvpRateLimitOrResponse(request, { windowMs: 60_000, max: 120 });
+  if (limited) return limited;
+
   const user = await getAuthedUserFromRequest(request, supabaseUrl, supabaseAnonKey);
   if (!user) return jsonError("Unauthorized", 401);
 

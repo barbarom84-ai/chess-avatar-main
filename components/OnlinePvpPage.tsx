@@ -79,6 +79,7 @@ export default function OnlinePvpPage() {
   const [myProfile, setMyProfile] = useState<AccountProfile | null>(null);
   const [resultHeadToHead, setResultHeadToHead] = useState<PvpHeadToHeadRecord | null>(null);
   const [resultHeadToHeadLoading, setResultHeadToHeadLoading] = useState(false);
+  const [rematchLoading, setRematchLoading] = useState(false);
   const startMsRef = useRef<number | null>(null);
   const resultModalShownForGameId = useRef<string | null>(null);
 
@@ -153,8 +154,9 @@ export default function OnlinePvpPage() {
     }
     setJoining(true);
     try {
+      const acceptingRematch = online.canAcceptRematch;
       await online.joinLobby();
-      toast.success(o.joinedAsBlack);
+      toast.success(acceptingRematch ? o.acceptRematch : o.joinedAsBlack);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : o.joinFailed);
     } finally {
@@ -382,6 +384,28 @@ export default function OnlinePvpPage() {
     URL.revokeObjectURL(url);
   }, [pgnStringForDownload, gameId]);
 
+  const handleRematch = useCallback(async () => {
+    if (!gameId || !userId) return;
+    setRematchLoading(true);
+    try {
+      const { gameId: newId, inviteUrl: rematchUrl } = await online.requestRematch(true);
+      if (rematchUrl) {
+        try {
+          await navigator.clipboard.writeText(rematchUrl);
+        } catch {
+          /* clipboard optional */
+        }
+      }
+      toast.success(o.rematchCreated);
+      setShowResultModal(false);
+      router.push(`/online?game=${newId}`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : o.rematchFailed);
+    } finally {
+      setRematchLoading(false);
+    }
+  }, [gameId, userId, online, o, router]);
+
   const gameOver = Boolean(
     online.game &&
       (online.game.status === "finished" || online.game.status === "aborted")
@@ -472,9 +496,7 @@ export default function OnlinePvpPage() {
     !online.isSideToMoveTimedOut &&
     !gameOver;
 
-  const isSpectator = Boolean(
-    userId && !online.role && !online.canJoin && g.status === "playing"
-  );
+  const isSpectator = online.isSpectator;
 
   const whiteAvatarUrl =
     g.white_user_id === userId
@@ -497,6 +519,7 @@ export default function OnlinePvpPage() {
         moves={online.moves}
         role={online.role}
         canJoin={online.canJoin}
+        canAcceptRematch={online.canAcceptRematch}
         userId={userId}
         gameId={gameId}
         lang={lang}
@@ -552,6 +575,8 @@ export default function OnlinePvpPage() {
         headToHead={resultHeadToHead}
         headToHeadLoading={resultHeadToHeadLoading}
         onNewGame={() => router.push("/online")}
+        onRematch={() => void handleRematch()}
+        rematchLoading={rematchLoading}
         onDownloadPgn={handleDownloadPgn}
         onSaveCloud={handleSaveCloud}
         canSave={Boolean(userId) && !savedToCloud}
