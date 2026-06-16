@@ -12,6 +12,7 @@ import { isSupabaseConfigured } from "@/lib/supabase";
 import { useSuperUser } from "@/hooks/useSuperUser";
 import { useOnlineGame } from "@/hooks/useOnlineGame";
 import { useOpenPvpLobbies } from "@/hooks/useOpenPvpLobbies";
+import { usePvpMatchmaking } from "@/hooks/usePvpMatchmaking";
 import OnlinePvpResultModal from "@/components/OnlinePvpResultModal";
 import OnlinePvpLobbyLayout from "@/components/pvp/OnlinePvpLobbyLayout";
 import OnlinePvpGameLayout from "@/components/pvp/OnlinePvpGameLayout";
@@ -43,6 +44,9 @@ export default function OnlinePvpPage() {
   const gameId = searchParams.get("game");
   const { userId, loading: authLoading } = useSuperUser();
   const online = useOnlineGame(gameId, userId);
+  const matchmaking = usePvpMatchmaking(userId);
+  const matchedGameId = matchmaking.matchedGameId;
+  const clearMatchmakingMatched = matchmaking.clearMatched;
   const {
     lobbies: openLobbiesList,
     activeGames,
@@ -110,6 +114,13 @@ export default function OnlinePvpPage() {
   }, [refreshFriends]);
 
   useEffect(() => {
+    if (!matchedGameId) return;
+    toast.success(o.matchmakingMatched);
+    router.push(`/online?game=${matchedGameId}`);
+    clearMatchmakingMatched();
+  }, [matchedGameId, clearMatchmakingMatched, o.matchmakingMatched, router]);
+
+  useEffect(() => {
     setSavedToCloud(false);
     setShowResultModal(false);
     setEndedDurationSec(null);
@@ -130,6 +141,35 @@ export default function OnlinePvpPage() {
     typeof window !== "undefined" && gameId
       ? `${window.location.origin}/online?game=${gameId}`
       : "";
+
+  const handleQuickPlay = async () => {
+    if (!userId) {
+      setAuthOpen(true);
+      return;
+    }
+    if (!matchmaking.canQuickPlay(timePreset)) {
+      toast.error(o.matchmakingOnlyLive);
+      return;
+    }
+    try {
+      const gameId = await matchmaking.joinQueue(timePreset);
+      if (gameId) {
+        toast.success(o.matchmakingMatched);
+        router.push(`/online?game=${gameId}`);
+        matchmaking.clearMatched();
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : o.matchmakingFailed);
+    }
+  };
+
+  const handleCancelMatchmaking = async () => {
+    try {
+      await matchmaking.leaveQueue();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : o.matchmakingFailed);
+    }
+  };
 
   const handleCreate = async () => {
     if (!userId) {
@@ -456,6 +496,12 @@ export default function OnlinePvpPage() {
           onFriendsChange={setFriends}
           locale={locale}
           presetLabels={presetLabels}
+          canQuickPlay={matchmaking.canQuickPlay(timePreset)}
+          matchmakingInQueue={matchmaking.inQueue}
+          matchmakingJoining={matchmaking.joining}
+          matchmakingQueueSize={matchmaking.queueSize}
+          onQuickPlay={() => void handleQuickPlay()}
+          onCancelMatchmaking={() => void handleCancelMatchmaking()}
         />
         <AuthModal open={authOpen} onOpenChange={setAuthOpen} />
       </main>
@@ -539,6 +585,12 @@ export default function OnlinePvpPage() {
         onOpenAuth={() => setAuthOpen(true)}
         onResign={() => online.resign()}
         onDrawAction={(action) => online.drawAction(action)}
+        onTakebackAction={(action) => online.takebackAction(action)}
+        allowPremove={Boolean(online.role) && g.status === "playing"}
+        canPremove={online.canPremove}
+        canOfferTakeback={online.canOfferTakeback}
+        premoveUci={online.premoveUci}
+        onPremoveChange={online.setPremoveUci}
         oppInfo={oppInfo}
         opponentProfile={opponentProfile}
         friends={friends}

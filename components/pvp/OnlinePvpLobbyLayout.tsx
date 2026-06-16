@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { Loader2, Plus, LayoutGrid, Users, Trash2, UserMinus } from "lucide-react";
+import { Loader2, Plus, LayoutGrid, Users, Trash2, UserMinus, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -41,6 +41,12 @@ type OnlinePvpLobbyLayoutProps = {
   onFriendsChange: (friends: AccountFriend[]) => void;
   locale: string;
   presetLabels: Record<string, string>;
+  canQuickPlay?: boolean;
+  matchmakingInQueue?: boolean;
+  matchmakingJoining?: boolean;
+  matchmakingQueueSize?: number;
+  onQuickPlay?: () => void;
+  onCancelMatchmaking?: () => void;
 };
 
 import type { TranslationKey } from "@/lib/i18n";
@@ -222,6 +228,12 @@ export default function OnlinePvpLobbyLayout({
   onFriendsChange,
   locale,
   presetLabels,
+  canQuickPlay = false,
+  matchmakingInQueue = false,
+  matchmakingJoining = false,
+  matchmakingQueueSize = 0,
+  onQuickPlay,
+  onCancelMatchmaking,
 }: OnlinePvpLobbyLayoutProps) {
   const { t } = useLanguage();
   const o = t.playOnline;
@@ -281,18 +293,63 @@ export default function OnlinePvpLobbyLayout({
                   {o.openAuth}
                 </Button>
               ) : (
-                <Button
-                  type="button"
-                  onClick={onCreate}
-                  disabled={creating}
-                  className="w-full h-11 text-base font-semibold"
-                >
-                  {creating ? (
-                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-                  ) : (
-                    o.startGame
+                <>
+                  <Button
+                    type="button"
+                    onClick={onQuickPlay}
+                    disabled={
+                      creating ||
+                      matchmakingJoining ||
+                      matchmakingInQueue ||
+                      !canQuickPlay
+                    }
+                    variant="secondary"
+                    className="w-full h-11 text-base font-semibold border border-cyan-500/40"
+                  >
+                    {matchmakingJoining || matchmakingInQueue ? (
+                      <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                    ) : (
+                      <>
+                        <Zap className="h-4 w-4 mr-2" aria-hidden />
+                        {o.quickPlay}
+                      </>
+                    )}
+                  </Button>
+                  {matchmakingInQueue && (
+                    <div className="rounded-md border border-cyan-500/30 bg-cyan-950/20 px-3 py-2 space-y-2">
+                      <p className="text-xs text-cyan-100">{o.matchmakingSearching}</p>
+                      {matchmakingQueueSize > 1 && (
+                        <p className="text-[10px] text-slate-400">
+                          {matchmakingQueueSize} {presetLabels[timePreset] ?? timePreset}
+                        </p>
+                      )}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="w-full border-slate-600"
+                        onClick={onCancelMatchmaking}
+                      >
+                        {o.matchmakingCancel}
+                      </Button>
+                    </div>
                   )}
-                </Button>
+                  {!canQuickPlay && userId && (
+                    <p className="text-xs text-slate-500">{o.matchmakingOnlyLive}</p>
+                  )}
+                  <Button
+                    type="button"
+                    onClick={onCreate}
+                    disabled={creating || matchmakingInQueue}
+                    className="w-full h-11 text-base font-semibold"
+                  >
+                    {creating ? (
+                      <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                    ) : (
+                      o.startGame
+                    )}
+                  </Button>
+                </>
               )}
               <Button variant="outline" asChild className="w-full border-slate-700">
                 <Link href="/play">{o.backToBots}</Link>

@@ -11,6 +11,8 @@ import {
 } from "@/lib/pvp-chess";
 import { isPvpSideToMoveTimedOut } from "@/lib/pvp-clock";
 import { playChessMoveSound } from "@/lib/chess-sound";
+import { isPremoveLegalNow } from "@/lib/pvp-premove";
+import { canOfferPvpTakeback, pvpGameJustStarted } from "@/lib/pvp-takeback";
 import { track } from "@/lib/track";
 import { useChessboardSettings } from "@/contexts/ChessboardSettingsContext";
 
@@ -67,6 +69,7 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
     error: null,
   });
   const [pendingUci, setPendingUci] = useState<string | null>(null);
+  const [premoveUci, setPremoveUci] = useState<string | null>(null);
   const [clockNow, setClockNow] = useState(() => Date.now());
   const timeoutClaimInFlightRef = useRef(false);
 
@@ -183,6 +186,9 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
     }
   }, [gameId, fetchWithAuth, applyServerState]);
 
+  const refreshSilentRef = useRef(refreshSilent);
+  refreshSilentRef.current = refreshSilent;
+
   useEffect(() => {
     if (!gameId || !isSupabaseConfigured || !supabase) {
       setState({
@@ -196,9 +202,11 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
         error: null,
       });
       setPendingUci(null);
+      setPremoveUci(null);
       return;
     }
     setPendingUci(null);
+    setPremoveUci(null);
     void refresh();
   }, [gameId, refresh]);
 
@@ -256,7 +264,30 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
         (payload: RealtimePostgresChangesPayload<{ [key: string]: unknown }>) => {
           const row = payload.new as PvpGameRow | null;
           if (!row) return;
-          setState((s) => ({ ...s, game: row }));
+          setState((s) => {
+            const justStarted = pvpGameJustStarted(s.game, row);
+            if (justStarted) {
+              queueMicrotask(() => void refreshSilentRef.current());
+            }
+            return { ...s, game: row };
+          });
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "DELETE",
+          schema: "public",
+          table: "pvp_moves",
+          filter: `game_id=eq.${gameId}`,
+        },
+        (payload: RealtimePostgresChangesPayload<{ [key: string]: unknown }>) => {
+          const old = payload.old as { ply?: number } | null;
+          if (!old?.ply) return;
+          setState((s) => ({
+            ...s,
+            moves: s.moves.filter((m) => m.ply !== old.ply),
+          }));
         }
       )
       .subscribe();
@@ -339,6 +370,12 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
     }
   }, [state.moves, pendingUci]);
 
+  const canPremove = useMemo(() => {
+    if (!state.game || state.game.status !== "playing" || !state.role) return false;
+    if (pendingUci || isMyTurn) return false;
+    return true;
+  }, [state.game, state.role, pendingUci, isMyTurn]);
+
   const createLobby = useCallback(async (timePreset = "correspondence_3d"): Promise<string | null> => {
     if (!isSupabaseConfigured || !supabase) return null;
     const data = await fetchWithAuth("/api/pvp/games", {
@@ -357,10 +394,25 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
 
   const joinLobby = useCallback(async () => {
     if (!gameId) return;
-    await fetchWithAuth(`/api/pvp/games/${gameId}/join`, { method: "POST" });
+    const data = await fetchWithAuth(`/api/pvp/games/${gameId}/join`, { method: "POST" });
     track("pvp_game_joined", { game_id: gameId });
-    await refresh();
-  }, [gameId, refresh, fetchWithAuth]);
+
+    const joinedGame = data.game as PvpGameRow | undefined;
+    const joinedRole = (data.role as Role) ?? null;
+    if (joinedGame) {
+      setState((s) => ({
+        ...s,
+        game: s.game ? { ...s.game, ...joinedGame } : joinedGame,
+        role: joinedRole ?? s.role,
+        canJoin: false,
+        canAcceptRematch: false,
+        loading: false,
+        error: null,
+      }));
+    }
+
+    await refreshSilent();
+  }, [gameId, refreshSilent, fetchWithAuth]);
 
   const submitMove = useCallback(
     async (uci: string) => {
@@ -449,6 +501,42 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
     [gameId, refresh, fetchWithAuth]
   );
 
+  const takebackAction = useCallback(
+    async (action: "offer" | "accept" | "decline" | "cancel") => {
+      if (!gameId) return;
+      await fetchWithAuth(`/api/pvp/games/${gameId}/takeback`, {
+        method: "POST",
+        body: JSON.stringify({ action }),
+      });
+      await refresh();
+    },
+    [gameId, refresh, fetchWithAuth]
+  );
+
+  const premoveQueuedRef = useRef(false);
+  useEffect(() => {
+    if (!isMyTurn || !premoveUci || pendingUci || premoveQueuedRef.current) return;
+    if (!state.role || !state.game || state.game.status !== "playing") return;
+    if (!isPremoveLegalNow(chess.fen(), premoveUci)) {
+      setPremoveUci(null);
+      return;
+    }
+    premoveQueuedRef.current = true;
+    const uci = premoveUci;
+    setPremoveUci(null);
+    void submitMove(uci).finally(() => {
+      premoveQueuedRef.current = false;
+    });
+  }, [
+    isMyTurn,
+    premoveUci,
+    pendingUci,
+    state.role,
+    state.game,
+    chess,
+    submitMove,
+  ]);
+
   const requestRematch = useCallback(
     async (swapColors = true): Promise<{ gameId: string; inviteUrl?: string }> => {
       if (!gameId) throw new Error("No game");
@@ -470,11 +558,21 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
     [gameId, fetchWithAuth]
   );
 
+  const canOfferTakeback = useMemo(() => {
+    if (!userId || !state.role || !state.game || state.game.status !== "playing") return false;
+    if (state.game.takeback_offered_by || state.game.draw_offered_by) return false;
+    return canOfferPvpTakeback(userId, state.role, state.moves, chess);
+  }, [userId, state.role, state.game, state.moves, chess]);
+
   return {
     ...state,
     chess,
     lastMove,
     pendingUci,
+    premoveUci,
+    setPremoveUci,
+    canPremove,
+    canOfferTakeback,
     isMyTurn,
     isParticipant,
     isSideToMoveTimedOut,
@@ -486,6 +584,7 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
     submitMove,
     resign,
     drawAction,
+    takebackAction,
     requestRematch,
   };
 }

@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
-import { Copy, FlipVertical, Handshake, Loader2, Mail, MessageSquare, Swords } from "lucide-react";
+import { Copy, FlipVertical, Handshake, Loader2, Mail, MessageSquare, RotateCcw, Swords } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,6 +34,7 @@ type OnlinePvpSidebarProps = {
   onOpenAuth: () => void;
   onResign: () => Promise<void>;
   onDrawAction: (action: "offer" | "accept" | "decline" | "cancel") => Promise<void>;
+  onTakebackAction?: (action: "offer" | "accept" | "decline" | "cancel") => Promise<void>;
   oppInfo: { oppId: string; oppLabel: string; oppColor: "white" | "black" } | null;
   opponentProfile: AccountProfile | null;
   friends: AccountFriend[];
@@ -49,6 +50,10 @@ type OnlinePvpSidebarProps = {
   onShowEvalBarChange: (v: boolean) => void;
   sidebarTab: string;
   onSidebarTabChange: (tab: string) => void;
+  selectedPly?: number | null;
+  onSelectPly?: (ply: number | null) => void;
+  canPremove?: boolean;
+  canOfferTakeback?: boolean;
   isSpectator?: boolean;
   boardFlipped?: boolean;
   onFlipBoard?: () => void;
@@ -71,6 +76,7 @@ export default function OnlinePvpSidebar({
   onOpenAuth,
   onResign,
   onDrawAction,
+  onTakebackAction,
   oppInfo,
   opponentProfile,
   friends,
@@ -86,6 +92,10 @@ export default function OnlinePvpSidebar({
   onShowEvalBarChange,
   sidebarTab,
   onSidebarTabChange,
+  selectedPly,
+  onSelectPly,
+  canPremove = false,
+  canOfferTakeback = false,
   isSpectator = false,
   boardFlipped = false,
   onFlipBoard,
@@ -239,7 +249,15 @@ export default function OnlinePvpSidebar({
             </Button>
           )}
 
-          <OnlinePvpMoveList moves={moves} />
+          {canPremove && (
+            <p className="text-[10px] text-slate-500">{o.premoveHint}</p>
+          )}
+
+          <OnlinePvpMoveList
+            moves={moves}
+            selectedPly={selectedPly}
+            onSelectPly={onSelectPly}
+          />
 
           {oppInfo && userId && (
             <OnlinePvpOpponentCard
@@ -254,6 +272,53 @@ export default function OnlinePvpSidebar({
 
           {g.status === "playing" && role && userId && (
             <div className="space-y-2 pt-2 border-t border-slate-800">
+              {g.takeback_offered_by && g.takeback_offered_by !== userId && onTakebackAction && (
+                <div
+                  role="status"
+                  aria-live="polite"
+                  className="rounded-lg border border-violet-400/60 bg-violet-950/50 px-3 py-2 space-y-2"
+                >
+                  <p className="text-xs font-medium text-violet-100 flex items-start gap-2">
+                    <RotateCcw className="h-4 w-4 shrink-0 mt-0.5" aria-hidden />
+                    {o.opponentOfferedTakeback}
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="flex-1 bg-emerald-600 hover:bg-emerald-500"
+                      onClick={() => void onTakebackAction("accept")}
+                    >
+                      {o.takebackAccept}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 border-violet-400/50"
+                      onClick={() => void onTakebackAction("decline")}
+                    >
+                      {o.takebackDecline}
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {g.takeback_offered_by === userId && onTakebackAction && (
+                <div className="rounded-lg border border-violet-500/40 bg-violet-950/30 px-3 py-2 text-center">
+                  <p className="text-xs text-violet-100">{o.youOfferedTakeback}</p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="mt-2 h-7 text-xs"
+                    onClick={() => void onTakebackAction("cancel")}
+                  >
+                    {o.takebackCancel}
+                  </Button>
+                </div>
+              )}
+
               {g.draw_offered_by && g.draw_offered_by !== userId && (
                 <div
                   role="status"
@@ -314,7 +379,21 @@ export default function OnlinePvpSidebar({
                 >
                   {o.resign}
                 </Button>
-                {!g.draw_offered_by && (
+                {onTakebackAction &&
+                  canOfferTakeback &&
+                  !g.takeback_offered_by &&
+                  !g.draw_offered_by && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="border-violet-500/50 text-violet-200"
+                      onClick={() => void onTakebackAction("offer")}
+                    >
+                      {o.takebackOffer}
+                    </Button>
+                  )}
+                {!g.draw_offered_by && !g.takeback_offered_by && (
                   <Button
                     type="button"
                     variant="outline"

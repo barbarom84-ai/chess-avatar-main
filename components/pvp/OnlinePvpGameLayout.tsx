@@ -11,6 +11,7 @@ import { useStockfish } from "@/hooks/useStockfish";
 import { usePvpChat } from "@/hooks/usePvpChat";
 import { stmEvalToWhitePov } from "@/lib/arena-chess";
 import type { PvpGameRow, PvpMoveRow } from "@/lib/pvp-chess";
+import { replayGameFromUcis, uciToLastMoveSquares } from "@/lib/pvp-chess";
 import { whiteBlackDisplayNames } from "@/lib/pvp-utils";
 import type { AccountFriend, AccountProfile } from "@/lib/account-types";
 import type { Language } from "@/lib/i18n";
@@ -43,6 +44,12 @@ type OnlinePvpGameLayoutProps = {
   onOpenAuth: () => void;
   onResign: () => Promise<void>;
   onDrawAction: (action: "offer" | "accept" | "decline" | "cancel") => Promise<void>;
+  onTakebackAction?: (action: "offer" | "accept" | "decline" | "cancel") => Promise<void>;
+  allowPremove?: boolean;
+  canPremove?: boolean;
+  canOfferTakeback?: boolean;
+  premoveUci?: string | null;
+  onPremoveChange?: (uci: string | null) => void;
   oppInfo: { oppId: string; oppLabel: string; oppColor: "white" | "black" } | null;
   opponentProfile: AccountProfile | null;
   friends: AccountFriend[];
@@ -77,6 +84,12 @@ export default function OnlinePvpGameLayout({
   onOpenAuth,
   onResign,
   onDrawAction,
+  onTakebackAction,
+  allowPremove = false,
+  canPremove = false,
+  canOfferTakeback = false,
+  premoveUci = null,
+  onPremoveChange,
   oppInfo,
   opponentProfile,
   friends,
@@ -91,7 +104,29 @@ export default function OnlinePvpGameLayout({
   const [liveEval, setLiveEval] = useState<number | null>(null);
   const [sidebarTab, setSidebarTab] = useState("game");
   const [boardFlipped, setBoardFlipped] = useState(false);
+  const [previewPly, setPreviewPly] = useState<number | null>(null);
   const liveEvalRequestRef = useRef(0);
+
+  useEffect(() => {
+    setPreviewPly(null);
+  }, [moves.length]);
+
+  const isLiveView = previewPly === null || previewPly >= moves.length;
+
+  const displayChess = useMemo(() => {
+    if (isLiveView) return chess;
+    const ucis = moves.slice(0, previewPly).map((m) => m.uci);
+    return replayGameFromUcis(ucis);
+  }, [chess, isLiveView, moves, previewPly]);
+
+  const displayLastMove = useMemo(() => {
+    if (isLiveView) return lastMove;
+    const ucis = moves.slice(0, previewPly).map((m) => m.uci);
+    return uciToLastMoveSquares(ucis[ucis.length - 1]);
+  }, [isLiveView, lastMove, moves, previewPly]);
+
+  const boardCanMove = canMove && isLiveView;
+  const boardAllowPremove = canPremove && isLiveView;
 
   const effectiveOrientation: "white" | "black" =
     boardFlipped && isSpectator
@@ -125,11 +160,11 @@ export default function OnlinePvpGameLayout({
   }, [canShowEvalBar]);
 
   useEffect(() => {
-    if (!canShowEvalBar || !showEvalBar || gameOver || !isReady) {
+    if (!canShowEvalBar || !showEvalBar || gameOver || !isReady || !isLiveView) {
       setLiveEval(null);
       return;
     }
-    const fen = chess.fen();
+    const fen = displayChess.fen();
     const id = ++liveEvalRequestRef.current;
     let cancelled = false;
     const timer = setTimeout(() => {
@@ -147,7 +182,7 @@ export default function OnlinePvpGameLayout({
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [canShowEvalBar, showEvalBar, gameOver, isReady, chess, getPositionEvaluation, moves.length]);
+  }, [canShowEvalBar, showEvalBar, gameOver, isReady, displayChess, getPositionEvaluation, moves.length, isLiveView]);
 
   const wb = useMemo(() => whiteBlackDisplayNames(g), [g]);
 
@@ -178,10 +213,14 @@ export default function OnlinePvpGameLayout({
 
         <div className="w-full aspect-square max-h-[min(72dvh,calc(100vw-1rem))] xl:max-h-[min(78dvh,100%)]">
           <OnlineChessboard
-            fen={chess.fen()}
+            fen={displayChess.fen()}
             orientation={effectiveOrientation}
-            lastMove={lastMove}
-            canMove={canMove}
+            lastMove={displayLastMove}
+            canMove={boardCanMove}
+            allowPremove={boardAllowPremove}
+            playerRole={role}
+            premoveUci={premoveUci}
+            onPremoveChange={onPremoveChange}
             onSubmitUci={onSubmitUci}
             onMoveError={(msg) => toast.error(msg)}
           />
@@ -215,6 +254,7 @@ export default function OnlinePvpGameLayout({
         onOpenAuth={onOpenAuth}
         onResign={onResign}
         onDrawAction={onDrawAction}
+        onTakebackAction={onTakebackAction}
         oppInfo={oppInfo}
         opponentProfile={opponentProfile}
         friends={friends}
@@ -237,6 +277,10 @@ export default function OnlinePvpGameLayout({
         }}
         sidebarTab={sidebarTab}
         onSidebarTabChange={setSidebarTab}
+        selectedPly={previewPly}
+        onSelectPly={setPreviewPly}
+        canPremove={canPremove}
+        canOfferTakeback={canOfferTakeback}
         isSpectator={isSpectator}
         boardFlipped={boardFlipped}
         onFlipBoard={() => setBoardFlipped((v) => !v)}

@@ -14,6 +14,8 @@ export interface PvpGameRow {
   result: string | null;
   result_reason: string | null;
   draw_offered_by: string | null;
+  /** Joueur ayant demandé une reprise du dernier coup. */
+  takeback_offered_by?: string | null;
   /** unlimited | timed | correspondence */
   clock_mode?: string | null;
   clock_initial_sec?: number | null;

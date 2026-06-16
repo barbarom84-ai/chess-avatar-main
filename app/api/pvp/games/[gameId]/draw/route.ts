@@ -52,7 +52,7 @@ export async function POST(
   if (action === "offer") {
     const { error } = await sb
       .from("pvp_games")
-      .update({ draw_offered_by: user.id })
+      .update({ draw_offered_by: user.id, takeback_offered_by: null })
       .eq("id", gameId)
       .eq("status", "playing");
     if (error) return jsonError(error.message ?? "Update failed", 500);

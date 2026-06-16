@@ -7,6 +7,7 @@ import { replayGameFromUcis, normalizeUci } from "@/lib/pvp-chess";
 import { applyUciMove } from "@/lib/learn-chess-utils";
 import { applyMoveClockUpdate, checkTimeoutForTimedGame } from "@/lib/pvp-clock-server";
 import { pvpRateLimitOrResponse } from "@/lib/pvp-api-rate-limit";
+import { notifyCorrespondenceYourTurn } from "@/lib/pvp-correspondence-notify";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
@@ -127,7 +128,10 @@ export async function POST(
     newStatus = "finished";
   }
 
-  const ongoingClock: Record<string, unknown> = { draw_offered_by: null };
+  const ongoingClock: Record<string, unknown> = {
+    draw_offered_by: null,
+    takeback_offered_by: null,
+  };
   if (row.clock_mode === "timed" && clock.kind === "tick") {
     ongoingClock.white_remaining_ms = clock.white_remaining_ms;
     ongoingClock.black_remaining_ms = clock.black_remaining_ms;
@@ -147,6 +151,13 @@ export async function POST(
     await sb.from("pvp_games").update(gameUpdate).eq("id", gameId);
   } else {
     await sb.from("pvp_games").update(ongoingClock).eq("id", gameId);
+    void notifyCorrespondenceYourTurn(
+      sb,
+      { ...row, ...ongoingClock } as PvpGameRow,
+      user.id,
+      gameId,
+      request.headers.get("origin")
+    );
   }
 
   const gamePatch: Partial<PvpGameRow> = {
@@ -154,6 +165,7 @@ export async function POST(
     result,
     result_reason: resultReason,
     draw_offered_by: null,
+    takeback_offered_by: null,
   };
   if (row.clock_mode === "timed" && clock.kind === "tick") {
     gamePatch.white_remaining_ms = clock.white_remaining_ms;
