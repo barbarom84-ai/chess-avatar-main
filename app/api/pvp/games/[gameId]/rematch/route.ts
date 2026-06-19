@@ -5,12 +5,38 @@ import type { PvpGameRow } from "@/lib/pvp-chess";
 import { displayNameFromAuthUser } from "@/lib/pvp-display-name";
 import { pvpRematchWantWhite } from "@/lib/pvp-access";
 import { pvpRateLimitOrResponse } from "@/lib/pvp-api-rate-limit";
+import {
+  findActiveRematchForSource,
+  isRematchUniqueViolation,
+  resolveRematchForParticipant,
+  type PvpRematchRole,
+} from "@/lib/pvp-rematch";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
 
 function jsonError(message: string, status: number) {
   return NextResponse.json({ error: message }, { status });
+}
+
+function rematchResponse(
+  game: PvpGameRow,
+  role: PvpRematchRole,
+  request: NextRequest,
+  extra?: { started?: boolean }
+) {
+  const origin = request.headers.get("origin") ?? "";
+  const inviteUrl = origin
+    ? `${origin}/online?game=${game.id}`
+    : `/online?game=${game.id}`;
+  return NextResponse.json({
+    gameId: game.id,
+    game,
+    inviteUrl,
+    role,
+    serverNow: Date.now(),
+    ...extra,
+  });
 }
 
 /** Create a rematch lobby from a finished game (optional color swap). */
@@ -53,11 +79,27 @@ export async function POST(
     isWhite ? game.black_display_name : game.white_display_name
   )?.trim() || "Player";
 
-  const wantWhite = pvpRematchWantWhite(isWhite, swapColors);
   const callerName = displayNameFromAuthUser(user);
+
+  const existingRematch = await findActiveRematchForSource(sb, gameId);
+  if (existingRematch) {
+    const resolved = await resolveRematchForParticipant(
+      sb,
+      existingRematch,
+      user.id,
+      callerName
+    );
+    if (!resolved) return jsonError("Cannot join rematch", 400);
+    return rematchResponse(resolved.game, resolved.role, request, {
+      started: resolved.game.status === "playing",
+    });
+  }
+
+  const wantWhite = pvpRematchWantWhite(isWhite, swapColors);
 
   const baseInsert = {
     created_by: user.id,
+    rematch_source_game_id: gameId,
     status: "waiting" as const,
     time_preset: game.time_preset,
     clock_mode: game.clock_mode,
@@ -90,23 +132,33 @@ export async function POST(
   const { data: created, error } = await sb
     .from("pvp_games")
     .insert(insertRow)
-    .select(
-      "id,status,white_user_id,black_user_id,created_at,time_preset,clock_mode,clock_initial_sec,clock_increment_sec,white_display_name,black_display_name"
-    )
+    .select("*")
     .single();
 
-  if (error || !created) {
-    return jsonError(error?.message ?? "Failed to create rematch", 500);
+  if (error) {
+    if (isRematchUniqueViolation(error)) {
+      const raced = await findActiveRematchForSource(sb, gameId);
+      if (!raced) return jsonError("Rematch failed", 500);
+      const resolved = await resolveRematchForParticipant(
+        sb,
+        raced,
+        user.id,
+        callerName
+      );
+      if (!resolved) return jsonError("Cannot join rematch", 400);
+      return rematchResponse(resolved.game, resolved.role, request, {
+        started: resolved.game.status === "playing",
+      });
+    }
+    return jsonError(error.message ?? "Failed to create rematch", 500);
   }
 
-  const newId = created.id as string;
-  const origin = request.headers.get("origin") ?? "";
-  const inviteUrl = origin ? `${origin}/online?game=${newId}` : `/online?game=${newId}`;
+  if (!created) return jsonError("Failed to create rematch", 500);
 
-  return NextResponse.json({
-    gameId: newId,
-    game: created,
-    inviteUrl,
-    role: wantWhite ? ("white" as const) : ("black" as const),
+  const rematch = created as PvpGameRow;
+  const role: PvpRematchRole = wantWhite ? "white" : "black";
+
+  return rematchResponse(rematch, role, request, {
+    started: rematch.status === "playing",
   });
 }

@@ -10,6 +10,7 @@ import {
   Loader2,
   Radio,
   Swords,
+  Trash2,
   Users,
 } from "lucide-react";
 import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
@@ -49,16 +50,16 @@ type PresenceState = {
   last_seen: string;
 };
 
-async function fetchWithAuth(path: string) {
+async function fetchWithAuth(path: string, init?: RequestInit) {
   if (!supabase) throw new Error("Supabase unavailable");
   const {
     data: { session },
   } = await supabase.auth.getSession();
-  const headers: HeadersInit = {};
+  const headers = new Headers(init?.headers);
   if (session?.access_token) {
-    headers.Authorization = `Bearer ${session.access_token}`;
+    headers.set("Authorization", `Bearer ${session.access_token}`);
   }
-  const res = await fetch(path, { headers });
+  const res = await fetch(path, { ...init, headers });
   const json: unknown = await res.json().catch(() => ({}));
   if (!res.ok) {
     const err =
@@ -79,6 +80,7 @@ export default function AdminOpsPage() {
   const [events, setEvents] = useState<ActivityRow[]>([]);
   const [userSummaries, setUserSummaries] = useState<Record<string, AccountUserSummary>>({});
   const [pvpLive, setPvpLive] = useState<PvpGameRow[]>([]);
+  const [pvpActionId, setPvpActionId] = useState<string | null>(null);
   const [presenceList, setPresenceList] = useState<PresenceState[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -124,7 +126,7 @@ export default function AdminOpsPage() {
       const { data } = await client
         .from("pvp_games")
         .select(
-          "id, status, white_user_id, black_user_id, white_display_name, created_at, updated_at"
+          "id, status, white_user_id, black_user_id, white_display_name, black_display_name, created_at, updated_at, rematch_source_game_id"
         )
         .in("status", ["playing", "waiting"])
         .order("updated_at", { ascending: false })
@@ -187,6 +189,29 @@ export default function AdminOpsPage() {
       channelRef.current = null;
     };
   }, [isSuperUser]);
+
+  const adminPvpAction = useCallback(
+    async (gameId: string, action: "delete" | "abort") => {
+      setPvpActionId(gameId);
+      try {
+        const init: RequestInit =
+          action === "delete"
+            ? { method: "DELETE" }
+            : {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ action: "abort" }),
+              };
+        await fetchWithAuth(`/api/admin/pvp/games/${gameId}`, init);
+        setPvpLive((prev) => prev.filter((g) => g.id !== gameId));
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Error");
+      } finally {
+        setPvpActionId(null);
+      }
+    },
+    []
+  );
 
   const topEvents = useMemo(() => {
     if (!snapshot?.eventCounts24h) return [];
@@ -313,11 +338,60 @@ export default function AdminOpsPage() {
                 <p className="text-slate-500">Aucune partie active.</p>
               ) : (
                 pvpLive.map((g) => (
-                  <div key={g.id} className="flex justify-between gap-2 border-b border-slate-800 pb-1">
-                    <span className="text-amber-300">{g.status}</span>
-                    <span className="text-slate-400 truncate">
-                      {g.white_display_name ?? g.id.slice(0, 8)}
-                    </span>
+                  <div
+                    key={g.id}
+                    className="flex items-center justify-between gap-2 border-b border-slate-800 pb-2"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-amber-300 shrink-0">{g.status}</span>
+                        <Link
+                          href={`/online?game=${g.id}`}
+                          className="text-cyan-400 hover:underline truncate text-xs"
+                        >
+                          {g.id.slice(0, 8)}
+                        </Link>
+                      </div>
+                      <p className="text-slate-400 truncate text-xs">
+                        {g.white_display_name ?? g.white_user_id.slice(0, 8)}
+                        {g.black_display_name || g.black_user_id
+                          ? ` vs ${g.black_display_name ?? g.black_user_id?.slice(0, 8)}`
+                          : " · en attente"}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 gap-1">
+                      {g.status === "playing" ? (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="h-7 px-2 text-[10px] border-amber-500/40 text-amber-200"
+                          disabled={pvpActionId === g.id}
+                          onClick={() => void adminPvpAction(g.id, "abort")}
+                        >
+                          {pvpActionId === g.id ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            "Annuler"
+                          )}
+                        </Button>
+                      ) : (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="h-7 px-2 text-[10px] border-red-500/40 text-red-300"
+                          disabled={pvpActionId === g.id}
+                          onClick={() => void adminPvpAction(g.id, "delete")}
+                        >
+                          {pvpActionId === g.id ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-3 w-3" />
+                          )}
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 ))
               )}

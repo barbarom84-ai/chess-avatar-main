@@ -753,6 +753,8 @@ export const en = {
       pendingRematchIncoming: "{name} challenged you to a rematch.",
       pendingRematchOutgoing: "Waiting for {name} to accept your rematch.",
       openRematch: "Open rematch",
+      cancelRematch: "Cancel rematch",
+      rematchCancelled: "Rematch cancelled.",
       drawOffer: "Offer draw",
       drawOfferLimit: "Draw offer limit reached (3 per game).",
       drawOffersRemaining: "{count} draw offer(s) remaining.",

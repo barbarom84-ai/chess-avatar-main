@@ -45,6 +45,7 @@ export type PendingRematch = {
   clock_mode: string;
   clock_initial_sec: number;
   clock_increment_sec: number;
+  can_cancel: boolean;
 };
 
 export type PendingPvpInvite = {
@@ -133,7 +134,10 @@ export function useOpenPvpLobbies(userId: string | null, pollMs = 12_000) {
         }))
       );
       setPendingRematches(
-        Array.isArray(data.pendingRematches) ? data.pendingRematches : []
+        (Array.isArray(data.pendingRematches) ? data.pendingRematches : []).map((rm) => ({
+          ...rm,
+          can_cancel: rm.can_cancel ?? false,
+        }))
       );
       setPendingInvites(
         Array.isArray(data.pendingInvites) ? data.pendingInvites : []

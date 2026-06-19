@@ -23,6 +23,7 @@ import { chessForPvpClockAuthority } from "@/lib/pvp-clock-sync";
 import { consumePvpGameBootstrap, writePvpGameBootstrap } from "@/lib/pvp-game-bootstrap";
 import { nowFromServerAnchor, syncAnchorFromResponse, type ServerTimeAnchor } from "@/lib/pvp-server-time";
 import { canOfferPvpTakeback, pvpGameJustStarted } from "@/lib/pvp-takeback";
+import { canUserCancelWaitingPvpGame } from "@/lib/pvp-game-cancel";
 import { track } from "@/lib/track";
 import { useChessboardSettings } from "@/contexts/ChessboardSettingsContext";
 import { usePvpGamePresence } from "@/hooks/usePvpGamePresence";
@@ -760,7 +761,7 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
   ]);
 
   const requestRematch = useCallback(
-    async (swapColors = true): Promise<{ gameId: string; inviteUrl?: string }> => {
+    async (swapColors = true): Promise<{ gameId: string; inviteUrl?: string; started?: boolean }> => {
       if (!gameId) throw new Error("No game");
       const data = await fetchWithAuth(`/api/pvp/games/${gameId}/rematch`, {
         method: "POST",
@@ -771,10 +772,22 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
           ? data.gameId
           : (data.game as { id?: string } | undefined)?.id;
       if (!newId) throw new Error("Rematch failed");
+      const rematchGame = data.game as PvpGameRow | undefined;
+      const role = (data.role as Role) ?? null;
+      if (rematchGame && role && rematchGame.status === "playing") {
+        writePvpGameBootstrap({
+          gameId: newId,
+          game: rematchGame,
+          role,
+          moves: [],
+          at: Date.now(),
+        });
+      }
       track("pvp_rematch_created", { from_game_id: gameId, swap_colors: swapColors });
       return {
         gameId: newId,
         inviteUrl: typeof data.inviteUrl === "string" ? data.inviteUrl : undefined,
+        started: Boolean(data.started) || rematchGame?.status === "playing",
       };
     },
     [gameId, fetchWithAuth]
@@ -846,8 +859,14 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
     return state.role === "black" ? localConnection : opponentConnection;
   }, [state.role, localConnection, opponentConnection]);
 
+  const canCancelLobby = useMemo(() => {
+    if (!userId || !state.game) return false;
+    return canUserCancelWaitingPvpGame(userId, state.game);
+  }, [userId, state.game]);
+
   return {
     ...state,
+    canCancelLobby,
     chess,
     lastMove,
     pendingUci,

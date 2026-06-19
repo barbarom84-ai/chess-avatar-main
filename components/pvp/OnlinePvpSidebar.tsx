@@ -12,6 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import OnlinePvpMoveList from "@/components/pvp/OnlinePvpMoveList";
 import OnlinePvpChatPanel from "@/components/pvp/OnlinePvpChatPanel";
 import OnlinePvpOpponentCard from "@/components/OnlinePvpOpponentCard";
+import { isPvpRematchLobby } from "@/lib/pvp-game-cancel";
 import type { PvpGameRow, PvpMoveRow } from "@/lib/pvp-chess";
 import type { AccountFriend, AccountProfile } from "@/lib/account-types";
 import type { PvpChatMessage } from "@/lib/pvp-chat";
@@ -29,6 +30,7 @@ type OnlinePvpSidebarProps = {
   inviteUrl: string;
   presetLabel: string | null;
   waitingOpponent: boolean;
+  canCancelLobby?: boolean;
   onJoin: () => void;
   onCopyInvite: () => void;
   onCancelLobby: () => void;
@@ -72,6 +74,7 @@ export default function OnlinePvpSidebar({
   inviteUrl,
   presetLabel,
   waitingOpponent,
+  canCancelLobby = false,
   onJoin,
   onCopyInvite,
   onCancelLobby,
@@ -170,16 +173,29 @@ export default function OnlinePvpSidebar({
                   {o.shareEmail}
                 </a>
               </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="border-red-500/40 text-red-300"
-                onClick={onCancelLobby}
-              >
-                {o.cancelLobby}
-              </Button>
             </div>
+          </div>
+        )}
+
+        {canCancelLobby && (
+          <div className="space-y-2 pt-1 border-t border-slate-800">
+            {!waitingOpponent && g.status === "waiting" && (
+              <p className="text-xs text-slate-300">
+                {isPvpRematchLobby(g) ? o.pendingRematchOutgoing.replace(
+                  "{name}",
+                  oppInfo?.oppLabel ?? o.opponentName
+                ) : o.waitingOpponent}
+              </p>
+            )}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="w-full border-red-500/40 text-red-300"
+              onClick={onCancelLobby}
+            >
+              {isPvpRematchLobby(g) ? o.cancelRematch : o.cancelLobby}
+            </Button>
           </div>
         )}
 

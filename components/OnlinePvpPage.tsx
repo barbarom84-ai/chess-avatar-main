@@ -112,6 +112,7 @@ export default function OnlinePvpPage() {
   const [rematchLoading, setRematchLoading] = useState(false);
   const [acceptingRematchId, setAcceptingRematchId] = useState<string | null>(null);
   const [acceptingInviteId, setAcceptingInviteId] = useState<string | null>(null);
+  const [cancellingRematchId, setCancellingRematchId] = useState<string | null>(null);
   const startMsRef = useRef<number | null>(null);
   const resultModalShownForGameId = useRef<string | null>(null);
   const rematchToastShownRef = useRef<Set<string>>(new Set());
@@ -373,11 +374,30 @@ export default function OnlinePvpPage() {
     handleJoin,
   ]);
 
+  const handleCancelRematch = useCallback(
+    async (targetGameId: string) => {
+      setCancellingRematchId(targetGameId);
+      try {
+        await cancelLobby(targetGameId);
+        toast.success(o.rematchCancelled);
+        if (gameId === targetGameId) {
+          router.push("/online");
+        }
+      } catch (e) {
+        pvpToastError(e, o.rematchFailed);
+      } finally {
+        setCancellingRematchId(null);
+      }
+    },
+    [cancelLobby, o, gameId, router, pvpToastError]
+  );
+
   const handleCancelLobby = async () => {
     if (!gameId) return;
     try {
       await online.deleteWaitingLobby();
-      toast.success(o.lobbyRemoved);
+      const wasRematch = Boolean(online.game?.rematch_source_game_id);
+      toast.success(wasRematch ? o.rematchCancelled : o.lobbyRemoved);
       router.push("/online");
     } catch (e) {
       pvpToastError(e, o.openLobbiesError);
@@ -638,15 +658,8 @@ export default function OnlinePvpPage() {
     if (!gameId || !userId) return;
     setRematchLoading(true);
     try {
-      const { gameId: newId, inviteUrl: rematchUrl } = await online.requestRematch(true);
-      if (rematchUrl) {
-        try {
-          await navigator.clipboard.writeText(rematchUrl);
-        } catch {
-          /* clipboard optional */
-        }
-      }
-      toast.success(o.rematchCreated);
+      const { gameId: newId, started } = await online.requestRematch(true);
+      toast.success(started ? o.matchmakingMatched : o.rematchCreated);
       setShowResultModal(false);
       router.push(`/online?game=${newId}`);
     } catch (e) {
@@ -716,6 +729,8 @@ export default function OnlinePvpPage() {
           onCancelMatchmaking={() => void handleCancelMatchmaking()}
           onAcceptRematch={handleAcceptRematch}
           acceptingRematchId={acceptingRematchId}
+          onCancelRematch={handleCancelRematch}
+          cancellingRematchId={cancellingRematchId}
           onJoinOpenLobby={handleJoinOpenLobby}
           joiningOpenLobbyId={joiningOpenLobbyId}
         />
@@ -795,6 +810,7 @@ export default function OnlinePvpPage() {
         inviteUrl={inviteUrl}
         presetLabel={formatPvpGameTimeControlLabel(g, presetLabels)}
         waitingOpponent={waitingOpponent}
+        canCancelLobby={online.canCancelLobby}
         gameOver={gameOver}
         isSpectator={isSpectator}
         onJoin={() => void handleJoin()}

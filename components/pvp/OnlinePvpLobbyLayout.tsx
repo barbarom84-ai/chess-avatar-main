@@ -49,6 +49,8 @@ type OnlinePvpLobbyLayoutProps = {
   onCancelMatchmaking?: () => void;
   onAcceptRematch?: (gameId: string) => void | Promise<void>;
   acceptingRematchId?: string | null;
+  onCancelRematch?: (gameId: string) => void | Promise<void>;
+  cancellingRematchId?: string | null;
   onJoinOpenLobby?: (gameId: string) => void | Promise<void>;
   joiningOpenLobbyId?: string | null;
 };
@@ -126,6 +128,8 @@ function PendingRematchesList({
   o,
   onAcceptRematch,
   acceptingRematchId,
+  onCancelRematch,
+  cancellingRematchId,
 }: {
   pendingRematches: PendingRematch[];
   presetLabels: Record<string, string>;
@@ -133,6 +137,8 @@ function PendingRematchesList({
   o: PlayOnlineCopy;
   onAcceptRematch?: (gameId: string) => void | Promise<void>;
   acceptingRematchId?: string | null;
+  onCancelRematch?: (gameId: string) => void | Promise<void>;
+  cancellingRematchId?: string | null;
 }) {
   if (pendingRematches.length === 0) {
     return <p className="text-sm text-slate-500">{o.pendingRematchesEmpty}</p>;
@@ -196,11 +202,26 @@ function PendingRematchesList({
                 {o.acceptRematch}
               </Button>
             ) : (
-              <Button asChild size="sm" className="shrink-0 bg-violet-700 hover:bg-violet-600">
-                <Link href={`/online?game=${rm.id}`}>
-                  {isIncoming ? o.acceptRematch : o.openRematch}
-                </Link>
-              </Button>
+              <div className="flex flex-wrap gap-2 shrink-0">
+                {rm.can_cancel && onCancelRematch ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="border-red-500/40 text-red-300"
+                    disabled={cancellingRematchId === rm.id}
+                    onClick={() => void onCancelRematch(rm.id)}
+                  >
+                    {cancellingRematchId === rm.id ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" aria-hidden />
+                    ) : null}
+                    {o.cancelRematch}
+                  </Button>
+                ) : null}
+                <Button asChild size="sm" className="bg-violet-700 hover:bg-violet-600">
+                  <Link href={`/online?game=${rm.id}`}>{o.openRematch}</Link>
+                </Button>
+              </div>
             )}
           </li>
         );
@@ -355,6 +376,8 @@ export default function OnlinePvpLobbyLayout({
   onCancelMatchmaking,
   onAcceptRematch,
   acceptingRematchId = null,
+  onCancelRematch,
+  cancellingRematchId = null,
   onJoinOpenLobby,
   joiningOpenLobbyId = null,
 }: OnlinePvpLobbyLayoutProps) {
@@ -497,6 +520,8 @@ export default function OnlinePvpLobbyLayout({
                       o={o}
                       onAcceptRematch={onAcceptRematch}
                       acceptingRematchId={acceptingRematchId}
+                      onCancelRematch={onCancelRematch}
+                      cancellingRematchId={cancellingRematchId}
                     />
                   </section>
 

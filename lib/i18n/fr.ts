@@ -757,6 +757,8 @@ export const fr = {
       pendingRematchIncoming: "{name} vous défie en revanche.",
       pendingRematchOutgoing: "En attente que {name} accepte votre revanche.",
       openRematch: "Ouvrir la revanche",
+      cancelRematch: "Annuler la revanche",
+      rematchCancelled: "Revanche annulée.",
       drawOffer: "Proposer la nulle",
       drawOfferLimit: "Limite de 3 propositions de nulle atteinte pour cette partie.",
       drawOffersRemaining: "{count} proposition(s) de nulle restante(s).",

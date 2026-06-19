@@ -5,6 +5,7 @@ import { createServiceSupabase } from "@/lib/supabase-service";
 import type { PvpGameRow, PvpMoveRow } from "@/lib/pvp-chess";
 import { checkTimeoutForTimedGameWithMoves } from "@/lib/pvp-clock-server";
 import { canAccessPvpGameAsSpectator } from "@/lib/pvp-access";
+import { canUserCancelWaitingPvpGame } from "@/lib/pvp-game-cancel";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
@@ -54,6 +55,8 @@ export async function GET(
     row.black_user_id != null &&
     row.white_user_id === user.id;
 
+  const canCancelLobby = canUserCancelWaitingPvpGame(user.id, row);
+
   const isSpectator = canAccessPvpGameAsSpectator(
     row.status,
     isParticipant,
@@ -91,6 +94,7 @@ export async function GET(
     role: isWhite ? "white" : isBlack ? "black" : null,
     canJoin,
     canAcceptRematch,
+    canCancelLobby,
     isSpectator,
     serverNow: Date.now(),
   });
@@ -111,15 +115,14 @@ export async function DELETE(
 
   const { data: game, error: gErr } = await sb
     .from("pvp_games")
-    .select("id,white_user_id,status,black_user_id")
+    .select("id,white_user_id,status,black_user_id,created_by")
     .eq("id", gameId)
     .maybeSingle();
 
   if (gErr || !game) return jsonError("Game not found", 404);
 
-  if (game.white_user_id !== user.id) return jsonError("Forbidden", 403);
-  if (game.status !== "waiting" || game.black_user_id != null) {
-    return jsonError("Only open waiting lobbies can be cancelled", 400);
+  if (!canUserCancelWaitingPvpGame(user.id, game as PvpGameRow)) {
+    return jsonError("Only the creator can cancel a waiting game", 403);
   }
 
   const { error: delErr } = await sb.from("pvp_games").delete().eq("id", gameId);

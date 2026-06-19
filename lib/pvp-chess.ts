@@ -33,6 +33,8 @@ export interface PvpGameRow {
   black_draw_offers_count?: number | null;
   /** Joueur invité à rejoindre comme noirs (salon privé). */
   invited_user_id?: string | null;
+  /** Partie terminée à l'origine de cette revanche. */
+  rematch_source_game_id?: string | null;
 }
 
 export interface PvpMoveRow {

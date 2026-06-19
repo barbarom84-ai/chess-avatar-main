@@ -229,6 +229,7 @@ export async function GET(request: NextRequest) {
       clock_mode: row.clock_mode ?? "unlimited",
       clock_initial_sec: row.clock_initial_sec ?? 0,
       clock_increment_sec: row.clock_increment_sec ?? 0,
+      can_cancel: row.created_by === user.id,
     };
   });
 

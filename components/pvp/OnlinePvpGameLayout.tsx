@@ -47,6 +47,7 @@ type OnlinePvpGameLayoutProps = {
   inviteUrl: string;
   presetLabel: string | null;
   waitingOpponent: boolean;
+  canCancelLobby?: boolean;
   gameOver: boolean;
   onJoin: () => void;
   onCopyInvite: () => void;
@@ -108,6 +109,7 @@ export default function OnlinePvpGameLayout({
   inviteUrl,
   presetLabel,
   waitingOpponent,
+  canCancelLobby = false,
   gameOver,
   onJoin,
   onCopyInvite,
@@ -419,6 +421,7 @@ export default function OnlinePvpGameLayout({
         inviteUrl={inviteUrl}
         presetLabel={presetLabel}
         waitingOpponent={waitingOpponent}
+        canCancelLobby={canCancelLobby}
         onJoin={onJoin}
         onCopyInvite={onCopyInvite}
         onCancelLobby={onCancelLobby}
