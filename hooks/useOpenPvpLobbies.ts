@@ -47,10 +47,23 @@ export type PendingRematch = {
   clock_increment_sec: number;
 };
 
+export type PendingPvpInvite = {
+  id: string;
+  created_at: string;
+  host_user_id: string;
+  host_display_name: string | null;
+  host_avatar_url: string | null;
+  time_preset: string;
+  clock_mode: string;
+  clock_initial_sec: number;
+  clock_increment_sec: number;
+};
+
 type PvpGamesListResponse = {
   games: OpenPvpLobby[];
   activeGames?: ActivePvpGame[];
   pendingRematches?: PendingRematch[];
+  pendingInvites?: PendingPvpInvite[];
 };
 
 type PvpJoinGameResponse = {
@@ -94,6 +107,7 @@ export function useOpenPvpLobbies(userId: string | null, pollMs = 12_000) {
   const [lobbies, setLobbies] = useState<OpenPvpLobby[]>([]);
   const [activeGames, setActiveGames] = useState<ActivePvpGame[]>([]);
   const [pendingRematches, setPendingRematches] = useState<PendingRematch[]>([]);
+  const [pendingInvites, setPendingInvites] = useState<PendingPvpInvite[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -102,6 +116,7 @@ export function useOpenPvpLobbies(userId: string | null, pollMs = 12_000) {
       setLobbies([]);
       setActiveGames([]);
       setPendingRematches([]);
+      setPendingInvites([]);
       setError(null);
       return;
     }
@@ -120,11 +135,15 @@ export function useOpenPvpLobbies(userId: string | null, pollMs = 12_000) {
       setPendingRematches(
         Array.isArray(data.pendingRematches) ? data.pendingRematches : []
       );
+      setPendingInvites(
+        Array.isArray(data.pendingInvites) ? data.pendingInvites : []
+      );
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error");
       setLobbies([]);
       setActiveGames([]);
       setPendingRematches([]);
+      setPendingInvites([]);
     } finally {
       setLoading(false);
     }
@@ -169,6 +188,7 @@ export function useOpenPvpLobbies(userId: string | null, pollMs = 12_000) {
       setLobbies([]);
       setActiveGames([]);
       setPendingRematches([]);
+      setPendingInvites([]);
       return;
     }
     void refresh();
@@ -176,5 +196,17 @@ export function useOpenPvpLobbies(userId: string | null, pollMs = 12_000) {
     return () => window.clearInterval(id);
   }, [userId, pollMs, refresh]);
 
-  return { lobbies, activeGames, pendingRematches, loading, error, refresh, cancelLobby, acceptRematch, joinOpenLobby };
+  return {
+    lobbies,
+    activeGames,
+    pendingRematches,
+    pendingInvites,
+    loading,
+    error,
+    refresh,
+    cancelLobby,
+    acceptRematch,
+    acceptInvite: joinGameWithBootstrap,
+    joinOpenLobby,
+  };
 }

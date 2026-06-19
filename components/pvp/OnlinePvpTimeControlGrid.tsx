@@ -40,7 +40,7 @@ export default function OnlinePvpTimeControlGrid({
       <div className="space-y-2">
         <div className="flex items-center gap-2">
           <Zap className="h-4 w-4 text-cyan-400 shrink-0" aria-hidden />
-          <Label className="text-sm text-slate-200">{o.quickPlay}</Label>
+          <Label className="text-sm text-slate-200">{o.presetGroups.live}</Label>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           {PVP_LIVE_PRESETS.map((p) => {

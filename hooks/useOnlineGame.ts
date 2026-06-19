@@ -542,11 +542,17 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
     return true;
   }, [state.game, state.role, pendingUci, isMyTurn]);
 
-  const createLobby = useCallback(async (timePreset = "correspondence_3d"): Promise<string | null> => {
+  const createLobby = useCallback(async (
+    timePreset = "correspondence_3d",
+    invitedUserId?: string
+  ): Promise<string | null> => {
     if (!isSupabaseConfigured || !supabase) return null;
     const data = await fetchWithAuth("/api/pvp/games", {
       method: "POST",
-      body: JSON.stringify({ timePreset }),
+      body: JSON.stringify({
+        timePreset,
+        ...(invitedUserId ? { invitedUserId } : {}),
+      }),
     });
     const game = data.game as { id?: string } | undefined;
     if (game?.id) track("pvp_lobby_created", { time_preset: timePreset });

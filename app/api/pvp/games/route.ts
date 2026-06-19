@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
   const { data, error } = await sb
     .from("pvp_games")
     .select(
-      "id, created_at, white_user_id, white_display_name, time_preset, clock_mode, clock_initial_sec, clock_increment_sec"
+      "id, created_at, white_user_id, white_display_name, invited_user_id, time_preset, clock_mode, clock_initial_sec, clock_increment_sec"
     )
     .eq("status", "waiting")
     .is("black_user_id", null)
@@ -51,6 +51,7 @@ export async function GET(request: NextRequest) {
     created_at: string;
     white_user_id: string;
     white_display_name?: string | null;
+    invited_user_id?: string | null;
     time_preset?: string | null;
     clock_mode?: string | null;
     clock_initial_sec?: number | null;
@@ -58,16 +59,17 @@ export async function GET(request: NextRequest) {
   };
 
   const waitingRows = (data ?? []) as WaitingRow[];
+  const publicWaitingRows = waitingRows.filter((row) => !row.invited_user_id);
   const hostIdsForEnrich = [
     ...new Set(
-      waitingRows
+      publicWaitingRows
         .filter((row) => row.white_user_id !== user.id)
         .map((row) => row.white_user_id)
     ),
   ];
   const hostSummaries = await fetchAccountSummariesByUserIds(sb, hostIdsForEnrich);
 
-  const games = waitingRows.map((row) => {
+  const games = publicWaitingRows.map((row) => {
     const summary = hostSummaries.get(row.white_user_id);
     const snapshotName = row.white_display_name?.trim() || null;
     return {
@@ -230,7 +232,54 @@ export async function GET(request: NextRequest) {
     };
   });
 
-  return NextResponse.json({ games, activeGames, pendingRematches });
+  type InviteRow = {
+    id: string;
+    created_at: string;
+    white_user_id: string;
+    white_display_name?: string | null;
+    time_preset?: string | null;
+    clock_mode?: string | null;
+    clock_initial_sec?: number | null;
+    clock_increment_sec?: number | null;
+  };
+
+  const { data: inviteRows, error: inviteErr } = await sb
+    .from("pvp_games")
+    .select(
+      "id, created_at, white_user_id, white_display_name, time_preset, clock_mode, clock_initial_sec, clock_increment_sec"
+    )
+    .eq("status", "waiting")
+    .is("black_user_id", null)
+    .eq("invited_user_id", user.id)
+    .gte("created_at", since)
+    .order("created_at", { ascending: false })
+    .limit(20);
+
+  if (inviteErr) return jsonError(inviteErr.message ?? "Invite list failed", 500);
+
+  const inviteList = (inviteRows ?? []) as InviteRow[];
+  const inviterIds = [
+    ...new Set(inviteList.map((row) => row.white_user_id).filter((id) => id.length >= 8)),
+  ];
+  const inviterSummaries = await fetchAccountSummariesByUserIds(sb, inviterIds);
+
+  const pendingInvites = inviteList.map((row) => {
+    const snapshotName = row.white_display_name?.trim() || null;
+    const summary = inviterSummaries.get(row.white_user_id);
+    return {
+      id: row.id,
+      created_at: row.created_at,
+      host_user_id: row.white_user_id,
+      host_display_name: summary?.displayName ?? snapshotName,
+      host_avatar_url: summary?.avatarUrl ?? null,
+      time_preset: row.time_preset ?? "unlimited",
+      clock_mode: row.clock_mode ?? "unlimited",
+      clock_initial_sec: row.clock_initial_sec ?? 0,
+      clock_increment_sec: row.clock_increment_sec ?? 0,
+    };
+  });
+
+  return NextResponse.json({ games, activeGames, pendingRematches, pendingInvites });
 }
 
 /** Create a new PvP lobby: creator plays White until an opponent joins as Black. */
@@ -244,10 +293,20 @@ export async function POST(request: NextRequest) {
   const sb = createServiceSupabase();
   if (!sb) return jsonError("Server misconfigured", 503);
 
-  const body = (await request.json().catch(() => null)) as { timePreset?: string } | null;
+  const body = (await request.json().catch(() => null)) as {
+    timePreset?: string;
+    invitedUserId?: string;
+  } | null;
   const rawPreset = typeof body?.timePreset === "string" ? body.timePreset : "correspondence_3d";
   const presetId = isValidPvpTimePresetId(rawPreset) ? rawPreset : "correspondence_3d";
   const preset = resolvePvpTimePreset(presetId);
+  const invitedUserId =
+    typeof body?.invitedUserId === "string" && body.invitedUserId.length >= 8
+      ? body.invitedUserId
+      : null;
+  if (invitedUserId && invitedUserId === user.id) {
+    return jsonError("Invalid invite target", 400);
+  }
 
   const { data, error } = await sb
     .from("pvp_games")
@@ -256,6 +315,7 @@ export async function POST(request: NextRequest) {
       white_user_id: user.id,
       status: "waiting",
       white_display_name: displayNameFromAuthUser(user),
+      invited_user_id: invitedUserId,
       time_preset: preset.id,
       clock_mode: preset.mode,
       clock_initial_sec: preset.mode === "unlimited" ? 0 : presetStorageInitialSec(preset),

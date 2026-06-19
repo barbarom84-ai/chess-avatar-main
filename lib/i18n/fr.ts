@@ -836,12 +836,16 @@ export const fr = {
       friendRemoved: "Retiré de vos amis.",
       friendsTitle: "Amis (invitations)",
       friendsHint:
-        "Liste stockée sur cet appareil. Après une partie, ajoutez l’adversaire puis utilisez « Inviter » pour créer un salon et copier le lien.",
+        "Ajoutez des adversaires après une partie en ligne, puis invitez-les directement depuis cette liste.",
       friendsEmpty:
         "Jouez une partie en ligne, puis utilisez « Ajouter aux amis » sur la fiche adversaire. Ensuite « Inviter » crée un salon et copie le lien.",
-      inviteFriend: "Inviter (nouveau salon + lien)",
-      inviteFriendHint: "Crée une partie blanche, ouvre le salon et copie le lien dans le presse-papiers.",
+      inviteFriend: "Inviter",
+      inviteFriendHint:
+        "Crée une partie et envoie une invitation directe — l'ami peut accepter pour démarrer immédiatement.",
       inviteFriendCreated: "Salon créé — lien copié pour votre ami.",
+      friendInviteSent: "Invitation envoyée à {name}.",
+      pendingInviteIncoming: "{name} vous invite à jouer.",
+      acceptInvite: "Accepter",
       shareEmail: "Partager par e-mail",
       waitingHostYou: "Vous attendez un adversaire en tant que {name} (blancs).",
       emailInviteSubject: "Partie Chess Avatar en ligne",
@@ -873,10 +877,12 @@ export const fr = {
         chat: "Chat",
       },
       startGame: "Commencer la partie",
+      newGameAction: "Nouvelle partie",
       quickPlay: "Parties rapides",
       matchmakingSearching: "Recherche d'un adversaire…",
       matchmakingCancel: "Annuler la recherche",
-      matchmakingOnlyLive: "Les parties rapides sont réservées aux cadences en direct.",
+      matchmakingOnlyLive:
+        "La recherche automatique d'adversaire est disponible pour les cadences en direct. En différé, une partie ouverte est créée.",
       matchmakingFailed: "Impossible de rejoindre la file d'attente.",
       matchmakingMatched: "Adversaire trouvé — la partie démarre !",
       copyLink: "Copier le lien",

@@ -82,6 +82,11 @@ export async function POST(
   }
   if (game.white_user_id === user.id) return jsonError("Cannot join this game", 400);
 
+  const invitedId = (game as PvpGameRow & { invited_user_id?: string | null }).invited_user_id;
+  if (invitedId && invitedId !== user.id) {
+    return jsonError("This game is a private invitation", 403);
+  }
+
   const patch: Record<string, unknown> = {
     black_user_id: user.id,
     status: "playing",

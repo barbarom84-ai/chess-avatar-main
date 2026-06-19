@@ -31,6 +31,8 @@ export interface PvpGameRow {
   /** Nombre de propositions de nulle envoyées par camp (max 3). */
   white_draw_offers_count?: number | null;
   black_draw_offers_count?: number | null;
+  /** Joueur invité à rejoindre comme noirs (salon privé). */
+  invited_user_id?: string | null;
 }
 
 export interface PvpMoveRow {

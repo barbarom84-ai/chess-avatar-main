@@ -71,11 +71,13 @@ export default function OnlinePvpPage() {
     lobbies: openLobbiesList,
     activeGames,
     pendingRematches,
+    pendingInvites,
     loading: lobbiesLoading,
     error: lobbiesError,
     refresh: refreshOpenLobbies,
     cancelLobby,
     acceptRematch,
+    acceptInvite,
     joinOpenLobby,
   } = useOpenPvpLobbies(userId, gameId ? 5_000 : 12_000);
   const [authOpen, setAuthOpen] = useState(false);
@@ -109,9 +111,11 @@ export default function OnlinePvpPage() {
   const [resultHeadToHeadLoading, setResultHeadToHeadLoading] = useState(false);
   const [rematchLoading, setRematchLoading] = useState(false);
   const [acceptingRematchId, setAcceptingRematchId] = useState<string | null>(null);
+  const [acceptingInviteId, setAcceptingInviteId] = useState<string | null>(null);
   const startMsRef = useRef<number | null>(null);
   const resultModalShownForGameId = useRef<string | null>(null);
   const rematchToastShownRef = useRef<Set<string>>(new Set());
+  const inviteToastShownRef = useRef<Set<string>>(new Set());
   const autoRematchJoinRef = useRef<Set<string>>(new Set());
   const prevGameSnapRef = useRef<{
     status?: string;
@@ -278,38 +282,22 @@ export default function OnlinePvpPage() {
       ? `${window.location.origin}/online?game=${gameId}`
       : "";
 
-  const handleQuickPlay = async () => {
+  const handleNewGame = async () => {
     if (!userId) {
       setAuthOpen(true);
       return;
     }
-    if (!matchmaking.canQuickPlay(timePreset)) {
-      toast.error(o.matchmakingOnlyLive);
-      return;
-    }
-    try {
-      const gameId = await matchmaking.joinQueue(timePreset);
-      if (gameId) {
-        toast.success(o.matchmakingMatched);
-        router.push(`/online?game=${gameId}`);
-        matchmaking.clearMatched();
+    if (matchmaking.canQuickPlay(timePreset)) {
+      try {
+        const matchedId = await matchmaking.joinQueue(timePreset);
+        if (matchedId) {
+          toast.success(o.matchmakingMatched);
+          router.push(`/online?game=${matchedId}`);
+          matchmaking.clearMatched();
+        }
+      } catch (e) {
+        pvpToastError(e, o.matchmakingFailed);
       }
-    } catch (e) {
-      pvpToastError(e, o.matchmakingFailed);
-    }
-  };
-
-  const handleCancelMatchmaking = async () => {
-    try {
-      await matchmaking.leaveQueue();
-    } catch (e) {
-      pvpToastError(e, o.matchmakingFailed);
-    }
-  };
-
-  const handleCreate = async () => {
-    if (!userId) {
-      setAuthOpen(true);
       return;
     }
     setCreating(true);
@@ -322,6 +310,35 @@ export default function OnlinePvpPage() {
       setCreating(false);
     }
   };
+
+  const handleCancelMatchmaking = async () => {
+    try {
+      await matchmaking.leaveQueue();
+    } catch (e) {
+      pvpToastError(e, o.matchmakingFailed);
+    }
+  };
+
+  const handleInviteFriend = useCallback(
+    async (friendUserId: string, friendName: string) => {
+      if (!userId) {
+        setAuthOpen(true);
+        return;
+      }
+      setCreating(true);
+      try {
+        const id = await online.createLobby(timePreset, friendUserId);
+        if (!id) return;
+        toast.success(o.friendInviteSent.replace("{name}", friendName));
+        router.push(`/online?game=${id}`);
+      } catch (e) {
+        pvpToastError(e, o.createFailed);
+      } finally {
+        setCreating(false);
+      }
+    },
+    [userId, online, timePreset, o, router, pvpToastError]
+  );
 
   const handleJoin = useCallback(async () => {
     if (!userId) {
@@ -367,29 +384,42 @@ export default function OnlinePvpPage() {
     }
   };
 
-  const handleInviteFriend = async () => {
-    if (!userId) {
-      setAuthOpen(true);
-      return;
+  const handleAcceptInvite = useCallback(
+    async (targetGameId: string) => {
+      if (!userId) {
+        setAuthOpen(true);
+        return;
+      }
+      setAcceptingInviteId(targetGameId);
+      try {
+        await acceptInvite(targetGameId);
+        inviteToastShownRef.current.add(targetGameId);
+        toast.success(o.joinedAsBlack);
+        router.push(`/online?game=${targetGameId}`);
+      } catch (e) {
+        pvpToastError(e, o.joinFailed);
+      } finally {
+        setAcceptingInviteId(null);
+      }
+    },
+    [userId, acceptInvite, o, router, pvpToastError]
+  );
+
+  useEffect(() => {
+    if (!userId || pendingInvites.length === 0) return;
+    for (const inv of pendingInvites) {
+      if (inviteToastShownRef.current.has(inv.id)) continue;
+      inviteToastShownRef.current.add(inv.id);
+      const name = inv.host_display_name ?? o.anonymousPlayer;
+      toast.info(o.pendingInviteIncoming.replace("{name}", name), {
+        duration: 14_000,
+        action: {
+          label: o.acceptInvite,
+          onClick: () => void handleAcceptInvite(inv.id),
+        },
+      });
     }
-    setCreating(true);
-    try {
-      const id = await online.createLobby(timePreset);
-      if (!id) return;
-      const base =
-        typeof window !== "undefined" && window.location?.origin
-          ? window.location.origin
-          : "";
-      const url = `${base}/online?game=${id}`;
-      await navigator.clipboard.writeText(url);
-      toast.success(o.inviteFriendCreated);
-      router.push(`/online?game=${id}`);
-    } catch (e) {
-      pvpToastError(e, o.createFailed);
-    } finally {
-      setCreating(false);
-    }
-  };
+  }, [pendingInvites, userId, o, handleAcceptInvite]);
 
   const copyInvite = async () => {
     if (!inviteUrl) return;
@@ -662,9 +692,11 @@ export default function OnlinePvpPage() {
           timePreset={timePreset}
           onTimePresetChange={setTimePreset}
           creating={creating}
-          onCreate={() => void handleCreate()}
+          onNewGame={() => void handleNewGame()}
           onOpenAuth={() => setAuthOpen(true)}
-          onInviteFriend={() => void handleInviteFriend()}
+          onInviteFriend={(friendUserId, friendName) =>
+            void handleInviteFriend(friendUserId, friendName)
+          }
           activeGames={activeGames}
           pendingRematches={pendingRematches}
           openLobbiesList={openLobbiesList}
@@ -681,7 +713,6 @@ export default function OnlinePvpPage() {
           matchmakingInQueue={matchmaking.inQueue}
           matchmakingJoining={matchmaking.joining}
           matchmakingQueueSize={matchmaking.queueSize}
-          onQuickPlay={() => void handleQuickPlay()}
           onCancelMatchmaking={() => void handleCancelMatchmaking()}
           onAcceptRematch={handleAcceptRematch}
           acceptingRematchId={acceptingRematchId}

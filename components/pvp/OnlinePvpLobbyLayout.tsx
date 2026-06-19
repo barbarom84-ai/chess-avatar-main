@@ -27,9 +27,9 @@ type OnlinePvpLobbyLayoutProps = {
   timePreset: string;
   onTimePresetChange: (id: string) => void;
   creating: boolean;
-  onCreate: () => void;
+  onNewGame: () => void;
   onOpenAuth: () => void;
-  onInviteFriend: () => void;
+  onInviteFriend: (friendUserId: string, friendName: string) => void;
   activeGames: ActivePvpGame[];
   pendingRematches?: PendingRematch[];
   openLobbiesList: OpenPvpLobby[];
@@ -46,7 +46,6 @@ type OnlinePvpLobbyLayoutProps = {
   matchmakingInQueue?: boolean;
   matchmakingJoining?: boolean;
   matchmakingQueueSize?: number;
-  onQuickPlay?: () => void;
   onCancelMatchmaking?: () => void;
   onAcceptRematch?: (gameId: string) => void | Promise<void>;
   acceptingRematchId?: string | null;
@@ -334,7 +333,7 @@ export default function OnlinePvpLobbyLayout({
   timePreset,
   onTimePresetChange,
   creating,
-  onCreate,
+  onNewGame,
   onOpenAuth,
   onInviteFriend,
   activeGames,
@@ -353,7 +352,6 @@ export default function OnlinePvpLobbyLayout({
   matchmakingInQueue = false,
   matchmakingJoining = false,
   matchmakingQueueSize = 0,
-  onQuickPlay,
   onCancelMatchmaking,
   onAcceptRematch,
   acceptingRematchId = null,
@@ -421,22 +419,20 @@ export default function OnlinePvpLobbyLayout({
                 <>
                   <Button
                     type="button"
-                    onClick={onQuickPlay}
+                    onClick={onNewGame}
                     disabled={
                       creating ||
                       matchmakingJoining ||
-                      matchmakingInQueue ||
-                      !canQuickPlay
+                      matchmakingInQueue
                     }
-                    variant="secondary"
-                    className="w-full h-11 text-base font-semibold border border-cyan-500/40"
+                    className="w-full h-11 text-base font-semibold"
                   >
-                    {matchmakingJoining || matchmakingInQueue ? (
+                    {creating || matchmakingJoining || matchmakingInQueue ? (
                       <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
                     ) : (
                       <>
                         <Zap className="h-4 w-4 mr-2" aria-hidden />
-                        {o.quickPlay}
+                        {o.newGameAction}
                       </>
                     )}
                   </Button>
@@ -462,18 +458,6 @@ export default function OnlinePvpLobbyLayout({
                   {!canQuickPlay && userId && (
                     <p className="text-xs text-slate-500">{o.matchmakingOnlyLive}</p>
                   )}
-                  <Button
-                    type="button"
-                    onClick={onCreate}
-                    disabled={creating || matchmakingInQueue}
-                    className="w-full h-11 text-base font-semibold"
-                  >
-                    {creating ? (
-                      <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-                    ) : (
-                      o.startGame
-                    )}
-                  </Button>
                 </>
               )}
               <Button variant="outline" asChild className="w-full border-slate-700">
@@ -591,7 +575,14 @@ export default function OnlinePvpLobbyLayout({
             <TabsContent value="players" className="mt-4 space-y-3">
               {!userId ? (
                 <p className="text-sm text-slate-500">{o.openAuth}</p>
-              ) : friendsLoading ? (
+              ) : (
+                <>
+                  <OnlinePvpTimeControlGrid
+                    value={timePreset}
+                    onChange={onTimePresetChange}
+                    disabled={creating}
+                  />
+                  {friendsLoading ? (
                 <p className="text-sm text-slate-500">{o.openLobbiesLoading}</p>
               ) : friends.length === 0 ? (
                 <p className="text-sm text-slate-500">{o.friendsEmpty}</p>
@@ -631,8 +622,13 @@ export default function OnlinePvpLobbyLayout({
                           type="button"
                           size="sm"
                           variant="secondary"
-                          disabled={creating}
-                          onClick={onInviteFriend}
+                          disabled={creating || matchmakingInQueue}
+                          onClick={() =>
+                            onInviteFriend(
+                              f.friendUserId,
+                              f.label || f.displayName
+                            )
+                          }
                         >
                           {o.inviteFriend}
                         </Button>
@@ -660,8 +656,10 @@ export default function OnlinePvpLobbyLayout({
                   ))}
                 </ul>
               )}
-              <p className="text-[11px] text-slate-500">{o.friendsHint}</p>
-              <p className="text-[11px] text-slate-500">{o.inviteFriendHint}</p>
+                  <p className="text-[11px] text-slate-500">{o.friendsHint}</p>
+                  <p className="text-[11px] text-slate-500">{o.inviteFriendHint}</p>
+                </>
+              )}
             </TabsContent>
           </Tabs>
         </div>
