@@ -118,6 +118,7 @@ export default function OnlinePvpPage() {
   const rematchToastShownRef = useRef<Set<string>>(new Set());
   const inviteToastShownRef = useRef<Set<string>>(new Set());
   const autoRematchJoinRef = useRef<Set<string>>(new Set());
+  const newGameInFlightRef = useRef(false);
   const prevGameSnapRef = useRef<{
     status?: string;
     black_user_id?: string | null;
@@ -288,27 +289,38 @@ export default function OnlinePvpPage() {
       setAuthOpen(true);
       return;
     }
-    if (matchmaking.canQuickPlay(timePreset)) {
-      try {
+    if (
+      newGameInFlightRef.current ||
+      creating ||
+      matchmaking.joining ||
+      matchmaking.inQueue
+    ) {
+      return;
+    }
+    newGameInFlightRef.current = true;
+    try {
+      if (matchmaking.canQuickPlay(timePreset)) {
         const matchedId = await matchmaking.joinQueue(timePreset);
         if (matchedId) {
           toast.success(o.matchmakingMatched);
           router.push(`/online?game=${matchedId}`);
           matchmaking.clearMatched();
         }
-      } catch (e) {
-        pvpToastError(e, o.matchmakingFailed);
+        return;
       }
-      return;
-    }
-    setCreating(true);
-    try {
-      const id = await online.createLobby(timePreset);
-      if (id) router.push(`/online?game=${id}`);
+      setCreating(true);
+      try {
+        const id = await online.createLobby(timePreset);
+        if (id) router.push(`/online?game=${id}`);
+      } catch (e) {
+        pvpToastError(e, o.createFailed);
+      } finally {
+        setCreating(false);
+      }
     } catch (e) {
-      pvpToastError(e, o.createFailed);
+      pvpToastError(e, o.matchmakingFailed);
     } finally {
-      setCreating(false);
+      newGameInFlightRef.current = false;
     }
   };
 

@@ -29,6 +29,20 @@ export async function upsertMatchmakingEntry(
 ): Promise<PvpMatchmakingRow> {
   const displayName = displayNameFromAuthUser(user);
 
+  const { data: existing, error: existingErr } = await sb
+    .from("pvp_matchmaking_queue")
+    .select("id,user_id,time_preset,display_name,created_at")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (existingErr) {
+    throw new Error(existingErr.message ?? "Failed to read queue");
+  }
+
+  if (existing && (existing as PvpMatchmakingRow).time_preset === timePreset) {
+    return existing as PvpMatchmakingRow;
+  }
+
   await sb.from("pvp_matchmaking_queue").delete().eq("user_id", user.id);
 
   const { data, error } = await sb

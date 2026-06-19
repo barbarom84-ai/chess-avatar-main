@@ -9,6 +9,7 @@ import {
   upsertMatchmakingEntry,
   type PvpMatchmakingRow,
 } from "@/lib/pvp-matchmaking";
+import { findRecentMatchmakingStarterGame } from "@/lib/pvp-new-game-dedup";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
@@ -74,6 +75,18 @@ export async function POST(request: NextRequest) {
   const rawPreset = typeof body?.timePreset === "string" ? body.timePreset : "";
   if (!isMatchmakingEligiblePreset(rawPreset)) {
     return jsonError("Invalid or unsupported time control for matchmaking", 400);
+  }
+
+  const recent = await findRecentMatchmakingStarterGame(sb, user.id, rawPreset);
+  if (recent) {
+    return NextResponse.json({
+      matched: true,
+      gameId: recent.game.id,
+      role: recent.role,
+      game: recent.game,
+      serverNow: Date.now(),
+      reused: true,
+    });
   }
 
   const entry = await upsertMatchmakingEntry(sb, user, rawPreset);

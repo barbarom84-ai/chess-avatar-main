@@ -38,6 +38,7 @@ export function usePvpMatchmaking(userId: string | null) {
   });
   const accessTokenRef = useRef<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const joinInFlightRef = useRef(false);
 
   useEffect(() => {
     if (!isSupabaseConfigured || !supabase) return;
@@ -172,6 +173,8 @@ export function usePvpMatchmaking(userId: string | null) {
       if (!isMatchmakingEligiblePreset(timePreset)) {
         throw new Error("Unsupported time control");
       }
+      if (joinInFlightRef.current) return null;
+      joinInFlightRef.current = true;
       setState((s) => ({ ...s, joining: true, error: null }));
       try {
         const data = await fetchWithAuth("/api/pvp/matchmaking", {
@@ -184,6 +187,8 @@ export function usePvpMatchmaking(userId: string | null) {
         const msg = e instanceof Error ? e.message : "Matchmaking failed";
         setState((s) => ({ ...s, joining: false, error: msg }));
         throw e;
+      } finally {
+        joinInFlightRef.current = false;
       }
     },
     [fetchWithAuth, applyPollResult]

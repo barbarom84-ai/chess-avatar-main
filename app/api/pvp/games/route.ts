@@ -7,6 +7,7 @@ import { pvpRateLimitOrResponse } from "@/lib/pvp-api-rate-limit";
 import { displayNameFromAuthUser } from "@/lib/pvp-display-name";
 import { fetchAccountSummariesByUserIds } from "@/lib/account-server";
 import { pvpActiveGameIsMyTurn } from "@/lib/pvp-active-games";
+import { findExistingOpenPvpLobby } from "@/lib/pvp-new-game-dedup";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
@@ -307,6 +308,13 @@ export async function POST(request: NextRequest) {
       : null;
   if (invitedUserId && invitedUserId === user.id) {
     return jsonError("Invalid invite target", 400);
+  }
+
+  if (!invitedUserId) {
+    const existingLobby = await findExistingOpenPvpLobby(sb, user.id, presetId);
+    if (existingLobby) {
+      return NextResponse.json({ game: existingLobby, reused: true });
+    }
   }
 
   const { data, error } = await sb
