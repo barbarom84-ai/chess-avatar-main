@@ -15,6 +15,7 @@ import OnlinePvpOpponentCard from "@/components/OnlinePvpOpponentCard";
 import type { PvpGameRow, PvpMoveRow } from "@/lib/pvp-chess";
 import type { AccountFriend, AccountProfile } from "@/lib/account-types";
 import type { PvpChatMessage } from "@/lib/pvp-chat";
+import { canUserOfferPvpDraw, pvpDrawOffersRemaining } from "@/lib/pvp-draw-limits";
 import { useLanguage } from "@/lib/language-context";
 
 type OnlinePvpSidebarProps = {
@@ -32,7 +33,7 @@ type OnlinePvpSidebarProps = {
   onCopyInvite: () => void;
   onCancelLobby: () => void;
   onOpenAuth: () => void;
-  onResign: () => Promise<void>;
+  onResignRequest: () => void;
   onDrawAction: (action: "offer" | "accept" | "decline" | "cancel") => Promise<void>;
   onTakebackAction?: (action: "offer" | "accept" | "decline" | "cancel") => Promise<void>;
   oppInfo: { oppId: string; oppLabel: string; oppColor: "white" | "black" } | null;
@@ -57,6 +58,7 @@ type OnlinePvpSidebarProps = {
   isSpectator?: boolean;
   boardFlipped?: boolean;
   onFlipBoard?: () => void;
+  hideIncomingRequests?: boolean;
 };
 
 export default function OnlinePvpSidebar({
@@ -74,7 +76,7 @@ export default function OnlinePvpSidebar({
   onCopyInvite,
   onCancelLobby,
   onOpenAuth,
-  onResign,
+  onResignRequest,
   onDrawAction,
   onTakebackAction,
   oppInfo,
@@ -99,9 +101,13 @@ export default function OnlinePvpSidebar({
   isSpectator = false,
   boardFlipped = false,
   onFlipBoard,
+  hideIncomingRequests = false,
 }: OnlinePvpSidebarProps) {
   const { t } = useLanguage();
   const o = t.playOnline;
+  const drawOffersLeft =
+    userId && role ? pvpDrawOffersRemaining(g, userId) : 0;
+  const canOfferDraw = userId ? canUserOfferPvpDraw(g, userId) : false;
 
   useEffect(() => {
     onChatTabVisible(sidebarTab === "chat");
@@ -255,6 +261,7 @@ export default function OnlinePvpSidebar({
 
           <OnlinePvpMoveList
             moves={moves}
+            clockMode={g.clock_mode}
             selectedPly={selectedPly}
             onSelectPly={onSelectPly}
           />
@@ -272,7 +279,7 @@ export default function OnlinePvpSidebar({
 
           {g.status === "playing" && role && userId && (
             <div className="space-y-2 pt-2 border-t border-slate-800">
-              {g.takeback_offered_by && g.takeback_offered_by !== userId && onTakebackAction && (
+              {g.takeback_offered_by && g.takeback_offered_by !== userId && onTakebackAction && !hideIncomingRequests && (
                 <div
                   role="status"
                   aria-live="polite"
@@ -319,7 +326,7 @@ export default function OnlinePvpSidebar({
                 </div>
               )}
 
-              {g.draw_offered_by && g.draw_offered_by !== userId && (
+              {g.draw_offered_by && g.draw_offered_by !== userId && !hideIncomingRequests && (
                 <div
                   role="status"
                   aria-live="polite"
@@ -371,11 +378,7 @@ export default function OnlinePvpSidebar({
                   type="button"
                   variant="destructive"
                   size="sm"
-                  onClick={() => {
-                    if (window.confirm(o.resignConfirm)) {
-                      void onResign();
-                    }
-                  }}
+                  onClick={onResignRequest}
                 >
                   {o.resign}
                 </Button>
@@ -393,7 +396,7 @@ export default function OnlinePvpSidebar({
                       {o.takebackOffer}
                     </Button>
                   )}
-                {!g.draw_offered_by && !g.takeback_offered_by && (
+                {!g.draw_offered_by && !g.takeback_offered_by && canOfferDraw && (
                   <Button
                     type="button"
                     variant="outline"
@@ -405,6 +408,18 @@ export default function OnlinePvpSidebar({
                   </Button>
                 )}
               </div>
+              {!g.draw_offered_by &&
+                !canOfferDraw &&
+                role &&
+                userId &&
+                g.status === "playing" && (
+                  <p className="text-[10px] text-slate-500">{o.drawOfferLimit}</p>
+                )}
+              {canOfferDraw && drawOffersLeft < 3 && drawOffersLeft > 0 && !g.draw_offered_by && (
+                <p className="text-[10px] text-slate-500">
+                  {o.drawOffersRemaining.replace("{count}", String(drawOffersLeft))}
+                </p>
+              )}
             </div>
           )}
         </TabsContent>

@@ -1,5 +1,7 @@
 import type { Chess } from "chess.js";
-import type { PvpGameRow } from "@/lib/pvp-chess";
+import type { PvpGameRow, PvpMoveRow } from "@/lib/pvp-chess";
+import { computeMoveTimeSpentMs } from "@/lib/pvp-move-time";
+import { chessForPvpClockAuthority } from "@/lib/pvp-clock-sync";
 
 export type TimeoutPatch = {
   status: "finished";
@@ -89,7 +91,7 @@ export function checkTimeoutForTimedGame(
   const t0 = row.clock_turn_started_at;
   if (!t0) return null;
 
-  const elapsed = Math.max(0, nowMs - new Date(t0).getTime());
+  const elapsed = computeMoveTimeSpentMs(t0, nowMs);
 
   if (row.clock_mode === "correspondence") {
     const budgetMs = moveBudgetMs(row);
@@ -101,6 +103,16 @@ export function checkTimeoutForTimedGame(
   const b = row.black_remaining_ms;
   if (w == null || b == null) return null;
   return timeoutPatchForSide(row, chess, nowMs, elapsed, 0);
+}
+
+/** Timeout check avec garde contre un décalage coup / horloge (race API ou Realtime). */
+export function checkTimeoutForTimedGameWithMoves(
+  row: PvpGameRow,
+  moves: PvpMoveRow[],
+  nowMs: number
+): TimeoutPatch | null {
+  const chess = chessForPvpClockAuthority(row, moves);
+  return checkTimeoutForTimedGame(row, chess, nowMs);
 }
 
 /** Décompte + incrément Fischer (direct) ou reset du délai par coup (différé). */
@@ -127,10 +139,7 @@ export function applyMoveClockUpdate(
 
   if (row.clock_mode === "correspondence") {
     const budgetMs = moveBudgetMs(row);
-    const t0 = row.clock_turn_started_at
-      ? new Date(row.clock_turn_started_at).getTime()
-      : nowMs;
-    const elapsed = Math.max(0, nowMs - t0);
+    const elapsed = computeMoveTimeSpentMs(row.clock_turn_started_at, nowMs);
     const timeout = timeoutPatchForSide(row, chessBeforeMove, nowMs, elapsed, budgetMs);
     if (timeout) {
       return { kind: "timeout", patch: timeout };
@@ -154,10 +163,7 @@ export function applyMoveClockUpdate(
 
   const w0 = Number(row.white_remaining_ms ?? 0);
   const b0 = Number(row.black_remaining_ms ?? 0);
-  const t0 = row.clock_turn_started_at
-    ? new Date(row.clock_turn_started_at).getTime()
-    : nowMs;
-  const elapsed = Math.max(0, nowMs - t0);
+  const elapsed = computeMoveTimeSpentMs(row.clock_turn_started_at, nowMs);
   const stm = chessBeforeMove.turn();
   const incMs = Math.max(0, Number(row.clock_increment_sec ?? 0)) * 1000;
   let w = w0;

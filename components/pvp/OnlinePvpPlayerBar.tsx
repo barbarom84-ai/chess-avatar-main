@@ -1,10 +1,11 @@
 "use client";
 
 import { useMemo } from "react";
-import type { Chess } from "chess.js";
-import type { PvpGameRow } from "@/lib/pvp-chess";
+import type { PvpGameRow, PvpMoveRow } from "@/lib/pvp-chess";
 import type { Language } from "@/lib/i18n";
+import type { PvpConnectionInfo } from "@/lib/pvp-connection";
 import AccountAvatar from "@/components/AccountAvatar";
+import OnlinePvpConnectionDot from "@/components/pvp/OnlinePvpConnectionDot";
 import { accountProfileInitials } from "@/lib/account-profile";
 import { usePvpClockDisplay } from "@/hooks/usePvpClockDisplay";
 
@@ -13,10 +14,13 @@ type OnlinePvpPlayerBarProps = {
   displayName: string;
   avatarUrl?: string | null;
   game: PvpGameRow;
-  chess: Chess;
+  moves: PvpMoveRow[];
   myRole: "white" | "black" | null;
   lang: Language;
   isActiveSide?: boolean;
+  nowMs?: number;
+  connection?: PvpConnectionInfo;
+  connectionTitle?: string;
 };
 
 export default function OnlinePvpPlayerBar({
@@ -24,12 +28,15 @@ export default function OnlinePvpPlayerBar({
   displayName,
   avatarUrl,
   game,
-  chess,
+  moves,
   myRole,
   lang,
   isActiveSide,
+  nowMs,
+  connection,
+  connectionTitle,
 }: OnlinePvpPlayerBarProps) {
-  const clock = usePvpClockDisplay({ game, chess, myRole, lang });
+  const clock = usePvpClockDisplay({ game, moves, myRole, lang, nowMs });
   const isWhite = side === "white";
   const isActive = isActiveSide ?? (isWhite ? clock.active === "w" : clock.active === "b");
   const isMine = myRole === side;
@@ -60,7 +67,12 @@ export default function OnlinePvpPlayerBar({
           />
         </div>
         <div className="min-w-0">
-          <p className="text-sm font-medium text-slate-100 truncate">{displayName}</p>
+          <div className="flex items-center gap-1.5 min-w-0">
+            <p className="text-sm font-medium text-slate-100 truncate">{displayName}</p>
+            {connection && connectionTitle ? (
+              <OnlinePvpConnectionDot info={connection} title={connectionTitle} />
+            ) : null}
+          </div>
           {isMine && (
             <p className="text-[10px] text-cyan-400/80 truncate">
               {isWhite ? "♔" : "♚"}

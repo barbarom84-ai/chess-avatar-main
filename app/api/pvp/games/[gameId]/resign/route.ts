@@ -55,5 +55,5 @@ export async function POST(
 
   if (upErr) return jsonError(upErr.message ?? "Update failed", 500);
 
-  return NextResponse.json({ ok: true, result, resultReason: "resignation" });
+  return NextResponse.json({ ok: true, result, resultReason: "resignation", serverNow: Date.now() });
 }

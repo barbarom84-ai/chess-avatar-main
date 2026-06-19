@@ -68,15 +68,13 @@ export async function POST(
       .eq("status", "waiting")
       .eq("white_user_id", user.id)
       .not("black_user_id", "is", null)
-      .select(
-        "id,status,white_user_id,black_user_id,time_preset,clock_mode,white_remaining_ms,black_remaining_ms,clock_turn_started_at,white_display_name,black_display_name"
-      )
+      .select("*")
       .maybeSingle();
 
     if (error) return jsonError(error.message ?? "Join failed", 500);
     if (!updated) return jsonError("Cannot join this game", 400);
 
-    return NextResponse.json({ game: updated, role: "white" as const });
+    return NextResponse.json({ game: updated, role: "white" as const, serverNow: Date.now() });
   }
 
   if (game.black_user_id) {
@@ -112,13 +110,11 @@ export async function POST(
     .eq("status", "waiting")
     .is("black_user_id", null)
     .neq("white_user_id", user.id)
-    .select(
-      "id,status,white_user_id,black_user_id,time_preset,clock_mode,white_remaining_ms,black_remaining_ms,clock_turn_started_at,white_display_name,black_display_name"
-    )
+    .select("*")
     .maybeSingle();
 
   if (error) return jsonError(error.message ?? "Join failed", 500);
   if (!updated) return jsonError("Cannot join this game", 400);
 
-  return NextResponse.json({ game: updated, role: "black" as const });
+  return NextResponse.json({ game: updated, role: "black" as const, serverNow: Date.now() });
 }

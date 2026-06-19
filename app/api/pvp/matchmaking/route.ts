@@ -47,6 +47,8 @@ export async function GET(request: NextRequest) {
       matched: true,
       gameId: match.gameId,
       role: match.role,
+      game: match.game,
+      serverNow: Date.now(),
     });
   }
 
@@ -82,6 +84,8 @@ export async function POST(request: NextRequest) {
       matched: true,
       gameId: match.gameId,
       role: match.role,
+      game: match.game,
+      serverNow: Date.now(),
     });
   }
 

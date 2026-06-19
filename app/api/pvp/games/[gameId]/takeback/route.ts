@@ -88,7 +88,7 @@ export async function POST(
       .eq("id", gameId)
       .eq("status", "playing");
     if (error) return jsonError(error.message ?? "Update failed", 500);
-    return NextResponse.json({ ok: true, takebackOfferedBy: user.id });
+    return NextResponse.json({ ok: true, takebackOfferedBy: user.id, serverNow: Date.now() });
   }
 
   if (action === "cancel") {
@@ -98,7 +98,7 @@ export async function POST(
       .update({ takeback_offered_by: null })
       .eq("id", gameId);
     if (error) return jsonError(error.message ?? "Update failed", 500);
-    return NextResponse.json({ ok: true, takebackOfferedBy: null });
+    return NextResponse.json({ ok: true, takebackOfferedBy: null, serverNow: Date.now() });
   }
 
   if (action === "decline") {
@@ -110,7 +110,7 @@ export async function POST(
       .update({ takeback_offered_by: null })
       .eq("id", gameId);
     if (error) return jsonError(error.message ?? "Update failed", 500);
-    return NextResponse.json({ ok: true, takebackOfferedBy: null });
+    return NextResponse.json({ ok: true, takebackOfferedBy: null, serverNow: Date.now() });
   }
 
   if (!row.takeback_offered_by || row.takeback_offered_by === user.id) {
@@ -124,5 +124,6 @@ export async function POST(
     ok: true,
     removedPly: undo.removedPly,
     game: undo.game,
+    serverNow: Date.now(),
   });
 }

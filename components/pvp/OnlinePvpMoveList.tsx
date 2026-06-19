@@ -6,19 +6,66 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/lib/language-context";
 import { replayGameFromUcis, type PvpMoveRow } from "@/lib/pvp-chess";
+import { formatPvpMoveListTimeMs, pvpMoveTimeMsByPly } from "@/lib/pvp-move-time";
 
 type OnlinePvpMoveListProps = {
   moves: PvpMoveRow[];
+  clockMode?: string | null;
   selectedPly?: number | null;
   onSelectPly?: (ply: number | null) => void;
 };
 
+function MoveCell({
+  san,
+  ply,
+  timeLabel,
+  active,
+  interactive,
+  isLiveHighlight,
+  onSelect,
+}: {
+  san: string;
+  ply: number;
+  timeLabel: string;
+  active: boolean;
+  interactive: boolean;
+  isLiveHighlight: boolean;
+  onSelect?: (ply: number) => void;
+}) {
+  const highlightClass = "text-cyan-300 bg-cyan-950/50 rounded px-1 cursor-pointer";
+  const normalClass = "text-slate-200 cursor-pointer hover:text-cyan-200";
+  const staticClass = "text-slate-200";
+
+  let className = staticClass;
+  if (active) className = highlightClass;
+  else if (interactive) className = normalClass;
+  else if (isLiveHighlight) className = highlightClass;
+
+  return (
+    <button
+      type="button"
+      className={`inline-flex min-w-0 items-baseline gap-1 text-left ${className}`}
+      onClick={() => onSelect?.(ply)}
+      disabled={!onSelect}
+      title={timeLabel || undefined}
+    >
+      <span>{san}</span>
+      {timeLabel ? (
+        <span className="text-[10px] font-normal text-slate-500 tabular-nums shrink-0">
+          {timeLabel}
+        </span>
+      ) : null}
+    </button>
+  );
+}
+
 export default function OnlinePvpMoveList({
   moves,
+  clockMode = null,
   selectedPly = null,
   onSelectPly,
 }: OnlinePvpMoveListProps) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const o = t.playOnline;
 
   const sanMoves = useMemo(() => {
@@ -27,14 +74,22 @@ export default function OnlinePvpMoveList({
     return chess.history();
   }, [moves]);
 
+  const timeByPly = useMemo(
+    () => pvpMoveTimeMsByPly(moves, clockMode),
+    [moves, clockMode]
+  );
+
+  const formatTime = (ply: number) => {
+    const ms = timeByPly.get(ply);
+    if (ms == null) return "";
+    return formatPvpMoveListTimeMs(ms, clockMode, lang);
+  };
+
   const livePly = moves.length;
   const activePly = selectedPly ?? livePly;
   const isLive = selectedPly === null || selectedPly >= livePly;
 
   const plyForSanIndex = (sanIndex: number) => sanIndex + 1;
-
-  const highlightClass = "text-cyan-300 bg-cyan-950/50 rounded px-1 cursor-pointer";
-  const normalClass = "text-slate-200 cursor-pointer hover:text-cyan-200";
 
   return (
     <div className="flex flex-col min-h-0">
@@ -70,41 +125,32 @@ export default function OnlinePvpMoveList({
               const whitePly = plyForSanIndex(whiteIndex);
               const blackPly = blackIndex < sanMoves.length ? plyForSanIndex(blackIndex) : null;
               return (
-                <div key={moveNum} className="flex gap-1 py-0.5">
-                  <span className="text-slate-500 w-7 shrink-0">{moveNum}.</span>
-                  <button
-                    type="button"
-                    className={
-                      activePly === whitePly && !isLive
-                        ? highlightClass
-                        : onSelectPly
-                          ? normalClass
-                          : whiteIndex === sanMoves.length - 1 && isLive
-                            ? highlightClass
-                            : "text-slate-200"
-                    }
-                    onClick={() => onSelectPly?.(whitePly)}
-                    disabled={!onSelectPly}
-                  >
-                    {sanMoves[whiteIndex]}
-                  </button>
-                  {sanMoves[blackIndex] && blackPly != null && (
-                    <button
-                      type="button"
-                      className={
-                        activePly === blackPly && !isLive
-                          ? highlightClass
-                          : onSelectPly
-                            ? normalClass
-                            : blackIndex === sanMoves.length - 1 && isLive
-                              ? highlightClass
-                              : "text-slate-200"
-                      }
-                      onClick={() => onSelectPly?.(blackPly)}
-                      disabled={!onSelectPly}
-                    >
-                      {sanMoves[blackIndex]}
-                    </button>
+                <div
+                  key={moveNum}
+                  className="grid grid-cols-[1.75rem_minmax(0,1fr)_minmax(0,1fr)] gap-x-1 py-0.5 items-baseline"
+                >
+                  <span className="text-slate-500 shrink-0">{moveNum}.</span>
+                  <MoveCell
+                    san={sanMoves[whiteIndex]!}
+                    ply={whitePly}
+                    timeLabel={formatTime(whitePly)}
+                    active={activePly === whitePly && !isLive}
+                    interactive={Boolean(onSelectPly)}
+                    isLiveHighlight={whiteIndex === sanMoves.length - 1 && isLive}
+                    onSelect={onSelectPly ?? undefined}
+                  />
+                  {sanMoves[blackIndex] && blackPly != null ? (
+                    <MoveCell
+                      san={sanMoves[blackIndex]!}
+                      ply={blackPly}
+                      timeLabel={formatTime(blackPly)}
+                      active={activePly === blackPly && !isLive}
+                      interactive={Boolean(onSelectPly)}
+                      isLiveHighlight={blackIndex === sanMoves.length - 1 && isLive}
+                      onSelect={onSelectPly ?? undefined}
+                    />
+                  ) : (
+                    <span />
                   )}
                 </div>
               );

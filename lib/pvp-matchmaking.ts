@@ -7,6 +7,7 @@ import {
 } from "@/lib/pvp-time-controls";
 import { displayNameFromAuthUser } from "@/lib/pvp-display-name";
 import { initialClockFieldsForPreset } from "@/lib/pvp-game-lifecycle";
+import type { PvpGameRow } from "@/lib/pvp-chess";
 
 export type PvpMatchmakingRow = {
   id: string;
@@ -56,7 +57,7 @@ export async function leaveMatchmakingQueue(
 
 export type MatchmakingTryResult =
   | { status: "waiting"; queueSize: number }
-  | { status: "matched"; gameId: string; role: "white" | "black" };
+  | { status: "matched"; gameId: string; role: "white" | "black"; game: PvpGameRow };
 
 /** Tente d'apparier l'utilisateur avec un adversaire en file (FIFO par cadence). */
 export async function tryMatchmakingPair(
@@ -128,7 +129,7 @@ export async function tryMatchmakingPair(
       draw_offered_by: null,
       ...clocks,
     })
-    .select("id")
+    .select("*")
     .single();
 
   if (gameErr || !game?.id) {
@@ -136,5 +137,5 @@ export async function tryMatchmakingPair(
   }
 
   const role = user.id === whiteEntry.user_id ? ("white" as const) : ("black" as const);
-  return { status: "matched", gameId: game.id as string, role };
+  return { status: "matched", gameId: game.id as string, role, game: game as PvpGameRow };
 }

@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState, type MutableRefObject } from "react";
-import type { Chess } from "chess.js";
-import type { PvpGameRow } from "@/lib/pvp-chess";
+import type { PvpGameRow, PvpMoveRow } from "@/lib/pvp-chess";
 import {
   formatClockMsPrecise,
   formatCorrespondenceMs,
-  getPvpClockDisplayMs,
   isCorrespondenceTimeLow,
 } from "@/lib/pvp-clock";
+import { chessForPvpClockAuthority } from "@/lib/pvp-clock-sync";
+import { getPvpClockDisplayMs } from "@/lib/pvp-clock";
 import { playClockLowTimeWarning } from "@/lib/chess-sound";
 import type { Language } from "@/lib/i18n";
 
@@ -16,16 +16,19 @@ const LOW_TIME_MS = 20_000;
 
 export function usePvpClockDisplay({
   game,
-  chess,
+  moves,
   myRole,
   lang,
+  nowMs: externalNow,
 }: {
   game: PvpGameRow;
-  chess: Chess;
+  moves: PvpMoveRow[];
   myRole: "white" | "black" | null;
   lang: Language;
+  nowMs?: number;
 }) {
-  const [now, setNow] = useState(() => Date.now());
+  const [internalNow, setInternalNow] = useState(() => Date.now());
+  const now = externalNow ?? internalNow;
   const [whiteLow, setWhiteLow] = useState(false);
   const [blackLow, setBlackLow] = useState(false);
   const warnedWhiteRef = useRef(false);
@@ -34,7 +37,7 @@ export function usePvpClockDisplay({
   const showClocks =
     (game.clock_mode === "timed" || game.clock_mode === "correspondence") &&
     game.status === "playing";
-  const stm = chess.turn();
+  const stm = chessForPvpClockAuthority(game, moves).turn();
   const display = showClocks
     ? getPvpClockDisplayMs(game, stm, now)
     : {
@@ -52,11 +55,11 @@ export function usePvpClockDisplay({
       : 0;
 
   useEffect(() => {
-    if (!showClocks) return;
+    if (externalNow != null || !showClocks) return;
     const intervalMs = correspondence ? 60_000 : 50;
-    const id = window.setInterval(() => setNow(Date.now()), intervalMs);
+    const id = window.setInterval(() => setInternalNow(Date.now()), intervalMs);
     return () => window.clearInterval(id);
-  }, [showClocks, correspondence]);
+  }, [externalNow, showClocks, correspondence]);
 
   useEffect(() => {
     if (!showClocks) {

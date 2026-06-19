@@ -12,7 +12,7 @@ import OnlinePvpTimeControlGrid from "@/components/pvp/OnlinePvpTimeControlGrid"
 import { accountProfileInitials } from "@/lib/account-profile";
 import { removeAccountFriendRemote } from "@/lib/account-friends";
 import type { AccountFriend } from "@/lib/account-types";
-import type { ActivePvpGame, OpenPvpLobby } from "@/hooks/useOpenPvpLobbies";
+import type { ActivePvpGame, OpenPvpLobby, PendingRematch } from "@/hooks/useOpenPvpLobbies";
 import { useLanguage } from "@/lib/language-context";
 
 const SimpleChessboard = dynamic(() => import("@/components/SimpleChessboard"), {
@@ -31,6 +31,7 @@ type OnlinePvpLobbyLayoutProps = {
   onOpenAuth: () => void;
   onInviteFriend: () => void;
   activeGames: ActivePvpGame[];
+  pendingRematches?: PendingRematch[];
   openLobbiesList: OpenPvpLobby[];
   lobbiesLoading: boolean;
   lobbiesError: string | null;
@@ -47,6 +48,10 @@ type OnlinePvpLobbyLayoutProps = {
   matchmakingQueueSize?: number;
   onQuickPlay?: () => void;
   onCancelMatchmaking?: () => void;
+  onAcceptRematch?: (gameId: string) => void | Promise<void>;
+  acceptingRematchId?: string | null;
+  onJoinOpenLobby?: (gameId: string) => void | Promise<void>;
+  joiningOpenLobbyId?: string | null;
 };
 
 import type { TranslationKey } from "@/lib/i18n";
@@ -98,6 +103,11 @@ function ActiveGamesList({
                 <Badge variant="outline" className="text-[10px] border-slate-600">
                   {ag.role === "white" ? o.youAreWhite : o.youAreBlack}
                 </Badge>
+                {ag.is_my_turn && (
+                  <Badge variant="secondary" className="text-[10px] font-normal bg-amber-900/70 text-amber-100">
+                    {o.multiGame.yourTurn}
+                  </Badge>
+                )}
               </div>
             </div>
           </div>
@@ -110,18 +120,112 @@ function ActiveGamesList({
   );
 }
 
+function PendingRematchesList({
+  pendingRematches,
+  presetLabels,
+  locale,
+  o,
+  onAcceptRematch,
+  acceptingRematchId,
+}: {
+  pendingRematches: PendingRematch[];
+  presetLabels: Record<string, string>;
+  locale: string;
+  o: PlayOnlineCopy;
+  onAcceptRematch?: (gameId: string) => void | Promise<void>;
+  acceptingRematchId?: string | null;
+}) {
+  if (pendingRematches.length === 0) {
+    return <p className="text-sm text-slate-500">{o.pendingRematchesEmpty}</p>;
+  }
+  return (
+    <ul className="divide-y divide-slate-800 rounded-md border border-violet-500/30 overflow-hidden">
+      {pendingRematches.map((rm) => {
+        const isIncoming = rm.direction === "incoming";
+        const name = rm.opponent_display_name ?? o.anonymousPlayer;
+        return (
+          <li
+            key={rm.id}
+            className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-3 py-2.5 bg-violet-950/20"
+          >
+            <div className="min-w-0 flex items-start gap-2.5">
+              <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full border border-violet-500/40 bg-gradient-to-br from-violet-700 to-indigo-900">
+                <AccountAvatar
+                  src={rm.opponent_avatar_url}
+                  alt={name}
+                  initials={accountProfileInitials(name)}
+                  sizes="36px"
+                  className="text-[10px]"
+                />
+              </div>
+              <div className="min-w-0 space-y-0.5">
+                <p className="text-sm text-slate-100 font-medium truncate">
+                  {isIncoming
+                    ? o.pendingRematchIncoming.replace("{name}", name)
+                    : o.pendingRematchOutgoing.replace("{name}", name)}
+                </p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge
+                    variant="outline"
+                    className="text-[10px] border-violet-400/50 text-violet-200"
+                  >
+                    {isIncoming ? o.acceptRematch : o.statusWaiting}
+                  </Badge>
+                  <Badge variant="secondary" className="text-[10px] font-normal">
+                    {presetLabels[rm.time_preset] ?? rm.time_preset}
+                  </Badge>
+                </div>
+                <p className="text-[10px] text-slate-500">
+                  {new Date(rm.created_at).toLocaleString(locale, {
+                    dateStyle: "short",
+                    timeStyle: "short",
+                  })}
+                </p>
+              </div>
+            </div>
+            {isIncoming && onAcceptRematch ? (
+              <Button
+                type="button"
+                size="sm"
+                className="shrink-0 bg-violet-700 hover:bg-violet-600"
+                disabled={acceptingRematchId === rm.id}
+                onClick={() => void onAcceptRematch(rm.id)}
+              >
+                {acceptingRematchId === rm.id ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" aria-hidden />
+                ) : null}
+                {o.acceptRematch}
+              </Button>
+            ) : (
+              <Button asChild size="sm" className="shrink-0 bg-violet-700 hover:bg-violet-600">
+                <Link href={`/online?game=${rm.id}`}>
+                  {isIncoming ? o.acceptRematch : o.openRematch}
+                </Link>
+              </Button>
+            )}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
 function OpenLobbiesList({
   openLobbiesList,
   presetLabels,
   locale,
   o,
   onCancelLobby,
+  onJoinOpenLobby,
+  joiningOpenLobbyId = null,
 }: {
   openLobbiesList: OpenPvpLobby[];
   presetLabels: Record<string, string>;
   locale: string;
   o: PlayOnlineCopy;
   onCancelLobby: (id: string) => Promise<void>;
+  onJoinOpenLobby?: (gameId: string) => void | Promise<void>;
+  joiningOpenLobbyId?: string | null;
 }) {
   if (openLobbiesList.length === 0) {
     return <p className="text-sm text-slate-500">{o.openLobbiesEmpty}</p>;
@@ -197,11 +301,27 @@ function OpenLobbiesList({
                 <Trash2 className="h-4 w-4" />
               </Button>
             )}
-            <Button asChild size="sm" className="shrink-0">
-              <Link href={`/online?game=${lobby.id}`}>
-                {lobby.isHost ? o.openLobby : o.joinLobbyRow}
-              </Link>
-            </Button>
+            {!lobby.isHost && onJoinOpenLobby ? (
+              <Button
+                type="button"
+                size="sm"
+                className="shrink-0"
+                disabled={joiningOpenLobbyId === lobby.id}
+                onClick={() => void onJoinOpenLobby(lobby.id)}
+              >
+                {joiningOpenLobbyId === lobby.id ? (
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                ) : (
+                  o.joinLobbyRow
+                )}
+              </Button>
+            ) : (
+              <Button asChild size="sm" className="shrink-0">
+                <Link href={`/online?game=${lobby.id}`}>
+                  {lobby.isHost ? o.openLobby : o.joinLobbyRow}
+                </Link>
+              </Button>
+            )}
           </div>
         </li>
       ))}
@@ -218,6 +338,7 @@ export default function OnlinePvpLobbyLayout({
   onOpenAuth,
   onInviteFriend,
   activeGames,
+  pendingRematches = [],
   openLobbiesList,
   lobbiesLoading,
   lobbiesError,
@@ -234,6 +355,10 @@ export default function OnlinePvpLobbyLayout({
   matchmakingQueueSize = 0,
   onQuickPlay,
   onCancelMatchmaking,
+  onAcceptRematch,
+  acceptingRematchId = null,
+  onJoinOpenLobby,
+  joiningOpenLobbyId = null,
 }: OnlinePvpLobbyLayoutProps) {
   const { t } = useLanguage();
   const o = t.playOnline;
@@ -363,6 +488,36 @@ export default function OnlinePvpLobbyLayout({
                 <>
                   <section className="space-y-2">
                     <div className="flex items-center justify-between gap-2">
+                      <h2 className="text-sm font-semibold text-violet-100">
+                        {o.pendingRematchesTitle}
+                      </h2>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="text-violet-300 shrink-0 h-8"
+                        onClick={onRefreshLobbies}
+                      >
+                        {lobbiesLoading ? (
+                          <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                        ) : (
+                          "↻"
+                        )}
+                      </Button>
+                    </div>
+                    <p className="text-xs text-slate-500">{o.pendingRematchesHint}</p>
+                    <PendingRematchesList
+                      pendingRematches={pendingRematches}
+                      presetLabels={presetLabels}
+                      locale={locale}
+                      o={o}
+                      onAcceptRematch={onAcceptRematch}
+                      acceptingRematchId={acceptingRematchId}
+                    />
+                  </section>
+
+                  <section className="space-y-2">
+                    <div className="flex items-center justify-between gap-2">
                       <h2 className="text-sm font-semibold text-cyan-100">
                         {o.activeGamesTitle}
                       </h2>
@@ -414,6 +569,7 @@ export default function OnlinePvpLobbyLayout({
                     {lobbiesLoading &&
                     openLobbiesList.length === 0 &&
                     activeGames.length === 0 &&
+                    pendingRematches.length === 0 &&
                     !lobbiesError ? (
                       <p className="text-sm text-slate-500">{o.openLobbiesLoading}</p>
                     ) : (
@@ -423,6 +579,8 @@ export default function OnlinePvpLobbyLayout({
                         locale={locale}
                         o={o}
                         onCancelLobby={onCancelLobby}
+                        onJoinOpenLobby={onJoinOpenLobby}
+                        joiningOpenLobbyId={joiningOpenLobbyId}
                       />
                     )}
                   </section>

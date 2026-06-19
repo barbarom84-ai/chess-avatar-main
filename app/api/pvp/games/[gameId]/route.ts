@@ -3,8 +3,7 @@ import { rateLimit } from "@/lib/rate-limit";
 import { getAuthedUserFromRequest } from "@/lib/supabase-auth-request";
 import { createServiceSupabase } from "@/lib/supabase-service";
 import type { PvpGameRow, PvpMoveRow } from "@/lib/pvp-chess";
-import { replayGameFromUcis } from "@/lib/pvp-chess";
-import { checkTimeoutForTimedGame } from "@/lib/pvp-clock-server";
+import { checkTimeoutForTimedGameWithMoves } from "@/lib/pvp-clock-server";
 import { canAccessPvpGameAsSpectator } from "@/lib/pvp-access";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
@@ -76,8 +75,7 @@ export async function GET(
   }
 
   if (isParticipant && row.status === "playing") {
-    const chess = replayGameFromUcis(moves.map((m) => m.uci));
-    const timeout = checkTimeoutForTimedGame(row, chess, Date.now());
+    const timeout = checkTimeoutForTimedGameWithMoves(row, moves, Date.now());
     if (timeout) {
       const { error: upErr } = await sb.from("pvp_games").update(timeout).eq("id", gameId);
       if (!upErr) {
@@ -94,6 +92,7 @@ export async function GET(
     canJoin,
     canAcceptRematch,
     isSpectator,
+    serverNow: Date.now(),
   });
 }
 

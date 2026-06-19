@@ -6,6 +6,7 @@ import type { PvpGameRow, PvpMoveRow } from "@/lib/pvp-chess";
 import { replayGameFromUcis, normalizeUci } from "@/lib/pvp-chess";
 import { applyUciMove } from "@/lib/learn-chess-utils";
 import { applyMoveClockUpdate, checkTimeoutForTimedGame } from "@/lib/pvp-clock-server";
+import { computeMoveTimeSpentMs } from "@/lib/pvp-move-time";
 import { pvpRateLimitOrResponse } from "@/lib/pvp-api-rate-limit";
 import { notifyCorrespondenceYourTurn } from "@/lib/pvp-correspondence-notify";
 
@@ -82,24 +83,13 @@ export async function POST(
     return jsonError("Time forfeiture", 400);
   }
 
+  const timeSpentMs =
+    row.clock_mode === "timed" || row.clock_mode === "correspondence"
+      ? computeMoveTimeSpentMs(row.clock_turn_started_at, now)
+      : null;
+
   const next = new Chess(chess.fen());
   if (!applyUciMove(next, uci)) return jsonError("Illegal move", 400);
-
-  const { data: insertedMove, error: insErr } = await sb
-    .from("pvp_moves")
-    .insert({
-      game_id: gameId,
-      ply: expectedPly,
-      uci,
-      played_by: user.id,
-    })
-    .select("id, game_id, ply, uci, played_by, created_at")
-    .single();
-
-  if (insErr) {
-    if (insErr.code === "23505") return jsonError("Move already submitted", 409);
-    return jsonError(insErr.message ?? "Insert failed", 500);
-  }
 
   let result: string | null = row.result;
   let resultReason: string | null = row.result_reason;
@@ -148,9 +138,11 @@ export async function POST(
   };
 
   if (newStatus === "finished") {
-    await sb.from("pvp_games").update(gameUpdate).eq("id", gameId);
+    const { error: finishErr } = await sb.from("pvp_games").update(gameUpdate).eq("id", gameId);
+    if (finishErr) return jsonError(finishErr.message ?? "Update failed", 500);
   } else {
-    await sb.from("pvp_games").update(ongoingClock).eq("id", gameId);
+    const { error: clockErr } = await sb.from("pvp_games").update(ongoingClock).eq("id", gameId);
+    if (clockErr) return jsonError(clockErr.message ?? "Clock update failed", 500);
     void notifyCorrespondenceYourTurn(
       sb,
       { ...row, ...ongoingClock } as PvpGameRow,
@@ -158,6 +150,23 @@ export async function POST(
       gameId,
       request.headers.get("origin")
     );
+  }
+
+  const { data: insertedMove, error: insErr } = await sb
+    .from("pvp_moves")
+    .insert({
+      game_id: gameId,
+      ply: expectedPly,
+      uci,
+      played_by: user.id,
+      time_spent_ms: timeSpentMs,
+    })
+    .select("id, game_id, ply, uci, played_by, created_at, time_spent_ms")
+    .single();
+
+  if (insErr) {
+    if (insErr.code === "23505") return jsonError("Move already submitted", 409);
+    return jsonError(insErr.message ?? "Insert failed", 500);
   }
 
   const gamePatch: Partial<PvpGameRow> = {
@@ -184,5 +193,6 @@ export async function POST(
     gameOver: newStatus === "finished",
     result,
     resultReason,
+    serverNow: Date.now(),
   });
 }

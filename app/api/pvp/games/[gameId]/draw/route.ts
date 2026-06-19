@@ -3,6 +3,7 @@ import { getAuthedUserFromRequest } from "@/lib/supabase-auth-request";
 import { createServiceSupabase } from "@/lib/supabase-service";
 import type { PvpGameRow } from "@/lib/pvp-chess";
 import { pvpRateLimitOrResponse } from "@/lib/pvp-api-rate-limit";
+import { MAX_PVP_DRAW_OFFERS_PER_PLAYER } from "@/lib/pvp-draw-limits";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
@@ -50,20 +51,38 @@ export async function POST(
   if (!isWhite && !isBlack) return jsonError("Forbidden", 403);
 
   if (action === "offer") {
+    const countField = isWhite ? "white_draw_offers_count" : "black_draw_offers_count";
+    const current = Number(row[countField] ?? 0);
+    const isRenewal = row.draw_offered_by === user.id;
+    if (!isRenewal && current >= MAX_PVP_DRAW_OFFERS_PER_PLAYER) {
+      return jsonError("Draw offer limit reached", 400);
+    }
+    const patch: Record<string, unknown> = {
+      draw_offered_by: user.id,
+      takeback_offered_by: null,
+    };
+    if (!isRenewal) {
+      patch[countField] = current + 1;
+    }
     const { error } = await sb
       .from("pvp_games")
-      .update({ draw_offered_by: user.id, takeback_offered_by: null })
+      .update(patch)
       .eq("id", gameId)
       .eq("status", "playing");
     if (error) return jsonError(error.message ?? "Update failed", 500);
-    return NextResponse.json({ ok: true, drawOfferedBy: user.id });
+    return NextResponse.json({
+      ok: true,
+      drawOfferedBy: user.id,
+      serverNow: Date.now(),
+      drawOffersCount: isRenewal ? current : current + 1,
+    });
   }
 
   if (action === "cancel") {
     if (row.draw_offered_by !== user.id) return jsonError("No offer to cancel", 400);
     const { error } = await sb.from("pvp_games").update({ draw_offered_by: null }).eq("id", gameId);
     if (error) return jsonError(error.message ?? "Update failed", 500);
-    return NextResponse.json({ ok: true, drawOfferedBy: null });
+    return NextResponse.json({ ok: true, drawOfferedBy: null, serverNow: Date.now() });
   }
 
   if (action === "decline") {
@@ -72,7 +91,7 @@ export async function POST(
     }
     const { error } = await sb.from("pvp_games").update({ draw_offered_by: null }).eq("id", gameId);
     if (error) return jsonError(error.message ?? "Update failed", 500);
-    return NextResponse.json({ ok: true, drawOfferedBy: null });
+    return NextResponse.json({ ok: true, drawOfferedBy: null, serverNow: Date.now() });
   }
 
   // accept
@@ -91,5 +110,5 @@ export async function POST(
     .eq("status", "playing");
 
   if (error) return jsonError(error.message ?? "Update failed", 500);
-  return NextResponse.json({ ok: true, result: "1/2-1/2", resultReason: "draw_agreed" });
+  return NextResponse.json({ ok: true, result: "1/2-1/2", resultReason: "draw_agreed", serverNow: Date.now() });
 }

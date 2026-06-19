@@ -28,6 +28,9 @@ export interface PvpGameRow {
   white_display_name?: string | null;
   /** Libellé public enregistré quand les noirs rejoignent. */
   black_display_name?: string | null;
+  /** Nombre de propositions de nulle envoyées par camp (max 3). */
+  white_draw_offers_count?: number | null;
+  black_draw_offers_count?: number | null;
 }
 
 export interface PvpMoveRow {
@@ -37,6 +40,8 @@ export interface PvpMoveRow {
   uci: string;
   played_by: string;
   created_at: string;
+  /** Temps passé sur ce coup (ms), enregistré côté serveur pour les parties cadencées. */
+  time_spent_ms?: number | null;
 }
 
 export function replayGameFromUcis(ucis: string[]): Chess {

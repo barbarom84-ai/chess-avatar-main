@@ -1,7 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { PvpGameRow, PvpMoveRow } from "@/lib/pvp-chess";
-import { replayGameFromUcis } from "@/lib/pvp-chess";
-import { checkTimeoutForTimedGame } from "@/lib/pvp-clock-server";
+import { checkTimeoutForTimedGameWithMoves } from "@/lib/pvp-clock-server";
 
 export type PvpTimeoutSweepResult = {
   checked: number;
@@ -48,7 +47,7 @@ export async function sweepPvpTimeouts(
 
       const { data: moveRows, error: mErr } = await sb
         .from("pvp_moves")
-        .select("uci")
+        .select("ply,uci,played_by,created_at")
         .eq("game_id", id)
         .order("ply", { ascending: true });
 
@@ -57,9 +56,15 @@ export async function sweepPvpTimeouts(
         continue;
       }
 
-      const ucis = ((moveRows ?? []) as Pick<PvpMoveRow, "uci">[]).map((m) => m.uci);
-      const chess = replayGameFromUcis(ucis);
-      const patch = checkTimeoutForTimedGame(row, chess, nowMs);
+      const moves = (moveRows ?? []) as Pick<
+        PvpMoveRow,
+        "ply" | "uci" | "played_by" | "created_at"
+      >[];
+      const patch = checkTimeoutForTimedGameWithMoves(
+        row,
+        moves as PvpMoveRow[],
+        nowMs
+      );
       if (!patch) continue;
 
       const { error: upErr } = await sb.from("pvp_games").update(patch).eq("id", id).eq("status", "playing");

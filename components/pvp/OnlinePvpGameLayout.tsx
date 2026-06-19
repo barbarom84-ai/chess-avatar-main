@@ -6,10 +6,20 @@ import { toast } from "sonner";
 import OnlineChessboard from "@/components/OnlineChessboard";
 import EvaluationBar from "@/components/EvaluationBar";
 import OnlinePvpPlayerBar from "@/components/pvp/OnlinePvpPlayerBar";
+import OnlinePvpRequestBanner, {
+  type PvpIncomingRequest,
+} from "@/components/pvp/OnlinePvpRequestBanner";
+import OnlinePvpCenterBanners from "@/components/pvp/OnlinePvpCenterBanners";
+import OnlinePvpResignConfirmBanner from "@/components/pvp/OnlinePvpResignConfirmBanner";
+import OnlinePvpConnectionStrip from "@/components/pvp/OnlinePvpConnectionStrip";
 import OnlinePvpSidebar from "@/components/pvp/OnlinePvpSidebar";
 import { useStockfish } from "@/hooks/useStockfish";
 import { usePvpChat } from "@/hooks/usePvpChat";
+import { useChessboardSettings } from "@/contexts/ChessboardSettingsContext";
 import { stmEvalToWhitePov } from "@/lib/arena-chess";
+import { playPvpRequestSound } from "@/lib/chess-sound";
+import type { PvpConnectionInfo } from "@/lib/pvp-connection";
+import { mapPvpErrorMessage } from "@/lib/pvp-errors";
 import type { PvpGameRow, PvpMoveRow } from "@/lib/pvp-chess";
 import { replayGameFromUcis, uciToLastMoveSquares } from "@/lib/pvp-chess";
 import { whiteBlackDisplayNames } from "@/lib/pvp-utils";
@@ -57,6 +67,27 @@ type OnlinePvpGameLayoutProps = {
   whiteAvatarUrl?: string | null;
   blackAvatarUrl?: string | null;
   isSpectator?: boolean;
+  syncedClockNow?: number;
+  whiteConnection?: PvpConnectionInfo;
+  blackConnection?: PvpConnectionInfo;
+  connectionLabels?: Record<string, string>;
+  requestBannerLabels?: {
+    drawTitle: string;
+    takebackTitle: string;
+    accept: string;
+    decline: string;
+    dismiss: string;
+  };
+  resignBannerLabels?: {
+    title: string;
+    message: string;
+    confirm: string;
+    cancel: string;
+  };
+  errorLabels?: Record<string, string>;
+  localConnection?: PvpConnectionInfo;
+  connectionStripLabels?: { offline: string; poor: string; retry: string };
+  onResync?: () => void;
 };
 
 export default function OnlinePvpGameLayout({
@@ -97,7 +128,18 @@ export default function OnlinePvpGameLayout({
   whiteAvatarUrl,
   blackAvatarUrl,
   isSpectator = false,
+  syncedClockNow,
+  whiteConnection,
+  blackConnection,
+  connectionLabels = {},
+  requestBannerLabels,
+  resignBannerLabels,
+  errorLabels = {},
+  localConnection,
+  connectionStripLabels,
+  onResync,
 }: OnlinePvpGameLayoutProps) {
+  const { settings } = useChessboardSettings();
   const isParticipant = Boolean(role);
   const canShowEvalBar = isSpectator && !isParticipant;
   const [showEvalBar, setShowEvalBar] = useState(false);
@@ -105,6 +147,9 @@ export default function OnlinePvpGameLayout({
   const [sidebarTab, setSidebarTab] = useState("game");
   const [boardFlipped, setBoardFlipped] = useState(false);
   const [previewPly, setPreviewPly] = useState<number | null>(null);
+  const [dismissedRequestKey, setDismissedRequestKey] = useState<string | null>(null);
+  const [showResignConfirm, setShowResignConfirm] = useState(false);
+  const lastRequestSoundKeyRef = useRef<string | null>(null);
   const liveEvalRequestRef = useRef(0);
 
   useEffect(() => {
@@ -194,7 +239,123 @@ export default function OnlinePvpGameLayout({
   const topAvatar = topSide === "white" ? whiteAvatarUrl : blackAvatarUrl;
   const bottomAvatar = bottomSide === "white" ? whiteAvatarUrl : blackAvatarUrl;
 
+  const connectionTitle = (info: PvpConnectionInfo | undefined) => {
+    if (!info) return "";
+    return connectionLabels[info.labelKey] ?? info.labelKey;
+  };
+
+  const incomingRequest = useMemo((): PvpIncomingRequest | null => {
+    if (!userId || g.status !== "playing" || isSpectator) return null;
+    if (g.draw_offered_by && g.draw_offered_by !== userId) {
+      const key = `draw-${g.draw_offered_by}`;
+      if (dismissedRequestKey === key) return null;
+      const oppName = role === "white" ? wb.black : wb.white;
+      return { kind: "draw", fromLabel: oppName };
+    }
+    if (g.takeback_offered_by && g.takeback_offered_by !== userId) {
+      const key = `takeback-${g.takeback_offered_by}`;
+      if (dismissedRequestKey === key) return null;
+      const oppName = role === "white" ? wb.black : wb.white;
+      return { kind: "takeback", fromLabel: oppName };
+    }
+    return null;
+  }, [userId, g, isSpectator, dismissedRequestKey, role, wb.black, wb.white]);
+
+  useEffect(() => {
+    if (!g.draw_offered_by && !g.takeback_offered_by) {
+      setDismissedRequestKey(null);
+      lastRequestSoundKeyRef.current = null;
+    }
+  }, [g.draw_offered_by, g.takeback_offered_by]);
+
+  useEffect(() => {
+    if (!incomingRequest) return;
+    const key =
+      incomingRequest.kind === "draw"
+        ? `draw-${g.draw_offered_by}`
+        : `takeback-${g.takeback_offered_by}`;
+    if (!key || lastRequestSoundKeyRef.current === key) return;
+    lastRequestSoundKeyRef.current = key;
+    if (settings.soundEnabled) playPvpRequestSound();
+  }, [
+    incomingRequest,
+    g.draw_offered_by,
+    g.takeback_offered_by,
+    settings.soundEnabled,
+  ]);
+
+  const bannerLabels = requestBannerLabels ?? {
+    drawTitle: "Draw offer",
+    takebackTitle: "Takeback request",
+    accept: "Accept",
+    decline: "Decline",
+    dismiss: "Dismiss",
+  };
+
+  const resignLabels = resignBannerLabels ?? {
+    title: "Confirm resignation",
+    message: "Are you sure you want to resign this game?",
+    confirm: "Resign",
+    cancel: "Cancel",
+  };
+
+  const handleMoveError = (msg: string) => {
+    toast.error(mapPvpErrorMessage(msg, errorLabels));
+  };
+
+  const showConnectionBanner =
+    Boolean(localConnection && connectionStripLabels && role && g.status === "playing") &&
+    (localConnection?.level === "poor" || localConnection?.level === "offline");
+
   return (
+    <>
+      <OnlinePvpCenterBanners dimBackdrop={Boolean(incomingRequest || showResignConfirm)}>
+        {showConnectionBanner && localConnection && connectionStripLabels ? (
+          <OnlinePvpConnectionStrip
+            prominent
+            connection={localConnection}
+            message={
+              localConnection.level === "offline"
+                ? connectionStripLabels.offline
+                : connectionStripLabels.poor
+            }
+            onRetry={onResync}
+            retryLabel={connectionStripLabels.retry}
+          />
+        ) : null}
+        {incomingRequest ? (
+          <OnlinePvpRequestBanner
+            request={incomingRequest}
+            onAccept={() => {
+              if (incomingRequest.kind === "draw") void onDrawAction("accept");
+              else void onTakebackAction?.("accept");
+            }}
+            onDecline={() => {
+              if (incomingRequest.kind === "draw") void onDrawAction("decline");
+              else void onTakebackAction?.("decline");
+            }}
+            onDismiss={() => {
+              const key =
+                incomingRequest.kind === "draw"
+                  ? `draw-${g.draw_offered_by}`
+                  : `takeback-${g.takeback_offered_by}`;
+              setDismissedRequestKey(key);
+            }}
+            labels={bannerLabels}
+          />
+        ) : null}
+        {showResignConfirm ? (
+          <OnlinePvpResignConfirmBanner
+            labels={resignLabels}
+            onConfirm={() => {
+              setShowResignConfirm(false);
+              void onResign();
+            }}
+            onCancel={() => setShowResignConfirm(false)}
+          />
+        ) : null}
+      </OnlinePvpCenterBanners>
+
     <div className="pvp-game-layout grid grid-cols-1 xl:grid-cols-[minmax(0,1.1fr)_minmax(300px,0.9fr)] gap-3 xl:gap-4 items-start max-w-7xl mx-auto">
       <div className="space-y-1.5 min-w-0">
         <OnlinePvpPlayerBar
@@ -202,9 +363,14 @@ export default function OnlinePvpGameLayout({
           displayName={topName}
           avatarUrl={topAvatar}
           game={g}
-          chess={chess}
+          moves={moves}
           myRole={role}
           lang={lang}
+          nowMs={syncedClockNow}
+          connection={topSide === "white" ? whiteConnection : blackConnection}
+          connectionTitle={connectionTitle(
+            topSide === "white" ? whiteConnection : blackConnection
+          )}
         />
 
         {canShowEvalBar && showEvalBar && (
@@ -222,7 +388,7 @@ export default function OnlinePvpGameLayout({
             premoveUci={premoveUci}
             onPremoveChange={onPremoveChange}
             onSubmitUci={onSubmitUci}
-            onMoveError={(msg) => toast.error(msg)}
+            onMoveError={handleMoveError}
           />
         </div>
 
@@ -231,9 +397,14 @@ export default function OnlinePvpGameLayout({
           displayName={bottomName}
           avatarUrl={bottomAvatar}
           game={g}
-          chess={chess}
+          moves={moves}
           myRole={role}
           lang={lang}
+          nowMs={syncedClockNow}
+          connection={bottomSide === "white" ? whiteConnection : blackConnection}
+          connectionTitle={connectionTitle(
+            bottomSide === "white" ? whiteConnection : blackConnection
+          )}
         />
       </div>
 
@@ -252,7 +423,7 @@ export default function OnlinePvpGameLayout({
         onCopyInvite={onCopyInvite}
         onCancelLobby={onCancelLobby}
         onOpenAuth={onOpenAuth}
-        onResign={onResign}
+        onResignRequest={() => setShowResignConfirm(true)}
         onDrawAction={onDrawAction}
         onTakebackAction={onTakebackAction}
         oppInfo={oppInfo}
@@ -284,7 +455,9 @@ export default function OnlinePvpGameLayout({
         isSpectator={isSpectator}
         boardFlipped={boardFlipped}
         onFlipBoard={() => setBoardFlipped((v) => !v)}
+        hideIncomingRequests={true}
       />
     </div>
+    </>
   );
 }

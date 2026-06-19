@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import type { PvpGameRow, PvpMoveRow } from "@/lib/pvp-chess";
@@ -10,11 +10,22 @@ import {
   validateUciForPlayer,
 } from "@/lib/pvp-chess";
 import { isPvpSideToMoveTimedOut } from "@/lib/pvp-clock";
+import {
+  localConnectionFromSignals,
+  mergeOpponentLastSeen,
+  opponentConnectionFromLastSeen,
+  type PvpConnectionInfo,
+} from "@/lib/pvp-connection";
 import { playChessMoveSound } from "@/lib/chess-sound";
 import { isPremoveLegalNow } from "@/lib/pvp-premove";
+import { optimisticGameClockAfterMove } from "@/lib/pvp-clock-client";
+import { chessForPvpClockAuthority } from "@/lib/pvp-clock-sync";
+import { consumePvpGameBootstrap, writePvpGameBootstrap } from "@/lib/pvp-game-bootstrap";
+import { nowFromServerAnchor, syncAnchorFromResponse, type ServerTimeAnchor } from "@/lib/pvp-server-time";
 import { canOfferPvpTakeback, pvpGameJustStarted } from "@/lib/pvp-takeback";
 import { track } from "@/lib/track";
 import { useChessboardSettings } from "@/contexts/ChessboardSettingsContext";
+import { usePvpGamePresence } from "@/hooks/usePvpGamePresence";
 
 type Role = "white" | "black" | null;
 
@@ -38,6 +49,7 @@ type MovePostResponse = {
   gameOver?: boolean;
   result?: string | null;
   resultReason?: string | null;
+  serverNow?: number;
 };
 
 function mergeMovesByPly(existing: PvpMoveRow[], incoming: PvpMoveRow): PvpMoveRow[] {
@@ -71,12 +83,55 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
   const [pendingUci, setPendingUci] = useState<string | null>(null);
   const [premoveUci, setPremoveUci] = useState<string | null>(null);
   const [clockNow, setClockNow] = useState(() => Date.now());
+  const [serverOffsetMs, setServerOffsetMs] = useState<number | null>(null);
+  const serverTimeAnchorRef = useRef<ServerTimeAnchor | null>(null);
+  const [browserOnline, setBrowserOnline] = useState(
+    () => typeof navigator !== "undefined" && navigator.onLine
+  );
+  const [realtimeSubscribed, setRealtimeSubscribed] = useState(false);
+  const [lastEventAt, setLastEventAt] = useState<number | null>(null);
+  const [lastApiOkAt, setLastApiOkAt] = useState<number | null>(null);
+  const [opponentLastSeenAt, setOpponentLastSeenAt] = useState<number | null>(null);
   const timeoutClaimInFlightRef = useRef(false);
 
   const channelRef = useRef<ReturnType<NonNullable<typeof supabase>["channel"]> | null>(
     null
   );
   const accessTokenRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const onOnline = () => setBrowserOnline(true);
+    const onOffline = () => setBrowserOnline(false);
+    window.addEventListener("online", onOnline);
+    window.addEventListener("offline", onOffline);
+    return () => {
+      window.removeEventListener("online", onOnline);
+      window.removeEventListener("offline", onOffline);
+    };
+  }, []);
+
+  const touchEvent = useCallback(() => setLastEventAt(Date.now()), []);
+  const markOpponentSeen = useCallback(() => setOpponentLastSeenAt(Date.now()), []);
+
+  const syncServerTimeFromResponse = useCallback(
+    (res: Response, body: unknown, requestStartedAtMs: number, responseReceivedAtMs: number) => {
+      const rec =
+        body && typeof body === "object" ? (body as Record<string, unknown>) : {};
+      const bodyNow = typeof rec.serverNow === "number" ? rec.serverNow : null;
+      const anchor = syncAnchorFromResponse({
+        serverNow: bodyNow,
+        response: res,
+        requestStartedAtMs,
+        responseReceivedAtMs,
+      });
+      if (anchor) {
+        serverTimeAnchorRef.current = anchor;
+        setServerOffsetMs(anchor.serverMs - Date.now());
+      }
+      setLastApiOkAt(Date.now());
+    },
+    []
+  );
 
   useEffect(() => {
     if (!isSupabaseConfigured || !supabase) return;
@@ -93,7 +148,11 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const fetchWithAuth = useCallback(async (path: string, init?: RequestInit) => {
+  const fetchWithAuth = useCallback(async (
+    path: string,
+    init?: RequestInit,
+    options?: { syncTime?: boolean }
+  ) => {
     if (!supabase) throw new Error("Supabase client unavailable");
     let token = accessTokenRef.current;
     if (!token) {
@@ -112,7 +171,9 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
     ) {
       headers.set("Content-Type", "application/json");
     }
+    const requestStartedAtMs = Date.now();
     const res = await fetch(path, { ...init, headers });
+    const responseReceivedAtMs = Date.now();
     const json: unknown = await res.json().catch(() => ({}));
     if (!res.ok) {
       const err =
@@ -124,8 +185,11 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
           : res.statusText;
       throw new Error(err);
     }
+    if (options?.syncTime !== false) {
+      syncServerTimeFromResponse(res, json, requestStartedAtMs, responseReceivedAtMs);
+    }
     return json as Record<string, unknown>;
-  }, []);
+  }, [syncServerTimeFromResponse]);
 
   const applyServerState = useCallback(
     (payload: {
@@ -188,6 +252,23 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
 
   const refreshSilentRef = useRef(refreshSilent);
   refreshSilentRef.current = refreshSilent;
+  const seededFromBootstrapRef = useRef(false);
+
+  useLayoutEffect(() => {
+    seededFromBootstrapRef.current = false;
+    if (!gameId || !isSupabaseConfigured) return;
+    const seed = consumePvpGameBootstrap(gameId);
+    if (!seed) return;
+    applyServerState({
+      game: seed.game,
+      moves: seed.moves ?? [],
+      role: seed.role,
+      canJoin: false,
+      canAcceptRematch: false,
+      isSpectator: false,
+    });
+    seededFromBootstrapRef.current = true;
+  }, [gameId, applyServerState]);
 
   useEffect(() => {
     if (!gameId || !isSupabaseConfigured || !supabase) {
@@ -207,8 +288,13 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
     }
     setPendingUci(null);
     setPremoveUci(null);
+    if (seededFromBootstrapRef.current) {
+      seededFromBootstrapRef.current = false;
+      void refreshSilent();
+      return;
+    }
     void refresh();
-  }, [gameId, refresh]);
+  }, [gameId, refresh, refreshSilent]);
 
   const isParticipant = useMemo(() => {
     if (!state.game || !userId) return false;
@@ -241,15 +327,37 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
           filter: `game_id=eq.${gameId}`,
         },
         (payload: RealtimePostgresChangesPayload<{ [key: string]: unknown }>) => {
+          touchEvent();
           const row = payload.new as PvpMoveRow | null;
           if (!row?.ply) return;
+          if (row.played_by && row.played_by !== userId) {
+            markOpponentSeen();
+          }
           if (soundEnabledRef.current && row.played_by && row.played_by !== userId) {
             playChessMoveSound();
           }
-          setState((s) => ({
-            ...s,
-            moves: mergeMovesByPly(s.moves, row),
-          }));
+          setState((s) => {
+            if (!row?.ply || !s.game) {
+              return s;
+            }
+            const isNewPly = !s.moves.some((m) => m.ply === row.ply);
+            let nextGame = s.game;
+            if (isNewPly && s.game.status === "playing") {
+              const clockPatch = optimisticGameClockAfterMove(
+                s.game,
+                s.moves,
+                nowFromServerAnchor(serverTimeAnchorRef.current)
+              );
+              if (Object.keys(clockPatch).length > 0) {
+                nextGame = mergeGameRow(s.game, clockPatch);
+              }
+            }
+            return {
+              ...s,
+              game: nextGame,
+              moves: mergeMovesByPly(s.moves, row),
+            };
+          });
           setPendingUci((pending) => (pending === row.uci ? null : pending));
         }
       )
@@ -262,14 +370,29 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
           filter: `id=eq.${gameId}`,
         },
         (payload: RealtimePostgresChangesPayload<{ [key: string]: unknown }>) => {
+          touchEvent();
           const row = payload.new as PvpGameRow | null;
           if (!row) return;
+          if (userId) {
+            if (row.draw_offered_by && row.draw_offered_by !== userId) markOpponentSeen();
+            if (row.takeback_offered_by && row.takeback_offered_by !== userId) markOpponentSeen();
+          }
           setState((s) => {
+            if (!s.game) return { ...s, game: row };
             const justStarted = pvpGameJustStarted(s.game, row);
+            const nextGame = mergeGameRow(s.game, row);
             if (justStarted) {
               queueMicrotask(() => void refreshSilentRef.current());
             }
-            return { ...s, game: row };
+            return {
+              ...s,
+              game: nextGame,
+              canJoin: false,
+              canAcceptRematch:
+                row.status === "waiting" &&
+                row.black_user_id != null &&
+                row.white_user_id === userId,
+            };
           });
         }
       )
@@ -282,6 +405,7 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
           filter: `game_id=eq.${gameId}`,
         },
         (payload: RealtimePostgresChangesPayload<{ [key: string]: unknown }>) => {
+          touchEvent();
           const old = payload.old as { ply?: number } | null;
           if (!old?.ply) return;
           setState((s) => ({
@@ -290,15 +414,21 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
           }));
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") setRealtimeSubscribed(true);
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+          setRealtimeSubscribed(false);
+        }
+      });
 
     channelRef.current = ch;
 
     return () => {
       void client.removeChannel(ch);
       channelRef.current = null;
+      setRealtimeSubscribed(false);
     };
-  }, [gameId, userId, canUseRealtime]);
+  }, [gameId, userId, canUseRealtime, touchEvent, markOpponentSeen]);
 
   const prevPvpStatusRef = useRef<string | null>(null);
   useEffect(() => {
@@ -342,15 +472,29 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
 
   useEffect(() => {
     if (!usesMoveClock) return;
-    const intervalMs = state.game?.clock_mode === "correspondence" ? 60_000 : 200;
-    const id = window.setInterval(() => setClockNow(Date.now()), intervalMs);
-    return () => window.clearInterval(id);
+    if (state.game?.clock_mode === "correspondence") {
+      const id = window.setInterval(
+        () => setClockNow(nowFromServerAnchor(serverTimeAnchorRef.current)),
+        60_000
+      );
+      return () => window.clearInterval(id);
+    }
+    let rafId = 0;
+    const tick = () => {
+      setClockNow(nowFromServerAnchor(serverTimeAnchorRef.current));
+      rafId = requestAnimationFrame(tick);
+    };
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
   }, [usesMoveClock, state.game?.clock_mode]);
+
+  const syncedClockNow = clockNow;
 
   const isSideToMoveTimedOut = useMemo(() => {
     if (!state.game || state.game.status !== "playing") return false;
-    return isPvpSideToMoveTimedOut(state.game, chess.turn(), clockNow);
-  }, [state.game, chess, clockNow]);
+    const stm = chessForPvpClockAuthority(state.game, state.moves).turn();
+    return isPvpSideToMoveTimedOut(state.game, stm, syncedClockNow);
+  }, [state.game, state.moves, syncedClockNow]);
 
   useEffect(() => {
     if (!gameId || !isParticipant || !isSideToMoveTimedOut || !state.game) return;
@@ -362,6 +506,28 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
       timeoutClaimInFlightRef.current = false;
     });
   }, [gameId, isParticipant, isSideToMoveTimedOut, state.game, refreshSilent]);
+
+  useEffect(() => {
+    if (!gameId || !isParticipant) return;
+    const g = state.game;
+    if (!g || g.status !== "waiting" || g.black_user_id) return;
+    const id = window.setInterval(() => void refreshSilent(), 2_500);
+    return () => window.clearInterval(id);
+  }, [
+    gameId,
+    isParticipant,
+    state.game?.status,
+    state.game?.black_user_id,
+    refreshSilent,
+  ]);
+
+  useEffect(() => {
+    if (!gameId || !isParticipant || state.game?.status !== "playing") return;
+    if (state.game.clock_mode !== "timed" && state.game.clock_mode !== "correspondence") return;
+    const intervalMs = state.game.clock_mode === "timed" ? 12_000 : 120_000;
+    const id = window.setInterval(() => void refreshSilent(), intervalMs);
+    return () => window.clearInterval(id);
+  }, [gameId, isParticipant, state.game?.status, state.game?.clock_mode, refreshSilent]);
 
   useEffect(() => {
     if (!pendingUci) return;
@@ -399,20 +565,28 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
 
     const joinedGame = data.game as PvpGameRow | undefined;
     const joinedRole = (data.role as Role) ?? null;
-    if (joinedGame) {
-      setState((s) => ({
+    if (!joinedGame || !joinedRole) return;
+
+    setState((s) => {
+      const nextGame = s.game ? mergeGameRow(s.game, joinedGame) : joinedGame;
+      writePvpGameBootstrap({
+        gameId,
+        game: nextGame,
+        role: joinedRole,
+        moves: s.moves,
+        at: Date.now(),
+      });
+      return {
         ...s,
-        game: s.game ? { ...s.game, ...joinedGame } : joinedGame,
-        role: joinedRole ?? s.role,
+        game: nextGame,
+        role: joinedRole,
         canJoin: false,
         canAcceptRematch: false,
         loading: false,
         error: null,
-      }));
-    }
-
-    await refreshSilent();
-  }, [gameId, refreshSilent, fetchWithAuth]);
+      };
+    });
+  }, [gameId, fetchWithAuth]);
 
   const submitMove = useCallback(
     async (uci: string) => {
@@ -422,7 +596,7 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
       if (!role || !game || game.status !== "playing") {
         throw new Error("Game is not active");
       }
-      if (isPvpSideToMoveTimedOut(game, chess.turn(), Date.now())) {
+      if (isPvpSideToMoveTimedOut(game, chessForPvpClockAuthority(game, state.moves).turn(), syncedClockNow)) {
         void refreshSilent();
         throw new Error("Time expired");
       }
@@ -443,10 +617,14 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
       if (soundEnabledRef.current) playChessMoveSound();
 
       try {
-        const data = (await fetchWithAuth(`/api/pvp/games/${gameId}/move`, {
-          method: "POST",
-          body: JSON.stringify({ uci: validation.uci }),
-        })) as MovePostResponse;
+        const data = (await fetchWithAuth(
+          `/api/pvp/games/${gameId}/move`,
+          {
+            method: "POST",
+            body: JSON.stringify({ uci: validation.uci }),
+          },
+          { syncTime: false }
+        )) as MovePostResponse;
 
         const inserted = data.move;
         const gamePatch = data.game;
@@ -480,37 +658,75 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
         throw e;
       }
     },
-    [gameId, state.role, state.game, state.moves, pendingUci, fetchWithAuth, userId, chess, refreshSilent]
+    [gameId, state.role, state.game, state.moves, pendingUci, fetchWithAuth, userId, chess, refreshSilent, syncedClockNow]
   );
 
   const resign = useCallback(async () => {
     if (!gameId) return;
     await fetchWithAuth(`/api/pvp/games/${gameId}/resign`, { method: "POST" });
-    await refresh();
-  }, [gameId, refresh, fetchWithAuth]);
+    await refreshSilent();
+  }, [gameId, refreshSilent, fetchWithAuth]);
 
   const drawAction = useCallback(
     async (action: "offer" | "accept" | "decline" | "cancel") => {
-      if (!gameId) return;
+      if (!gameId || !userId) return;
+      setState((s) => {
+        if (!s.game) return s;
+        if (action === "offer") {
+          const isRenewal = s.game.draw_offered_by === userId;
+          const countField =
+            s.role === "white" ? "white_draw_offers_count" : "black_draw_offers_count";
+          const nextGame = {
+            ...s.game,
+            draw_offered_by: userId,
+            takeback_offered_by: null,
+          } as PvpGameRow;
+          if (!isRenewal && s.role) {
+            nextGame[countField] = Number(s.game[countField] ?? 0) + 1;
+          }
+          return { ...s, game: nextGame };
+        }
+        if (action === "cancel" || action === "decline") {
+          return { ...s, game: { ...s.game, draw_offered_by: null } };
+        }
+        return s;
+      });
       await fetchWithAuth(`/api/pvp/games/${gameId}/draw`, {
         method: "POST",
         body: JSON.stringify({ action }),
       });
-      await refresh();
+      await refreshSilent();
     },
-    [gameId, refresh, fetchWithAuth]
+    [gameId, userId, refreshSilent, fetchWithAuth]
   );
 
   const takebackAction = useCallback(
     async (action: "offer" | "accept" | "decline" | "cancel") => {
-      if (!gameId) return;
+      if (!gameId || !userId) return;
+      setState((s) => {
+        if (!s.game) return s;
+        if (action === "offer") {
+          return {
+            ...s,
+            game: {
+              ...s.game,
+              takeback_offered_by: userId,
+              draw_offered_by: null,
+            },
+          };
+        }
+        if (action === "cancel" || action === "decline") {
+          return { ...s, game: { ...s.game, takeback_offered_by: null } };
+        }
+        return s;
+      });
       await fetchWithAuth(`/api/pvp/games/${gameId}/takeback`, {
         method: "POST",
         body: JSON.stringify({ action }),
       });
-      await refresh();
+      await refreshSilent();
     },
-    [gameId, refresh, fetchWithAuth]
+    [gameId, userId, refreshSilent, fetchWithAuth]
   );
 
   const premoveQueuedRef = useRef(false);
@@ -564,6 +780,66 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
     return canOfferPvpTakeback(userId, state.role, state.moves, chess);
   }, [userId, state.role, state.game, state.moves, chess]);
 
+  useEffect(() => {
+    if (!userId || !state.moves.length) return;
+    for (let i = state.moves.length - 1; i >= 0; i--) {
+      const m = state.moves[i];
+      if (m.played_by && m.played_by !== userId) {
+        const ts = Date.parse(m.created_at);
+        if (Number.isFinite(ts)) setOpponentLastSeenAt(ts);
+        break;
+      }
+    }
+  }, [state.moves, userId]);
+
+  const opponentUserId = useMemo(() => {
+    if (!state.game || !userId || !state.game.black_user_id) return null;
+    return state.game.white_user_id === userId
+      ? state.game.black_user_id
+      : state.game.white_user_id;
+  }, [state.game, userId]);
+
+  const presenceEnabled =
+    isParticipant && state.game?.status === "playing" && Boolean(opponentUserId);
+  const { opponentPresenceAt } = usePvpGamePresence(
+    gameId,
+    userId,
+    opponentUserId,
+    presenceEnabled
+  );
+
+  const mergedOpponentLastSeen = useMemo(
+    () => mergeOpponentLastSeen(opponentLastSeenAt, opponentPresenceAt),
+    [opponentLastSeenAt, opponentPresenceAt]
+  );
+
+  const localConnection = useMemo(
+    () =>
+      localConnectionFromSignals({
+        online: browserOnline,
+        realtimeSubscribed,
+        lastEventAt,
+        lastApiOkAt,
+        nowMs: clockNow,
+      }),
+    [browserOnline, realtimeSubscribed, lastEventAt, lastApiOkAt, clockNow]
+  );
+
+  const opponentConnection = useMemo(
+    () => opponentConnectionFromLastSeen(mergedOpponentLastSeen, clockNow),
+    [mergedOpponentLastSeen, clockNow]
+  );
+
+  const whiteConnection = useMemo((): PvpConnectionInfo => {
+    if (!state.role) return opponentConnection;
+    return state.role === "white" ? localConnection : opponentConnection;
+  }, [state.role, localConnection, opponentConnection]);
+
+  const blackConnection = useMemo((): PvpConnectionInfo => {
+    if (!state.role) return opponentConnection;
+    return state.role === "black" ? localConnection : opponentConnection;
+  }, [state.role, localConnection, opponentConnection]);
+
   return {
     ...state,
     chess,
@@ -576,6 +852,12 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
     isMyTurn,
     isParticipant,
     isSideToMoveTimedOut,
+    syncedClockNow,
+    serverOffsetMs,
+    localConnection,
+    opponentConnection,
+    whiteConnection,
+    blackConnection,
     refresh,
     refreshSilent,
     createLobby,

@@ -6,6 +6,7 @@ import { isValidPvpTimePresetId, presetStorageInitialSec, resolvePvpTimePreset }
 import { pvpRateLimitOrResponse } from "@/lib/pvp-api-rate-limit";
 import { displayNameFromAuthUser } from "@/lib/pvp-display-name";
 import { fetchAccountSummariesByUserIds } from "@/lib/account-server";
+import { pvpActiveGameIsMyTurn } from "@/lib/pvp-active-games";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
@@ -114,6 +115,22 @@ export async function GET(request: NextRequest) {
   };
 
   const activeList = (activeRows ?? []) as ActiveRow[];
+  const activeIds = activeList.map((row) => row.id);
+
+  const moveCountByGame = new Map<string, number>();
+  if (activeIds.length > 0) {
+    const { data: moveRows, error: movesErr } = await sb
+      .from("pvp_moves")
+      .select("game_id, ply")
+      .in("game_id", activeIds);
+    if (movesErr) return jsonError(movesErr.message ?? "Move count failed", 500);
+    for (const moveRow of moveRows ?? []) {
+      const gid = moveRow.game_id as string;
+      const ply = moveRow.ply as number;
+      moveCountByGame.set(gid, Math.max(moveCountByGame.get(gid) ?? 0, ply));
+    }
+  }
+
   const oppIdsForEnrich = [
     ...new Set(
       activeList
@@ -132,12 +149,78 @@ export async function GET(request: NextRequest) {
     const oppLabel = isWhite ? row.black_display_name : row.white_display_name;
     const snapshotName = oppLabel?.trim() || null;
     const summary = oppId ? oppSummaries.get(oppId) : undefined;
+    const role = isWhite ? ("white" as const) : ("black" as const);
+    const moveCount = moveCountByGame.get(row.id) ?? 0;
     return {
       id: row.id,
       created_at: row.created_at,
       updated_at: row.updated_at,
-      role: isWhite ? ("white" as const) : ("black" as const),
+      role,
       opponent_user_id: oppId ?? "",
+      opponent_display_name: summary?.displayName ?? snapshotName,
+      opponent_avatar_url: summary?.avatarUrl ?? null,
+      time_preset: row.time_preset ?? "unlimited",
+      clock_mode: row.clock_mode ?? "unlimited",
+      clock_initial_sec: row.clock_initial_sec ?? 0,
+      clock_increment_sec: row.clock_increment_sec ?? 0,
+      move_count: moveCount,
+      is_my_turn: pvpActiveGameIsMyTurn(role, moveCount),
+    };
+  });
+
+  type RematchRow = {
+    id: string;
+    created_at: string;
+    white_user_id: string;
+    black_user_id: string;
+    white_display_name?: string | null;
+    black_display_name?: string | null;
+    time_preset?: string | null;
+    clock_mode?: string | null;
+    clock_initial_sec?: number | null;
+    clock_increment_sec?: number | null;
+    created_by?: string | null;
+  };
+
+  const { data: rematchRows, error: rematchErr } = await sb
+    .from("pvp_games")
+    .select(
+      "id, created_at, white_user_id, black_user_id, white_display_name, black_display_name, time_preset, clock_mode, clock_initial_sec, clock_increment_sec, created_by"
+    )
+    .eq("status", "waiting")
+    .not("black_user_id", "is", null)
+    .or(`white_user_id.eq.${user.id},black_user_id.eq.${user.id}`)
+    .gte("created_at", since)
+    .order("created_at", { ascending: false })
+    .limit(20);
+
+  if (rematchErr) return jsonError(rematchErr.message ?? "Rematch list failed", 500);
+
+  const rematchList = (rematchRows ?? []) as RematchRow[];
+  const rematchOppIds = [
+    ...new Set(
+      rematchList
+        .map((row) => {
+          const incoming = row.white_user_id === user.id;
+          return incoming ? row.black_user_id : row.white_user_id;
+        })
+        .filter((id): id is string => !!id && id.length >= 8)
+    ),
+  ];
+  const rematchSummaries = await fetchAccountSummariesByUserIds(sb, rematchOppIds);
+
+  const pendingRematches = rematchList.map((row) => {
+    const incoming = row.white_user_id === user.id;
+    const oppId = incoming ? row.black_user_id : row.white_user_id;
+    const snapshotName = (
+      incoming ? row.black_display_name : row.white_display_name
+    )?.trim() || null;
+    const summary = rematchSummaries.get(oppId);
+    return {
+      id: row.id,
+      created_at: row.created_at,
+      direction: incoming ? ("incoming" as const) : ("outgoing" as const),
+      opponent_user_id: oppId,
       opponent_display_name: summary?.displayName ?? snapshotName,
       opponent_avatar_url: summary?.avatarUrl ?? null,
       time_preset: row.time_preset ?? "unlimited",
@@ -147,7 +230,7 @@ export async function GET(request: NextRequest) {
     };
   });
 
-  return NextResponse.json({ games, activeGames });
+  return NextResponse.json({ games, activeGames, pendingRematches });
 }
 
 /** Create a new PvP lobby: creator plays White until an opponent joins as Black. */

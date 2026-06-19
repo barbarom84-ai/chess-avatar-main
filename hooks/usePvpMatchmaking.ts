@@ -4,6 +4,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { isMatchmakingEligiblePreset } from "@/lib/pvp-matchmaking";
 import { track } from "@/lib/track";
+import type { PvpGameRow } from "@/lib/pvp-chess";
+import { writePvpGameBootstrap } from "@/lib/pvp-game-bootstrap";
 
 type MatchmakingState = {
   inQueue: boolean;
@@ -19,6 +21,7 @@ type MatchResponse = {
   inQueue?: boolean;
   gameId?: string;
   role?: "white" | "black";
+  game?: PvpGameRow;
   timePreset?: string;
   queueSize?: number;
   error?: string;
@@ -80,6 +83,15 @@ export function usePvpMatchmaking(userId: string | null) {
 
   const applyPollResult = useCallback((data: MatchResponse): string | null => {
     if (data.matched && data.gameId) {
+      if (data.game && data.role) {
+        writePvpGameBootstrap({
+          gameId: data.gameId,
+          game: data.game,
+          role: data.role,
+          moves: [],
+          at: Date.now(),
+        });
+      }
       setState((s) => ({
         ...s,
         inQueue: false,
