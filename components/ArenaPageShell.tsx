@@ -7,7 +7,10 @@ import ArenaForcedOpeningPicker from "@/components/ArenaForcedOpeningPicker";
 import ArenaTimeControlPicker from "@/components/ArenaTimeControlPicker";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/lib/language-context";
-import { ARENA_FORCED_OPENING_STORAGE } from "@/lib/arena-forced-opening";
+import {
+  ARENA_DEFAULT_FORCED_OPENING_ID,
+  ARENA_FORCED_OPENING_STORAGE,
+} from "@/lib/arena-forced-opening";
 import {
   ARENA_DEFAULT_TIME_PRESET_ID,
   ARENA_TIME_PRESET_STORAGE,
@@ -19,14 +22,21 @@ type ArenaTab = "spectator" | "playoff";
 export default function ArenaPageShell() {
   const { t } = useLanguage();
   const [tab, setTab] = useState<ArenaTab>("spectator");
-  const [forcedOpeningId, setForcedOpeningId] = useState<string | null>(null);
+  const [forcedOpeningId, setForcedOpeningId] = useState<string | null>(
+    ARENA_DEFAULT_FORCED_OPENING_ID
+  );
   const [timePresetId, setTimePresetId] = useState(ARENA_DEFAULT_TIME_PRESET_ID);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
       const stored = localStorage.getItem(ARENA_FORCED_OPENING_STORAGE);
-      if (stored?.trim()) setForcedOpeningId(stored.trim());
+      if (stored === null) return;
+      if (stored.trim() === "") {
+        setForcedOpeningId(null);
+        return;
+      }
+      setForcedOpeningId(stored.trim());
       const storedTc = localStorage.getItem(ARENA_TIME_PRESET_STORAGE);
       if (storedTc?.trim()) setTimePresetId(storedTc.trim());
     } catch {
@@ -40,7 +50,7 @@ export default function ArenaPageShell() {
       if (forcedOpeningId) {
         localStorage.setItem(ARENA_FORCED_OPENING_STORAGE, forcedOpeningId);
       } else {
-        localStorage.removeItem(ARENA_FORCED_OPENING_STORAGE);
+        localStorage.setItem(ARENA_FORCED_OPENING_STORAGE, "");
       }
     } catch {
       /* ignore */

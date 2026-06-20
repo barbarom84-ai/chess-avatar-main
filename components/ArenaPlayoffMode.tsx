@@ -712,7 +712,7 @@ export default function ArenaPlayoffMode({
                 {isReady && matchRunning && (
                   <EvaluationBar evaluation={barEval} />
                 )}
-                <div className="w-full aspect-square min-h-0 overflow-hidden">
+                <div className="chessboard-frame chessboard-frame--md w-full overflow-hidden">
                   <SimpleChessboard
                     position={fen}
                     lastMove={lastMove}

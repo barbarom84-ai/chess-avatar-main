@@ -164,6 +164,7 @@ export default function OnlineChessboard({
         orientation={orientation}
         lastMove={lastMove}
         arrows={boardArrows}
+        boardMaxWidth="100%"
       />
       <PromotionDialog
         open={promotionOpen}

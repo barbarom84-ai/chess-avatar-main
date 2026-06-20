@@ -106,8 +106,8 @@ export default function LessonChessboard({
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-center max-w-[min(100%,420px)] mx-auto aspect-square w-full">
-        <SimpleChessboard position={fen} orientation={orientation} lastMove={lastMove} />
+      <div className="chessboard-frame chessboard-frame--lesson w-full">
+        <SimpleChessboard position={fen} orientation={orientation} lastMove={lastMove} boardMaxWidth="100%" />
       </div>
       <div className="flex flex-wrap items-center justify-center gap-2">
         <Button type="button" variant="outline" size="sm" disabled={!canPrev} onClick={() => go(0)}>

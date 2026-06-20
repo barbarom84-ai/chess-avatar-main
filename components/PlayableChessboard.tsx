@@ -85,6 +85,8 @@ interface PlayableChessboardProps {
   playerColor: "white" | "black";
   onConfigChange?: (config: EngineConfig) => void;
   onColorChange?: () => void;
+  /** Compact layout for /play (toolbar lives in the page shell). */
+  playPageLayout?: boolean;
   /** Partie enregistrée (page Mes parties) : review + variantes, sans moteur. */
   archivePgn?: string | null;
   /** Libellé affiché à la place du nom du bot (ex. adversaire). */
@@ -129,6 +131,7 @@ export default function PlayableChessboard({
   playerColor,
   onConfigChange,
   onColorChange,
+  playPageLayout = false,
   archivePgn,
   archiveViewLabel,
 }: PlayableChessboardProps) {
@@ -1219,16 +1222,18 @@ export default function PlayableChessboard({
   }
 
   return (
-    <div className="space-y-4">
+    <div className={playPageLayout ? "play-game-layout space-y-2" : "space-y-4"}>
       {/* Header compact avec actions */}
-      <div className="space-y-2">
-      <div className="flex items-center justify-between flex-wrap gap-3">
+      <div className={playPageLayout ? "space-y-1" : "space-y-2"}>
+      <div className="flex items-center justify-between flex-wrap gap-2">
         {/* Gauche: Statut */}
-        <div className="flex items-center gap-3">
-          <Badge variant="outline" className="bg-slate-900 border-green-500 text-xs">
-            {playerColor === 'white' ? `⚪ ${t.play.whiteSide}` : `⚫ ${t.play.blackSide}`}
-          </Badge>
-          <div className="text-sm">
+        <div className="flex items-center gap-2 min-w-0">
+          {!playPageLayout && (
+            <Badge variant="outline" className="bg-slate-900 border-green-500 text-xs shrink-0">
+              {playerColor === 'white' ? `⚪ ${t.play.whiteSide}` : `⚫ ${t.play.blackSide}`}
+            </Badge>
+          )}
+          <div className="text-sm min-w-0">
             <span className="font-semibold text-slate-200">
               {isArchiveMode && archiveViewLabel?.trim()
                 ? archiveViewLabel.trim()
@@ -1325,6 +1330,7 @@ export default function PlayableChessboard({
           lastBotEngineUsed={lastBotEngineUsed}
           botElo={currentConfig.elo}
           botDifficulty={currentConfig.difficulty}
+          compact={playPageLayout}
         />
       )}
       </div>
@@ -1362,7 +1368,7 @@ export default function PlayableChessboard({
       />
 
       {/* Layout principal: Échiquier CENTRÉ + Historique DROITE */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 lg:gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 lg:gap-3">
         
         {/* COLONNE GAUCHE : Infos (2/12) */}
         <div className="order-2 lg:order-1 lg:col-span-2 space-y-3">
@@ -1470,7 +1476,7 @@ export default function PlayableChessboard({
           )}
 
           {/* Raccourcis des flèches style Lichess */}
-          <Card className="p-3 bg-slate-900/50 border-slate-800">
+          <Card className={`p-3 bg-slate-900/50 border-slate-800 ${playPageLayout ? "play-left-optional hidden xl:block" : ""}`}>
             <h4 className="text-xs font-semibold text-slate-300 mb-2">
               {lang === "fr" ? "Raccourcis flèches" : "Arrow shortcuts"}
             </h4>
@@ -1513,7 +1519,7 @@ export default function PlayableChessboard({
         </div>
 
         {/* COLONNE CENTRALE : Échiquier (7/12) */}
-        <div className="order-1 lg:order-2 lg:col-span-7 space-y-3">
+        <div className="order-1 lg:order-2 lg:col-span-7 space-y-2">
           {showEvalBar && !isArchiveMode && !reviewMode && (
             <EvaluationBar evaluation={liveEval} />
           )}
@@ -1538,8 +1544,9 @@ export default function PlayableChessboard({
             </div>
           )}
           {/* Échiquier - ÉLÉMENT CENTRAL */}
-          <Card className="p-2 sm:p-4 lg:p-6 bg-slate-900 border-slate-800 shadow-xl">
+          <Card className={`${playPageLayout ? "p-2 sm:p-3" : "p-2 sm:p-4 lg:p-6"} bg-slate-900 border-slate-800 shadow-xl`}>
             <SimpleChessboard
+              className={playPageLayout ? "play-board-container" : undefined}
               position={
                 reviewMode && reviewPositionChess
                   ? reviewPositionChess.fen()
@@ -1594,7 +1601,7 @@ export default function PlayableChessboard({
 
         {/* COLONNE DROITE : Historique (3/12) - LE PLUS À DROITE */}
         <div className="order-3 lg:col-span-3">
-          <Card className="p-3 bg-slate-900/50 border-slate-800 lg:sticky lg:top-4">
+          <Card className={`p-3 bg-slate-900/50 border-slate-800 ${playPageLayout ? "play-sidebar-sticky" : "lg:sticky lg:top-[var(--sticky-below-nav,1rem)] lg:max-h-[calc(100dvh-var(--site-nav-height,4rem)-1rem)] lg:overflow-y-auto"}`}>
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
                 <BookOpen className="h-4 w-4 text-cyan-400" />

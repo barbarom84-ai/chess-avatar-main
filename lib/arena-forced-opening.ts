@@ -65,3 +65,6 @@ export function prepareArenaEngineConfig(
 }
 
 export const ARENA_FORCED_OPENING_STORAGE = "chess-arena.forcedOpeningId";
+
+/** Default forced opening when none is stored (Italian Game, ECO C50). */
+export const ARENA_DEFAULT_FORCED_OPENING_ID = "italian-game";

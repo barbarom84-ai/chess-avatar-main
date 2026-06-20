@@ -30,6 +30,10 @@ interface SimpleChessboardProps {
       blastRadius?: boolean;
     }
   >;
+  /** Optional wrapper class (e.g. play-board-container for viewport-fit sizing). */
+  className?: string;
+  /** Override default max-width; omit to use className-based sizing or the default cap. */
+  boardMaxWidth?: string;
 }
 
 export default function SimpleChessboard({
@@ -40,6 +44,8 @@ export default function SimpleChessboard({
   arrows = [],
   squareEmojis,
   squareEffects,
+  className,
+  boardMaxWidth,
 }: SimpleChessboardProps) {
   const { settings } = useChessboardSettings();
   const {
@@ -356,12 +362,18 @@ export default function SimpleChessboard({
 
   return (
     <div
-      className={`w-full aspect-square bg-slate-800 p-1.5 sm:p-2 rounded-lg shadow-2xl relative mx-auto min-h-0 ${
+      className={`w-full max-w-full aspect-square h-auto shrink-0 self-center bg-slate-800 p-1.5 sm:p-2 rounded-lg shadow-2xl relative mx-auto min-h-0 ${
         onDrop ? "touch-none" : ""
-      } ${isBoardDragging ? "cursor-grabbing select-none" : ""}`}
-      style={{ maxWidth: "min(96vw, 84vh, 820px)" }}
+      } ${isBoardDragging ? "cursor-grabbing select-none" : ""} ${className ?? ""}`}
+      style={
+        boardMaxWidth
+          ? { maxWidth: boardMaxWidth }
+          : className
+            ? undefined
+            : { maxWidth: "min(96vw, 84vh, 820px)" }
+      }
     >
-      <div className="grid grid-cols-8 grid-rows-8 gap-0 w-full h-full min-h-0">
+      <div className="grid grid-cols-8 grid-rows-8 gap-0 w-full aspect-square min-h-0">
         {displayRanks.map((rank, rankIdx) =>
           displayFiles.map((file, fileIdx) => {
             const square = `${file}${rank}`;

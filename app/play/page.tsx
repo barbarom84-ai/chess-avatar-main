@@ -156,8 +156,8 @@ function PlayContent() {
     <main className="min-h-screen theme-gradient theme-text-primary">
       <div className="max-w-[1600px] mx-auto">
         
-        {/* Barre de contrôle compacte en haut - Position fixe */}
-        <div className="lg:sticky lg:top-16 z-30 bg-gradient-to-b from-slate-950 to-slate-950/95 backdrop-blur-sm border-b theme-border px-2 md:px-4 py-2 space-y-1.5">
+        {/* Barre de contrôle compacte en haut */}
+        <div className="bg-gradient-to-b from-slate-950 to-slate-950/95 border-b theme-border px-2 md:px-4 py-1.5 md:py-2 space-y-1">
           <div className="flex items-center justify-between gap-2">
             {/* Gauche: carte compacte adversaire */}
             <div className="flex items-center gap-2 min-w-0">
@@ -223,7 +223,7 @@ function PlayContent() {
               </button>
             </div>
           </div>
-          <p className="text-[10px] text-slate-500 px-0.5 leading-tight hidden sm:block">
+          <p className="play-page-toolbar-hint text-[10px] text-slate-500 px-0.5 leading-tight hidden sm:block">
             <span className="text-cyan-500/70 mr-1" aria-hidden>
               ℹ️
             </span>
@@ -231,13 +231,14 @@ function PlayContent() {
           </p>
         </div>
 
-        {/* Zone de jeu - Échiquier commence immédiatement après la barre */}
-        <div className="p-2 md:p-4">
+        {/* Zone de jeu */}
+        <div className="p-2 md:p-3">
           <PlayableChessboard 
             config={config} 
             playerColor={playerColor}
             onConfigChange={setConfig}
             onColorChange={handleColorChange}
+            playPageLayout
           />
         </div>
 

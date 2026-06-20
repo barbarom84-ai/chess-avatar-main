@@ -60,7 +60,7 @@ export default function ReviewLayout({
       <div className="shrink-0 sticky top-0 z-10">{toolbar}</div>
 
       <div className="shrink-0 flex justify-center px-1 sm:px-2">
-        <div className="w-full max-w-[min(100%,520px)] aspect-square max-h-[42dvh] [&>div]:h-full [&>div]:w-full">
+        <div className="chessboard-frame chessboard-frame--review">
           {board}
         </div>
       </div>

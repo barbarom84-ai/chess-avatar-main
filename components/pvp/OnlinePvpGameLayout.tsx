@@ -379,7 +379,7 @@ export default function OnlinePvpGameLayout({
           <EvaluationBar evaluation={liveEval} compact />
         )}
 
-        <div className="w-full aspect-square max-h-[min(72dvh,calc(100vw-1rem))] xl:max-h-[min(78dvh,100%)]">
+        <div className="chessboard-frame chessboard-frame--pvp w-full">
           <OnlineChessboard
             fen={displayChess.fen()}
             orientation={effectiveOrientation}

@@ -555,6 +555,92 @@ nextjs-portal {
   }
 }
 
+/* Play vs bot — viewport-fit layout (nav + toolbar + board chrome) */
+:root {
+  --site-nav-height: 4rem;
+  --sticky-below-nav: calc(var(--site-nav-height) + 0.5rem);
+}
+
+.play-game-layout {
+  --play-layout-chrome: 21rem;
+}
+
+.play-game-layout .play-board-container {
+  aspect-ratio: 1 / 1;
+  width: min(96vw, calc(100dvh - var(--play-layout-chrome)), 720px);
+  max-width: 100%;
+  height: auto;
+  margin-inline: auto;
+}
+
+.play-game-layout .play-sidebar-sticky {
+  position: sticky;
+  top: var(--sticky-below-nav);
+  max-height: calc(100dvh - var(--site-nav-height) - 1rem);
+  overflow-y: auto;
+}
+
+@media (max-height: 900px) {
+  .play-game-layout {
+    --play-layout-chrome: 18.5rem;
+  }
+
+  .play-page-toolbar-hint,
+  .play-game-layout .play-left-optional {
+    display: none;
+  }
+}
+
+@media (max-width: 1023px) {
+  .play-game-layout {
+    --play-layout-chrome: 17rem;
+  }
+
+  .play-game-layout .play-sidebar-sticky {
+    position: static;
+    max-height: none;
+    overflow-y: visible;
+  }
+}
+
+@media (max-width: 640px) {
+  .play-game-layout {
+    --play-layout-chrome: 15rem;
+  }
+}
+
+/* Square chessboard wrapper — width drives height; avoids stretch in flex/grid layouts */
+.chessboard-frame {
+  aspect-ratio: 1 / 1;
+  width: min(100%, var(--chessboard-frame-max, 520px));
+  max-width: 100%;
+  margin-inline: auto;
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.chessboard-frame--review {
+  --chessboard-frame-max: min(520px, 42dvh);
+}
+
+.chessboard-frame--pvp {
+  --chessboard-frame-max: min(72dvh, calc(100vw - 1rem));
+}
+
+@media (min-width: 1280px) {
+  .chessboard-frame--pvp {
+    --chessboard-frame-max: min(78dvh, 100%);
+  }
+}
+
+.chessboard-frame--md {
+  --chessboard-frame-max: 28rem;
+}
+
+.chessboard-frame--lesson {
+  --chessboard-frame-max: min(420px, 100%);
+}
+
 /* Ascension reward modal shimmer */
 @keyframes shimmer {
   0%   { background-position: -200% center; }

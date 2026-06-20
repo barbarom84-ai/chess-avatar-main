@@ -773,7 +773,7 @@ export default function ArenaSpectator({
           <div className="flex justify-center">
             <div className="w-full max-w-md space-y-2">
               {isReady && <EvaluationBar evaluation={barEval} />}
-              <div className="w-full aspect-square">
+              <div className="chessboard-frame chessboard-frame--md w-full">
                 <SimpleChessboard
                   position={fen}
                   orientation="white"

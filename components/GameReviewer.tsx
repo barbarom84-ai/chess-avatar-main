@@ -1230,6 +1230,7 @@ export default function GameReviewer({
           orientation={orientation}
           lastMove={lastMoveForBoard}
           arrows={arrows}
+          boardMaxWidth="100%"
           onDrop={
             effectiveStatus === "running" ? undefined : handleExplorationDrop
           }
