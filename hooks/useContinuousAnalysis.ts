@@ -92,6 +92,11 @@ export function useContinuousAnalysis(options: UseContinuousAnalysisOptions = {}
   }, []);
 
   useEffect(() => {
+    if (!enabled) {
+      setEngineReady(false);
+      return;
+    }
+
     stockfishClient.acquire();
     let cancelled = false;
     void stockfishClient.waitUntilReady().then((ok) => {
@@ -103,7 +108,7 @@ export function useContinuousAnalysis(options: UseContinuousAnalysisOptions = {}
       stockfishClient.release();
       setEngineReady(false);
     };
-  }, []);
+  }, [enabled]);
 
   const stopAnalysis = useCallback(() => {
     sequenceRef.current += 1;

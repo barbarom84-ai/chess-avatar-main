@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { Chess, type Square } from "chess.js";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -52,6 +53,10 @@ import {
   PLAY_THEORY_ARROWS_STORAGE_KEY,
 } from "@/lib/play-opening-hints";
 import { stmEvalToWhitePov } from "@/lib/arena-spectator-helpers";
+import {
+  REVIEW_PGN_SESSION_KEY,
+  clearReviewSessionContext,
+} from "@/lib/review-session";
 
 const REVIEW_EMOJI_CHOICES = ["💡", "🔥", "❓", "!!", "!?", "⭐", "👍", "📌"];
 
@@ -222,6 +227,7 @@ export default function PlayableChessboard({
     isThinkingRef.current = isThinking;
   }, [isThinking]);
   const { t, lang } = useLanguage();
+  const router = useRouter();
   const { settings: boardUiSettings } = useChessboardSettings();
 
   const moveHistoryVerbose = useMemo(
@@ -1009,27 +1015,25 @@ export default function PlayableChessboard({
   };
 
   // Télécharger le PGN
-  const handleDownloadPGN = () => {
-    // Générer un PGN complet avec tous les headers
+  const buildCompletePgn = useCallback(() => {
     const date = new Date();
-    const dateStr = `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
-    const timeStr = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`;
-    
-    // Déterminer le résultat au format PGN
-    let pgnResult = '*';
-    if (gameResultType === 'win') {
-      pgnResult = playerColor === 'white' ? '1-0' : '0-1';
-    } else if (gameResultType === 'loss') {
-      pgnResult = playerColor === 'white' ? '0-1' : '1-0';
-    } else if (gameResultType === 'draw') {
-      pgnResult = '1/2-1/2';
+    const dateStr = `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, "0")}.${String(date.getDate()).padStart(2, "0")}`;
+    const timeStr = `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}:${String(date.getSeconds()).padStart(2, "0")}`;
+
+    let pgnResult = "*";
+    if (gameResultType === "win") {
+      pgnResult = playerColor === "white" ? "1-0" : "0-1";
+    } else if (gameResultType === "loss") {
+      pgnResult = playerColor === "white" ? "0-1" : "1-0";
+    } else if (gameResultType === "draw") {
+      pgnResult = "1/2-1/2";
     }
-    
-    // Déterminer les joueurs
-    const whitePlayer = playerColor === 'white' ? t.playableBoard.player : (currentConfig.name || 'Bot IA');
-    const blackPlayer = playerColor === 'black' ? t.playableBoard.player : (currentConfig.name || 'Bot IA');
-    
-    // Construire les headers PGN
+
+    const whitePlayer =
+      playerColor === "white" ? t.playableBoard.player : currentConfig.name || "Bot IA";
+    const blackPlayer =
+      playerColor === "black" ? t.playableBoard.player : currentConfig.name || "Bot IA";
+
     const headers = [
       `[Event "Chess Avatar Game"]`,
       `[Site "Chess Avatar"]`,
@@ -1040,48 +1044,61 @@ export default function PlayableChessboard({
       `[Black "${blackPlayer}"]`,
       `[Result "${pgnResult}"]`,
       `[TimeControl "-"]`,
-      `[WhiteElo "${playerColor === 'white' ? '?' : currentConfig.difficulty ? currentConfig.difficulty * 400 : '?'}"]`,
-      `[BlackElo "${playerColor === 'black' ? '?' : currentConfig.difficulty ? currentConfig.difficulty * 400 : '?'}"]`,
+      `[WhiteElo "${playerColor === "white" ? "?" : currentConfig.difficulty ? currentConfig.difficulty * 400 : "?"}"]`,
+      `[BlackElo "${playerColor === "black" ? "?" : currentConfig.difficulty ? currentConfig.difficulty * 400 : "?"}"]`,
       `[Termination "${gameResult}"]`,
     ];
-    
-    // Utiliser moveHistory au lieu de game.history() pour avoir TOUS les coups
+
     const moves = moveHistory;
-    let movesStr = '';
-    
+    let movesStr = "";
+
     if (moves.length === 0) {
-      // Aucun coup joué
       movesStr = pgnResult;
     } else {
-      // Formater les coups par paires (blancs + noirs)
       for (let i = 0; i < moves.length; i++) {
         if (i % 2 === 0) {
           movesStr += `${Math.floor(i / 2) + 1}. `;
         }
-        movesStr += moves[i] + ' ';
-        
-        // Retour à la ligne tous les 8 coups pour la lisibilité
+        movesStr += `${moves[i]} `;
         if (i % 16 === 15 && i < moves.length - 1) {
-          movesStr += '\n';
+          movesStr += "\n";
         }
       }
-      
-      // Ajouter le résultat à la fin
       movesStr += pgnResult;
     }
-    
-    // Assembler le PGN complet
-    const completePGN = headers.join('\n') + '\n\n' + movesStr;
-    
+
+    return `${headers.join("\n")}\n\n${movesStr}`;
+  }, [
+    gameResult,
+    gameResultType,
+    moveHistory,
+    playerColor,
+    currentConfig.difficulty,
+    currentConfig.name,
+    t.playableBoard.player,
+  ]);
+
+  const handleDownloadPGN = () => {
+    const completePGN = buildCompletePgn();
     const blob = new Blob([completePGN], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `partie-${currentConfig.name}-${dateStr}.pgn`;
+    a.download = `partie-${currentConfig.name}-${new Date().toISOString().slice(0, 10)}.pgn`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+  };
+
+  const handleAnalyzeWithCoach = () => {
+    if (isArchiveMode || typeof window === "undefined") return;
+    const pgn = buildCompletePgn();
+    if (!pgn.trim()) return;
+    setShowResultModal(false);
+    clearReviewSessionContext();
+    sessionStorage.setItem(REVIEW_PGN_SESSION_KEY, pgn);
+    router.push("/review");
   };
 
   // Gestion des callbacks du modal
@@ -1365,13 +1382,24 @@ export default function PlayableChessboard({
         onSwitchColor={handleSwitchColor}
         onConfigure={handleConfigure}
         onDownloadPGN={handleDownloadPGN}
+        onAnalyzeWithCoach={!isArchiveMode ? handleAnalyzeWithCoach : undefined}
       />
 
       {/* Layout principal: Échiquier CENTRÉ + Historique DROITE */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 lg:gap-3">
         
         {/* COLONNE GAUCHE : Infos (2/12) */}
-        <div className="order-2 lg:order-1 lg:col-span-2 space-y-3">
+        <div className={`${playPageLayout ? "order-3" : "order-2"} lg:order-1 lg:col-span-2`}>
+          <details
+            className={playPageLayout ? "play-side-details space-y-3" : "space-y-3"}
+            open={playPageLayout ? undefined : true}
+          >
+            {playPageLayout ? (
+              <summary className="lg:hidden px-3 py-2 text-xs font-semibold text-slate-300 cursor-pointer select-none rounded-lg border border-slate-800 bg-slate-900/50 mb-2 list-none [&::-webkit-details-marker]:hidden">
+                {t.playableBoard.detailsPanel}
+              </summary>
+            ) : null}
+            <div className="space-y-3">
           {/* Infos compactes */}
           {!gameOver && (
             <Card className="p-3 bg-slate-900/50 border-slate-800">
@@ -1516,6 +1544,8 @@ export default function PlayableChessboard({
               </div>
             </div>
           </Card>
+            </div>
+          </details>
         </div>
 
         {/* COLONNE CENTRALE : Échiquier (7/12) */}
@@ -1546,7 +1576,7 @@ export default function PlayableChessboard({
           {/* Échiquier - ÉLÉMENT CENTRAL */}
           <Card className={`${playPageLayout ? "p-2 sm:p-3" : "p-2 sm:p-4 lg:p-6"} bg-slate-900 border-slate-800 shadow-xl`}>
             <SimpleChessboard
-              className={playPageLayout ? "play-board-container" : undefined}
+              className={playPageLayout ? "chessboard-frame chessboard-frame--play w-full" : undefined}
               position={
                 reviewMode && reviewPositionChess
                   ? reviewPositionChess.fen()
@@ -1600,7 +1630,7 @@ export default function PlayableChessboard({
         </div>
 
         {/* COLONNE DROITE : Historique (3/12) - LE PLUS À DROITE */}
-        <div className="order-3 lg:col-span-3">
+        <div className={`${playPageLayout ? "order-2" : "order-3"} lg:col-span-3`}>
           <Card className={`p-3 bg-slate-900/50 border-slate-800 ${playPageLayout ? "play-sidebar-sticky" : "lg:sticky lg:top-[var(--sticky-below-nav,1rem)] lg:max-h-[calc(100dvh-var(--site-nav-height,4rem)-1rem)] lg:overflow-y-auto"}`}>
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-sm font-semibold text-slate-300 flex items-center gap-2">

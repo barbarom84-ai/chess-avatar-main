@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLanguage } from "@/lib/language-context";
 
 interface ReviewLayoutProps {
-  viewportOffset?: string;
+  reviewShellClassName?: string;
   toolbar: ReactNode;
   board: ReactNode;
   boardNav: ReactNode;
@@ -41,7 +41,7 @@ function PanelShell({
 }
 
 export default function ReviewLayout({
-  viewportOffset = "7rem",
+  reviewShellClassName = "",
   toolbar,
   board,
   boardNav,
@@ -53,11 +53,8 @@ export default function ReviewLayout({
   const { t } = useLanguage();
 
   return (
-    <div
-      className="flex flex-col gap-2 min-h-[520px]"
-      style={{ height: `calc(100dvh - ${viewportOffset})` }}
-    >
-      <div className="shrink-0 sticky top-0 z-10">{toolbar}</div>
+    <div className={`review-shell flex flex-col gap-2 min-h-[520px] ${reviewShellClassName}`}>
+      <div className="shrink-0 md:sticky md:top-0 z-10">{toolbar}</div>
 
       <div className="shrink-0 flex justify-center px-1 sm:px-2">
         <div className="chessboard-frame chessboard-frame--review">

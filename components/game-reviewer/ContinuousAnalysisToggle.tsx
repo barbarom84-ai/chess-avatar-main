@@ -16,6 +16,9 @@ export default function ContinuousAnalysisToggle({
   onToggle,
 }: ContinuousAnalysisToggleProps) {
   const { t } = useLanguage();
+  const label = enabled
+    ? t.review.continuousAnalysis.toggleActive
+    : t.review.continuousAnalysis.toggle;
 
   return (
     <Button
@@ -24,20 +27,15 @@ export default function ContinuousAnalysisToggle({
       disabled={disabled}
       className={
         enabled
-          ? "h-8 bg-amber-600 hover:bg-amber-500 text-white"
-          : "h-8 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600"
+          ? "h-8 shrink-0 max-w-full bg-amber-600 hover:bg-amber-500 text-white px-2 sm:px-3"
+          : "h-8 shrink-0 max-w-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600 px-2 sm:px-3"
       }
       onClick={onToggle}
-      title={
-        enabled
-          ? t.review.continuousAnalysis.toggleActive
-          : t.review.continuousAnalysis.toggle
-      }
+      title={label}
+      aria-label={label}
     >
-      <Search className="h-3.5 w-3.5 mr-1.5" />
-      {enabled
-        ? t.review.continuousAnalysis.toggleActive
-        : t.review.continuousAnalysis.toggle}
+      <Search className="h-3.5 w-3.5 shrink-0 sm:mr-1.5" />
+      <span className="hidden sm:inline truncate">{label}</span>
     </Button>
   );
 }

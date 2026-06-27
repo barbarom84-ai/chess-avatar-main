@@ -175,11 +175,14 @@ export default function AdvancedGameViewer({ pgn, playerColor = 'white' }: Advan
         
         {/* Échiquier + Contrôles */}
         <div className="lg:col-span-3 space-y-3">
-          <Card className="p-4 bg-slate-900 border-slate-800">
-            <SimpleChessboard 
-              position={currentFen} 
-              orientation={boardOrientation}
-            />
+          <Card className="p-3 sm:p-4 bg-slate-900 border-slate-800">
+            <div className="chessboard-frame chessboard-frame--viewer w-full">
+              <SimpleChessboard 
+                position={currentFen} 
+                orientation={boardOrientation}
+                boardMaxWidth="100%"
+              />
+            </div>
           </Card>
 
           {/* Contrôles de navigation */}

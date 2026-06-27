@@ -120,8 +120,8 @@ function ReviewContent() {
 
         {!isPremium && (
           <Card className="bg-amber-900/20 border-amber-500/30">
-            <CardContent className="py-2 flex items-center justify-between gap-3 flex-wrap">
-              <div className="text-xs text-amber-200">
+            <CardContent className="py-2 px-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <div className="text-xs text-amber-200 leading-snug min-w-0">
                 {t.review.freeLimits
                   .replace("{depth}", String(12))
                   .replace("{plies}", String(FREE_MAX_PLIES))}
@@ -130,10 +130,10 @@ function ReviewContent() {
                 size="sm"
                 variant="outline"
                 onClick={() => setShowUpgrade(true)}
-                className="border-amber-500/50 text-amber-200 hover:bg-amber-500/10"
+                className="border-amber-500/50 text-amber-200 hover:bg-amber-500/10 shrink-0 self-start sm:self-auto"
               >
-                <Crown className="h-4 w-4 mr-2" />
-                {t.review.upgradeForFull}
+                <Crown className="h-4 w-4 mr-1.5 shrink-0" />
+                <span className="text-xs">{t.review.upgradeForFull}</span>
               </Button>
             </CardContent>
           </Card>
@@ -151,7 +151,9 @@ function ReviewContent() {
           cloudSaveContext={{
             emailLocalPart: email?.split("@")[0] ?? null,
           }}
-          viewportOffset={isPremium ? "5rem" : "7.5rem"}
+          reviewShellClassName={
+            isPremium ? "review-shell--compact-header" : "review-shell--with-upsell"
+          }
         />
       </div>
 

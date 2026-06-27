@@ -27,16 +27,8 @@ import {
   Bot,
   Save,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import { Chess, type Move, type Square as ChessSquare } from "chess.js";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  ResponsiveContainer,
-  ReferenceLine,
-  Tooltip as ReTooltip,
-} from "recharts";
 
 import SimpleChessboard from "./SimpleChessboard";
 import { Button } from "./ui/button";
@@ -47,6 +39,11 @@ import { Input } from "./ui/input";
 import { useGameReview, type ReviewStatus } from "@/hooks/useGameReview";
 import { useContinuousAnalysis } from "@/hooks/useContinuousAnalysis";
 import ReviewLayout from "./game-reviewer/ReviewLayout";
+
+const EvalGraphPanel = dynamic(
+  () => import("./game-reviewer/EvalGraphPanel"),
+  { ssr: false }
+);
 import ReviewToolbar from "./game-reviewer/ReviewToolbar";
 import EngineModule from "./game-reviewer/EngineModule";
 import BoardNavigationBar from "./game-reviewer/BoardNavigationBar";
@@ -187,8 +184,8 @@ interface GameReviewerProps {
   } | null;
   /** AprÃ¨s enregistrement rÃ©ussi dans `games`. */
   onSavedToGamesCloud?: () => void;
-  /** CSS length subtracted from 100dvh for viewport-fit layout (page header). */
-  viewportOffset?: string;
+  /** CSS class on review shell for viewport-fit layout (see .review-shell in globals.css). */
+  reviewShellClassName?: string;
 }
 
 export default function GameReviewer({
@@ -204,7 +201,7 @@ export default function GameReviewer({
   reviewCloudSavePlayerHint = null,
   cloudSaveContext = null,
   onSavedToGamesCloud,
-  viewportOffset = "7rem",
+  reviewShellClassName = "",
 }: GameReviewerProps) {
   const { t, lang } = useLanguage();
 
@@ -1164,38 +1161,17 @@ export default function GameReviewer({
 
   const evalGraphPanel =
     evalSeries.length > 1 ? (
-      <div className="h-36 w-full">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={evalSeries}>
-            <XAxis dataKey="ply" hide />
-            <YAxis domain={[-10, 10]} hide />
-            <ReferenceLine y={0} stroke="#475569" strokeDasharray="3 3" />
-            <ReTooltip
-              contentStyle={{
-                background: "#0f172a",
-                border: "1px solid #334155",
-                fontSize: 12,
-              }}
-              formatter={(value: number) => [value.toFixed(2), t.review.eval]}
-              labelFormatter={(label: number) => `${t.review.ply} ${label}`}
-            />
-            <Line
-              type="monotone"
-              dataKey="eval"
-              stroke="#22d3ee"
-              strokeWidth={2}
-              dot={false}
-              isAnimationActive={false}
-            />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
+      <EvalGraphPanel
+        data={evalSeries}
+        evalLabel={t.review.eval}
+        plyLabel={t.review.ply}
+      />
     ) : null;
 
   return (
     <>
     <ReviewLayout
-      viewportOffset={viewportOffset}
+      reviewShellClassName={reviewShellClassName}
       toolbar={
         <ReviewToolbar
           analysisStrictness={analysisStrictness}

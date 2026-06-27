@@ -572,15 +572,18 @@ export default function AscensionPuzzlePlayer({
           </p>
         )}
         {!blocked && (
-        <SimpleChessboard
-          position={position}
-          onDrop={handleDrop}
-          lastMove={lastMove}
-          orientation={playerOrientation}
-          squareEffects={squareEffects}
-          squareEmojis={squareEmojis}
-          arrows={tunnelArrows}
-        />
+        <div className="chessboard-frame chessboard-frame--puzzle w-full mx-auto">
+          <SimpleChessboard
+            position={position}
+            onDrop={handleDrop}
+            lastMove={lastMove}
+            orientation={playerOrientation}
+            squareEffects={squareEffects}
+            squareEmojis={squareEmojis}
+            arrows={tunnelArrows}
+            boardMaxWidth="100%"
+          />
+        </div>
         )}
 
         {!blocked && (

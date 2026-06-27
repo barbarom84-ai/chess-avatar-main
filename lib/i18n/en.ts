@@ -1080,7 +1080,8 @@ export const en = {
       configure: "Configure",
       home: "Home",
       precisionAnalyzing: "Analyzing accuracy…",
-      precisionAnalysisPlyCount: "{{current}} / {{total}} moves"
+      precisionAnalysisPlyCount: "{{current}} / {{total}} moves",
+      analyzeWithCoach: "Analyze with coach",
     },
 
     // Header / nav
@@ -2306,6 +2307,7 @@ export const en = {
       openingUnknown: "Line not in local repertoire",
       outOfBookBadge: "Out of book",
       transpositionsHeading: "Other lines (transpositions)",
+      detailsPanel: "Details",
     },
 
     // Forced line editor extended

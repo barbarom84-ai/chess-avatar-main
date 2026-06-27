@@ -93,8 +93,8 @@ export default function ReviewToolbar({
 
     if (effectiveStatus === "done") {
       return (
-        <div className="flex flex-wrap items-center justify-end gap-1.5">
-          <span className="text-xs text-emerald-300 flex items-center gap-1 mr-1">
+        <div className="flex flex-wrap items-center justify-start sm:justify-end gap-1.5 w-full">
+          <span className="text-xs text-emerald-300 flex items-center gap-1 shrink-0">
             <Crown className="h-3 w-3" />
             <span className="hidden sm:inline">{t.review.done}</span>
           </span>
@@ -152,9 +152,9 @@ export default function ReviewToolbar({
     if (!hasCachedResult) {
       if (reviewStatus === "running") {
         return (
-          <div className="flex flex-col gap-1 min-w-[12rem] flex-1 max-w-md">
-            <div className="flex items-center justify-between gap-2 text-xs text-slate-300">
-              <div className="flex items-center gap-1.5 min-w-0">
+          <div className="flex flex-col gap-1 w-full sm:min-w-[12rem] sm:flex-1 sm:max-w-md">
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-300">
+              <div className="flex flex-wrap items-center gap-1.5 min-w-0">
                 <ContinuousAnalysisToggle
                   enabled={continuousEnabled}
                   onToggle={onContinuousToggle}
@@ -192,18 +192,18 @@ export default function ReviewToolbar({
         }
         if (reviewStatus === "idle") {
           return (
-            <div className="flex items-center gap-1.5">
+            <div className="flex flex-wrap items-center gap-1.5 w-full sm:w-auto">
               <ContinuousAnalysisToggle
                 enabled={continuousEnabled}
                 onToggle={onContinuousToggle}
               />
               <Button
                 size="sm"
-                className="h-8 bg-cyan-600 hover:bg-cyan-500 text-white"
+                className="h-8 shrink-0 bg-cyan-600 hover:bg-cyan-500 text-white"
                 onClick={onStartAnalysis}
               >
-                <Play className="h-3.5 w-3.5 mr-1" />
-                {t.review.startAnalysis}
+                <Play className="h-3.5 w-3.5 sm:mr-1" />
+                <span className="hidden sm:inline">{t.review.startAnalysis}</span>
               </Button>
             </div>
           );
@@ -226,24 +226,24 @@ export default function ReviewToolbar({
   };
 
   return (
-    <div className="rounded-lg border border-cyan-500/25 bg-slate-900/80 backdrop-blur-sm">
-      <div className="flex flex-wrap items-center justify-between gap-2 px-2 py-1.5">
-        <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+    <div className="rounded-lg border border-cyan-500/25 bg-slate-900/80 backdrop-blur-sm overflow-hidden">
+      <div className="flex flex-col gap-2 px-2 py-1.5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+        <div className="flex flex-wrap items-center gap-1.5 min-w-0 w-full sm:w-auto sm:max-w-[55%]">
           <Button
             type="button"
             size="sm"
             variant="ghost"
-            className="h-8 text-slate-300 hover:text-cyan-200 hover:bg-slate-800"
+            className="h-8 shrink-0 text-slate-300 hover:text-cyan-200 hover:bg-slate-800"
             onClick={() => setSettingsOpen((o) => !o)}
           >
-            <Settings2 className="h-3.5 w-3.5 mr-1.5" />
-            <span className="text-xs">
+            <Settings2 className="h-3.5 w-3.5 sm:mr-1.5" />
+            <span className="text-xs hidden min-[380px]:inline">
               {settingsOpen ? t.review.layout.settingsCollapse : t.review.layout.settingsToggle}
             </span>
             {settingsOpen ? (
-              <ChevronUp className="h-3.5 w-3.5 ml-1" />
+              <ChevronUp className="h-3.5 w-3.5 ml-0.5" />
             ) : (
-              <ChevronDown className="h-3.5 w-3.5 ml-1" />
+              <ChevronDown className="h-3.5 w-3.5 ml-0.5" />
             )}
           </Button>
           {canSaveToGames && !showSavedInGamesList && (
@@ -251,27 +251,30 @@ export default function ReviewToolbar({
               type="button"
               size="sm"
               variant="ghost"
-              className="h-8 px-2 text-cyan-300 hover:text-cyan-100 hover:bg-cyan-500/10"
+              className="h-8 shrink-0 px-2 text-cyan-300 hover:text-cyan-100 hover:bg-cyan-500/10"
               onClick={onSaveToGames}
               disabled={saveBusy}
               title={t.review.saveToCloudButton}
+              aria-label={t.review.saveToCloudButton}
             >
               {saveBusy ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin sm:mr-1" />
               ) : (
                 <Save className="h-3.5 w-3.5 sm:mr-1" />
               )}
-              <span className="text-xs">{t.review.saveToCloudButton}</span>
+              <span className="text-xs hidden sm:inline">{t.review.saveToCloudButton}</span>
             </Button>
           )}
           {showSavedInGamesList && (
-            <span className="text-xs text-emerald-300 flex items-center gap-1 px-1">
+            <span className="text-xs text-emerald-300 flex items-center gap-1 px-1 shrink-0">
               <Check className="h-3.5 w-3.5" />
-              <span>{t.review.savedInGamesList}</span>
+              <span className="hidden sm:inline">{t.review.savedInGamesList}</span>
             </span>
           )}
         </div>
-        <div className="flex-1 flex justify-end min-w-0">{renderActions()}</div>
+        <div className="w-full sm:w-auto sm:flex-1 sm:flex sm:justify-end min-w-0">
+          {renderActions()}
+        </div>
       </div>
 
       {settingsOpen && (

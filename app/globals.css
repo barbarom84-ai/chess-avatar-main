@@ -565,12 +565,58 @@ nextjs-portal {
   --play-layout-chrome: 21rem;
 }
 
+.play-game-layout .play-board-container,
+.chessboard-frame--play {
+  --chessboard-frame-max: min(96vw, calc(100dvh - var(--play-layout-chrome, 21rem)), 720px);
+}
+
 .play-game-layout .play-board-container {
   aspect-ratio: 1 / 1;
-  width: min(96vw, calc(100dvh - var(--play-layout-chrome)), 720px);
+  width: min(100%, var(--chessboard-frame-max));
   max-width: 100%;
   height: auto;
   margin-inline: auto;
+}
+
+.chessboard-frame--puzzle {
+  --chessboard-frame-max: min(400px, 100%);
+}
+
+.chessboard-frame--viewer {
+  --chessboard-frame-max: min(520px, 55dvh, 100%);
+}
+
+/* Review / games analysis shell */
+.review-shell {
+  --review-chrome-height: 7rem;
+  height: calc(100dvh - var(--review-chrome-height));
+}
+
+.review-shell--compact-header {
+  --review-chrome-height: 5.5rem;
+}
+
+.review-shell--with-upsell {
+  --review-chrome-height: 10rem;
+}
+
+@media (max-width: 767px) {
+  .review-shell {
+    height: auto;
+    min-height: 0;
+  }
+
+  .review-shell--compact-header {
+    --review-chrome-height: 0rem;
+  }
+
+  .review-shell--with-upsell {
+    --review-chrome-height: 0rem;
+  }
+
+  .chessboard-frame--review {
+    --chessboard-frame-max: min(calc(100vw - 0.75rem), 92vw);
+  }
 }
 
 .play-game-layout .play-sidebar-sticky {
@@ -606,6 +652,12 @@ nextjs-portal {
 @media (max-width: 640px) {
   .play-game-layout {
     --play-layout-chrome: 15rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .play-side-details:not([open]) > .space-y-3 {
+    display: block;
   }
 }
 

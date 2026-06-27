@@ -203,16 +203,19 @@ export default function LichessPuzzlePlayer({ puzzle, labels }: LichessPuzzlePla
       </p>
 
       <div
-        className={`flex justify-center max-w-[min(100%,400px)] mx-auto transition-opacity ${
+        className={`flex justify-center mx-auto transition-opacity ${
           wrongFlash ? "opacity-70 ring-2 ring-rose-600/50 rounded-sm" : ""
         }`}
       >
-        <SimpleChessboard
-          position={fen}
-          orientation={orientation}
-          onDrop={solved ? undefined : handleDrop}
-          lastMove={lastMove}
-        />
+        <div className="chessboard-frame chessboard-frame--puzzle w-full">
+          <SimpleChessboard
+            position={fen}
+            orientation={orientation}
+            onDrop={solved ? undefined : handleDrop}
+            lastMove={lastMove}
+            boardMaxWidth="100%"
+          />
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-2 justify-center items-center">

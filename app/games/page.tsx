@@ -512,8 +512,8 @@ export default function GamesPage() {
 
           {!isPremium && (
             <Card className="bg-amber-900/20 border-amber-500/30">
-            <CardContent className="py-2 flex items-center justify-between gap-3 flex-wrap">
-              <div className="text-xs text-amber-200">
+            <CardContent className="py-2 px-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <div className="text-xs text-amber-200 leading-snug min-w-0">
                 {t.review.freeLimits
                   .replace("{depth}", String(12))
                   .replace("{plies}", String(FREE_MAX_PLIES))}
@@ -522,10 +522,10 @@ export default function GamesPage() {
                 size="sm"
                 variant="outline"
                 onClick={() => setShowUpgrade(true)}
-                className="border-amber-500/50 text-amber-200 hover:bg-amber-500/10"
+                className="border-amber-500/50 text-amber-200 hover:bg-amber-500/10 shrink-0 self-start sm:self-auto"
               >
-                <Crown className="h-4 w-4 mr-2" />
-                {t.review.upgradeForFull}
+                <Crown className="h-4 w-4 mr-1.5 shrink-0" />
+                <span className="text-xs">{t.review.upgradeForFull}</span>
               </Button>
             </CardContent>
           </Card>
@@ -554,7 +554,9 @@ export default function GamesPage() {
               void loadGames();
               void loadStats();
             }}
-            viewportOffset={isPremium ? "5.5rem" : "8rem"}
+            reviewShellClassName={
+              isPremium ? "review-shell--compact-header" : "review-shell--with-upsell"
+            }
           />
         </div>
 
@@ -570,8 +572,8 @@ export default function GamesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 py-8 px-4">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="min-h-screen theme-gradient theme-text-primary py-4 px-3 md:py-8 md:px-4">
+      <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
         {/* Header */}
         <div className="text-center">
           <h1 className="text-3xl font-bold neon-cyan mb-2">{t.pages.games.title}</h1>
@@ -592,7 +594,7 @@ export default function GamesPage() {
         </section>
 
         {/* Statistiques */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
           <Card className="bg-slate-900 border-cyan-500/20">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
@@ -647,20 +649,80 @@ export default function GamesPage() {
 
         {/* Filtres et Recherche */}
         <Card className="bg-slate-900 border-cyan-500/20">
-          <CardContent className="pt-6">
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                  <Input
-                    placeholder={t.games.searchOpponent}
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 bg-slate-950 border-slate-700 text-slate-200"
-                  />
+          <CardContent className="pt-4 pb-4">
+            <div className="relative mb-3 md:mb-0">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Input
+                placeholder={t.games.searchOpponent}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 bg-slate-950 border-slate-700 text-slate-200"
+              />
+            </div>
+
+            <details className="md:hidden rounded-lg border border-slate-800 bg-slate-950/50">
+              <summary className="px-3 py-2 text-sm text-cyan-400 cursor-pointer select-none">
+                {t.common.filter}
+              </summary>
+              <div className="px-3 pb-3 space-y-3">
+                <div className="flex flex-wrap gap-2">
+                  {(["all", "win", "loss", "draw"] as const).map((key) => (
+                    <Button
+                      key={key}
+                      variant={filterResult === key ? "default" : "outline"}
+                      onClick={() => setFilterResult(key)}
+                      size="sm"
+                      className={
+                        filterResult === key
+                          ? key === "win"
+                            ? "bg-green-600"
+                            : key === "loss"
+                              ? "bg-red-600"
+                              : key === "draw"
+                                ? "bg-amber-600"
+                                : "bg-cyan-600"
+                          : "border-slate-600"
+                      }
+                    >
+                      {key === "all"
+                        ? t.games.all
+                        : key === "win"
+                          ? t.games.victories
+                          : key === "loss"
+                            ? t.games.defeats
+                            : t.games.draws}
+                    </Button>
+                  ))}
+                </div>
+                <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-800">
+                  {(
+                    [
+                      ["all", t.games.filterGameKindAll, "bg-indigo-600"],
+                      ["human", t.games.filterGameKindHuman, "bg-cyan-600"],
+                      ["arena", t.games.filterGameKindArena, "bg-violet-600"],
+                      ["pvp", t.games.filterGameKindPvp, "bg-emerald-600"],
+                    ] as const
+                  ).map(([key, label, activeClass]) => (
+                    <Button
+                      key={key}
+                      type="button"
+                      variant={gameKindFilter === key ? "default" : "outline"}
+                      onClick={() => setGameKindFilter(key)}
+                      size="sm"
+                      className={
+                        gameKindFilter === key
+                          ? `${activeClass} text-white`
+                          : "border-slate-600"
+                      }
+                    >
+                      {label}
+                    </Button>
+                  ))}
                 </div>
               </div>
-              <div className="flex gap-2">
+            </details>
+
+            <div className="hidden md:flex gap-2 flex-wrap">
                 <Button
                   variant={filterResult === 'all' ? 'default' : 'outline'}
                   onClick={() => setFilterResult('all')}
@@ -689,9 +751,8 @@ export default function GamesPage() {
                 >
                   {t.games.draws}
                 </Button>
-              </div>
             </div>
-            <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-slate-800">
+            <div className="hidden md:flex flex-wrap gap-2 mt-4 pt-4 border-t border-slate-800">
               <Button
                 type="button"
                 variant={gameKindFilter === "all" ? "default" : "outline"}

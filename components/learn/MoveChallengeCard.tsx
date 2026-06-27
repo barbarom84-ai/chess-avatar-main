@@ -200,8 +200,6 @@ export default function MoveChallengeCard({
   const titleClass = lichessMode
     ? "text-base text-cyan-100/95"
     : "text-base text-amber-200/90";
-  const boardMax = lichessMode ? "max-w-[min(100%,400px)]" : "max-w-[min(100%,360px)]";
-
   const choicesButtons = (
     <div className="flex flex-wrap gap-2 justify-center">
           {choices.map((uci) => {
@@ -260,16 +258,28 @@ export default function MoveChallengeCard({
         )}
 
         <div
-          className={`flex justify-center ${boardMax} mx-auto transition-opacity ${
+          className={`flex justify-center mx-auto transition-opacity ${
             wrongFlash ? "opacity-70 ring-2 ring-rose-600/50 rounded-sm" : ""
           }`}
         >
-          <SimpleChessboard
-            position={displayFen}
-            orientation={boardOrientation}
-            onDrop={picked ? undefined : handleBoardDrop}
-            lastMove={lastMoveHighlight}
-          />
+          <div
+            className={`chessboard-frame w-full ${
+              lichessMode ? "chessboard-frame--puzzle" : ""
+            }`}
+            style={
+              lichessMode
+                ? undefined
+                : ({ ["--chessboard-frame-max" as string]: "min(360px, 100%)" } as React.CSSProperties)
+            }
+          >
+            <SimpleChessboard
+              position={displayFen}
+              orientation={boardOrientation}
+              onDrop={picked ? undefined : handleBoardDrop}
+              lastMove={lastMoveHighlight}
+              boardMaxWidth="100%"
+            />
+          </div>
         </div>
 
         {lichessMode && lichessLike?.choicesAid ? (

@@ -2,7 +2,7 @@
 
 import { Chess, type Square, type Piece } from "chess.js";
 import Image from "next/image";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useChessboardSettings, getPieceImagePath } from "@/contexts/ChessboardSettingsContext";
 import {
   LICHESS_ARROW_COLORS,
@@ -99,6 +99,8 @@ export default function SimpleChessboard({
   const suppressNextClickRef = useRef(false);
   const activeDragSquareRef = useRef<string | null>(null);
   const dragStartClientRef = useRef<{ x: number; y: number } | null>(null);
+  const boardRootRef = useRef<HTMLDivElement>(null);
+  const [keyboardSquare, setKeyboardSquare] = useState("e4");
 
   const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
   const ranks = ['8', '7', '6', '5', '4', '3', '2', '1'];
@@ -130,6 +132,33 @@ export default function SimpleChessboard({
 
   const animDur = getAnimationDuration();
   const isBoardDragging = draggedSquare !== null;
+
+  const squareLabel = useCallback((square: string, piece: Piece | null | undefined) => {
+    const label = square.toUpperCase();
+    if (!piece) return `${label}, empty`;
+    const color = piece.color === "w" ? "white" : "black";
+    const names: Record<string, string> = {
+      p: "pawn",
+      n: "knight",
+      b: "bishop",
+      r: "rook",
+      q: "queen",
+      k: "king",
+    };
+    return `${label}, ${color} ${names[piece.type] ?? piece.type}`;
+  }, []);
+
+  const moveKeyboardSquare = useCallback(
+    (deltaFile: number, deltaRank: number) => {
+      const fileIdx = files.indexOf(keyboardSquare[0]);
+      const rankIdx = ranks.indexOf(keyboardSquare[1]);
+      if (fileIdx < 0 || rankIdx < 0) return;
+      const nextFile = files[Math.min(7, Math.max(0, fileIdx + deltaFile))];
+      const nextRank = ranks[Math.min(7, Math.max(0, rankIdx + deltaRank))];
+      setKeyboardSquare(`${nextFile}${nextRank}`);
+    },
+    [keyboardSquare, files, ranks]
+  );
 
   const resetPointerDrag = () => {
     activeDragSquareRef.current = null;
@@ -273,6 +302,45 @@ export default function SimpleChessboard({
     }
   };
 
+  useEffect(() => {
+    if (!onDrop) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const root = boardRootRef.current;
+      if (!root?.contains(document.activeElement)) return;
+
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        moveKeyboardSquare(orientation === "black" ? 1 : -1, 0);
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        moveKeyboardSquare(orientation === "black" ? -1 : 1, 0);
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        moveKeyboardSquare(0, orientation === "black" ? 1 : -1);
+      } else if (e.key === "ArrowDown") {
+        e.preventDefault();
+        moveKeyboardSquare(0, orientation === "black" ? -1 : 1);
+      } else if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        const boardRankIdx = ranks.indexOf(keyboardSquare[1]);
+        const boardFileIdx = files.indexOf(keyboardSquare[0]);
+        const piece =
+          boardRankIdx >= 0 && boardFileIdx >= 0
+            ? board[boardRankIdx][boardFileIdx]
+            : null;
+        handleSquareClick(keyboardSquare, piece);
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        setSelectedSquare(null);
+        setHighlightedSquares([]);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onDrop, board, keyboardSquare, moveKeyboardSquare, orientation, ranks, files]);
+
   // Fonction pour convertir une case en coordonnées SVG
   const squareToCoords = (square: string): { x: number; y: number } => {
     const file = square[0];
@@ -362,8 +430,12 @@ export default function SimpleChessboard({
 
   return (
     <div
-      className={`w-full max-w-full aspect-square h-auto shrink-0 self-center bg-slate-800 p-1.5 sm:p-2 rounded-lg shadow-2xl relative mx-auto min-h-0 ${
-        onDrop ? "touch-none" : ""
+      ref={boardRootRef}
+      tabIndex={onDrop ? 0 : undefined}
+      role={onDrop ? "application" : undefined}
+      aria-label={onDrop ? "Chessboard, use arrow keys to move focus and Enter to select" : "Chessboard"}
+      className={`w-full max-w-full aspect-square h-auto shrink-0 self-center bg-slate-800 p-1.5 sm:p-2 rounded-lg shadow-2xl relative mx-auto min-h-0 outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/70 ${
+        onDrop && isBoardDragging ? "touch-none" : onDrop ? "touch-manipulation" : ""
       } ${isBoardDragging ? "cursor-grabbing select-none" : ""} ${className ?? ""}`}
       style={
         boardMaxWidth
@@ -373,7 +445,7 @@ export default function SimpleChessboard({
             : { maxWidth: "min(96vw, 84vh, 820px)" }
       }
     >
-      <div className="grid grid-cols-8 grid-rows-8 gap-0 w-full aspect-square min-h-0">
+      <div className="grid grid-cols-8 grid-rows-8 gap-0 w-full aspect-square min-h-0" role="grid">
         {displayRanks.map((rank, rankIdx) =>
           displayFiles.map((file, fileIdx) => {
             const square = `${file}${rank}`;
@@ -402,6 +474,10 @@ export default function SimpleChessboard({
               <div
                 key={square}
                 data-chess-square={square}
+                role="gridcell"
+                aria-label={squareLabel(square, piece)}
+                tabIndex={onDrop && keyboardSquare === square ? 0 : -1}
+                onFocus={() => setKeyboardSquare(square)}
                 style={{
                   backgroundColor: bgColor,
                   transition: isBoardDragging

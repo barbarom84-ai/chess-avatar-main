@@ -1084,7 +1084,8 @@ export const fr = {
       configure: "Configurer",
       home: "Accueil",
       precisionAnalyzing: "Analyse de la précision…",
-      precisionAnalysisPlyCount: "{{current}} / {{total}} coups"
+      precisionAnalysisPlyCount: "{{current}} / {{total}} coups",
+      analyzeWithCoach: "Analyser avec le coach",
     },
 
     // Header / nav
@@ -2318,6 +2319,7 @@ export const fr = {
       openingUnknown: "Ligne non répertoriée dans la base locale",
       outOfBookBadge: "Hors livre",
       transpositionsHeading: "Autres lignes (transpositions)",
+      detailsPanel: "Détails",
     },
 
     // Forced line editor extended

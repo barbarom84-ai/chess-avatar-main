@@ -150,16 +150,19 @@ function GameViewerInner({ pgn }: GameViewerProps) {
         display={continuous.display}
       />
 
-      <div className="flex items-start gap-4">
-        <Card className="p-6 bg-slate-900 border-slate-800 flex-1">
-          <SimpleChessboard
-            position={currentFen}
-            orientation={boardOrientation}
-            arrows={arrows}
-          />
+      <div className="flex flex-col lg:flex-row items-start gap-4">
+        <Card className="p-3 sm:p-4 bg-slate-900 border-slate-800 flex-1 min-w-0 w-full">
+          <div className="chessboard-frame chessboard-frame--viewer w-full">
+            <SimpleChessboard
+              position={currentFen}
+              orientation={boardOrientation}
+              arrows={arrows}
+              boardMaxWidth="100%"
+            />
+          </div>
         </Card>
 
-        <div className="space-y-3">
+        <div className="space-y-3 w-full lg:w-auto shrink-0">
           <Button
             onClick={() =>
               setBoardOrientation((prev) =>

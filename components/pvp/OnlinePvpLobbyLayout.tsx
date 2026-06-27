@@ -390,8 +390,8 @@ export default function OnlinePvpLobbyLayout({
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(320px,420px)] gap-6 lg:gap-8 items-start">
         <div className="hidden lg:block space-y-4 sticky top-4">
           <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-3 shadow-lg">
-            <div className="aspect-square w-full max-w-md mx-auto">
-              <SimpleChessboard position="start" orientation="white" />
+            <div className="chessboard-frame chessboard-frame--md w-full mx-auto">
+              <SimpleChessboard position="start" orientation="white" boardMaxWidth="100%" />
             </div>
           </div>
           <div className="text-center space-y-1 px-2">
