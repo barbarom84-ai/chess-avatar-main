@@ -18,7 +18,9 @@ import { trackChessAvatarTelemetry } from "@/lib/chessavatar-telemetry";
 export { isWasmSimdSupported } from "@/lib/wasm-simd";
 
 const WORKER_URL = "/chessavatar/worker.js";
-const DEFAULT_NNUE_URL = "/chessavatar/nn-default.nnue";
+/** Custom ChessAvatar net (HalfKAv2_hm); falls back to Stockfish default if missing. */
+const PRIMARY_NNUE_URL = "/chessavatar/nn-chessavatar.nnue";
+const FALLBACK_NNUE_URL = "/chessavatar/nn-default.nnue";
 
 type QueueTask = () => Promise<void>;
 
@@ -50,7 +52,9 @@ class ChessAvatarClient {
   private refCount = 0;
   private readyWaiters: Array<(ok: boolean) => void> = [];
   private playReadyWaiters: Array<(ok: boolean) => void> = [];
-  private nnueUrl = DEFAULT_NNUE_URL;
+  private nnueUrl = PRIMARY_NNUE_URL;
+  private nnueFallbackUrl = FALLBACK_NNUE_URL;
+  private nnueUsingFallback = false;
   private nnueLoading = false;
   private nnueReady = false;
   private nnueFailed = false;
@@ -112,6 +116,23 @@ class ChessAvatarClient {
 
   setNnueUrl(url: string): void {
     this.nnueUrl = url;
+    this.nnueUsingFallback = false;
+  }
+
+  /** Prefer custom ChessAvatar net; retry with Stockfish default on load failure. */
+  private async resolveNnueUrl(url: string): Promise<string> {
+    try {
+      const head = await fetch(url, { method: "HEAD" });
+      if (head.ok) return url;
+    } catch {
+      /* try fallback */
+    }
+    if (url !== this.nnueFallbackUrl) {
+      console.warn("ChessAvatar NNUE not found at", url, "— using", this.nnueFallbackUrl);
+      this.nnueUsingFallback = true;
+      return this.nnueFallbackUrl;
+    }
+    return url;
   }
 
   private parseInfoLine(line: string): void {
@@ -145,14 +166,22 @@ class ChessAvatarClient {
 
   private async loadNnueIntoWorker(): Promise<void> {
     const worker = this.worker;
-    const url = this.nnueUrl;
-    if (!worker || !url) return;
+    if (!worker) return;
+
+    const url = await this.resolveNnueUrl(this.nnueUrl);
+    if (!url) return;
 
     try {
       const bytes = await loadNnueWithCache(url);
       const copy = new Uint8Array(bytes);
       worker.postMessage({ type: "load-nnue", buffer: copy.buffer }, [copy.buffer]);
     } catch (err) {
+      if (!this.nnueUsingFallback && url !== this.nnueFallbackUrl) {
+        this.nnueUsingFallback = true;
+        this.nnueUrl = this.nnueFallbackUrl;
+        void this.loadNnueIntoWorker();
+        return;
+      }
       console.warn("ChessAvatar NNUE cache load failed, using URL:", err);
       worker.postMessage(`load-nnue ${url}`);
     }
@@ -192,6 +221,12 @@ class ChessAvatarClient {
 
         if (message === "nnue-failed") {
           this.nnueLoading = false;
+          if (!this.nnueUsingFallback && this.nnueUrl !== this.nnueFallbackUrl) {
+            this.nnueUsingFallback = true;
+            this.nnueUrl = this.nnueFallbackUrl;
+            this.beginNnueLoad();
+            return;
+          }
           this.nnueFailed = true;
           trackChessAvatarTelemetry("chessavatar_nnue_failed");
           this.resolvePlayReadyWaiters();
@@ -464,20 +499,34 @@ export function webSearchLimits(
   difficulty = 3,
   elo?: number
 ): { depth: number; movetime: number } {
-  const maxDepth = Math.min(Math.max(4, depth), 22);
+  const maxDepth = Math.min(Math.max(4, depth), 24);
 
   let movetime = Math.max(200, movetimeMs);
+  let minDepth = 4;
 
-  if (elo != null && elo >= 3200) movetime = Math.max(movetime, 18_000);
-  else if (elo != null && elo >= 2800) movetime = Math.max(movetime, 12_000);
-  else if (elo != null && elo >= 2400) movetime = Math.max(movetime, 8000);
-  else if (difficulty >= 5) movetime = Math.max(movetime, 6000);
-  else if (difficulty >= 4) movetime = Math.max(movetime, 3500);
-  else if (difficulty >= 3) movetime = Math.max(movetime, 1200);
+  if (elo != null && elo >= 3200) {
+    movetime = Math.max(movetime, 18_000);
+    minDepth = 16;
+  } else if (elo != null && elo >= 2800) {
+    movetime = Math.max(movetime, 12_000);
+    minDepth = 14;
+  } else if (elo != null && elo >= 2400) {
+    movetime = Math.max(movetime, 8000);
+    minDepth = 12;
+  } else if (difficulty >= 5) {
+    movetime = Math.max(movetime, 6000);
+    minDepth = 10;
+  } else if (difficulty >= 4) {
+    movetime = Math.max(movetime, 3500);
+    minDepth = 8;
+  } else if (difficulty >= 3) {
+    movetime = Math.max(movetime, 1200);
+    minDepth = 6;
+  }
 
   movetime = Math.min(movetime, 30_000);
 
-  return { depth: maxDepth, movetime };
+  return { depth: Math.max(maxDepth, minDepth), movetime };
 }
 
 export async function chessAvatarGetBestMove(

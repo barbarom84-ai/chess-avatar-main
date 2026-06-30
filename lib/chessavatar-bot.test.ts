@@ -40,8 +40,16 @@ describe("webSearchLimits", () => {
   it("caps depth and extends movetime for strong bots", async () => {
     const { webSearchLimits } = await import("./chessavatar-client");
     const limits = webSearchLimits(30, 500, 3, 3200);
-    expect(limits.depth).toBeLessThanOrEqual(22);
+    expect(limits.depth).toBeGreaterThanOrEqual(16);
+    expect(limits.depth).toBeLessThanOrEqual(24);
     expect(limits.movetime).toBeGreaterThanOrEqual(18_000);
+  });
+
+  it("targets ~2500 Elo band with depth 12+ and 8s think", async () => {
+    const { webSearchLimits } = await import("./chessavatar-client");
+    const limits = webSearchLimits(10, 500, 3, 2500);
+    expect(limits.depth).toBeGreaterThanOrEqual(12);
+    expect(limits.movetime).toBeGreaterThanOrEqual(8000);
   });
 
   it("uses shorter movetime for low difficulty", async () => {
