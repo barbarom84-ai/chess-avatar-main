@@ -97,6 +97,7 @@ export async function POST(req: NextRequest) {
 
     const reply = completion.choices[0]?.message?.content?.trim() ?? "";
 
+    let remaining: number | null = null;
     if (!isPremium) {
       const admin = createServiceSupabase();
       if (admin) {
@@ -108,16 +109,24 @@ export async function POST(req: NextRequest) {
           .eq("day", today)
           .maybeSingle();
         const prev = typeof usageRow?.count === "number" ? usageRow.count : 0;
+        const next = prev + 1;
         await admin.from("coach_usage").upsert(
-          { user_id: user.id, day: today, count: prev + 1, updated_at: new Date().toISOString() },
+          {
+            user_id: user.id,
+            day: today,
+            count: next,
+            updated_at: new Date().toISOString(),
+          },
           { onConflict: "user_id,day" }
         );
+        remaining = Math.max(0, FREE_DAILY_QUOTA - next);
       }
     }
 
     return NextResponse.json({
       reply,
-      remaining: isPremium ? null : Math.max(0, FREE_DAILY_QUOTA - 1),
+      remaining,
+      limit: isPremium ? null : FREE_DAILY_QUOTA,
     });
   } catch {
     return NextResponse.json({ error: "OPENAI_ERROR" }, { status: 502 });
