@@ -25,6 +25,7 @@ import { nowFromServerAnchor, syncAnchorFromResponse, type ServerTimeAnchor } fr
 import { canOfferPvpTakeback, pvpGameJustStarted } from "@/lib/pvp-takeback";
 import { canUserCancelWaitingPvpGame } from "@/lib/pvp-game-cancel";
 import { track } from "@/lib/track";
+import { enqueuePendingPvpMove, replayPendingPvpMoves } from "@/lib/pvp-offline-moves";
 import { useChessboardSettings } from "@/contexts/ChessboardSettingsContext";
 import { usePvpGamePresence } from "@/hooks/usePvpGamePresence";
 
@@ -623,6 +624,12 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
       setPendingUci(validation.uci);
       if (soundEnabledRef.current) playChessMoveSound();
 
+      if (!browserOnline) {
+        enqueuePendingPvpMove(gameId, validation.uci);
+        setPendingUci(null);
+        return;
+      }
+
       try {
         const data = (await fetchWithAuth(
           `/api/pvp/games/${gameId}/move`,
@@ -665,8 +672,23 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
         throw e;
       }
     },
-    [gameId, state.role, state.game, state.moves, pendingUci, fetchWithAuth, userId, chess, refreshSilent, syncedClockNow]
+    [gameId, state.role, state.game, state.moves, pendingUci, fetchWithAuth, userId, chess, refreshSilent, syncedClockNow, browserOnline]
   );
+
+  const submitMoveRef = useRef(submitMove);
+  submitMoveRef.current = submitMove;
+
+  useEffect(() => {
+    if (!browserOnline || !gameId) return;
+    void replayPendingPvpMoves(gameId, async (uci) => {
+      try {
+        await submitMoveRef.current(uci);
+        return true;
+      } catch {
+        return false;
+      }
+    });
+  }, [browserOnline, gameId]);
 
   const resign = useCallback(async () => {
     if (!gameId) return;

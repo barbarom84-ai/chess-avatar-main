@@ -291,6 +291,60 @@ export const en = {
       championsAnalyzeCta: "Analyze a player",
       noFilterResults: "No avatars match your search or filters.",
     },
+
+    collections: {
+      title: "Collections & Favorites",
+      newPlaceholder: "Collection name…",
+      create: "Create",
+      created: "Collection created",
+      createError: "Could not create collection",
+      deleted: "Collection deleted",
+      empty: "No collections yet. Create one to organize your avatars.",
+      profiles: "profiles",
+      favoritesCount: "{count} favorite profiles",
+      addFavorite: "Add to favorites",
+      removeFavorite: "Remove from favorites",
+      addToCollection: "Add to collection",
+    },
+
+    comparePage: {
+      title: "Engine Comparison",
+      subtitle: "Compare two avatars side-by-side on the same position.",
+      selectLeft: "Left avatar",
+      selectRight: "Right avatar",
+      fenPlaceholder: "FEN position (optional)",
+      startPosition: "Start position",
+      playLeft: "Left plays",
+      playRight: "Right plays",
+      analyzing: "Analyzing…",
+      noMove: "No move",
+      swap: "Swap avatars",
+    },
+
+    avatarChat: {
+      title: "Avatar Chat",
+      subtitle: "Chat with your avatar in their style.",
+      placeholder: "Say something…",
+      send: "Send",
+      thinking: "Thinking…",
+      quotaExceeded: "Daily chat quota exceeded.",
+      notAuthenticated: "Sign in to use Avatar Chat.",
+    },
+
+    offlineSync: {
+      offlineMode: "Offline mode — changes will sync when you're back online.",
+      pendingSync: "Pending changes to sync",
+      syncNow: "Sync now",
+    },
+
+    pvpTournaments: {
+      title: "Tournaments & Leagues",
+      empty: "No open tournaments right now.",
+      join: "Join",
+      joined: "Joined tournament!",
+      joinError: "Could not join tournament",
+      leagueStandings: "League standings",
+    },
     
     // Games Page
     games: {
@@ -1788,7 +1842,16 @@ export const en = {
       styleChaotic: "Chaotic",
       phaseOpening: "Opening",
       phaseMiddlegame: "Middlegame",
-      phaseEndgame: "Endgame"
+      phaseEndgame: "Endgame",
+      heatMapTab: "Heat Map",
+      timelineTab: "Timeline",
+      heatMapEmpty: "No move data available for heat map.",
+      heatMapSubtitle: "Square activity from {count} games analyzed",
+      heatMapLow: "Low",
+      heatMapHigh: "High",
+      timelineEmpty: "No timeline data available.",
+      timelineWinRate: "Rolling win rate (10 games)",
+      timelineRating: "Rating progression"
     },
 
     // Style radar chart

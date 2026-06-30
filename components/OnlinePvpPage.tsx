@@ -20,6 +20,7 @@ import OnlinePvpLobbyLayout from "@/components/pvp/OnlinePvpLobbyLayout";
 import OnlinePvpGameLayout from "@/components/pvp/OnlinePvpGameLayout";
 import OnlinePvpActiveGamesDock from "@/components/pvp/OnlinePvpActiveGamesDock";
 import AuthModal from "@/components/AuthModal";
+import PvpTournamentsPanel from "@/components/PvpTournamentsPanel";
 import { buildPgnFromUcis } from "@/lib/pvp-chess";
 import {
   fetchAccountFriends,
@@ -746,6 +747,9 @@ export default function OnlinePvpPage() {
           onJoinOpenLobby={handleJoinOpenLobby}
           joiningOpenLobbyId={joiningOpenLobbyId}
         />
+        <div className="max-w-4xl mx-auto mt-6 px-4">
+          <PvpTournamentsPanel />
+        </div>
         <AuthModal open={authOpen} onOpenChange={setAuthOpen} />
       </main>
     );

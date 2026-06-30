@@ -8,6 +8,11 @@ import type { EngineConfig, PersonaStats } from './analysis';
 import { getSavedConfigs } from './storage';
 import type { ProfileMetadata } from '@/types/chess';
 import {
+  cacheProfileOffline,
+  enqueueSyncItem,
+  isBrowserOnline,
+} from './offline-sync';
+import {
   rankSimilarProfiles,
   type SimilarProfile,
 } from './profile-suggestions';
@@ -159,6 +164,41 @@ export async function saveProfileToCloud(
       ...config,
       creatorName: user.email?.split('@')[0] || 'unknown',
     };
+
+    if (!isBrowserOnline()) {
+      const offlineId = crypto.randomUUID();
+      await cacheProfileOffline({
+        id: offlineId,
+        username: stats.username,
+        platform: detectedPlatform,
+        config: configWithCreator,
+        stats,
+        updated_at: new Date().toISOString(),
+        pending_sync: true,
+      });
+      await enqueueSyncItem({
+        action: 'upsert_profile',
+        payload: {
+          id: offlineId,
+          username: stats.username,
+          platform: detectedPlatform,
+          config: configWithCreator,
+          stats,
+          is_public: isPublic,
+        },
+      });
+      return {
+        id: offlineId,
+        user_id: user.id,
+        username: stats.username,
+        platform: detectedPlatform,
+        config: configWithCreator,
+        stats,
+        is_public: isPublic,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      } as DbProfile;
+    }
 
     const { data, error } = await supabase
       .from('profiles')

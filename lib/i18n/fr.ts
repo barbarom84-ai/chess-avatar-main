@@ -291,6 +291,60 @@ export const fr = {
       championsAnalyzeCta: "Analyser un joueur",
       noFilterResults: "Aucun avatar ne correspond à la recherche ou aux filtres.",
     },
+
+    collections: {
+      title: "Collections & Favoris",
+      newPlaceholder: "Nom de la collection…",
+      create: "Créer",
+      created: "Collection créée",
+      createError: "Impossible de créer la collection",
+      deleted: "Collection supprimée",
+      empty: "Aucune collection. Créez-en une pour organiser vos avatars.",
+      profiles: "profils",
+      favoritesCount: "{count} profils favoris",
+      addFavorite: "Ajouter aux favoris",
+      removeFavorite: "Retirer des favoris",
+      addToCollection: "Ajouter à la collection",
+    },
+
+    comparePage: {
+      title: "Comparaison de moteurs",
+      subtitle: "Comparez deux avatars côte à côte sur la même position.",
+      selectLeft: "Avatar gauche",
+      selectRight: "Avatar droit",
+      fenPlaceholder: "Position FEN (optionnel)",
+      startPosition: "Position de départ",
+      playLeft: "Coup gauche",
+      playRight: "Coup droit",
+      analyzing: "Analyse…",
+      noMove: "Aucun coup",
+      swap: "Inverser",
+    },
+
+    avatarChat: {
+      title: "Avatar Chat",
+      subtitle: "Discutez avec votre avatar dans son style.",
+      placeholder: "Écrivez un message…",
+      send: "Envoyer",
+      thinking: "Réflexion…",
+      quotaExceeded: "Quota de chat journalier dépassé.",
+      notAuthenticated: "Connectez-vous pour utiliser Avatar Chat.",
+    },
+
+    offlineSync: {
+      offlineMode: "Mode hors ligne — les modifications se synchroniseront au retour en ligne.",
+      pendingSync: "Modifications en attente de sync",
+      syncNow: "Synchroniser",
+    },
+
+    pvpTournaments: {
+      title: "Tournois & Ligues",
+      empty: "Aucun tournoi ouvert pour l'instant.",
+      join: "Rejoindre",
+      joined: "Inscription au tournoi réussie !",
+      joinError: "Impossible de rejoindre le tournoi",
+      leagueStandings: "Classement ligue",
+    },
     
     // Games Page
     games: {
@@ -1798,7 +1852,16 @@ export const fr = {
       styleChaotic: "Chaotique",
       phaseOpening: "Ouverture",
       phaseMiddlegame: "Milieu",
-      phaseEndgame: "Finale"
+      phaseEndgame: "Finale",
+      heatMapTab: "Heat Map",
+      timelineTab: "Progression",
+      heatMapEmpty: "Pas de données de coups pour la heat map.",
+      heatMapSubtitle: "Activité des cases sur {count} parties analysées",
+      heatMapLow: "Faible",
+      heatMapHigh: "Élevée",
+      timelineEmpty: "Pas de données de progression disponibles.",
+      timelineWinRate: "Taux de victoire glissant (10 parties)",
+      timelineRating: "Évolution du classement"
     },
 
     // Style radar chart

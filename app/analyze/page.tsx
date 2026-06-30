@@ -18,12 +18,17 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 // Imports Logique
 import PersonaCard from "@/components/PersonaCard";
 import PerformanceCharts from "@/components/PerformanceCharts";
+import AvatarChatPanel from "@/components/AvatarChatPanel";
 import {
   analyzePersona,
   type PersonaStats,
   type EngineConfig,
   type PersonaGameInput,
 } from "@/lib/analysis";
+import {
+  analyzePersonaMoves,
+  type PersonaMoveAnalysis,
+} from "@/lib/persona-move-analysis";
 import { useLanguage } from "@/lib/language-context";
 import { setReviewSessionFromAnalyze } from "@/lib/review-session";
 import { scheduleIdleWork } from "@/lib/schedule-idle";
@@ -58,6 +63,7 @@ export default function AnalyzePage() {
   );
   const [personaStats, setPersonaStats] = useState<PersonaStats | null>(null);
   const [engineConfig, setEngineConfig] = useState<EngineConfig | null>(null);
+  const [moveAnalysis, setMoveAnalysis] = useState<PersonaMoveAnalysis | null>(null);
 
   // --- LOGIQUE D'ANALYSE ---
   const handleAnalyze = async () => {
@@ -67,6 +73,7 @@ export default function AnalyzePage() {
     setError("");
     setGames([]);
     setPersonaStats(null);
+    setMoveAnalysis(null);
     setSelectedGame(null);
 
     try {
@@ -129,6 +136,7 @@ export default function AnalyzePage() {
         );
         setPersonaStats(analysis.stats);
         setEngineConfig(analysis.config);
+        setMoveAnalysis(analyzePersonaMoves(gamesData, username));
       });
 
     } catch (err: unknown) {
@@ -212,9 +220,11 @@ export default function AnalyzePage() {
               </div>
               
               <div className="lg:col-span-2">
-                <PerformanceCharts stats={personaStats} />
+                <PerformanceCharts stats={personaStats} moveAnalysis={moveAnalysis} />
               </div>
             </div>
+
+            <AvatarChatPanel stats={personaStats} config={engineConfig} />
 
             <Separator className="bg-slate-800" />
 

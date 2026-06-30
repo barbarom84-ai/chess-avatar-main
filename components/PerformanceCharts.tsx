@@ -12,12 +12,16 @@ import {
 } from "recharts";
 import { TrendingUp, PieChart as PieChartIcon, Target, Activity } from "lucide-react";
 import type { PersonaStats } from "@/lib/analysis";
+import type { PersonaMoveAnalysis } from "@/lib/persona-move-analysis";
+import BoardHeatMap from "@/components/BoardHeatMap";
+import ProgressionTimeline from "@/components/ProgressionTimeline";
 
 interface PerformanceChartsProps {
   stats: PersonaStats;
+  moveAnalysis?: PersonaMoveAnalysis | null;
 }
 
-export default function PerformanceCharts({ stats }: PerformanceChartsProps) {
+export default function PerformanceCharts({ stats, moveAnalysis }: PerformanceChartsProps) {
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState("style");
   
@@ -81,7 +85,7 @@ export default function PerformanceCharts({ stats }: PerformanceChartsProps) {
 
       <CardContent>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 bg-slate-950 border border-slate-800">
+          <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 bg-slate-950 border border-slate-800">
             <TabsTrigger value="style" className="data-[state=active]:bg-green-600">
               <Target className="h-4 w-4 mr-1" />
               {t.performanceCharts.styleTab}
@@ -97,6 +101,12 @@ export default function PerformanceCharts({ stats }: PerformanceChartsProps) {
             <TabsTrigger value="phases" className="data-[state=active]:bg-orange-600">
               <Activity className="h-4 w-4 mr-1" />
               {t.performanceCharts.phasesTab}
+            </TabsTrigger>
+            <TabsTrigger value="heatmap" className="data-[state=active]:bg-red-600">
+              {t.performanceCharts.heatMapTab}
+            </TabsTrigger>
+            <TabsTrigger value="timeline" className="data-[state=active]:bg-cyan-600">
+              {t.performanceCharts.timelineTab}
             </TabsTrigger>
           </TabsList>
 
@@ -333,6 +343,30 @@ export default function PerformanceCharts({ stats }: PerformanceChartsProps) {
                 </ul>
               </div>
             </div>
+          </TabsContent>
+          )}
+
+          {activeTab === "heatmap" && (
+          <TabsContent value="heatmap" className="mt-6">
+            {moveAnalysis ? (
+              <BoardHeatMap heatMap={moveAnalysis.heatMap} />
+            ) : (
+              <p className="text-sm text-slate-500 text-center py-8">
+                {t.performanceCharts.heatMapEmpty}
+              </p>
+            )}
+          </TabsContent>
+          )}
+
+          {activeTab === "timeline" && (
+          <TabsContent value="timeline" className="mt-6">
+            {moveAnalysis ? (
+              <ProgressionTimeline timeline={moveAnalysis.timeline} />
+            ) : (
+              <p className="text-sm text-slate-500 text-center py-8">
+                {t.performanceCharts.timelineEmpty}
+              </p>
+            )}
           </TabsContent>
           )}
 

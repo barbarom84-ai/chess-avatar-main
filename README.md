@@ -222,11 +222,11 @@ npm run build
 - [x] Cache API Lichess/Chess.com + CI GitHub Actions
 
 ### Prochainement
-- [ ] Mode hors ligne avec sync
-- [ ] Comparaison de moteurs
-- [ ] Collections de profils
-- [ ] Heat maps de l'échiquier
-- [ ] Timeline de progression
+- [x] Mode hors ligne avec sync
+- [x] Comparaison de moteurs
+- [x] Collections de profils
+- [x] Heat maps de l'échiquier
+- [x] Timeline de progression
 
 ## 🤝 Contribution
 
