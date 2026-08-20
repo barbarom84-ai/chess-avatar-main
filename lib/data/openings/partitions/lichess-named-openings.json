@@ -1861,6 +1861,30 @@
     ]
   },
   {
+    "id": "a00-polish-opening-outflank-variation-schuehler-gambit",
+    "name": "Polish Opening: Outflank Variation, Schuehler Gambit",
+    "nameEn": "Polish Opening: Outflank Variation, Schuehler Gambit",
+    "eco": "A00",
+    "moves": "1. b4 c6 2. Bb2 a5 3. b5",
+    "uciMoves": [
+      "b2b4",
+      "c7c6",
+      "c1b2",
+      "a7a5",
+      "b4b5"
+    ],
+    "character": "balanced",
+    "difficulty": 3,
+    "popularity": 3,
+    "color": "both",
+    "description": "Ligne nommée (A00) — base de données Lichess chess-openings.",
+    "descriptionEn": "Named line (A00) — Lichess chess-openings database.",
+    "tags": [
+      "lichess-openings",
+      "A"
+    ]
+  },
+  {
     "id": "a00-polish-opening-queen-s-indian-variation",
     "name": "Polish Opening: Queen's Indian Variation",
     "nameEn": "Polish Opening: Queen's Indian Variation",
@@ -5669,6 +5693,41 @@
     ]
   },
   {
+    "id": "a07-king-s-indian-attack-keres-variation-3",
+    "name": "King's Indian Attack: Keres Variation",
+    "nameEn": "King's Indian Attack: Keres Variation",
+    "eco": "A07",
+    "moves": "1. Nf3 d5 2. g3 c6 3. Bg2 Bg4 4. O-O Nd7 5. d4 Ngf6 6. c4 e6 7. cxd5 exd5 8. Nc3 Bd6",
+    "uciMoves": [
+      "g1f3",
+      "d7d5",
+      "g2g3",
+      "c7c6",
+      "f1g2",
+      "c8g4",
+      "e1g1",
+      "b8d7",
+      "d2d4",
+      "g8f6",
+      "c2c4",
+      "e7e6",
+      "c4d5",
+      "e6d5",
+      "b1c3",
+      "f8d6"
+    ],
+    "character": "balanced",
+    "difficulty": 3,
+    "popularity": 3,
+    "color": "both",
+    "description": "Ligne nommée (A07) — base de données Lichess chess-openings.",
+    "descriptionEn": "Named line (A07) — Lichess chess-openings database.",
+    "tags": [
+      "lichess-openings",
+      "A"
+    ]
+  },
+  {
     "id": "a07-king-s-indian-attack-omega-delta-gambit",
     "name": "King's Indian Attack: Omega-Delta Gambit",
     "nameEn": "King's Indian Attack: Omega-Delta Gambit",
@@ -5758,6 +5817,34 @@
       "c7c6",
       "e1g1",
       "c8g4"
+    ],
+    "character": "balanced",
+    "difficulty": 3,
+    "popularity": 3,
+    "color": "both",
+    "description": "Ligne nommée (A07) — base de données Lichess chess-openings.",
+    "descriptionEn": "Named line (A07) — Lichess chess-openings database.",
+    "tags": [
+      "lichess-openings",
+      "A"
+    ]
+  },
+  {
+    "id": "a07-king-s-indian-attack-yugoslav-variation-1",
+    "name": "King's Indian Attack: Yugoslav Variation",
+    "nameEn": "King's Indian Attack: Yugoslav Variation",
+    "eco": "A07",
+    "moves": "1. c4 e6 2. Nf3 d5 3. g3 Nf6 4. Bg2 b6 5. O-O",
+    "uciMoves": [
+      "c2c4",
+      "e7e6",
+      "g1f3",
+      "d7d5",
+      "g2g3",
+      "g8f6",
+      "f1g2",
+      "b7b6",
+      "e1g1"
     ],
     "character": "balanced",
     "difficulty": 3,
@@ -7153,6 +7240,62 @@
     ]
   },
   {
+    "id": "a12-reti-opening-anglo-slav-variation-capablanca-variation-1",
+    "name": "Réti Opening: Anglo-Slav Variation, Capablanca Variation",
+    "nameEn": "Réti Opening: Anglo-Slav Variation, Capablanca Variation",
+    "eco": "A12",
+    "moves": "1. c4 Nf6 2. Nf3 c6 3. b3 d5 4. Bb2 Bg4 5. e3",
+    "uciMoves": [
+      "c2c4",
+      "g8f6",
+      "g1f3",
+      "c7c6",
+      "b2b3",
+      "d7d5",
+      "c1b2",
+      "c8g4",
+      "e2e3"
+    ],
+    "character": "balanced",
+    "difficulty": 3,
+    "popularity": 3,
+    "color": "both",
+    "description": "Ligne nommée (A12) — base de données Lichess chess-openings.",
+    "descriptionEn": "Named line (A12) — Lichess chess-openings database.",
+    "tags": [
+      "lichess-openings",
+      "A"
+    ]
+  },
+  {
+    "id": "a12-reti-opening-anglo-slav-variation-capablanca-variation-2",
+    "name": "Réti Opening: Anglo-Slav Variation, Capablanca Variation",
+    "nameEn": "Réti Opening: Anglo-Slav Variation, Capablanca Variation",
+    "eco": "A12",
+    "moves": "1. c4 Nf6 2. Nf3 c6 3. b3 d5 4. Bb2 Bg4 5. d3",
+    "uciMoves": [
+      "c2c4",
+      "g8f6",
+      "g1f3",
+      "c7c6",
+      "b2b3",
+      "d7d5",
+      "c1b2",
+      "c8g4",
+      "d2d3"
+    ],
+    "character": "balanced",
+    "difficulty": 3,
+    "popularity": 3,
+    "color": "both",
+    "description": "Ligne nommée (A12) — base de données Lichess chess-openings.",
+    "descriptionEn": "Named line (A12) — Lichess chess-openings database.",
+    "tags": [
+      "lichess-openings",
+      "A"
+    ]
+  },
+  {
     "id": "a12-reti-opening-anglo-slav-variation-london-defensive-system",
     "name": "Réti Opening: Anglo-Slav Variation, London Defensive System",
     "nameEn": "Réti Opening: Anglo-Slav Variation, London Defensive System",
@@ -7167,6 +7310,92 @@
       "d7d5",
       "b2b3",
       "c8f5"
+    ],
+    "character": "balanced",
+    "difficulty": 3,
+    "popularity": 3,
+    "color": "both",
+    "description": "Ligne nommée (A12) — base de données Lichess chess-openings.",
+    "descriptionEn": "Named line (A12) — Lichess chess-openings database.",
+    "tags": [
+      "lichess-openings",
+      "A"
+    ]
+  },
+  {
+    "id": "a12-reti-opening-anglo-slav-variation-london-defensive-system-1",
+    "name": "Réti Opening: Anglo-Slav Variation, London Defensive System",
+    "nameEn": "Réti Opening: Anglo-Slav Variation, London Defensive System",
+    "eco": "A12",
+    "moves": "1. c4 Nf6 2. g3 c6 3. Nf3 d5 4. b3 Bf5 5. Bg2",
+    "uciMoves": [
+      "c2c4",
+      "g8f6",
+      "g2g3",
+      "c7c6",
+      "g1f3",
+      "d7d5",
+      "b2b3",
+      "c8f5",
+      "f1g2"
+    ],
+    "character": "balanced",
+    "difficulty": 3,
+    "popularity": 3,
+    "color": "both",
+    "description": "Ligne nommée (A12) — base de données Lichess chess-openings.",
+    "descriptionEn": "Named line (A12) — Lichess chess-openings database.",
+    "tags": [
+      "lichess-openings",
+      "A"
+    ]
+  },
+  {
+    "id": "a12-reti-opening-anglo-slav-variation-london-defensive-system-2",
+    "name": "Réti Opening: Anglo-Slav Variation, London Defensive System",
+    "nameEn": "Réti Opening: Anglo-Slav Variation, London Defensive System",
+    "eco": "A12",
+    "moves": "1. c4 Nf6 2. g3 c6 3. Nf3 d5 4. b3 Bf5 5. Bg2 e6 6. Bb2",
+    "uciMoves": [
+      "c2c4",
+      "g8f6",
+      "g2g3",
+      "c7c6",
+      "g1f3",
+      "d7d5",
+      "b2b3",
+      "c8f5",
+      "f1g2",
+      "e7e6",
+      "c1b2"
+    ],
+    "character": "balanced",
+    "difficulty": 3,
+    "popularity": 3,
+    "color": "both",
+    "description": "Ligne nommée (A12) — base de données Lichess chess-openings.",
+    "descriptionEn": "Named line (A12) — Lichess chess-openings database.",
+    "tags": [
+      "lichess-openings",
+      "A"
+    ]
+  },
+  {
+    "id": "a12-reti-opening-anglo-slav-variation-london-defensive-system-3",
+    "name": "Réti Opening: Anglo-Slav Variation, London Defensive System",
+    "nameEn": "Réti Opening: Anglo-Slav Variation, London Defensive System",
+    "eco": "A12",
+    "moves": "1. c4 Nf6 2. g3 c6 3. Nf3 d5 4. b3 Bf5 5. Bb2",
+    "uciMoves": [
+      "c2c4",
+      "g8f6",
+      "g2g3",
+      "c7c6",
+      "g1f3",
+      "d7d5",
+      "b2b3",
+      "c8f5",
+      "c1b2"
     ],
     "character": "balanced",
     "difficulty": 3,
@@ -7207,6 +7436,62 @@
     ]
   },
   {
+    "id": "a12-reti-opening-anglo-slav-variation-new-york-system-1",
+    "name": "Réti Opening: Anglo-Slav Variation, New York System",
+    "nameEn": "Réti Opening: Anglo-Slav Variation, New York System",
+    "eco": "A12",
+    "moves": "1. Nf3 Nf6 2. c4 c6 3. b3 d5 4. Bb2 Bf5 5. e3",
+    "uciMoves": [
+      "g1f3",
+      "g8f6",
+      "c2c4",
+      "c7c6",
+      "b2b3",
+      "d7d5",
+      "c1b2",
+      "c8f5",
+      "e2e3"
+    ],
+    "character": "balanced",
+    "difficulty": 3,
+    "popularity": 3,
+    "color": "both",
+    "description": "Ligne nommée (A12) — base de données Lichess chess-openings.",
+    "descriptionEn": "Named line (A12) — Lichess chess-openings database.",
+    "tags": [
+      "lichess-openings",
+      "A"
+    ]
+  },
+  {
+    "id": "a12-reti-opening-anglo-slav-variation-new-york-system-2",
+    "name": "Réti Opening: Anglo-Slav Variation, New York System",
+    "nameEn": "Réti Opening: Anglo-Slav Variation, New York System",
+    "eco": "A12",
+    "moves": "1. Nf3 Nf6 2. c4 c6 3. b3 d5 4. Bb2 Bf5 5. d3",
+    "uciMoves": [
+      "g1f3",
+      "g8f6",
+      "c2c4",
+      "c7c6",
+      "b2b3",
+      "d7d5",
+      "c1b2",
+      "c8f5",
+      "d2d3"
+    ],
+    "character": "balanced",
+    "difficulty": 3,
+    "popularity": 3,
+    "color": "both",
+    "description": "Ligne nommée (A12) — base de données Lichess chess-openings.",
+    "descriptionEn": "Named line (A12) — Lichess chess-openings database.",
+    "tags": [
+      "lichess-openings",
+      "A"
+    ]
+  },
+  {
     "id": "a12-reti-opening-anglo-slav-variation-torre-system",
     "name": "Réti Opening: Anglo-Slav Variation, Torre System",
     "nameEn": "Réti Opening: Anglo-Slav Variation, Torre System",
@@ -7221,6 +7506,92 @@
       "d7d5",
       "b2b3",
       "c8g4"
+    ],
+    "character": "balanced",
+    "difficulty": 3,
+    "popularity": 3,
+    "color": "both",
+    "description": "Ligne nommée (A12) — base de données Lichess chess-openings.",
+    "descriptionEn": "Named line (A12) — Lichess chess-openings database.",
+    "tags": [
+      "lichess-openings",
+      "A"
+    ]
+  },
+  {
+    "id": "a12-reti-opening-anglo-slav-variation-torre-system-1",
+    "name": "Réti Opening: Anglo-Slav Variation, Torre System",
+    "nameEn": "Réti Opening: Anglo-Slav Variation, Torre System",
+    "eco": "A12",
+    "moves": "1. c4 Nf6 2. g3 c6 3. Nf3 d5 4. b3 Bg4 5. Bg2",
+    "uciMoves": [
+      "c2c4",
+      "g8f6",
+      "g2g3",
+      "c7c6",
+      "g1f3",
+      "d7d5",
+      "b2b3",
+      "c8g4",
+      "f1g2"
+    ],
+    "character": "balanced",
+    "difficulty": 3,
+    "popularity": 3,
+    "color": "both",
+    "description": "Ligne nommée (A12) — base de données Lichess chess-openings.",
+    "descriptionEn": "Named line (A12) — Lichess chess-openings database.",
+    "tags": [
+      "lichess-openings",
+      "A"
+    ]
+  },
+  {
+    "id": "a12-reti-opening-anglo-slav-variation-torre-system-2",
+    "name": "Réti Opening: Anglo-Slav Variation, Torre System",
+    "nameEn": "Réti Opening: Anglo-Slav Variation, Torre System",
+    "eco": "A12",
+    "moves": "1. c4 Nf6 2. g3 c6 3. Nf3 d5 4. b3 Bg4 5. Bg2 e6 6. Bb2",
+    "uciMoves": [
+      "c2c4",
+      "g8f6",
+      "g2g3",
+      "c7c6",
+      "g1f3",
+      "d7d5",
+      "b2b3",
+      "c8g4",
+      "f1g2",
+      "e7e6",
+      "c1b2"
+    ],
+    "character": "balanced",
+    "difficulty": 3,
+    "popularity": 3,
+    "color": "both",
+    "description": "Ligne nommée (A12) — base de données Lichess chess-openings.",
+    "descriptionEn": "Named line (A12) — Lichess chess-openings database.",
+    "tags": [
+      "lichess-openings",
+      "A"
+    ]
+  },
+  {
+    "id": "a12-reti-opening-anglo-slav-variation-torre-system-3",
+    "name": "Réti Opening: Anglo-Slav Variation, Torre System",
+    "nameEn": "Réti Opening: Anglo-Slav Variation, Torre System",
+    "eco": "A12",
+    "moves": "1. c4 Nf6 2. g3 c6 3. Nf3 d5 4. b3 Bg4 5. Bb2",
+    "uciMoves": [
+      "c2c4",
+      "g8f6",
+      "g2g3",
+      "c7c6",
+      "g1f3",
+      "d7d5",
+      "b2b3",
+      "c8g4",
+      "c1b2"
     ],
     "character": "balanced",
     "difficulty": 3,
@@ -9592,6 +9963,125 @@
     ]
   },
   {
+    "id": "a25-english-opening-king-s-english-variation-reversed-closed-sicilian-1",
+    "name": "English Opening: King's English Variation, Reversed Closed Sicilian",
+    "nameEn": "English Opening: King's English Variation, Reversed Closed Sicilian",
+    "eco": "A25",
+    "moves": "1. c4 e5 2. g3 Nf6 3. Bg2 Nc6 4. Nc3 Bb4 5. Nd5",
+    "uciMoves": [
+      "c2c4",
+      "e7e5",
+      "g2g3",
+      "g8f6",
+      "f1g2",
+      "b8c6",
+      "b1c3",
+      "f8b4",
+      "c3d5"
+    ],
+    "character": "balanced",
+    "difficulty": 3,
+    "popularity": 3,
+    "color": "both",
+    "description": "Ligne nommée (A25) — base de données Lichess chess-openings.",
+    "descriptionEn": "Named line (A25) — Lichess chess-openings database.",
+    "tags": [
+      "lichess-openings",
+      "A"
+    ]
+  },
+  {
+    "id": "a25-english-opening-king-s-english-variation-reversed-closed-sicilian-2",
+    "name": "English Opening: King's English Variation, Reversed Closed Sicilian",
+    "nameEn": "English Opening: King's English Variation, Reversed Closed Sicilian",
+    "eco": "A25",
+    "moves": "1. c4 e5 2. g3 Nf6 3. Bg2 Nc6 4. Nc3 Bb4 5. e4 d6 6. Nge2",
+    "uciMoves": [
+      "c2c4",
+      "e7e5",
+      "g2g3",
+      "g8f6",
+      "f1g2",
+      "b8c6",
+      "b1c3",
+      "f8b4",
+      "e2e4",
+      "d7d6",
+      "g1e2"
+    ],
+    "character": "balanced",
+    "difficulty": 3,
+    "popularity": 3,
+    "color": "both",
+    "description": "Ligne nommée (A25) — base de données Lichess chess-openings.",
+    "descriptionEn": "Named line (A25) — Lichess chess-openings database.",
+    "tags": [
+      "lichess-openings",
+      "A"
+    ]
+  },
+  {
+    "id": "a25-english-opening-king-s-english-variation-reversed-closed-sicilian-3",
+    "name": "English Opening: King's English Variation, Reversed Closed Sicilian",
+    "nameEn": "English Opening: King's English Variation, Reversed Closed Sicilian",
+    "eco": "A25",
+    "moves": "1. c4 e5 2. g3 Nf6 3. Bg2 Nc6 4. Nc3 Bb4 5. e4 d6 6. Nge2 Bg4",
+    "uciMoves": [
+      "c2c4",
+      "e7e5",
+      "g2g3",
+      "g8f6",
+      "f1g2",
+      "b8c6",
+      "b1c3",
+      "f8b4",
+      "e2e4",
+      "d7d6",
+      "g1e2",
+      "c8g4"
+    ],
+    "character": "balanced",
+    "difficulty": 3,
+    "popularity": 3,
+    "color": "both",
+    "description": "Ligne nommée (A25) — base de données Lichess chess-openings.",
+    "descriptionEn": "Named line (A25) — Lichess chess-openings database.",
+    "tags": [
+      "lichess-openings",
+      "A"
+    ]
+  },
+  {
+    "id": "a25-english-opening-king-s-english-variation-reversed-closed-sicilian-4",
+    "name": "English Opening: King's English Variation, Reversed Closed Sicilian",
+    "nameEn": "English Opening: King's English Variation, Reversed Closed Sicilian",
+    "eco": "A25",
+    "moves": "1. c4 e5 2. Nc3 Nf6 3. g3 Bb4 4. e4 O-O 5. Nge2 Nc6 6. Bg2",
+    "uciMoves": [
+      "c2c4",
+      "e7e5",
+      "b1c3",
+      "g8f6",
+      "g2g3",
+      "f8b4",
+      "e2e4",
+      "e8g8",
+      "g1e2",
+      "b8c6",
+      "f1g2"
+    ],
+    "character": "balanced",
+    "difficulty": 3,
+    "popularity": 3,
+    "color": "both",
+    "description": "Ligne nommée (A25) — base de données Lichess chess-openings.",
+    "descriptionEn": "Named line (A25) — Lichess chess-openings database.",
+    "tags": [
+      "lichess-openings",
+      "A"
+    ]
+  },
+  {
     "id": "a25-english-opening-king-s-english-variation-taimanov-variation",
     "name": "English Opening: King's English Variation, Taimanov Variation",
     "nameEn": "English Opening: King's English Variation, Taimanov Variation",
@@ -9984,6 +10474,66 @@
     "name": "English Opening: King's English Variation, Four Knights Variation, Fianchetto Line",
     "nameEn": "English Opening: King's English Variation, Four Knights Variation, Fianchetto Line",
     "eco": "A29",
+    "moves": "1. c4 e5 2. Nc3 Nf6 3. Nf3 Nc6 4. g3 Bb4",
+    "uciMoves": [
+      "c2c4",
+      "e7e5",
+      "b1c3",
+      "g8f6",
+      "g1f3",
+      "b8c6",
+      "g2g3",
+      "f8b4"
+    ],
+    "character": "balanced",
+    "difficulty": 3,
+    "popularity": 3,
+    "color": "both",
+    "description": "Ligne nommée (A29) — base de données Lichess chess-openings.",
+    "descriptionEn": "Named line (A29) — Lichess chess-openings database.",
+    "tags": [
+      "lichess-openings",
+      "A"
+    ]
+  },
+  {
+    "id": "a29-english-opening-king-s-english-variation-four-knights-variation-fianchetto-l-2",
+    "name": "English Opening: King's English Variation, Four Knights Variation, Fianchetto Line",
+    "nameEn": "English Opening: King's English Variation, Four Knights Variation, Fianchetto Line",
+    "eco": "A29",
+    "moves": "1. c4 e5 2. Nc3 Nf6 3. Nf3 Nc6 4. g3 Bb4 5. Bg2 Bxc3 6. dxc3 d6 7. O-O O-O",
+    "uciMoves": [
+      "c2c4",
+      "e7e5",
+      "b1c3",
+      "g8f6",
+      "g1f3",
+      "b8c6",
+      "g2g3",
+      "f8b4",
+      "f1g2",
+      "b4c3",
+      "d2c3",
+      "d7d6",
+      "e1g1",
+      "e8g8"
+    ],
+    "character": "balanced",
+    "difficulty": 3,
+    "popularity": 3,
+    "color": "both",
+    "description": "Ligne nommée (A29) — base de données Lichess chess-openings.",
+    "descriptionEn": "Named line (A29) — Lichess chess-openings database.",
+    "tags": [
+      "lichess-openings",
+      "A"
+    ]
+  },
+  {
+    "id": "a29-english-opening-king-s-english-variation-four-knights-variation-fianchetto-l-3",
+    "name": "English Opening: King's English Variation, Four Knights Variation, Fianchetto Line",
+    "nameEn": "English Opening: King's English Variation, Four Knights Variation, Fianchetto Line",
+    "eco": "A29",
     "moves": "1. c4 e5 2. g3 Nf6 3. Bg2 d5 4. cxd5 Nxd5 5. Nf3 Nc6",
     "uciMoves": [
       "c2c4",
@@ -10009,7 +10559,7 @@
     ]
   },
   {
-    "id": "a29-english-opening-king-s-english-variation-four-knights-variation-fianchetto-l-2",
+    "id": "a29-english-opening-king-s-english-variation-four-knights-variation-fianchetto-l-4",
     "name": "English Opening: King's English Variation, Four Knights Variation, Fianchetto Line",
     "nameEn": "English Opening: King's English Variation, Four Knights Variation, Fianchetto Line",
     "eco": "A29",
@@ -10039,7 +10589,7 @@
     ]
   },
   {
-    "id": "a29-english-opening-king-s-english-variation-four-knights-variation-fianchetto-l-3",
+    "id": "a29-english-opening-king-s-english-variation-four-knights-variation-fianchetto-l-5",
     "name": "English Opening: King's English Variation, Four Knights Variation, Fianchetto Line",
     "nameEn": "English Opening: King's English Variation, Four Knights Variation, Fianchetto Line",
     "eco": "A29",
@@ -10072,7 +10622,7 @@
     ]
   },
   {
-    "id": "a29-english-opening-king-s-english-variation-four-knights-variation-fianchetto-l-4",
+    "id": "a29-english-opening-king-s-english-variation-four-knights-variation-fianchetto-l-6",
     "name": "English Opening: King's English Variation, Four Knights Variation, Fianchetto Line, Delayed .. Nc6",
     "nameEn": "English Opening: King's English Variation, Four Knights Variation, Fianchetto Line, Delayed .. Nc6",
     "eco": "A29",
@@ -10105,7 +10655,7 @@
     ]
   },
   {
-    "id": "a29-english-opening-king-s-english-variation-four-knights-variation-fianchetto-l-5",
+    "id": "a29-english-opening-king-s-english-variation-four-knights-variation-fianchetto-l-7",
     "name": "English Opening: King's English Variation, Four Knights Variation, Fianchetto Line, with .. d6",
     "nameEn": "English Opening: King's English Variation, Four Knights Variation, Fianchetto Line, with .. d6",
     "eco": "A29",
@@ -10135,7 +10685,7 @@
     ]
   },
   {
-    "id": "a29-english-opening-king-s-english-variation-four-knights-variation-fianchetto-l-6",
+    "id": "a29-english-opening-king-s-english-variation-four-knights-variation-fianchetto-l-8",
     "name": "English Opening: King's English Variation, Four Knights Variation, Fianchetto Line, with .. d6",
     "nameEn": "English Opening: King's English Variation, Four Knights Variation, Fianchetto Line, with .. d6",
     "eco": "A29",
@@ -10167,7 +10717,7 @@
     ]
   },
   {
-    "id": "a29-english-opening-king-s-english-variation-four-knights-variation-fianchetto-l-7",
+    "id": "a29-english-opening-king-s-english-variation-four-knights-variation-fianchetto-l-9",
     "name": "English Opening: King's English Variation, Four Knights Variation, Fianchetto Line, with .. d6, Be7",
     "nameEn": "English Opening: King's English Variation, Four Knights Variation, Fianchetto Line, with .. d6, Be7",
     "eco": "A29",
@@ -10198,7 +10748,7 @@
     ]
   },
   {
-    "id": "a29-english-opening-king-s-english-variation-four-knights-variation-fianchetto-l-8",
+    "id": "a29-english-opening-king-s-english-variation-four-knights-variation-fianchetto-l-10",
     "name": "English Opening: King's English Variation, Four Knights Variation, Fianchetto Line, with .. d6, a6",
     "nameEn": "English Opening: King's English Variation, Four Knights Variation, Fianchetto Line, with .. d6, a6",
     "eco": "A29",
@@ -10229,7 +10779,7 @@
     ]
   },
   {
-    "id": "a29-english-opening-king-s-english-variation-four-knights-variation-fianchetto-l-9",
+    "id": "a29-english-opening-king-s-english-variation-four-knights-variation-fianchetto-l-11",
     "name": "English Opening: King's English Variation, Four Knights Variation, Fianchetto Line, with .. d6, h6",
     "nameEn": "English Opening: King's English Variation, Four Knights Variation, Fianchetto Line, with .. d6, h6",
     "eco": "A29",
@@ -10260,7 +10810,7 @@
     ]
   },
   {
-    "id": "a29-english-opening-king-s-english-variation-four-knights-variation-fianchetto-l-10",
+    "id": "a29-english-opening-king-s-english-variation-four-knights-variation-fianchetto-l-12",
     "name": "English Opening: King's English Variation, Four Knights Variation, Fianchetto Line, with Bc5",
     "nameEn": "English Opening: King's English Variation, Four Knights Variation, Fianchetto Line, with Bc5",
     "eco": "A29",
@@ -10291,7 +10841,7 @@
     ]
   },
   {
-    "id": "a29-english-opening-king-s-english-variation-four-knights-variation-fianchetto-l-11",
+    "id": "a29-english-opening-king-s-english-variation-four-knights-variation-fianchetto-l-13",
     "name": "English Opening: King's English Variation, Four Knights Variation, Fianchetto Line, with Nb6",
     "nameEn": "English Opening: King's English Variation, Four Knights Variation, Fianchetto Line, with Nb6",
     "eco": "A29",
@@ -10780,14 +11330,41 @@
     "name": "English Opening: Symmetrical Variation, Four Knights Variation",
     "nameEn": "English Opening: Symmetrical Variation, Four Knights Variation",
     "eco": "A35",
-    "moves": "1. c4 Nf6 2. Nf3 c5 3. Nc3 Nc6",
+    "moves": "1. c4 c5 2. Nf3 Nf6 3. Nc3 Nc6",
     "uciMoves": [
       "c2c4",
-      "g8f6",
-      "g1f3",
       "c7c5",
+      "g1f3",
+      "g8f6",
       "b1c3",
       "b8c6"
+    ],
+    "character": "balanced",
+    "difficulty": 3,
+    "popularity": 3,
+    "color": "both",
+    "description": "Ligne nommée (A35) — base de données Lichess chess-openings.",
+    "descriptionEn": "Named line (A35) — Lichess chess-openings database.",
+    "tags": [
+      "lichess-openings",
+      "A"
+    ]
+  },
+  {
+    "id": "a35-english-opening-symmetrical-variation-four-knights-variation-keres-parma-sys",
+    "name": "English Opening: Symmetrical Variation, Four Knights Variation, Keres-Parma System",
+    "nameEn": "English Opening: Symmetrical Variation, Four Knights Variation, Keres-Parma System",
+    "eco": "A35",
+    "moves": "1. c4 c5 2. Nf3 Nf6 3. Nc3 Nc6 4. g3 e6",
+    "uciMoves": [
+      "c2c4",
+      "c7c5",
+      "g1f3",
+      "g8f6",
+      "b1c3",
+      "b8c6",
+      "g2g3",
+      "e7e6"
     ],
     "character": "balanced",
     "difficulty": 3,
@@ -11135,6 +11712,66 @@
       "f1g2",
       "f8g7",
       "g1f3"
+    ],
+    "character": "balanced",
+    "difficulty": 3,
+    "popularity": 3,
+    "color": "both",
+    "description": "Ligne nommée (A37) — base de données Lichess chess-openings.",
+    "descriptionEn": "Named line (A37) — Lichess chess-openings database.",
+    "tags": [
+      "lichess-openings",
+      "A"
+    ]
+  },
+  {
+    "id": "a37-english-opening-symmetrical-variation-three-knights-fianchetto-variation-1",
+    "name": "English Opening: Symmetrical Variation, Three Knights, Fianchetto Variation",
+    "nameEn": "English Opening: Symmetrical Variation, Three Knights, Fianchetto Variation",
+    "eco": "A37",
+    "moves": "1. c4 c5 2. Nf3 Nc6 3. g3 g6 4. Bg2 Bg7 5. O-O d6 6. Nc3",
+    "uciMoves": [
+      "c2c4",
+      "c7c5",
+      "g1f3",
+      "b8c6",
+      "g2g3",
+      "g7g6",
+      "f1g2",
+      "f8g7",
+      "e1g1",
+      "d7d6",
+      "b1c3"
+    ],
+    "character": "balanced",
+    "difficulty": 3,
+    "popularity": 3,
+    "color": "both",
+    "description": "Ligne nommée (A37) — base de données Lichess chess-openings.",
+    "descriptionEn": "Named line (A37) — Lichess chess-openings database.",
+    "tags": [
+      "lichess-openings",
+      "A"
+    ]
+  },
+  {
+    "id": "a37-english-opening-symmetrical-variation-three-knights-fianchetto-variation-2",
+    "name": "English Opening: Symmetrical Variation, Three Knights, Fianchetto Variation",
+    "nameEn": "English Opening: Symmetrical Variation, Three Knights, Fianchetto Variation",
+    "eco": "A37",
+    "moves": "1. c4 c5 2. Nf3 Nc6 3. g3 g6 4. Bg2 Bg7 5. O-O e6 6. Nc3",
+    "uciMoves": [
+      "c2c4",
+      "c7c5",
+      "g1f3",
+      "b8c6",
+      "g2g3",
+      "g7g6",
+      "f1g2",
+      "f8g7",
+      "e1g1",
+      "e7e6",
+      "b1c3"
     ],
     "character": "balanced",
     "difficulty": 3,
@@ -12630,6 +13267,29 @@
     ]
   },
   {
+    "id": "a41-queen-s-pawn-game-rossolimo-variation",
+    "name": "Queen's Pawn Game: Rossolimo Variation",
+    "nameEn": "Queen's Pawn Game: Rossolimo Variation",
+    "eco": "A41",
+    "moves": "1. d4 d6 2. Nf3 g6",
+    "uciMoves": [
+      "d2d4",
+      "d7d6",
+      "g1f3",
+      "g7g6"
+    ],
+    "character": "balanced",
+    "difficulty": 3,
+    "popularity": 3,
+    "color": "both",
+    "description": "Ligne nommée (A41) — base de données Lichess chess-openings.",
+    "descriptionEn": "Named line (A41) — Lichess chess-openings database.",
+    "tags": [
+      "lichess-openings",
+      "A"
+    ]
+  },
+  {
     "id": "a41-rat-defense-english-rat",
     "name": "Rat Defense: English Rat",
     "nameEn": "Rat Defense: English Rat",
@@ -12703,9 +13363,9 @@
     ]
   },
   {
-    "id": "a41-robatsch-defense",
-    "name": "Robatsch Defense",
-    "nameEn": "Robatsch Defense",
+    "id": "a41-robatsch-defense-rossolimo-variation",
+    "name": "Robatsch Defense: Rossolimo Variation",
+    "nameEn": "Robatsch Defense: Rossolimo Variation",
     "eco": "A41",
     "moves": "1. d4 d6 2. Nf3 g6 3. c4 Bg7 4. e4 Bg4",
     "uciMoves": [
@@ -13475,6 +14135,28 @@
       "b1c3",
       "d7d5",
       "d1d3"
+    ],
+    "character": "balanced",
+    "difficulty": 3,
+    "popularity": 3,
+    "color": "both",
+    "description": "Ligne nommée (A45) — base de données Lichess chess-openings.",
+    "descriptionEn": "Named line (A45) — Lichess chess-openings database.",
+    "tags": [
+      "lichess-openings",
+      "A"
+    ]
+  },
+  {
+    "id": "a45-basque-opening",
+    "name": "Basque Opening",
+    "nameEn": "Basque Opening",
+    "eco": "A45",
+    "moves": "1. d4 Nf6 2. b3",
+    "uciMoves": [
+      "d2d4",
+      "g8f6",
+      "b2b3"
     ],
     "character": "balanced",
     "difficulty": 3,
@@ -15332,9 +16014,9 @@
     ]
   },
   {
-    "id": "a51-indian-defense-budapest-defense",
-    "name": "Indian Defense: Budapest Defense",
-    "nameEn": "Indian Defense: Budapest Defense",
+    "id": "a51-indian-defense-budapest-gambit",
+    "name": "Indian Defense: Budapest Gambit",
+    "nameEn": "Indian Defense: Budapest Gambit",
     "eco": "A51",
     "moves": "1. d4 Nf6 2. c4 e5",
     "uciMoves": [
@@ -15355,20 +16037,17 @@
     ]
   },
   {
-    "id": "a51-indian-defense-budapest-defense-fajarowicz-defense-bonsdorf-variation",
-    "name": "Indian Defense: Budapest Defense, Fajarowicz Defense, Bonsdorf Variation",
-    "nameEn": "Indian Defense: Budapest Defense, Fajarowicz Defense, Bonsdorf Variation",
+    "id": "a51-indian-defense-budapest-gambit-accepted",
+    "name": "Indian Defense: Budapest Gambit Accepted",
+    "nameEn": "Indian Defense: Budapest Gambit Accepted",
     "eco": "A51",
-    "moves": "1. d4 Nf6 2. c4 e5 3. dxe5 Ne4 4. a3 b6",
+    "moves": "1. d4 Nf6 2. c4 e5 3. dxe5",
     "uciMoves": [
       "d2d4",
       "g8f6",
       "c2c4",
       "e7e5",
-      "d4e5",
-      "f6e4",
-      "a2a3",
-      "b7b6"
+      "d4e5"
     ],
     "character": "balanced",
     "difficulty": 3,
@@ -15382,9 +16061,9 @@
     ]
   },
   {
-    "id": "a51-indian-defense-budapest-defense-fajarowicz-variation",
-    "name": "Indian Defense: Budapest Defense, Fajarowicz Variation",
-    "nameEn": "Indian Defense: Budapest Defense, Fajarowicz Variation",
+    "id": "a51-indian-defense-budapest-gambit-accepted-fajarowicz-defense",
+    "name": "Indian Defense: Budapest Gambit Accepted, Fajarowicz Defense",
+    "nameEn": "Indian Defense: Budapest Gambit Accepted, Fajarowicz Defense",
     "eco": "A51",
     "moves": "1. d4 Nf6 2. c4 e5 3. dxe5 Ne4",
     "uciMoves": [
@@ -15407,9 +16086,35 @@
     ]
   },
   {
-    "id": "a51-indian-defense-budapest-defense-fajarowicz-steiner-variation",
-    "name": "Indian Defense: Budapest Defense, Fajarowicz-Steiner Variation",
-    "nameEn": "Indian Defense: Budapest Defense, Fajarowicz-Steiner Variation",
+    "id": "a51-indian-defense-budapest-gambit-accepted-fajarowicz-defense-bonsdorf-variatio",
+    "name": "Indian Defense: Budapest Gambit Accepted, Fajarowicz Defense, Bonsdorf Variation",
+    "nameEn": "Indian Defense: Budapest Gambit Accepted, Fajarowicz Defense, Bonsdorf Variation",
+    "eco": "A51",
+    "moves": "1. d4 Nf6 2. c4 e5 3. dxe5 Ne4 4. a3",
+    "uciMoves": [
+      "d2d4",
+      "g8f6",
+      "c2c4",
+      "e7e5",
+      "d4e5",
+      "f6e4",
+      "a2a3"
+    ],
+    "character": "balanced",
+    "difficulty": 3,
+    "popularity": 3,
+    "color": "both",
+    "description": "Ligne nommée (A51) — base de données Lichess chess-openings.",
+    "descriptionEn": "Named line (A51) — Lichess chess-openings database.",
+    "tags": [
+      "lichess-openings",
+      "A"
+    ]
+  },
+  {
+    "id": "a51-indian-defense-budapest-gambit-accepted-fajarowicz-defense-steiner-variation",
+    "name": "Indian Defense: Budapest Gambit Accepted, Fajarowicz Defense, Steiner Variation",
+    "nameEn": "Indian Defense: Budapest Gambit Accepted, Fajarowicz Defense, Steiner Variation",
     "eco": "A51",
     "moves": "1. d4 Nf6 2. c4 e5 3. dxe5 Ne4 4. Qc2",
     "uciMoves": [
@@ -15433,9 +16138,9 @@
     ]
   },
   {
-    "id": "a52-indian-defense-budapest-defense",
-    "name": "Indian Defense: Budapest Defense",
-    "nameEn": "Indian Defense: Budapest Defense",
+    "id": "a52-indian-defense-budapest-gambit-accepted-main-line",
+    "name": "Indian Defense: Budapest Gambit Accepted, Main Line",
+    "nameEn": "Indian Defense: Budapest Gambit Accepted, Main Line",
     "eco": "A52",
     "moves": "1. d4 Nf6 2. c4 e5 3. dxe5 Ng4",
     "uciMoves": [
@@ -15458,9 +16163,9 @@
     ]
   },
   {
-    "id": "a52-indian-defense-budapest-defense-adler-variation",
-    "name": "Indian Defense: Budapest Defense, Adler Variation",
-    "nameEn": "Indian Defense: Budapest Defense, Adler Variation",
+    "id": "a52-indian-defense-budapest-gambit-accepted-main-line-adler-variation",
+    "name": "Indian Defense: Budapest Gambit Accepted, Main Line, Adler Variation",
+    "nameEn": "Indian Defense: Budapest Gambit Accepted, Main Line, Adler Variation",
     "eco": "A52",
     "moves": "1. d4 Nf6 2. c4 e5 3. dxe5 Ng4 4. Nf3",
     "uciMoves": [
@@ -15484,9 +16189,9 @@
     ]
   },
   {
-    "id": "a52-indian-defense-budapest-defense-alekhine-variation",
-    "name": "Indian Defense: Budapest Defense, Alekhine Variation",
-    "nameEn": "Indian Defense: Budapest Defense, Alekhine Variation",
+    "id": "a52-indian-defense-budapest-gambit-accepted-main-line-alekhine-variation",
+    "name": "Indian Defense: Budapest Gambit Accepted, Main Line, Alekhine Variation",
+    "nameEn": "Indian Defense: Budapest Gambit Accepted, Main Line, Alekhine Variation",
     "eco": "A52",
     "moves": "1. d4 Nf6 2. c4 e5 3. dxe5 Ng4 4. e4",
     "uciMoves": [
@@ -15510,11 +16215,11 @@
     ]
   },
   {
-    "id": "a52-indian-defense-budapest-defense-alekhine-variation-abonyi-variation",
-    "name": "Indian Defense: Budapest Defense, Alekhine Variation, Abonyi Variation",
-    "nameEn": "Indian Defense: Budapest Defense, Alekhine Variation, Abonyi Variation",
+    "id": "a52-indian-defense-budapest-gambit-accepted-main-line-alekhine-variation-abonyi-",
+    "name": "Indian Defense: Budapest Gambit Accepted, Main Line, Alekhine Variation, Abonyi Variation",
+    "nameEn": "Indian Defense: Budapest Gambit Accepted, Main Line, Alekhine Variation, Abonyi Variation",
     "eco": "A52",
-    "moves": "1. d4 Nf6 2. c4 e5 3. dxe5 Ng4 4. e4 Nxe5 5. f4 Nec6",
+    "moves": "1. d4 Nf6 2. c4 e5 3. dxe5 Ng4 4. e4 Nxe5",
     "uciMoves": [
       "d2d4",
       "g8f6",
@@ -15523,9 +16228,7 @@
       "d4e5",
       "f6g4",
       "e2e4",
-      "g4e5",
-      "f2f4",
-      "e5c6"
+      "g4e5"
     ],
     "character": "balanced",
     "difficulty": 3,
@@ -15539,9 +16242,9 @@
     ]
   },
   {
-    "id": "a52-indian-defense-budapest-defense-alekhine-variation-tartakower-defense",
-    "name": "Indian Defense: Budapest Defense, Alekhine Variation, Tartakower Defense",
-    "nameEn": "Indian Defense: Budapest Defense, Alekhine Variation, Tartakower Defense",
+    "id": "a52-indian-defense-budapest-gambit-accepted-main-line-alekhine-variation-tartako",
+    "name": "Indian Defense: Budapest Gambit Accepted, Main Line, Alekhine Variation, Tartakower Defense",
+    "nameEn": "Indian Defense: Budapest Gambit Accepted, Main Line, Alekhine Variation, Tartakower Defense",
     "eco": "A52",
     "moves": "1. d4 Nf6 2. c4 e5 3. dxe5 Ng4 4. e4 d6",
     "uciMoves": [
@@ -15566,9 +16269,9 @@
     ]
   },
   {
-    "id": "a52-indian-defense-budapest-defense-rubinstein-variation",
-    "name": "Indian Defense: Budapest Defense, Rubinstein Variation",
-    "nameEn": "Indian Defense: Budapest Defense, Rubinstein Variation",
+    "id": "a52-indian-defense-budapest-gambit-accepted-main-line-rubinstein-variation",
+    "name": "Indian Defense: Budapest Gambit Accepted, Main Line, Rubinstein Variation",
+    "nameEn": "Indian Defense: Budapest Gambit Accepted, Main Line, Rubinstein Variation",
     "eco": "A52",
     "moves": "1. d4 Nf6 2. c4 e5 3. dxe5 Ng4 4. Bf4",
     "uciMoves": [
@@ -18068,6 +18771,30 @@
       "d2d4",
       "f7f5",
       "d1d3"
+    ],
+    "character": "balanced",
+    "difficulty": 3,
+    "popularity": 3,
+    "color": "both",
+    "description": "Ligne nommée (A80) — base de données Lichess chess-openings.",
+    "descriptionEn": "Named line (A80) — Lichess chess-openings database.",
+    "tags": [
+      "lichess-openings",
+      "A"
+    ]
+  },
+  {
+    "id": "a80-dutch-defense-barcza-variation",
+    "name": "Dutch Defense: Barcza Variation",
+    "nameEn": "Dutch Defense: Barcza Variation",
+    "eco": "A80",
+    "moves": "1. d4 f5 2. Nf3 Nf6 3. c3",
+    "uciMoves": [
+      "d2d4",
+      "f7f5",
+      "g1f3",
+      "g8f6",
+      "c2c3"
     ],
     "character": "balanced",
     "difficulty": 3,
@@ -22402,697 +23129,6 @@
       "b1c3",
       "d5a5",
       "b2b4"
-    ],
-    "character": "balanced",
-    "difficulty": 3,
-    "popularity": 3,
-    "color": "both",
-    "description": "Ligne nommée (B01) — base de données Lichess chess-openings.",
-    "descriptionEn": "Named line (B01) — Lichess chess-openings database.",
-    "tags": [
-      "lichess-openings",
-      "B"
-    ]
-  },
-  {
-    "id": "b01-scandinavian-defense-main-line-mieses-variation",
-    "name": "Scandinavian Defense: Main Line, Mieses Variation",
-    "nameEn": "Scandinavian Defense: Main Line, Mieses Variation",
-    "eco": "B01",
-    "moves": "1. e4 d5 2. exd5 Qxd5 3. Nc3 Qa5 4. d4 Nf6",
-    "uciMoves": [
-      "e2e4",
-      "d7d5",
-      "e4d5",
-      "d8d5",
-      "b1c3",
-      "d5a5",
-      "d2d4",
-      "g8f6"
-    ],
-    "character": "balanced",
-    "difficulty": 3,
-    "popularity": 3,
-    "color": "both",
-    "description": "Ligne nommée (B01) — base de données Lichess chess-openings.",
-    "descriptionEn": "Named line (B01) — Lichess chess-openings database.",
-    "tags": [
-      "lichess-openings",
-      "B"
-    ]
-  },
-  {
-    "id": "b01-scandinavian-defense-marshall-variation",
-    "name": "Scandinavian Defense: Marshall Variation",
-    "nameEn": "Scandinavian Defense: Marshall Variation",
-    "eco": "B01",
-    "moves": "1. e4 d5 2. exd5 Nf6 3. d4 Nxd5",
-    "uciMoves": [
-      "e2e4",
-      "d7d5",
-      "e4d5",
-      "g8f6",
-      "d2d4",
-      "f6d5"
-    ],
-    "character": "balanced",
-    "difficulty": 3,
-    "popularity": 3,
-    "color": "both",
-    "description": "Ligne nommée (B01) — base de données Lichess chess-openings.",
-    "descriptionEn": "Named line (B01) — Lichess chess-openings database.",
-    "tags": [
-      "lichess-openings",
-      "B"
-    ]
-  },
-  {
-    "id": "b01-scandinavian-defense-mieses-kotroc-variation",
-    "name": "Scandinavian Defense: Mieses-Kotroc Variation",
-    "nameEn": "Scandinavian Defense: Mieses-Kotroc Variation",
-    "eco": "B01",
-    "moves": "1. e4 d5 2. exd5 Qxd5",
-    "uciMoves": [
-      "e2e4",
-      "d7d5",
-      "e4d5",
-      "d8d5"
-    ],
-    "character": "balanced",
-    "difficulty": 3,
-    "popularity": 3,
-    "color": "both",
-    "description": "Ligne nommée (B01) — base de données Lichess chess-openings.",
-    "descriptionEn": "Named line (B01) — Lichess chess-openings database.",
-    "tags": [
-      "lichess-openings",
-      "B"
-    ]
-  },
-  {
-    "id": "b01-scandinavian-defense-modern-variation",
-    "name": "Scandinavian Defense: Modern Variation",
-    "nameEn": "Scandinavian Defense: Modern Variation",
-    "eco": "B01",
-    "moves": "1. e4 d5 2. exd5 Nf6",
-    "uciMoves": [
-      "e2e4",
-      "d7d5",
-      "e4d5",
-      "g8f6"
-    ],
-    "character": "balanced",
-    "difficulty": 3,
-    "popularity": 3,
-    "color": "both",
-    "description": "Ligne nommée (B01) — base de données Lichess chess-openings.",
-    "descriptionEn": "Named line (B01) — Lichess chess-openings database.",
-    "tags": [
-      "lichess-openings",
-      "B"
-    ]
-  },
-  {
-    "id": "b01-scandinavian-defense-modern-variation-1",
-    "name": "Scandinavian Defense: Modern Variation",
-    "nameEn": "Scandinavian Defense: Modern Variation",
-    "eco": "B01",
-    "moves": "1. e4 d5 2. exd5 Nf6 3. d4",
-    "uciMoves": [
-      "e2e4",
-      "d7d5",
-      "e4d5",
-      "g8f6",
-      "d2d4"
-    ],
-    "character": "balanced",
-    "difficulty": 3,
-    "popularity": 3,
-    "color": "both",
-    "description": "Ligne nommée (B01) — base de données Lichess chess-openings.",
-    "descriptionEn": "Named line (B01) — Lichess chess-openings database.",
-    "tags": [
-      "lichess-openings",
-      "B"
-    ]
-  },
-  {
-    "id": "b01-scandinavian-defense-modern-variation-gipslis-variation",
-    "name": "Scandinavian Defense: Modern Variation, Gipslis Variation",
-    "nameEn": "Scandinavian Defense: Modern Variation, Gipslis Variation",
-    "eco": "B01",
-    "moves": "1. e4 d5 2. exd5 Nf6 3. d4 Nxd5 4. Nf3 Bg4",
-    "uciMoves": [
-      "e2e4",
-      "d7d5",
-      "e4d5",
-      "g8f6",
-      "d2d4",
-      "f6d5",
-      "g1f3",
-      "c8g4"
-    ],
-    "character": "balanced",
-    "difficulty": 3,
-    "popularity": 3,
-    "color": "both",
-    "description": "Ligne nommée (B01) — base de données Lichess chess-openings.",
-    "descriptionEn": "Named line (B01) — Lichess chess-openings database.",
-    "tags": [
-      "lichess-openings",
-      "B"
-    ]
-  },
-  {
-    "id": "b01-scandinavian-defense-modern-variation-wing-gambit",
-    "name": "Scandinavian Defense: Modern Variation, Wing Gambit",
-    "nameEn": "Scandinavian Defense: Modern Variation, Wing Gambit",
-    "eco": "B01",
-    "moves": "1. e4 d5 2. exd5 Nf6 3. d4 g6 4. c4 b5",
-    "uciMoves": [
-      "e2e4",
-      "d7d5",
-      "e4d5",
-      "g8f6",
-      "d2d4",
-      "g7g6",
-      "c2c4",
-      "b7b5"
-    ],
-    "character": "balanced",
-    "difficulty": 3,
-    "popularity": 3,
-    "color": "both",
-    "description": "Ligne nommée (B01) — base de données Lichess chess-openings.",
-    "descriptionEn": "Named line (B01) — Lichess chess-openings database.",
-    "tags": [
-      "lichess-openings",
-      "B"
-    ]
-  },
-  {
-    "id": "b01-scandinavian-defense-panov-transfer",
-    "name": "Scandinavian Defense: Panov Transfer",
-    "nameEn": "Scandinavian Defense: Panov Transfer",
-    "eco": "B01",
-    "moves": "1. e4 d5 2. exd5 Nf6 3. c4 c6",
-    "uciMoves": [
-      "e2e4",
-      "d7d5",
-      "e4d5",
-      "g8f6",
-      "c2c4",
-      "c7c6"
-    ],
-    "character": "balanced",
-    "difficulty": 3,
-    "popularity": 3,
-    "color": "both",
-    "description": "Ligne nommée (B01) — base de données Lichess chess-openings.",
-    "descriptionEn": "Named line (B01) — Lichess chess-openings database.",
-    "tags": [
-      "lichess-openings",
-      "B"
-    ]
-  },
-  {
-    "id": "b01-scandinavian-defense-portuguese-gambit",
-    "name": "Scandinavian Defense: Portuguese Gambit",
-    "nameEn": "Scandinavian Defense: Portuguese Gambit",
-    "eco": "B01",
-    "moves": "1. e4 d5 2. exd5 Nf6 3. d4 Bg4",
-    "uciMoves": [
-      "e2e4",
-      "d7d5",
-      "e4d5",
-      "g8f6",
-      "d2d4",
-      "c8g4"
-    ],
-    "character": "balanced",
-    "difficulty": 3,
-    "popularity": 3,
-    "color": "both",
-    "description": "Ligne nommée (B01) — base de données Lichess chess-openings.",
-    "descriptionEn": "Named line (B01) — Lichess chess-openings database.",
-    "tags": [
-      "lichess-openings",
-      "B"
-    ]
-  },
-  {
-    "id": "b01-scandinavian-defense-portuguese-gambit-banker-variation",
-    "name": "Scandinavian Defense: Portuguese Gambit, Banker Variation",
-    "nameEn": "Scandinavian Defense: Portuguese Gambit, Banker Variation",
-    "eco": "B01",
-    "moves": "1. e4 d5 2. exd5 Nf6 3. d4 Bg4 4. f3 Bf5 5. c4",
-    "uciMoves": [
-      "e2e4",
-      "d7d5",
-      "e4d5",
-      "g8f6",
-      "d2d4",
-      "c8g4",
-      "f2f3",
-      "g4f5",
-      "c2c4"
-    ],
-    "character": "balanced",
-    "difficulty": 3,
-    "popularity": 3,
-    "color": "both",
-    "description": "Ligne nommée (B01) — base de données Lichess chess-openings.",
-    "descriptionEn": "Named line (B01) — Lichess chess-openings database.",
-    "tags": [
-      "lichess-openings",
-      "B"
-    ]
-  },
-  {
-    "id": "b01-scandinavian-defense-portuguese-gambit-classical-variation",
-    "name": "Scandinavian Defense: Portuguese Gambit, Classical Variation",
-    "nameEn": "Scandinavian Defense: Portuguese Gambit, Classical Variation",
-    "eco": "B01",
-    "moves": "1. e4 d5 2. exd5 Nf6 3. d4 Bg4 4. Nf3",
-    "uciMoves": [
-      "e2e4",
-      "d7d5",
-      "e4d5",
-      "g8f6",
-      "d2d4",
-      "c8g4",
-      "g1f3"
-    ],
-    "character": "balanced",
-    "difficulty": 3,
-    "popularity": 3,
-    "color": "both",
-    "description": "Ligne nommée (B01) — base de données Lichess chess-openings.",
-    "descriptionEn": "Named line (B01) — Lichess chess-openings database.",
-    "tags": [
-      "lichess-openings",
-      "B"
-    ]
-  },
-  {
-    "id": "b01-scandinavian-defense-portuguese-gambit-correspondence-refutation",
-    "name": "Scandinavian Defense: Portuguese Gambit, Correspondence Refutation",
-    "nameEn": "Scandinavian Defense: Portuguese Gambit, Correspondence Refutation",
-    "eco": "B01",
-    "moves": "1. e4 d5 2. exd5 Nf6 3. d4 Bg4 4. f3 Bf5 5. g4",
-    "uciMoves": [
-      "e2e4",
-      "d7d5",
-      "e4d5",
-      "g8f6",
-      "d2d4",
-      "c8g4",
-      "f2f3",
-      "g4f5",
-      "g2g4"
-    ],
-    "character": "balanced",
-    "difficulty": 3,
-    "popularity": 3,
-    "color": "both",
-    "description": "Ligne nommée (B01) — base de données Lichess chess-openings.",
-    "descriptionEn": "Named line (B01) — Lichess chess-openings database.",
-    "tags": [
-      "lichess-openings",
-      "B"
-    ]
-  },
-  {
-    "id": "b01-scandinavian-defense-portuguese-gambit-elbow-variation",
-    "name": "Scandinavian Defense: Portuguese Gambit, Elbow Variation",
-    "nameEn": "Scandinavian Defense: Portuguese Gambit, Elbow Variation",
-    "eco": "B01",
-    "moves": "1. e4 d5 2. exd5 Nf6 3. d4 Bg4 4. Bb5+ c6",
-    "uciMoves": [
-      "e2e4",
-      "d7d5",
-      "e4d5",
-      "g8f6",
-      "d2d4",
-      "c8g4",
-      "f1b5",
-      "c7c6"
-    ],
-    "character": "balanced",
-    "difficulty": 3,
-    "popularity": 3,
-    "color": "both",
-    "description": "Ligne nommée (B01) — base de données Lichess chess-openings.",
-    "descriptionEn": "Named line (B01) — Lichess chess-openings database.",
-    "tags": [
-      "lichess-openings",
-      "B"
-    ]
-  },
-  {
-    "id": "b01-scandinavian-defense-portuguese-gambit-jadoul-variation",
-    "name": "Scandinavian Defense: Portuguese Gambit, Jadoul Variation",
-    "nameEn": "Scandinavian Defense: Portuguese Gambit, Jadoul Variation",
-    "eco": "B01",
-    "moves": "1. e4 d5 2. exd5 Nf6 3. d4 Bg4 4. f3 Bf5 5. Bb5+ Nbd7 6. c4",
-    "uciMoves": [
-      "e2e4",
-      "d7d5",
-      "e4d5",
-      "g8f6",
-      "d2d4",
-      "c8g4",
-      "f2f3",
-      "g4f5",
-      "f1b5",
-      "b8d7",
-      "c2c4"
-    ],
-    "character": "balanced",
-    "difficulty": 3,
-    "popularity": 3,
-    "color": "both",
-    "description": "Ligne nommée (B01) — base de données Lichess chess-openings.",
-    "descriptionEn": "Named line (B01) — Lichess chess-openings database.",
-    "tags": [
-      "lichess-openings",
-      "B"
-    ]
-  },
-  {
-    "id": "b01-scandinavian-defense-portuguese-gambit-lusophobe-variation",
-    "name": "Scandinavian Defense: Portuguese Gambit, Lusophobe Variation",
-    "nameEn": "Scandinavian Defense: Portuguese Gambit, Lusophobe Variation",
-    "eco": "B01",
-    "moves": "1. e4 d5 2. exd5 Nf6 3. d4 Bg4 4. Bb5+ Nbd7 5. Be2",
-    "uciMoves": [
-      "e2e4",
-      "d7d5",
-      "e4d5",
-      "g8f6",
-      "d2d4",
-      "c8g4",
-      "f1b5",
-      "b8d7",
-      "b5e2"
-    ],
-    "character": "balanced",
-    "difficulty": 3,
-    "popularity": 3,
-    "color": "both",
-    "description": "Ligne nommée (B01) — base de données Lichess chess-openings.",
-    "descriptionEn": "Named line (B01) — Lichess chess-openings database.",
-    "tags": [
-      "lichess-openings",
-      "B"
-    ]
-  },
-  {
-    "id": "b01-scandinavian-defense-portuguese-gambit-melbourne-shuffle-variation",
-    "name": "Scandinavian Defense: Portuguese Gambit, Melbourne Shuffle Variation",
-    "nameEn": "Scandinavian Defense: Portuguese Gambit, Melbourne Shuffle Variation",
-    "eco": "B01",
-    "moves": "1. e4 d5 2. exd5 Nf6 3. d4 Bg4 4. f3 Bf5 5. Bb5+ Nbd7 6. Nc3",
-    "uciMoves": [
-      "e2e4",
-      "d7d5",
-      "e4d5",
-      "g8f6",
-      "d2d4",
-      "c8g4",
-      "f2f3",
-      "g4f5",
-      "f1b5",
-      "b8d7",
-      "b1c3"
-    ],
-    "character": "balanced",
-    "difficulty": 3,
-    "popularity": 3,
-    "color": "both",
-    "description": "Ligne nommée (B01) — base de données Lichess chess-openings.",
-    "descriptionEn": "Named line (B01) — Lichess chess-openings database.",
-    "tags": [
-      "lichess-openings",
-      "B"
-    ]
-  },
-  {
-    "id": "b01-scandinavian-defense-portuguese-gambit-wuss-variation",
-    "name": "Scandinavian Defense: Portuguese Gambit, Wuss Variation",
-    "nameEn": "Scandinavian Defense: Portuguese Gambit, Wuss Variation",
-    "eco": "B01",
-    "moves": "1. e4 d5 2. exd5 Nf6 3. d4 Bg4 4. Be2",
-    "uciMoves": [
-      "e2e4",
-      "d7d5",
-      "e4d5",
-      "g8f6",
-      "d2d4",
-      "c8g4",
-      "f1e2"
-    ],
-    "character": "balanced",
-    "difficulty": 3,
-    "popularity": 3,
-    "color": "both",
-    "description": "Ligne nommée (B01) — base de données Lichess chess-openings.",
-    "descriptionEn": "Named line (B01) — Lichess chess-openings database.",
-    "tags": [
-      "lichess-openings",
-      "B"
-    ]
-  },
-  {
-    "id": "b01-scandinavian-defense-richter-variation",
-    "name": "Scandinavian Defense: Richter Variation",
-    "nameEn": "Scandinavian Defense: Richter Variation",
-    "eco": "B01",
-    "moves": "1. e4 d5 2. exd5 Nf6 3. d4 Nxd5 4. Nf3 g6",
-    "uciMoves": [
-      "e2e4",
-      "d7d5",
-      "e4d5",
-      "g8f6",
-      "d2d4",
-      "f6d5",
-      "g1f3",
-      "g7g6"
-    ],
-    "character": "balanced",
-    "difficulty": 3,
-    "popularity": 3,
-    "color": "both",
-    "description": "Ligne nommée (B01) — base de données Lichess chess-openings.",
-    "descriptionEn": "Named line (B01) — Lichess chess-openings database.",
-    "tags": [
-      "lichess-openings",
-      "B"
-    ]
-  },
-  {
-    "id": "b01-scandinavian-defense-richter-variation-1",
-    "name": "Scandinavian Defense: Richter Variation",
-    "nameEn": "Scandinavian Defense: Richter Variation",
-    "eco": "B01",
-    "moves": "1. e4 d5 2. exd5 Nf6 3. d4 g6",
-    "uciMoves": [
-      "e2e4",
-      "d7d5",
-      "e4d5",
-      "g8f6",
-      "d2d4",
-      "g7g6"
-    ],
-    "character": "balanced",
-    "difficulty": 3,
-    "popularity": 3,
-    "color": "both",
-    "description": "Ligne nommée (B01) — base de données Lichess chess-openings.",
-    "descriptionEn": "Named line (B01) — Lichess chess-openings database.",
-    "tags": [
-      "lichess-openings",
-      "B"
-    ]
-  },
-  {
-    "id": "b01-scandinavian-defense-schiller-pytel-variation",
-    "name": "Scandinavian Defense: Schiller-Pytel Variation",
-    "nameEn": "Scandinavian Defense: Schiller-Pytel Variation",
-    "eco": "B01",
-    "moves": "1. e4 d5 2. exd5 Qxd5 3. Nc3 Qd6 4. d4 c6",
-    "uciMoves": [
-      "e2e4",
-      "d7d5",
-      "e4d5",
-      "d8d5",
-      "b1c3",
-      "d5d6",
-      "d2d4",
-      "c7c6"
-    ],
-    "character": "balanced",
-    "difficulty": 3,
-    "popularity": 3,
-    "color": "both",
-    "description": "Ligne nommée (B01) — base de données Lichess chess-openings.",
-    "descriptionEn": "Named line (B01) — Lichess chess-openings database.",
-    "tags": [
-      "lichess-openings",
-      "B"
-    ]
-  },
-  {
-    "id": "b01-scandinavian-defense-schiller-pytel-variation-modern-variation",
-    "name": "Scandinavian Defense: Schiller-Pytel Variation, Modern Variation",
-    "nameEn": "Scandinavian Defense: Schiller-Pytel Variation, Modern Variation",
-    "eco": "B01",
-    "moves": "1. e4 d5 2. exd5 Qxd5 3. Nc3 Qd6 4. d4 Nf6 5. Bc4 c6 6. Nge2 Bf5 7. Bf4 Qb4",
-    "uciMoves": [
-      "e2e4",
-      "d7d5",
-      "e4d5",
-      "d8d5",
-      "b1c3",
-      "d5d6",
-      "d2d4",
-      "g8f6",
-      "f1c4",
-      "c7c6",
-      "g1e2",
-      "c8f5",
-      "c1f4",
-      "d6b4"
-    ],
-    "character": "balanced",
-    "difficulty": 3,
-    "popularity": 3,
-    "color": "both",
-    "description": "Ligne nommée (B01) — base de données Lichess chess-openings.",
-    "descriptionEn": "Named line (B01) — Lichess chess-openings database.",
-    "tags": [
-      "lichess-openings",
-      "B"
-    ]
-  },
-  {
-    "id": "b01-scandinavian-defense-valencian-variation",
-    "name": "Scandinavian Defense: Valencian Variation",
-    "nameEn": "Scandinavian Defense: Valencian Variation",
-    "eco": "B01",
-    "moves": "1. e4 d5 2. exd5 Qxd5 3. Nc3 Qd8",
-    "uciMoves": [
-      "e2e4",
-      "d7d5",
-      "e4d5",
-      "d8d5",
-      "b1c3",
-      "d5d8"
-    ],
-    "character": "balanced",
-    "difficulty": 3,
-    "popularity": 3,
-    "color": "both",
-    "description": "Ligne nommée (B01) — base de données Lichess chess-openings.",
-    "descriptionEn": "Named line (B01) — Lichess chess-openings database.",
-    "tags": [
-      "lichess-openings",
-      "B"
-    ]
-  },
-  {
-    "id": "b01-scandinavian-defense-valencian-variation-ilundain-variation",
-    "name": "Scandinavian Defense: Valencian Variation, Ilundain Variation",
-    "nameEn": "Scandinavian Defense: Valencian Variation, Ilundain Variation",
-    "eco": "B01",
-    "moves": "1. e4 d5 2. exd5 Qxd5 3. Nc3 Qd8 4. d4 Nf6 5. Nf3 c6",
-    "uciMoves": [
-      "e2e4",
-      "d7d5",
-      "e4d5",
-      "d8d5",
-      "b1c3",
-      "d5d8",
-      "d2d4",
-      "g8f6",
-      "g1f3",
-      "c7c6"
-    ],
-    "character": "balanced",
-    "difficulty": 3,
-    "popularity": 3,
-    "color": "both",
-    "description": "Ligne nommée (B01) — base de données Lichess chess-openings.",
-    "descriptionEn": "Named line (B01) — Lichess chess-openings database.",
-    "tags": [
-      "lichess-openings",
-      "B"
-    ]
-  },
-  {
-    "id": "b01-scandinavian-defense-valencian-variation-main-line",
-    "name": "Scandinavian Defense: Valencian Variation, Main Line",
-    "nameEn": "Scandinavian Defense: Valencian Variation, Main Line",
-    "eco": "B01",
-    "moves": "1. e4 d5 2. exd5 Qxd5 3. Nc3 Qd8 4. d4 Nf6 5. Nf3 Bg4",
-    "uciMoves": [
-      "e2e4",
-      "d7d5",
-      "e4d5",
-      "d8d5",
-      "b1c3",
-      "d5d8",
-      "d2d4",
-      "g8f6",
-      "g1f3",
-      "c8g4"
-    ],
-    "character": "balanced",
-    "difficulty": 3,
-    "popularity": 3,
-    "color": "both",
-    "description": "Ligne nommée (B01) — base de données Lichess chess-openings.",
-    "descriptionEn": "Named line (B01) — Lichess chess-openings database.",
-    "tags": [
-      "lichess-openings",
-      "B"
-    ]
-  },
-  {
-    "id": "b01-scandinavian-defense-zilbermints-gambit",
-    "name": "Scandinavian Defense: Zilbermints Gambit",
-    "nameEn": "Scandinavian Defense: Zilbermints Gambit",
-    "eco": "B01",
-    "moves": "1. e4 d5 2. b4",
-    "uciMoves": [
-      "e2e4",
-      "d7d5",
-      "b2b4"
-    ],
-    "character": "balanced",
-    "difficulty": 3,
-    "popularity": 3,
-    "color": "both",
-    "description": "Ligne nommée (B01) — base de données Lichess chess-openings.",
-    "descriptionEn": "Named line (B01) — Lichess chess-openings database.",
-    "tags": [
-      "lichess-openings",
-      "B"
-    ]
-  },
-  {
-    "id": "b01-van-geet-opening-grunfeld-defense",
-    "name": "Van Geet Opening: Grünfeld Defense",
-    "nameEn": "Van Geet Opening: Grünfeld Defense",
-    "eco": "B01",
-    "moves": "1. e4 d5 2. Nc3 dxe4 3. Nxe4 e5",
-    "uciMoves": [
-      "e2e4",
-      "d7d5",
-      "b1c3",
-      "d5e4",
-      "c3e4",
-      "e7e5"
     ],
     "character": "balanced",
     "difficulty": 3,
