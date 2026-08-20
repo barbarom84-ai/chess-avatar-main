@@ -52,7 +52,7 @@ export default function LearnHubPage() {
     }
     const merged = Array.from(byId.values());
     merged.sort((a, b) => {
-      const eco = a.eco.localeCompare(b.eco);
+      const eco = (a.eco ?? "").localeCompare(b.eco ?? "");
       if (eco !== 0) return eco;
       return getOpeningName(a, lang).localeCompare(getOpeningName(b, lang), lang === "fr" ? "fr" : "en");
     });
@@ -95,9 +95,9 @@ export default function LearnHubPage() {
       if (q) {
         const hay = [
           title.toLowerCase(),
-          opening.eco.toLowerCase(),
+          opening.eco?.toLowerCase() ?? "",
           opening.nameEn?.toLowerCase() ?? "",
-          ...opening.tags.map((x) => x.toLowerCase()),
+          ...(opening.tags ?? []).map((x) => x.toLowerCase()),
         ].join(" ");
         if (!hay.includes(q)) return false;
       }

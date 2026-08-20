@@ -200,19 +200,20 @@ export interface MergedLearnCatalog {
  * Les parties / défis depuis `data/historical-games/*.meta.ts` sont fusionnées ensuite via `attachStaticGames`.
  */
 export function syntheticLessonFromOpening(o: Opening): OpeningLesson {
+  const uciMoves = Array.isArray(o.uciMoves) ? o.uciMoves : [];
   const modelLine =
-    o.uciMoves.length > 0
-      ? o.uciMoves.map((uci, idx) => ({
+    uciMoves.length > 0
+      ? uciMoves.map((uci, idx) => ({
           uci,
           comment: {
             fr:
               idx === 0
                 ? `Ligne principale : ${o.moves}`
-                : `Suite de la ligne (${idx + 1}/${o.uciMoves.length}).`,
+                : `Suite de la ligne (${idx + 1}/${uciMoves.length}).`,
             en:
               idx === 0
                 ? `Main line: ${o.moves}`
-                : `Continuation (${idx + 1}/${o.uciMoves.length}).`,
+                : `Continuation (${idx + 1}/${uciMoves.length}).`,
           },
         }))
       : [
@@ -222,12 +223,14 @@ export function syntheticLessonFromOpening(o: Opening): OpeningLesson {
           },
         ];
 
+  const name = o.name || o.nameEn || o.id;
+  const eco = o.eco || "A00";
   const descFr =
-    o.description.trim() ||
-    `Ouverture « ${o.name} » (${o.eco}) — fiche du répertoire agrégé.`;
+    (o.description ?? "").trim() ||
+    `Ouverture « ${name} » (${eco}) — fiche du répertoire agrégé.`;
   const descEn =
-    (o.descriptionEn ?? o.description).trim() ||
-    `Opening "${o.nameEn ?? o.name}" (${o.eco}) — aggregated repertoire card.`;
+    (o.descriptionEn ?? o.description ?? "").trim() ||
+    `Opening "${o.nameEn ?? name}" (${eco}) — aggregated repertoire card.`;
 
   return {
     openingId: o.id,
@@ -239,8 +242,8 @@ export function syntheticLessonFromOpening(o: Opening): OpeningLesson {
     overview: { fr: descFr, en: descEn },
     mainIdeas: [
       {
-        fr: `Code ECO ${o.eco}, style ${o.character}. Caractéristique : ${o.moves}`,
-        en: `ECO ${o.eco}, ${o.character} style. Characteristic: ${o.moves}`,
+        fr: `Code ECO ${eco}, style ${o.character ?? "balanced"}. Caractéristique : ${o.moves ?? ""}`,
+        en: `ECO ${eco}, ${o.character ?? "balanced"} style. Characteristic: ${o.moves ?? ""}`,
       },
     ],
     typicalPlans: [
@@ -257,8 +260,8 @@ export function syntheticLessonFromOpening(o: Opening): OpeningLesson {
     ],
     whatToRemember: [
       {
-        fr: `${o.eco} — ${o.name}`,
-        en: `${o.eco} — ${o.nameEn ?? o.name}`,
+        fr: `${eco} — ${name}`,
+        en: `${eco} — ${o.nameEn ?? name}`,
       },
     ],
     modelLine,
@@ -316,7 +319,7 @@ export function buildMergedCatalog(rows: LearnEntryRow[]): MergedLearnCatalog {
     }
   }
   syntheticCandidates.sort((a, b) => {
-    const eco = a.eco.localeCompare(b.eco);
+    const eco = (a.eco ?? "").localeCompare(b.eco ?? "");
     if (eco !== 0) return eco;
     return getOpeningName(a, "fr").localeCompare(getOpeningName(b, "fr"), "fr");
   });

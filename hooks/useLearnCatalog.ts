@@ -9,6 +9,7 @@ import {
   validateOpeningJson,
   validateOpeningLessonJson,
 } from "@/lib/learn-merge";
+import { ensureOpeningsPartitionsLoaded } from "@/lib/openings-registry";
 
 function parseRows(raw: unknown): LearnEntryRow[] {
   if (!Array.isArray(raw)) return [];
@@ -34,6 +35,7 @@ export function useLearnCatalog(): {
 } {
   const [rows, setRows] = useState<LearnEntryRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [partitionsGeneration, setPartitionsGeneration] = useState(0);
 
   const load = useCallback(async () => {
     if (!isSupabaseConfigured || !supabase) {
@@ -57,7 +59,16 @@ export function useLearnCatalog(): {
     load();
   }, [load]);
 
-  const catalog = useMemo(() => buildMergedCatalog(rows), [rows]);
+  useEffect(() => {
+    void ensureOpeningsPartitionsLoaded().finally(() => {
+      setPartitionsGeneration((n) => n + 1);
+    });
+  }, []);
+
+  const catalog = useMemo(
+    () => buildMergedCatalog(rows),
+    [rows, partitionsGeneration]
+  );
 
   return { catalog, loading, refetch: load };
 }
