@@ -14,7 +14,7 @@ export type PvpGameBootstrap = {
 export function writePvpGameBootstrap(payload: PvpGameBootstrap): void {
   if (typeof window === "undefined") return;
   try {
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
   } catch {
     /* ignore quota / private mode */
   }
@@ -23,7 +23,7 @@ export function writePvpGameBootstrap(payload: PvpGameBootstrap): void {
 export function readPvpGameBootstrap(gameId: string): PvpGameBootstrap | null {
   if (typeof window === "undefined") return null;
   try {
-    const raw = sessionStorage.getItem(STORAGE_KEY);
+    const raw = window.sessionStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const data = JSON.parse(raw) as PvpGameBootstrap;
     if (data.gameId !== gameId) return null;
@@ -38,7 +38,7 @@ export function readPvpGameBootstrap(gameId: string): PvpGameBootstrap | null {
 export function clearPvpGameBootstrap(): void {
   if (typeof window === "undefined") return;
   try {
-    sessionStorage.removeItem(STORAGE_KEY);
+    window.sessionStorage.removeItem(STORAGE_KEY);
   } catch {
     /* ignore */
   }
