@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   mapDbCampaignPuzzle,
-  mapDbChampionCard,
   requireAscensionAuth,
 } from "@/lib/ascension/server-auth";
 import {

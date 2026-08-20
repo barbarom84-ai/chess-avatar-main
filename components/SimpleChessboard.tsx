@@ -10,6 +10,9 @@ import {
   applyArrowOpacityPercent,
 } from "@/lib/chess-arrows";
 
+const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
+const RANKS = ["8", "7", "6", "5", "4", "3", "2", "1"];
+
 interface SimpleChessboardProps {
   position: string;
   onDrop?: (sourceSquare: string, targetSquare: string) => boolean;
@@ -102,11 +105,11 @@ export default function SimpleChessboard({
   const boardRootRef = useRef<HTMLDivElement>(null);
   const [keyboardSquare, setKeyboardSquare] = useState("e4");
 
-  const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
-  const ranks = ['8', '7', '6', '5', '4', '3', '2', '1'];
+  const files = FILES;
+  const ranks = RANKS;
   // Inverser l'échiquier si orientation = black
-  const displayFiles = orientation === 'black' ? [...files].reverse() : files;
-  const displayRanks = orientation === 'black' ? [...ranks].reverse() : ranks;
+  const displayFiles = orientation === "black" ? [...files].reverse() : [...files];
+  const displayRanks = orientation === "black" ? [...ranks].reverse() : [...ranks];
 
   const getPieceImage = (piece: { type: string; color: string }) => {
     const color = piece.color === 'w' ? 'w' : 'b';
@@ -150,14 +153,14 @@ export default function SimpleChessboard({
 
   const moveKeyboardSquare = useCallback(
     (deltaFile: number, deltaRank: number) => {
-      const fileIdx = files.indexOf(keyboardSquare[0]);
-      const rankIdx = ranks.indexOf(keyboardSquare[1]);
+      const fileIdx = FILES.indexOf(keyboardSquare[0]);
+      const rankIdx = RANKS.indexOf(keyboardSquare[1]);
       if (fileIdx < 0 || rankIdx < 0) return;
-      const nextFile = files[Math.min(7, Math.max(0, fileIdx + deltaFile))];
-      const nextRank = ranks[Math.min(7, Math.max(0, rankIdx + deltaRank))];
+      const nextFile = FILES[Math.min(7, Math.max(0, fileIdx + deltaFile))];
+      const nextRank = RANKS[Math.min(7, Math.max(0, rankIdx + deltaRank))];
       setKeyboardSquare(`${nextFile}${nextRank}`);
     },
-    [keyboardSquare, files, ranks]
+    [keyboardSquare]
   );
 
   const resetPointerDrag = () => {

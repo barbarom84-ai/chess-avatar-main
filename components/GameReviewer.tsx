@@ -623,53 +623,6 @@ export default function GameReviewer({
     return -1;
   }, [openingByPly]);
 
-  if (!parsed) {
-    return (
-      <Card className="bg-slate-900/50 border-red-500/30">
-        <CardContent className="py-10 text-center text-red-300">
-          {t.review.invalidPgn}
-        </CardContent>
-      </Card>
-    );
-  }
-
-  const currentFen =
-    currentIndex === 0
-      ? parsed.fenBefore[0]
-      : parsed.fenAfter[Math.min(currentIndex, parsed.fenAfter.length) - 1];
-
-  // The move that just played to reach currentFen (when currentIndex > 0).
-  const currentMove: ReviewedMove | undefined =
-    currentIndex > 0 ? effectiveMoves[currentIndex - 1] : undefined;
-  const lastMoveSquares =
-    currentIndex > 0 ? uciToSquares(parsed.uci[currentIndex - 1]) : null;
-
-  // Engine "best move" arrow: shown on the position BEFORE the move that was
-  // just played, if the played move was sub-optimal.
-  const arrows: Array<{ from: string; to: string; color?: string }> = [];
-  if (currentMove && currentMove.bestMove && currentMove.uci !== currentMove.bestMove) {
-    const isCritical =
-      currentMove.classification === "blunder" ||
-      currentMove.classification === "miss";
-    if (showAllBestArrows || isCritical) {
-      const sq = uciToSquares(currentMove.bestMove);
-      if (sq) {
-        arrows.push({
-          from: sq.from,
-          to: sq.to,
-          color: isCritical
-            ? "rgba(239, 68, 68, 0.85)"
-            : "rgba(34, 197, 94, 0.85)",
-        });
-      }
-    }
-  }
-
-  const evalForBar =
-    currentIndex === 0
-      ? 0
-      : effectiveMoves[currentIndex - 1]?.playerEval ?? null;
-
   const goPrev = useCallback(
     () => setCurrentIndex((i) => Math.max(0, i - 1)),
     []
@@ -733,6 +686,53 @@ export default function GameReviewer({
       toast.error(t.review.downloadAnnotatedFailed);
     }
   }, [parsed, effectiveMoves, t.review.downloadAnnotatedFailed]);
+
+  if (!parsed) {
+    return (
+      <Card className="bg-slate-900/50 border-red-500/30">
+        <CardContent className="py-10 text-center text-red-300">
+          {t.review.invalidPgn}
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const currentFen =
+    currentIndex === 0
+      ? parsed.fenBefore[0]
+      : parsed.fenAfter[Math.min(currentIndex, parsed.fenAfter.length) - 1];
+
+  // The move that just played to reach currentFen (when currentIndex > 0).
+  const currentMove: ReviewedMove | undefined =
+    currentIndex > 0 ? effectiveMoves[currentIndex - 1] : undefined;
+  const lastMoveSquares =
+    currentIndex > 0 ? uciToSquares(parsed.uci[currentIndex - 1]) : null;
+
+  // Engine "best move" arrow: shown on the position BEFORE the move that was
+  // just played, if the played move was sub-optimal.
+  const arrows: Array<{ from: string; to: string; color?: string }> = [];
+  if (currentMove && currentMove.bestMove && currentMove.uci !== currentMove.bestMove) {
+    const isCritical =
+      currentMove.classification === "blunder" ||
+      currentMove.classification === "miss";
+    if (showAllBestArrows || isCritical) {
+      const sq = uciToSquares(currentMove.bestMove);
+      if (sq) {
+        arrows.push({
+          from: sq.from,
+          to: sq.to,
+          color: isCritical
+            ? "rgba(239, 68, 68, 0.85)"
+            : "rgba(34, 197, 94, 0.85)",
+        });
+      }
+    }
+  }
+
+  const evalForBar =
+    currentIndex === 0
+      ? 0
+      : effectiveMoves[currentIndex - 1]?.playerEval ?? null;
 
   const goToKeyMoment = (direction: 1 | -1) => {
     if (!effectiveResult) return;

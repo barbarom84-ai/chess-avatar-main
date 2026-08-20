@@ -253,8 +253,11 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
   }, [gameId, fetchWithAuth, applyServerState]);
 
   const refreshSilentRef = useRef(refreshSilent);
-  refreshSilentRef.current = refreshSilent;
   const seededFromBootstrapRef = useRef(false);
+
+  useLayoutEffect(() => {
+    refreshSilentRef.current = refreshSilent;
+  });
 
   useLayoutEffect(() => {
     seededFromBootstrapRef.current = false;
@@ -676,7 +679,10 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
   );
 
   const submitMoveRef = useRef(submitMove);
-  submitMoveRef.current = submitMove;
+
+  useLayoutEffect(() => {
+    submitMoveRef.current = submitMove;
+  });
 
   useEffect(() => {
     if (!browserOnline || !gameId) return;

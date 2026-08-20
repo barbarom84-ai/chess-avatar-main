@@ -17,7 +17,6 @@ import {
 import {
   addAccountFriendRemote,
   fetchAccountFriends,
-  isAccountFriend,
   removeAccountFriendRemote,
 } from "@/lib/account-friends";
 import { toast } from "sonner";

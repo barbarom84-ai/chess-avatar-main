@@ -6,13 +6,11 @@ import SimpleChessboard from "@/components/SimpleChessboard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { useStockfish } from "@/hooks/useStockfish";
 import BotEngineSelector from "@/components/BotEngineSelector";
 import { saveArenaMatchToCloud } from "@/lib/arena-cloud-save";
 import {
-  applyArenaCaps,
   classifyArenaOutcome,
   replayUci,
   stmEvalToWhitePov,

@@ -244,7 +244,7 @@ export function buildAvatarCardModel({
   const classKey = resolveCardClassKey(config, playingStyle, stats);
 
   let strengths = findStrengths(playingStyle, seed, stats, lang).slice(0, 3);
-  let weaknesses = findImprovementAreas(playingStyle, stats, seed, lang).slice(0, 3);
+  const weaknesses = findImprovementAreas(playingStyle, stats, seed, lang).slice(0, 3);
 
   if ((config.elo ?? 0) >= 3000) {
     const eloTag =

@@ -12,7 +12,7 @@ type QueuedEvent = {
   props: Record<string, string | number | boolean>;
 };
 
-let queue: QueuedEvent[] = [];
+const queue: QueuedEvent[] = [];
 let flushTimer: ReturnType<typeof setTimeout> | null = null;
 let sessionId: string | null = null;
 

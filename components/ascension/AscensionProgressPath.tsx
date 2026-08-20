@@ -152,7 +152,7 @@ export default function AscensionProgressPath({
       x: BONUS_X,
       y: bottomY - i * BONUS_SPACING,
     }));
-  }, [fantasyPuzzles.length, contentHeight]);
+  }, [fantasyPuzzles, contentHeight]);
 
   const pathD = useMemo(() => buildAscensionPathD(standardNodes), [standardNodes]);
   const completedStandardCount = standardPuzzles.filter((p) => p.completed).length;
