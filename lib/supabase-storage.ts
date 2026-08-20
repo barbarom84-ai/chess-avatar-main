@@ -6,6 +6,16 @@ import { supabase, isSupabaseConfigured, type DbProfile } from './supabase';
 import { hasActivePremiumAccess } from './subscription-access';
 import type { EngineConfig, PersonaStats } from './analysis';
 import { getSavedConfigs } from './storage';
+import type { ProfileMetadata } from '@/types/chess';
+import {
+  cacheProfileOffline,
+  enqueueSyncItem,
+  isBrowserOnline,
+} from './offline-sync';
+import {
+  rankSimilarProfiles,
+  type SimilarProfile,
+} from './profile-suggestions';
 
 // Ré-exporter DbProfile pour faciliter les imports
 export type { DbProfile } from './supabase';
@@ -17,7 +27,7 @@ export type { DbProfile } from './supabase';
  * Partie stockée pour l’utilisateur (Supabase). Pour corpus bulk / millions de parties,
  * voir [`game-sources`](./game-sources.ts) — ne pas utiliser cette ligne comme entrepôt analytique.
  */
-export type GameKind = 'human_vs_bot' | 'arena_bot_vs_bot';
+export type GameKind = 'human_vs_bot' | 'arena_bot_vs_bot' | 'pvp_human_vs_human';
 
 export interface DbGame {
   id: string;
@@ -28,7 +38,7 @@ export interface DbGame {
   result: 'win' | 'loss' | 'draw';
   result_type: string;
   result_message?: string;
-  player_color: 'white' | 'black';
+  player_color: 'white' | 'black' | 'none';
   pgn: string;
   final_fen: string;
   moves_count: number;
@@ -52,6 +62,14 @@ export interface DbGame {
 
 export function isArenaBotVsBotGame(game: Pick<DbGame, 'game_kind'>): boolean {
   return game.game_kind === 'arena_bot_vs_bot';
+}
+
+export function isPvpOnlineGame(game: Pick<DbGame, 'game_kind'>): boolean {
+  return game.game_kind === 'pvp_human_vs_human';
+}
+
+export function isPgnArchiveGame(game: Pick<DbGame, 'result_type'>): boolean {
+  return game.result_type === 'pgn_archive';
 }
 
 /**
@@ -146,6 +164,41 @@ export async function saveProfileToCloud(
       ...config,
       creatorName: user.email?.split('@')[0] || 'unknown',
     };
+
+    if (!isBrowserOnline()) {
+      const offlineId = crypto.randomUUID();
+      await cacheProfileOffline({
+        id: offlineId,
+        username: stats.username,
+        platform: detectedPlatform,
+        config: configWithCreator,
+        stats,
+        updated_at: new Date().toISOString(),
+        pending_sync: true,
+      });
+      await enqueueSyncItem({
+        action: 'upsert_profile',
+        payload: {
+          id: offlineId,
+          username: stats.username,
+          platform: detectedPlatform,
+          config: configWithCreator,
+          stats,
+          is_public: isPublic,
+        },
+      });
+      return {
+        id: offlineId,
+        user_id: user.id,
+        username: stats.username,
+        platform: detectedPlatform,
+        config: configWithCreator,
+        stats,
+        is_public: isPublic,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      } as DbProfile;
+    }
 
     const { data, error } = await supabase
       .from('profiles')
@@ -349,8 +402,12 @@ export type ProfileSort = 'date' | 'elo' | 'name' | 'difficulty';
 /** Filtre source Lichess / Chess.com dans la bibliothèque */
 export type ProfilePlatformFilter = 'all' | 'lichess' | 'chesscom';
 
-const DEDUPE_FETCH_CAP = 400;
-const DEDUPE_MULTIPLIER = 6;
+const DEDUPE_FETCH_CAP = 120;
+const DEDUPE_MULTIPLIER = 3;
+
+/** Columns needed for library cards (avoids select('*') payload). */
+const PROFILE_LIST_SELECT =
+  "id,user_id,username,platform,config,stats,is_public,avatar_url,created_at,updated_at";
 
 /**
  * Garde une entrée par couple (pseudo normalisé + plateforme), la plus récemment mise à jour.
@@ -430,7 +487,7 @@ export async function getFilteredProfiles(
   try {
     const { data: { user } } = await supabase.auth.getUser();
     
-    let query = supabase.from('profiles').select('*');
+    let query = supabase.from('profiles').select(PROFILE_LIST_SELECT);
 
     // Appliquer le filtre
     switch (filter) {
@@ -493,7 +550,7 @@ export async function getFilteredProfiles(
 
     if (error) throw error;
 
-    let rows = data || [];
+    let rows = (data || []) as DbProfile[];
     if (dedupe) {
       rows = dedupeProfilesByUsernamePlatform(rows);
       rows = sortProfilesClient(rows, sort);
@@ -503,6 +560,71 @@ export async function getFilteredProfiles(
     return rows;
   } catch (error) {
     console.error('Erreur lors de la récupération filtrée:', error);
+    return [];
+  }
+}
+
+/**
+ * Public profiles most similar to the editor profile (style + metadata).
+ */
+export async function getSimilarProfilesForEditor(
+  profileId: string,
+  userMetadata: ProfileMetadata,
+  platform: "lichess" | "chesscom",
+  limit = 6
+): Promise<SimilarProfile[]> {
+  if (!isSupabaseConfigured || !supabase) return [];
+
+  try {
+    const { data: profiles, error } = await supabase
+      .from("profiles")
+      .select(PROFILE_LIST_SELECT)
+      .eq("is_public", true)
+      .neq("id", profileId)
+      .limit(40);
+
+    if (error || !profiles?.length) return [];
+
+    const profileIds = profiles.map((p) => p.id);
+    const { data: metaRows } = await supabase
+      .from("profile_metadata")
+      .select(
+        "profile_id, tags, style_aggression, style_tactical, style_positional, style_endgame, style_opening_theory, style_time_management, strengths, weaknesses"
+      )
+      .in("profile_id", profileIds);
+
+    const metaByProfile = new Map<string, ProfileMetadata>();
+    for (const row of metaRows ?? []) {
+      const pid = row.profile_id as string;
+      metaByProfile.set(pid, {
+        id: pid,
+        profileId: pid,
+        userId: "",
+        tags: (row.tags as string[]) ?? [],
+        playingStyle: {
+          aggression: (row.style_aggression as number) ?? 50,
+          tactical: (row.style_tactical as number) ?? 50,
+          positional: (row.style_positional as number) ?? 50,
+          endgame: (row.style_endgame as number) ?? 50,
+          openingTheory: (row.style_opening_theory as number) ?? 50,
+          timeManagement: (row.style_time_management as number) ?? 50,
+        },
+        strengths: (row.strengths as string[]) ?? [],
+        weaknesses: (row.weaknesses as string[]) ?? [],
+        gamesPlayed: 0,
+        createdAt: "",
+        updatedAt: "",
+      });
+    }
+
+    const candidates = profiles.map((profile) => ({
+      profile: profile as DbProfile,
+      metadata: metaByProfile.get(profile.id) ?? null,
+    }));
+
+    return rankSimilarProfiles(userMetadata, platform, candidates, limit);
+  } catch (error) {
+    console.error("Erreur similar profiles:", error);
     return [];
   }
 }
@@ -588,7 +710,7 @@ export async function saveGameToCloud(gameData: {
   result: 'win' | 'loss' | 'draw';
   resultType: string;
   resultMessage?: string;
-  playerColor: 'white' | 'black';
+  playerColor: 'white' | 'black' | 'none';
   pgn: string;
   finalFen: string;
   movesCount: number;
@@ -745,7 +867,7 @@ export async function getGamesStats(): Promise<{
 
     const { data, error } = await supabase
       .from('games')
-      .select('result, game_kind')
+      .select('result, game_kind, result_type')
       .eq('user_id', user.id);
 
     if (error || !data) {
@@ -753,8 +875,9 @@ export async function getGamesStats(): Promise<{
     }
 
     const rows = data.filter(
-      (g: { game_kind?: string | null }) =>
-        (g.game_kind ?? 'human_vs_bot') !== 'arena_bot_vs_bot'
+      (g: { game_kind?: string | null; result_type?: string | null }) =>
+        (g.game_kind ?? 'human_vs_bot') !== 'arena_bot_vs_bot' &&
+        g.result_type !== 'pgn_archive'
     );
 
     const total = rows.length;

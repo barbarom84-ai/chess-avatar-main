@@ -7,11 +7,11 @@ const projectRoot = path.dirname(fileURLToPath(import.meta.url));
 /** Defense-in-depth; tuned for Next.js, Supabase, Stripe redirect, Lichess/Chess.com fetches, Stockfish WASM. */
 const CONTENT_SECURITY_POLICY = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval'",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' https://va.vercel-scripts.com https://eu-assets.i.posthog.com",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
-  "connect-src 'self' https://*.supabase.co https://*.supabase.io wss://*.supabase.co https://api.stripe.com https://r.stripe.com https://lichess.org https://lichess1.org https://api.chess.com https://www.chess.com https://images.chesscomfiles.com https://api.resend.com",
+  "connect-src 'self' https://*.supabase.co https://*.supabase.io wss://*.supabase.co https://api.stripe.com https://r.stripe.com https://lichess.org https://lichess1.org https://api.chess.com https://www.chess.com https://images.chesscomfiles.com https://api.resend.com https://*.ingest.sentry.io https://eu.i.posthog.com https://eu-assets.i.posthog.com https://vitals.vercel-insights.com https://va.vercel-scripts.com",
   "worker-src 'self' blob:",
   "frame-src https://js.stripe.com https://hooks.stripe.com https://checkout.stripe.com",
   "object-src 'none'",

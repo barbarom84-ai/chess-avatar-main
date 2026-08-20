@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - name: Verify opening data artifacts
+        run: |
+          npm run openings:refresh
+          git diff --exit-code lib/data/openings/partitions/lichess-named-openings.json public/data/openings/fen-index.generated.json || (
+            echo "::error::Opening JSON/FEN index out of date. Run: npm run openings:refresh"
+            exit 1
+          )
+      - run: npm test
+      - name: Verify ChessAvatar WASM bundle
+        run: |
+          npm run verify:chessavatar
+          npm run smoke:chessavatar
+      - run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key

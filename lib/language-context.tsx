@@ -1,38 +1,64 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { translations, type Language } from "./translations";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  type ReactNode,
+} from "react";
+import { loadLocale, type Language, type TranslationKey } from "./i18n";
 
 interface LanguageContextType {
   lang: Language;
   setLang: (lang: Language) => void;
-  t: typeof translations.fr;
+  t: TranslationKey;
+  ready: boolean;
 }
 
-const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
+const LanguageContext = createContext<LanguageContextType | undefined>(
+  undefined
+);
+
+const DEFAULT_LANG: Language = "en";
+
+function readStoredLang(): Language {
+  if (typeof window === "undefined") return DEFAULT_LANG;
+  const saved = localStorage.getItem("chess-avatar-lang");
+  return saved === "fr" || saved === "en" ? saved : DEFAULT_LANG;
+}
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  // Default and main language: English
-  const [lang, setLangState] = useState<Language>("en");
+  const [lang, setLangState] = useState<Language>(DEFAULT_LANG);
+  const [t, setT] = useState<TranslationKey | null>(null);
 
-  // Charger la langue depuis localStorage après le montage
-  useEffect(() => {
-    const savedLang = localStorage.getItem("chess-avatar-lang") as Language;
-    if (savedLang === "fr" || savedLang === "en") {
-      setLangState(savedLang);
-    }
+  const applyLocale = useCallback(async (nextLang: Language) => {
+    const bundle = await loadLocale(nextLang);
+    setT(bundle);
+    setLangState(nextLang);
   }, []);
 
-  // Sauvegarder la langue dans localStorage quand elle change
+  useEffect(() => {
+    void applyLocale(readStoredLang());
+  }, [applyLocale]);
+
   const setLang = (newLang: Language) => {
-    setLangState(newLang);
     localStorage.setItem("chess-avatar-lang", newLang);
+    void applyLocale(newLang);
   };
 
-  const value = {
+  if (!t) {
+    return (
+      <div className="min-h-screen theme-gradient theme-text-primary" aria-busy="true" />
+    );
+  }
+
+  const value: LanguageContextType = {
     lang,
     setLang,
-    t: translations[lang]
+    t,
+    ready: true,
   };
 
   return (

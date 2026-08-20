@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isValidChessUsername } from "@/lib/chess-username";
 import { rateLimit } from "@/lib/rate-limit";
+import { pickChessComPlatformRating } from "@/lib/platform-rating";
 
 interface ChessComArchiveGame {
   uuid?: string;
@@ -54,6 +55,19 @@ export async function GET(request: NextRequest) {
       "avatar" in profile && typeof (profile as { avatar?: string }).avatar === "string"
         ? (profile as { avatar: string }).avatar
         : undefined;
+
+    let platformRating: number | undefined;
+    try {
+      const statsRes = await fetch(`https://api.chess.com/pub/player/${encoded}/stats`);
+      if (statsRes.ok) {
+        const stats: unknown = await statsRes.json().catch(() => null);
+        if (stats && typeof stats === "object") {
+          platformRating = pickChessComPlatformRating(stats);
+        }
+      }
+    } catch {
+      // Rating is optional — continue with games only.
+    }
 
     // 2. Récupérer les archives mensuelles (et non seulement le mois en cours)
     const archivesRes = await fetch(`https://api.chess.com/pub/player/${encoded}/games/archives`);
@@ -128,7 +142,8 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ 
         games: normalizedGames, 
-        avatarUrl: avatar || "https://www.chess.com/bundles/web/images/user-image.svg" 
+        avatarUrl: avatar || "https://www.chess.com/bundles/web/images/user-image.svg",
+        platformRating: platformRating ?? null
     });
 
   } catch {

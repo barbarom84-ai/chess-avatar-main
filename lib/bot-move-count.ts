@@ -38,7 +38,8 @@ export function shouldPlayHumanBlunderMove(
  */
 export function pickForcedHumanBlunder(
   bestFromEngine: string,
-  lineMoves: Map<number, string>
+  lineMoves: Map<number, string>,
+  rng: () => number = Math.random
 ): string {
   const n = lineMoves.size;
   if (n < 2 || !bestFromEngine) return bestFromEngine;
@@ -50,7 +51,7 @@ export function pickForcedHumanBlunder(
   }
   if (candidates.length === 0) return bestFromEngine;
 
-  const r = Math.floor(Math.random() * candidates.length);
+  const r = Math.floor(rng() * candidates.length);
   const pickRank = candidates[r]!;
   return lineMoves.get(pickRank) ?? bestFromEngine;
 }

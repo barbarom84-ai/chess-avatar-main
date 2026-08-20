@@ -9,10 +9,37 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { useStockfish } from "@/hooks/useStockfish";
-import type { EngineConfig } from "@/lib/analysis";
-import { getSavedConfigs, getRecentConfigs } from "@/lib/storage";
-import { normalizeEnginePlatform } from "@/lib/normalize-engine-platform";
-import { getFilteredProfiles, saveGameToCloud } from "@/lib/supabase-storage";
+import BotEngineSelector from "@/components/BotEngineSelector";
+import { saveArenaMatchToCloud } from "@/lib/arena-cloud-save";
+import {
+  applyArenaCaps,
+  classifyArenaOutcome,
+  replayUci,
+  stmEvalToWhitePov,
+  type ArenaOutcome,
+} from "@/lib/arena-spectator-helpers";
+import {
+  dedupeByIdentity,
+  filterByPlatform,
+  type ProfilePlatformFilter,
+} from "@/lib/arena-profile-pool";
+import ArenaProfilePicker from "@/components/arena/spectator/ArenaProfilePicker";
+import ArenaMatchupBanner from "@/components/arena/spectator/ArenaMatchupBanner";
+import type { ProfileOption } from "@/lib/arena-types";
+import { prepareArenaEngineConfig } from "@/lib/arena-forced-opening";
+import {
+  getArenaMoveDisplayDelayMs,
+  getArenaPhase,
+  getArenaThinkBudgetMs,
+  getCadenceDepthCap,
+  getSingleLegalMoveUci,
+  isArenaTheoreticalOpening,
+  sleepArenaThinkRemainder,
+} from "@/lib/arena-move-timing";
+import {
+  cadenceFromPreset,
+  resolveArenaTimePreset,
+} from "@/lib/arena-time-controls";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/language-context";
 import { usePremium } from "@/hooks/usePremium";
@@ -23,7 +50,6 @@ import {
   Pause,
   RotateCcw,
   StepForward,
-  Search,
   CopyMinus,
   Globe,
   Loader2,
@@ -32,408 +58,26 @@ import {
 const ARENA_STORAGE_PLATFORM = "chess-arena.platform";
 const ARENA_STORAGE_DEDUPE = "chess-arena.dedupe";
 const ARENA_STORAGE_SAVE_CLOUD = "chess-arena.saveCloud";
-const MAX_PICKER_ROWS = 36;
 
-type ProfilePlatformFilter = "all" | "lichess" | "chesscom";
-
-type ProfileOption = {
-  key: string;
-  label: string;
-  config: EngineConfig;
-  savedAt: number;
-};
-
-function replayUci(history: string[]): Chess {
-  const g = new Chess();
-  for (const u of history) {
-    if (!u || u.length < 4) continue;
-    const from = u.slice(0, 2);
-    const to = u.slice(2, 4);
-    const promotion =
-      u.length > 4 ? (u[4] as "q" | "r" | "b" | "n") : undefined;
-    const ok = g.move(
-      promotion ? { from, to, promotion } : { from, to }
-    );
-    if (!ok) break;
-  }
-  return g;
-}
-
-function applyArenaCaps(c: EngineConfig, depthCap: number): EngineConfig {
-  return {
-    ...c,
-    depth: Math.min(Math.max(5, c.depth), depthCap),
-    timeControl: Math.min(Math.max(100, c.timeControl), 2000),
-    threads: Math.min(Math.max(2, c.threads), 4),
-  };
-}
-
-function profileIdentityKey(config: EngineConfig): string {
-  const name = (config.name || "").trim().toLowerCase();
-  return `${name}|${normalizeEnginePlatform(config)}`;
-}
-
-function buildRawOptions(
-  savedLabel: string,
-  recentLabel: string
-): ProfileOption[] {
-  const saved = getSavedConfigs();
-  const recent = getRecentConfigs();
-  const out: ProfileOption[] = [];
-  /** Évite de masquer Lichess si un Bot_X Chess.com est déjà sauvé (même nom). */
-  const seenIdentity = new Set<string>();
-  for (const s of saved) {
-    seenIdentity.add(profileIdentityKey(s.config));
-    const labelBase = s.customName || s.config.name;
-    out.push({
-      key: `saved:${s.id}`,
-      label: `${labelBase} (${savedLabel})`,
-      config: s.config,
-      savedAt: s.savedAt,
-    });
-  }
-  for (const r of recent) {
-    if (seenIdentity.has(profileIdentityKey(r.config))) continue;
-    seenIdentity.add(profileIdentityKey(r.config));
-    out.push({
-      key: `recent:${r.id}`,
-      label: `${r.config.name} (${recentLabel})`,
-      config: r.config,
-      savedAt: r.savedAt,
-    });
-  }
-  out.sort((a, b) => b.savedAt - a.savedAt);
-  return out;
-}
-
-async function fetchCloudArenaProfileOptions(
-  cloudLabel: string
-): Promise<ProfileOption[]> {
-  if (!isSupabaseConfigured || !supabase) return [];
-  try {
-    const rows = await getFilteredProfiles(
-      "public",
-      "date",
-      80,
-      undefined,
-      { platform: "all", dedupeByUsernamePlatform: true }
-    );
-    return rows.map((p) => ({
-      key: `cloud:${p.id}`,
-      label: `${p.username} (${cloudLabel})`,
-      config: {
-        ...p.config,
-        platform: p.platform,
-      },
-      savedAt: new Date(p.updated_at || p.created_at).getTime(),
-    }));
-  } catch {
-    return [];
-  }
-}
-
-function mergeLocalAndCloud(
-  local: ProfileOption[],
-  cloud: ProfileOption[]
-): ProfileOption[] {
-  const seen = new Set(local.map((o) => profileIdentityKey(o.config)));
-  const out = [...local];
-  for (const c of cloud) {
-    const ik = profileIdentityKey(c.config);
-    if (seen.has(ik)) continue;
-    seen.add(ik);
-    out.push(c);
-  }
-  out.sort((a, b) => b.savedAt - a.savedAt);
-  return out;
-}
-
-function filterByPlatform(
-  options: ProfileOption[],
-  platform: ProfilePlatformFilter
-): ProfileOption[] {
-  if (platform === "all") return options;
-  return options.filter(
-    (o) => normalizeEnginePlatform(o.config) === platform
-  );
-}
-
-/** Une entrée par pseudo + plateforme (sauvegarde la plus récente). */
-function dedupeByIdentity(options: ProfileOption[]): ProfileOption[] {
-  const map = new Map<string, ProfileOption>();
-  for (const o of options) {
-    const plat = normalizeEnginePlatform(o.config);
-    const key = `${(o.config.name || "").trim().toLowerCase()}|${plat}`;
-    const prev = map.get(key);
-    if (!prev || o.savedAt >= prev.savedAt) map.set(key, o);
-  }
-  return Array.from(map.values()).sort((a, b) => b.savedAt - a.savedAt);
-}
-
-function filterBySearch(options: ProfileOption[], q: string): ProfileOption[] {
-  const needle = q.trim().toLowerCase();
-  if (!needle) return options;
-  return options.filter((o) => {
-    const name = (o.config.name || "").toLowerCase();
-    return (
-      o.label.toLowerCase().includes(needle) || name.includes(needle)
-    );
-  });
-}
-
-/** Stockfish `cp` est du point de vue du camp qui a le trait — conversion POV blancs. */
-function stmEvalToWhitePov(fen: string, evalFromEngine: number): number {
-  try {
-    return new Chess(fen).turn() === "w" ? evalFromEngine : -evalFromEngine;
-  } catch {
-    return evalFromEngine;
-  }
-}
-
-type ArenaOutcome = {
-  result: "win" | "loss" | "draw";
-  resultType: string;
-  resultMessage: string;
-  pgnResult: "1-0" | "0-1" | "1/2-1/2";
-};
-
-function classifyArenaOutcome(
-  game: Chess,
-  maxMovesReached: boolean,
-  lang: "fr" | "en"
-): ArenaOutcome {
-  if (maxMovesReached && !game.isGameOver()) {
-    return {
-      result: "draw",
-      resultType: "arena_move_limit",
-      resultMessage:
-        lang === "fr"
-          ? "Partie arrêtée : limite de coups atteinte."
-          : "Game stopped: move limit reached.",
-      pgnResult: "1/2-1/2",
-    };
-  }
-  if (game.isCheckmate()) {
-    const loser = game.turn();
-    if (loser === "w") {
-      return {
-        result: "loss",
-        resultType: "arena_black_wins",
-        resultMessage:
-          lang === "fr"
-            ? "Échec et mat — victoire des noirs."
-            : "Checkmate — Black wins.",
-        pgnResult: "0-1",
-      };
-    }
-    return {
-      result: "win",
-      resultType: "arena_white_wins",
-      resultMessage:
-        lang === "fr"
-          ? "Échec et mat — victoire des blancs."
-          : "Checkmate — White wins.",
-      pgnResult: "1-0",
-    };
-  }
-  if (game.isStalemate()) {
-    return {
-      result: "draw",
-      resultType: "arena_draw_stalemate",
-      resultMessage: lang === "fr" ? "Pat." : "Stalemate.",
-      pgnResult: "1/2-1/2",
-    };
-  }
-  if (game.isDraw()) {
-    let resultType = "arena_draw_generic";
-    let msg = lang === "fr" ? "Partie nulle." : "Draw.";
-    if (game.isInsufficientMaterial()) {
-      resultType = "arena_draw_insufficient";
-      msg =
-        lang === "fr"
-          ? "Nulle — matériel insuffisant."
-          : "Draw — insufficient material.";
-    } else if (game.isThreefoldRepetition()) {
-      resultType = "arena_draw_threefold";
-      msg =
-        lang === "fr"
-          ? "Nulle — triple répétition."
-          : "Draw — threefold repetition.";
-    } else if (game.isDrawByFiftyMoves()) {
-      resultType = "arena_draw_fifty";
-      msg =
-        lang === "fr"
-          ? "Nulle — règle des 50 coups."
-          : "Draw — fifty-move rule.";
-    }
-    return {
-      result: "draw",
-      resultType,
-      resultMessage: msg,
-      pgnResult: "1/2-1/2",
-    };
-  }
-  return {
-    result: "draw",
-    resultType: "arena_draw_generic",
-    resultMessage: lang === "fr" ? "Partie terminée." : "Game over.",
-    pgnResult: "1/2-1/2",
-  };
-}
-
-function countArenaCapturesChecks(game: Chess): {
-  captures: number;
-  checks: number;
-} {
-  const tmp = new Chess();
-  let captures = 0;
-  let checks = 0;
-  for (const san of game.history()) {
-    const m = tmp.move(san);
-    if (m?.captured) captures++;
-    if (tmp.inCheck()) checks++;
-  }
-  return { captures, checks };
-}
-
-function escapePgnHeader(s: string): string {
-  return s.replace(/\\/g, "\\\\").replace(/"/g, "'");
-}
-
-function buildArenaPgn(params: {
-  whiteName: string;
-  blackName: string;
-  outcome: ArenaOutcome;
-  uciMoves: string[];
-}): string {
-  const { whiteName, blackName, outcome, uciMoves } = params;
-  const date = new Date();
-  const dateStr = `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, "0")}.${String(date.getDate()).padStart(2, "0")}`;
-  const timeStr = `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}:${String(date.getSeconds()).padStart(2, "0")}`;
-
-  const replay = new Chess();
-  const sans: string[] = [];
-  for (const uci of uciMoves) {
-    if (!uci || uci.length < 4) continue;
-    const from = uci.slice(0, 2);
-    const to = uci.slice(2, 4);
-    const promotion =
-      uci.length > 4 ? (uci[4] as "q" | "r" | "b" | "n") : undefined;
-    const m = replay.move(
-      promotion ? { from, to, promotion } : { from, to }
-    );
-    if (!m) break;
-    sans.push(m.san);
-  }
-
-  const headers = [
-    `[Event "Chess Avatar Arena"]`,
-    `[Site "Chess Avatar / Arena"]`,
-    `[Date "${dateStr}"]`,
-    `[Time "${timeStr}"]`,
-    `[Round "1"]`,
-    `[White "${escapePgnHeader(whiteName)}"]`,
-    `[Black "${escapePgnHeader(blackName)}"]`,
-    `[Result "${outcome.pgnResult}"]`,
-    `[TimeControl "-"]`,
-    `[Termination "${escapePgnHeader(outcome.resultMessage)}"]`,
-  ];
-
-  let movesStr = "";
-  if (sans.length === 0) {
-    movesStr = outcome.pgnResult;
-  } else {
-    for (let i = 0; i < sans.length; i++) {
-      if (i % 2 === 0) movesStr += `${Math.floor(i / 2) + 1}. `;
-      movesStr += sans[i] + " ";
-      if (i % 16 === 15 && i < sans.length - 1) movesStr += "\n";
-    }
-    movesStr += outcome.pgnResult;
-  }
-
-  return headers.join("\n") + "\n\n" + movesStr;
-}
-
-function ArenaProfilePicker({
-  sideLabel,
-  selectedKey,
-  pool,
-  searchQuery,
-  onSearchChange,
-  onSelectKey,
-  searchPlaceholder,
-  noMatches,
-  listHint,
-  selectedPrefix,
+export default function ArenaSpectator({
+  embedded = false,
+  forcedOpeningId = null,
+  timePresetId,
 }: {
-  sideLabel: string;
-  selectedKey: string;
-  pool: ProfileOption[];
-  searchQuery: string;
-  onSearchChange: (q: string) => void;
-  onSelectKey: (key: string) => void;
-  searchPlaceholder: string;
-  noMatches: string;
-  listHint: string;
-  selectedPrefix: string;
+  embedded?: boolean;
+  forcedOpeningId?: string | null;
+  timePresetId: string;
 }) {
-  const visible = useMemo(() => {
-    return filterBySearch(pool, searchQuery).slice(0, MAX_PICKER_ROWS);
-  }, [pool, searchQuery]);
-
-  const selected = pool.find((o) => o.key === selectedKey);
-
-  return (
-    <div className="space-y-2 min-w-0">
-      <Label className="text-xs text-slate-400">{sideLabel}</Label>
-      <div className="relative">
-        <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-500 pointer-events-none" />
-        <Input
-          value={searchQuery}
-          onChange={(e) => onSearchChange(e.target.value)}
-          placeholder={searchPlaceholder}
-          className="pl-9 bg-slate-950 border-slate-700 text-slate-100 text-sm"
-          autoComplete="off"
-        />
-      </div>
-      {selected && (
-        <div className="text-[11px] text-cyan-200/90 truncate rounded border border-cyan-500/30 bg-cyan-950/30 px-2 py-1.5">
-          <span className="text-slate-500">{selectedPrefix}: </span>
-          <span className="font-medium">{selected.label}</span>
-        </div>
-      )}
-      <p className="text-[10px] text-slate-500">{listHint}</p>
-      <div className="max-h-44 overflow-y-auto rounded-md border border-slate-700 bg-slate-950 shadow-inner">
-        {visible.length === 0 ? (
-          <div className="px-3 py-6 text-center text-xs text-slate-500">
-            {noMatches}
-          </div>
-        ) : (
-          visible.map((o) => (
-            <button
-              key={o.key}
-              type="button"
-              onClick={() => onSelectKey(o.key)}
-              className={`w-full text-left px-3 py-2 text-sm border-b border-slate-800/80 last:border-b-0 transition-colors ${
-                selectedKey === o.key
-                  ? "bg-cyan-900/35 text-cyan-100"
-                  : "text-slate-200 hover:bg-slate-800/80"
-              }`}
-            >
-              <span className="line-clamp-2">{o.label}</span>
-            </button>
-          ))
-        )}
-      </div>
-    </div>
-  );
-}
-
-export default function ArenaSpectator() {
   const { t, lang } = useLanguage();
   const { userId } = usePremium();
   const {
     isReady,
+    isStockfishReady,
+    isChessAvatarReady,
+    isChessAvatarPlayReady,
+    isChessAvatarNnueLoading,
+    chessAvatarSearchStats,
+    lastBotEngineUsed,
     getBestMove,
     stopThinking,
     getPositionEvaluation,
@@ -449,6 +93,15 @@ export default function ArenaSpectator() {
   const [dedupeIdentity, setDedupeIdentity] = useState(true);
   const [arenaDepth, setArenaDepth] = useState(10);
   const [maxPlies, setMaxPlies] = useState(120);
+  const timePreset = useMemo(
+    () => resolveArenaTimePreset(timePresetId),
+    [timePresetId]
+  );
+  const cadence = useMemo(() => cadenceFromPreset(timePreset), [timePreset]);
+  const effectiveDepthCap = useMemo(
+    () => getCadenceDepthCap(cadence, arenaDepth),
+    [cadence, arenaDepth]
+  );
   const [fen, setFen] = useState(() => new Chess().fen());
   const historyRef = useRef<string[]>([]);
   const [moveCount, setMoveCount] = useState(0);
@@ -461,6 +114,7 @@ export default function ArenaSpectator() {
   const arenaClockStartRef = useRef<number | null>(null);
   const arenaSavedRef = useRef(false);
   const evalSeqRef = useRef(0);
+  const lastMoveDelayRef = useRef(400);
   const [saveCloudGames, setSaveCloudGames] = useState(false);
   const [barEval, setBarEval] = useState<number | null>(null);
 
@@ -507,14 +161,15 @@ export default function ArenaSpectator() {
   const loadOptions = useCallback(async () => {
     setListLoading(true);
     try {
-      const local = buildRawOptions(
-        t.arenaPage.savedProfiles,
-        t.arenaPage.recentProfiles
+      const { loadArenaProfilePool } = await import("@/lib/arena-profile-pool");
+      setRawOptions(
+        await loadArenaProfilePool({
+          savedProfiles: t.arenaPage.savedProfiles,
+          recentProfiles: t.arenaPage.recentProfiles,
+          cloudLibrary: t.arenaPage.cloudLibrary,
+          featuredChampions: t.arenaPage.featuredChampions,
+        })
       );
-      const cloud = await fetchCloudArenaProfileOptions(
-        t.arenaPage.cloudLibrary
-      );
-      setRawOptions(mergeLocalAndCloud(local, cloud));
     } finally {
       setListLoading(false);
     }
@@ -522,6 +177,7 @@ export default function ArenaSpectator() {
     t.arenaPage.savedProfiles,
     t.arenaPage.recentProfiles,
     t.arenaPage.cloudLibrary,
+    t.arenaPage.featuredChampions,
   ]);
 
   useEffect(() => {
@@ -590,36 +246,25 @@ export default function ArenaSpectator() {
     async (game: Chess, uciHist: string[], outcome: ArenaOutcome) => {
       if (!whiteConfig || !blackConfig || !userId) return;
       try {
-        const whiteName = whiteConfig.name || "White";
-        const blackName = blackConfig.name || "Black";
         const started = arenaClockStartRef.current;
         const durationSeconds =
           started != null
             ? Math.max(0, Math.round((Date.now() - started) / 1000))
             : undefined;
-        const pgn = buildArenaPgn({
-          whiteName,
-          blackName,
-          outcome,
-          uciMoves: uciHist,
-        });
-        const { captures, checks } = countArenaCapturesChecks(game);
-        await saveGameToCloud({
-          opponentName: `${whiteName} vs ${blackName}`,
-          opponentPlatform: "arena",
-          result: outcome.result,
-          resultType: outcome.resultType,
-          resultMessage: outcome.resultMessage,
-          playerColor: "white",
-          pgn,
-          finalFen: game.fen(),
-          movesCount: uciHist.length,
+        await saveArenaMatchToCloud({
+          whiteConfig,
+          blackConfig,
+          uciHist,
+          outcome: {
+            ...outcome,
+            winner:
+              outcome.pgnResult === "1-0"
+                ? "white"
+                : outcome.pgnResult === "0-1"
+                  ? "black"
+                  : "draw",
+          },
           durationSeconds,
-          capturesCount: captures,
-          checksCount: checks,
-          botConfig: blackConfig,
-          gameKind: "arena_bot_vs_bot",
-          arenaConfigs: { white: whiteConfig, black: blackConfig },
         });
         toast.success(t.arenaPage.cloudSavedToast);
       } catch (e) {
@@ -681,15 +326,43 @@ export default function ArenaSpectator() {
 
     const stm = game.turn();
     const base = stm === "w" ? whiteConfig : blackConfig;
-    const cfg = applyArenaCaps(base, arenaDepth);
-    const playerColor = stm === "w" ? "black" : "white";
-
-    const uci = await new Promise<string>((resolve) => {
-      getBestMove(game.fen(), cfg, (m) => resolve(m || ""), {
-        moveHistoryUci: hist,
-        playerColor,
-      });
+    const cfg = prepareArenaEngineConfig(base, {
+      depthCap: effectiveDepthCap,
+      ply: hist.length,
+      game,
+      forcedOpeningId,
+      cadence,
+      historyUci: hist,
     });
+    const phase = getArenaPhase(hist.length, game);
+    const singleUci = getSingleLegalMoveUci(game);
+    let uci: string;
+
+    if (singleUci) {
+      uci = singleUci;
+    } else {
+      const thinkBudgetMs = getArenaThinkBudgetMs(
+        isArenaTheoreticalOpening(cfg, hist.length, hist)
+      );
+      const thinkStartedAt = Date.now();
+      const playerColor = stm === "w" ? "black" : "white";
+
+      uci = await new Promise<string>((resolve) => {
+        getBestMove(game.fen(), cfg, (m) => resolve(m || ""), {
+          moveHistoryUci: hist,
+          playerColor,
+          arenaStyle: true,
+        });
+      });
+
+      await sleepArenaThinkRemainder(thinkStartedAt, thinkBudgetMs);
+    }
+
+    lastMoveDelayRef.current = getArenaMoveDisplayDelayMs(
+      phase,
+      cfg.timeControl,
+      "spectator"
+    );
 
     if (!uci || uci.length < 4) {
       setStatusNote(t.arenaPage.gameOver);
@@ -757,6 +430,8 @@ export default function ArenaSpectator() {
     whiteKey,
     blackKey,
     arenaDepth,
+    effectiveDepthCap,
+    cadence,
     maxPlies,
     getBestMove,
     t.arenaPage,
@@ -765,6 +440,7 @@ export default function ArenaSpectator() {
     userId,
     trySaveArenaCloud,
     lang,
+    forcedOpeningId,
   ]);
 
   const handleStartAuto = async () => {
@@ -775,7 +451,9 @@ export default function ArenaSpectator() {
       while (runningRef.current) {
         const done = await playStep();
         if (done) break;
-        await new Promise((r) => setTimeout(r, 400));
+        await new Promise((r) =>
+          setTimeout(r, lastMoveDelayRef.current)
+        );
       }
     } finally {
       runningRef.current = false;
@@ -796,18 +474,27 @@ export default function ArenaSpectator() {
   const needsProfiles = !listLoading && rawOptions.length < 2;
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6 p-4 md:p-6">
-      <div className="text-center space-y-2">
-        <h1 className="text-3xl font-bold text-cyan-400">{t.arenaPage.title}</h1>
-        <p className="text-sm text-slate-400 max-w-2xl mx-auto">
-          {t.arenaPage.subtitle}
-        </p>
-      </div>
+    <div
+      className={
+        embedded ? "space-y-6" : "max-w-6xl mx-auto space-y-6 p-4 md:p-6"
+      }
+    >
+      {!embedded && (
+        <div className="text-center space-y-2">
+          <h1 className="text-3xl font-bold text-cyan-400">{t.pages.arena.title}</h1>
+          <p className="text-sm text-slate-400 max-w-2xl mx-auto">
+            {t.pages.arena.subtitle}
+          </p>
+        </div>
+      )}
 
       {listLoading && rawOptions.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-3 py-16 text-slate-400">
           <Loader2 className="h-10 w-10 animate-spin text-cyan-500" />
           <span className="text-sm">{t.arenaPage.loadingProfiles}</span>
+          <span className="text-xs text-slate-500 max-w-sm text-center">
+            {t.arenaPage.featuredLoading}
+          </span>
         </div>
       ) : needsProfiles ? (
         <Card className="bg-slate-900/70 border-amber-500/30">
@@ -914,7 +601,7 @@ export default function ArenaSpectator() {
                   searchPlaceholder={t.arenaPage.pickSearchPlaceholder}
                   noMatches={t.arenaPage.pickNoMatches}
                   listHint={t.arenaPage.pickListHint}
-                  selectedPrefix={t.arenaPage.pickSelectedLabel}
+                  cardsHint={t.arenaPage.pickCardsHint}
                 />
                 <ArenaProfilePicker
                   sideLabel={t.arenaPage.blackSide}
@@ -926,9 +613,15 @@ export default function ArenaSpectator() {
                   searchPlaceholder={t.arenaPage.pickSearchPlaceholder}
                   noMatches={t.arenaPage.pickNoMatches}
                   listHint={t.arenaPage.pickListHint}
-                  selectedPrefix={t.arenaPage.pickSelectedLabel}
+                  cardsHint={t.arenaPage.pickCardsHint}
                 />
               </div>
+
+              <ArenaMatchupBanner
+                whiteOption={poolOptions.find((o) => o.key === whiteKey)}
+                blackOption={poolOptions.find((o) => o.key === blackKey)}
+                vsLabel={t.arenaPage.matchupVs}
+              />
 
               <div className="grid sm:grid-cols-2 gap-4 md:col-span-2 pt-2">
                 <div>
@@ -965,6 +658,18 @@ export default function ArenaSpectator() {
                   </div>
                 </div>
               </div>
+
+              <BotEngineSelector
+                chessAvatarReady={isChessAvatarReady}
+                chessAvatarPlayReady={isChessAvatarPlayReady}
+                chessAvatarNnueLoading={isChessAvatarNnueLoading}
+                chessAvatarSearchStats={chessAvatarSearchStats}
+                stockfishReady={isStockfishReady}
+                lastBotEngineUsed={lastBotEngineUsed}
+                botElo={Math.max(whiteConfig?.elo ?? 0, blackConfig?.elo ?? 0) || undefined}
+                botDifficulty={Math.max(whiteConfig?.difficulty ?? 0, blackConfig?.difficulty ?? 0) || undefined}
+                compact
+              />
 
               {isSupabaseConfigured && userId ? (
                 <div className="flex items-center justify-between gap-3 rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-2.5">
@@ -1069,7 +774,7 @@ export default function ArenaSpectator() {
           <div className="flex justify-center">
             <div className="w-full max-w-md space-y-2">
               {isReady && <EvaluationBar evaluation={barEval} />}
-              <div className="w-full aspect-square">
+              <div className="chessboard-frame chessboard-frame--md w-full">
                 <SimpleChessboard
                   position={fen}
                   orientation="white"

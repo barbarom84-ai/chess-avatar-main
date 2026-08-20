@@ -94,6 +94,8 @@ Or via CLI:
 npx vercel --prod
 ```
 
+**Prod routes are restored in this tree** from git commit `1c57977` (PvP, Ascension, Avatars, coach chat). Always run `npm run check:prod-parity` before a production deploy. On Vercel (`VERCEL=1`) the build still **fails** if those files disappear again.
+
 ### Custom Domain
 
 The project uses `chessavatar.net` (purchased via Vercel):

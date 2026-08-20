@@ -1,4 +1,4 @@
-import { getOpeningById } from "@/lib/openings-library";
+import { getOpeningByIdFromCore as getOpeningById } from "@/lib/openings-library";
 import type { EngineConfig } from "@/lib/analysis";
 import { buildFritzBlackOpeningFallback } from "@/lib/fritz-opening-fallback";
 
@@ -175,12 +175,41 @@ export function remainingForcedMovesForBot(
   return out;
 }
 
+/**
+ * Migrate deprecated `forcedLine` into `forcedLineWhite` / `forcedLineBlack` and omit legacy field.
+ */
+export function normalizeEngineConfigForcedLines(config: EngineConfig): EngineConfig {
+  const hasExplicit =
+    (config.forcedLineWhite?.length ?? 0) > 0 ||
+    (config.forcedLineBlack?.length ?? 0) > 0;
+
+  if (hasExplicit) {
+    const { forcedLine: _legacy, ...rest } = config;
+    return rest;
+  }
+
+  const legacy = config.forcedLine;
+  if (!Array.isArray(legacy) || legacy.length === 0) {
+    const { forcedLine: _legacy, ...rest } = config;
+    return rest;
+  }
+
+  const { white, black } = splitUciSequence(legacy.map(normalizeUci).filter(Boolean));
+  const { forcedLine: _legacy, ...rest } = config;
+  return {
+    ...rest,
+    forcedLineWhite: white,
+    forcedLineBlack: black,
+  };
+}
+
 export function prepareConfigForExport(
   config: EngineConfig,
   options?: { openingsDatabase?: { id: string; uciMoves?: string[] }[] }
 ): EngineConfig {
-  const { white, black } = getEffectiveForcedLinesByColor(config);
-  let next: EngineConfig = { ...config };
+  const normalized = normalizeEngineConfigForcedLines(config);
+  const { white, black } = getEffectiveForcedLinesByColor(normalized);
+  let next: EngineConfig = { ...normalized };
   if (white.length > 0 || black.length > 0) {
     next = { ...next, forcedLineWhite: white, forcedLineBlack: black };
   }

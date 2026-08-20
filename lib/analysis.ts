@@ -1,4 +1,5 @@
 import { Chess } from "chess.js";
+import { clampProfileElo } from "./persona-engine-params";
 
 /** Export UCI / Fritz (AvatarEngine.py) — réponses noires après séquence de coups blancs. */
 export interface FritzBlackChoice {
@@ -59,6 +60,8 @@ export interface EngineConfig {
    * 0 = désactivé. undefined = 10 (comportement par défaut).
    */
   humanBlunderInterval?: number;
+  /** Seeded champion from the featured arena pool (not a user clone). */
+  featuredSeed?: boolean;
 }
 
 function normalizeOpeningName(raw?: string | null): string | null {
@@ -129,7 +132,8 @@ export function analyzePersona(
   games: PersonaGameInput[],
   username: string,
   avatarUrl?: string,
-  platform?: "lichess" | "chesscom"
+  platform?: "lichess" | "chesscom",
+  platformRating?: number | null
 ): { stats: PersonaStats; config: EngineConfig } {
   let wins = 0;
   let draws = 0;
@@ -138,8 +142,8 @@ export function analyzePersona(
   const openingsMap = new Map<string, number>();
   const openingMovesMap = new Map<string, string>();
 
-  // Sécurité : on ne garde que les parties avec PGN
-  const validGames = games.filter(g => g && typeof g.pgn === 'string');
+  // Sécurité : on ne garde que les parties avec PGN (aligné Android AnalyzePersona)
+  const validGames = games.filter(g => g && typeof g.pgn === "string" && g.pgn.trim().length > 0);
 
   validGames.forEach((game) => {
     const pgnText = game.pgn;
@@ -214,15 +218,16 @@ export function analyzePersona(
   else if (winRate >= 40) difficulty = 2;
   else difficulty = 1;
 
-  // Calcul de l'ELO estimé
-  const estimatedElo = 1200 + (winRate * 10);
+  const estimatedElo = estimatePersonaElo(validGames, username, winRate, platformRating);
 
-  // Détermination du style de jeu
+  // Détermination du style de jeu (port Android AnalyzePersona)
   let playStyle: "agressif" | "solide" | "équilibré" | "positionnel" | "tactique" = "équilibré";
   if (style === "Agressif") playStyle = avgMoves < 35 ? "tactique" : "agressif";
-  else if (style === "Solide") playStyle = "positionnel";
-  else if (style === "Chaotique") playStyle = "tactique";
-  // Équilibré reste "équilibré" par défaut
+  else if (style === "Solide") {
+    if (avgMoves >= 40) playStyle = "solide";
+    else if (avgMoves <= 32) playStyle = "équilibré";
+    else playStyle = "positionnel";
+  } else if (style === "Chaotique") playStyle = "tactique";
 
   // Ouverture favorite (la plus jouée)
   const favoriteOpening = topOpenings.length > 0 ? topOpenings[0].name : "Italienne";
@@ -244,7 +249,7 @@ export function analyzePersona(
       name: `Bot_${username}`,
       avatarUrl,
       platform,
-      elo: Math.round(estimatedElo),
+      elo: estimatedElo,
       difficulty,
       aggressiveness: style === "Agressif" ? 100 : style === "Solide" ? 20 : 50,
       threads: difficulty >= 4 ? 4 : 2, // Minimum 2 threads
@@ -257,4 +262,38 @@ export function analyzePersona(
       humanBlunderInterval: 10
     }
   };
+}
+
+/**
+ * Port of Android `AnalyzePersona.estimatePersonaElo`:
+ * platform rating → PGN WhiteElo/BlackElo performance → 800 + winRate * 27.
+ */
+export function estimatePersonaElo(
+  games: PersonaGameInput[],
+  username: string,
+  winRate: number,
+  platformRating?: number | null
+): number {
+  if (platformRating != null && platformRating > 0) {
+    return clampProfileElo(platformRating);
+  }
+  const needle = username.toLowerCase();
+  const perfRatings: number[] = [];
+  for (const game of games) {
+    const pgn = typeof game.pgn === "string" ? game.pgn : "";
+    const whiteName =
+      game.players?.white?.user?.name || game.players?.white?.username || "";
+    const isWhite = whiteName.toLowerCase() === needle;
+    const selfTag = isWhite ? "WhiteElo" : "BlackElo";
+    const oppTag = isWhite ? "BlackElo" : "WhiteElo";
+    const selfElo = Number.parseInt(parsePgnTag(pgn, selfTag) ?? "", 10);
+    if (selfElo > 0) perfRatings.push(selfElo);
+    const oppElo = Number.parseInt(parsePgnTag(pgn, oppTag) ?? "", 10);
+    if (oppElo > 0) perfRatings.push(oppElo + (winRate - 50) * 4);
+  }
+  if (perfRatings.length >= 2) {
+    const avg = perfRatings.reduce((a, b) => a + b, 0) / perfRatings.length;
+    return clampProfileElo(avg);
+  }
+  return clampProfileElo(800 + winRate * 27);
 }

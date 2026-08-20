@@ -545,7 +545,10 @@ export default function GamesPage() {
             authUserId={userId}
             reviewCloudSavePlayerHint={null}
             cloudSaveContext={{
-              playerColor: selectedGame?.player_color,
+              playerColor:
+                selectedGame?.player_color === "white" || selectedGame?.player_color === "black"
+                  ? selectedGame.player_color
+                  : undefined,
               emailLocalPart: email?.split("@")[0] ?? null,
             }}
             onSavedToGamesCloud={() => {

@@ -289,3 +289,33 @@ export function validatePlayingStyle(style: PlayingStyle): boolean {
   const values = Object.values(style);
   return values.every(v => v >= 0 && v <= 100);
 }
+
+/**
+ * Métadonnées pour plusieurs profils (bibliothèque / grille de cartes).
+ */
+export async function fetchMetadataForProfiles(
+  profileIds: string[]
+): Promise<Map<string, ProfileMetadata>> {
+  const result = new Map<string, ProfileMetadata>();
+  if (!isSupabaseConfigured || !supabase || profileIds.length === 0) {
+    return result;
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("profile_metadata")
+      .select("*")
+      .in("profile_id", profileIds);
+
+    if (error || !data?.length) return result;
+
+    for (const row of data) {
+      const mapped = mapMetadataRow(row as Record<string, unknown>);
+      result.set(mapped.profileId, mapped);
+    }
+  } catch (error) {
+    console.error("Erreur fetchMetadataForProfiles:", error);
+  }
+
+  return result;
+}

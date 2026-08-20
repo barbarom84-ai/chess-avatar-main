@@ -71,6 +71,7 @@ export default function AnalyzePage() {
       let gamesData = [];
       let avatarUrl = "";
       let detectedPlatform: 'lichess' | 'chesscom' = 'lichess';
+      let platformRating: number | null = null;
 
       // 1. CHOIX DE L'API SELON LA PLATEFORME
       if (platform === "lichess") {
@@ -78,23 +79,34 @@ export default function AnalyzePage() {
         const response = await fetch(`/api/lichess?username=${username}`);
         if (!response.ok) throw new Error(t.errors.lichessPlayerNotFound);
         const data = await response.json();
+        if (!data || typeof data !== "object") {
+          throw new Error(t.errors.genericError);
+        }
         gamesData = data.games;
         avatarUrl = data.avatarUrl;
         detectedPlatform = 'lichess';
+        platformRating =
+          typeof data.platformRating === "number" && data.platformRating > 0
+            ? data.platformRating
+            : null;
       
       } else {
         // API Chess.com
         const response = await fetch(`/api/chesscom?username=${username}`);
         const data = await response.json();
         
-        if (!response.ok || data.error) {
-          const msg = data.errorKey && (t.errors as Record<string, string>)[data.errorKey] ? (t.errors as Record<string, string>)[data.errorKey] : data.error;
-          throw new Error(msg);
+        if (!response.ok || !data || typeof data !== "object" || data.error) {
+          const msg = data?.errorKey && (t.errors as Record<string, string>)[data.errorKey] ? (t.errors as Record<string, string>)[data.errorKey] : data?.error;
+          throw new Error(msg || t.errors.genericError);
         }
         
         gamesData = data.games;
         avatarUrl = data.avatarUrl;
         detectedPlatform = 'chesscom';
+        platformRating =
+          typeof data.platformRating === "number" && data.platformRating > 0
+            ? data.platformRating
+            : null;
       }
 
       // Vérification des données
@@ -106,7 +118,7 @@ export default function AnalyzePage() {
       setSelectedGame(gamesData[0]);
 
       // 2. LANCEMENT DE L'INTELLIGENCE
-      const analysis = analyzePersona(gamesData, username, avatarUrl, detectedPlatform);
+      const analysis = analyzePersona(gamesData, username, avatarUrl, detectedPlatform, platformRating);
       setPersonaStats(analysis.stats);
       setEngineConfig(analysis.config);
 

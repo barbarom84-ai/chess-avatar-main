@@ -6,6 +6,7 @@ import {
   type MoveEvalInput,
   type GameAccuracyResult,
 } from "./analysis-engine";
+import { computeOpeningByPly, isStrictBookPly } from "./openings-registry";
 import {
   type AnalysisStrictnessId,
   getAnalysisProfile,
@@ -64,6 +65,8 @@ export interface ReviewedMove {
    * normalized to white POV. Same sign convention as `bestMateInMoves`.
    */
   playerMateInMoves?: number;
+  /** Local opening theory — no Stockfish eval for this ply. */
+  isBook?: boolean;
 }
 
 export interface SideAccuracy extends GameAccuracyResult {
@@ -135,6 +138,28 @@ export function parsePgnForReview(pgn: string): ParsedGameForReview | null {
   return { fenBefore, fenAfter, san, uci, sideToMove, headers };
 }
 
+/**
+ * Prochain coup UCI de la ligne principale depuis une position alignée avec la partie,
+ * ou `null` si le préfixe ne suit plus la partie ou s'il n'y a plus de coup à jouer.
+ */
+export function nextMainlineUciIfAlignedWithGame(
+  parsed: ParsedGameForReview,
+  branchMainlinePly: number,
+  alignedPrefix: { uci: string }[]
+): string | null {
+  const { uci } = parsed;
+  if (branchMainlinePly < 0) return null;
+  const len = alignedPrefix.length;
+  const nextIdx = branchMainlinePly + len;
+  if (nextIdx >= uci.length) return null;
+  for (let k = 0; k < len; k++) {
+    if (alignedPrefix[k].uci !== uci[branchMainlinePly + k]) {
+      return null;
+    }
+  }
+  return uci[nextIdx];
+}
+
 // ---------------------------------------------------------------------------
 // Aggregation
 // ---------------------------------------------------------------------------
@@ -156,6 +181,7 @@ export function aggregateReview(
 
   for (let i = 0; i < moves.length; i++) {
     const m = moves[i];
+    if (m.isBook) continue;
     const input: MoveEvalInput = {
       bestEvalPawns: m.bestEval,
       playerEvalPawns: m.playerEval,
@@ -287,6 +313,76 @@ function throwIfCancelled(
   if (isCancelled?.()) throw new ReviewCancelledError();
 }
 
+type BestMoveEvalResult = Awaited<ReturnType<GetBestMoveAndEvalFn>>;
+
+function fenCacheKey(fen: string, searchDepth: number): string {
+  return `${fen}|${searchDepth}`;
+}
+
+/** Wrap engine calls with per-session FEN cache (reuses fenAfter from prior plies). */
+export function createCachedGetBestMoveAndEval(
+  getBestMoveAndEval: GetBestMoveAndEvalFn
+): GetBestMoveAndEvalFn {
+  const fenCache = new Map<string, BestMoveEvalResult>();
+  return (fen: string, searchDepth?: number) => {
+    const d = searchDepth ?? 18;
+    const key = fenCacheKey(fen, d);
+    const hit = fenCache.get(key);
+    if (hit) return Promise.resolve(hit);
+    return getBestMoveAndEval(fen, d).then((result) => {
+      fenCache.set(key, result);
+      return result;
+    });
+  };
+}
+
+/**
+ * Reviewed move for a ply that matches local opening theory (no engine search).
+ */
+export function buildBookTheoryReviewedMove(
+  args: {
+    ply: number;
+    san: string;
+    uci: string;
+    sideToMove: "white" | "black";
+    /** Eval (white POV) carried from the last engine line or 0 at game start. */
+    evalWhitePawns: number;
+  },
+  strictness: AnalysisStrictnessId = DEFAULT_ANALYSIS_STRICTNESS
+): ReviewedMove {
+  return {
+    ...buildReviewedMove(
+      {
+        ply: args.ply,
+        san: args.san,
+        uci: args.uci,
+        sideToMove: args.sideToMove,
+        evalBefore: args.evalWhitePawns,
+        bestMove: args.uci,
+        bestSan: args.san,
+        bestEval: args.evalWhitePawns,
+        playerEval: args.evalWhitePawns,
+      },
+      strictness
+    ),
+    isBook: true,
+  };
+}
+
+/** Lower depth in quiet middlegame positions; full depth in opening, endgame, or after swings. */
+export function adaptiveDepthForPly(
+  ply: number,
+  totalPlies: number,
+  baseDepth: number,
+  lastEvalSwingPawns: number
+): number {
+  const inOpening = ply < 8;
+  const inEndgame = ply >= Math.max(0, totalPlies - 10);
+  const volatile = lastEvalSwingPawns >= 1.5;
+  if (inOpening || inEndgame || volatile) return baseDepth;
+  return Math.max(10, baseDepth - 4);
+}
+
 /**
  * Ply-by-ply Stockfish review: same logic as the Game Reviewer UI.
  */
@@ -307,6 +403,10 @@ export async function analyzeParsedGameForReview(
 
   const totalPlies = Math.min(parsed.san.length, Math.max(0, maxPlies));
   const collected: ReviewedMove[] = [];
+  const cachedGet = createCachedGetBestMoveAndEval(getBestMoveAndEval);
+  const openingByPly = computeOpeningByPly(parsed.uci.slice(0, totalPlies));
+  let lastEvalSwing = 0;
+  let evalWhiteCarry = 0;
 
   for (let ply = 0; ply < totalPlies; ply++) {
     throwIfCancelled(signal, isCancelled);
@@ -317,7 +417,20 @@ export async function analyzeParsedGameForReview(
     const uci = parsed.uci[ply];
     const sideToMove = parsed.sideToMove[ply];
 
-    const best = await getBestMoveAndEval(fenBefore, depth);
+    const bookOpening = openingByPly[ply];
+    if (isStrictBookPly(bookOpening, parsed.uci, ply)) {
+      const reviewed = buildBookTheoryReviewedMove(
+        { ply, san, uci, sideToMove, evalWhitePawns: evalWhiteCarry },
+        analysisStrictness
+      );
+      collected.push(reviewed);
+      onPartialMove?.(reviewed, ply);
+      onProgress?.(ply + 1, totalPlies);
+      continue;
+    }
+
+    const plyDepth = adaptiveDepthForPly(ply, totalPlies, depth, lastEvalSwing);
+    const best = await cachedGet(fenBefore, plyDepth);
     throwIfCancelled(signal, isCancelled);
 
     let playerEvalPawns = best.evalPawns;
@@ -338,7 +451,11 @@ export async function analyzeParsedGameForReview(
         isMatePlayer = false;
         playerMateInMovesWhite = undefined;
       } else {
-        const afterPlayer = await getBestMoveAndEval(fenAfter, depth);
+        const afterDepth = Math.min(
+          adaptiveDepthForPly(ply + 1, totalPlies, depth, lastEvalSwing),
+          plyDepth
+        );
+        const afterPlayer = await cachedGet(fenAfter, afterDepth);
         throwIfCancelled(signal, isCancelled);
         playerEvalPawns = normalizeToWhitePov(
           afterPlayer.evalPawns,
@@ -384,6 +501,10 @@ export async function analyzeParsedGameForReview(
       },
       analysisStrictness
     );
+
+    const evalSwing = Math.abs(reviewed.evalBefore - reviewed.playerEval);
+    lastEvalSwing = evalSwing;
+    evalWhiteCarry = reviewed.playerEval;
 
     collected.push(reviewed);
     onPartialMove?.(reviewed, ply);

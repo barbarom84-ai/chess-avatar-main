@@ -604,6 +604,8 @@ export const translations = {
       puzzles: "Puzzles",
       arena: "Arène",
       guide: "Guide",
+      more: "Plus",
+      avatars: "Avatars",
       boardSettingsTitle: "Paramètres de l'échiquier"
     },
 
@@ -2082,6 +2084,8 @@ export const translations = {
       puzzles: "Puzzles",
       arena: "Arena",
       guide: "Guide",
+      more: "More",
+      avatars: "Avatars",
       boardSettingsTitle: "Board settings"
     },
 

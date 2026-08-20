@@ -1,0 +1,104 @@
+import { Chess } from "chess.js";
+import { applyUciMove } from "@/lib/learn-chess-utils";
+
+export type PvpGameStatus = "waiting" | "playing" | "finished" | "aborted";
+
+export interface PvpGameRow {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  created_by: string;
+  white_user_id: string;
+  black_user_id: string | null;
+  status: PvpGameStatus;
+  result: string | null;
+  result_reason: string | null;
+  draw_offered_by: string | null;
+  /** Joueur ayant demandé une reprise du dernier coup. */
+  takeback_offered_by?: string | null;
+  /** unlimited | timed | correspondence */
+  clock_mode?: string | null;
+  clock_initial_sec?: number | null;
+  clock_increment_sec?: number | null;
+  time_preset?: string | null;
+  white_remaining_ms?: number | null;
+  black_remaining_ms?: number | null;
+  clock_turn_started_at?: string | null;
+  /** Libellé public enregistré à la création du salon. */
+  white_display_name?: string | null;
+  /** Libellé public enregistré quand les noirs rejoignent. */
+  black_display_name?: string | null;
+  /** Nombre de propositions de nulle envoyées par camp (max 3). */
+  white_draw_offers_count?: number | null;
+  black_draw_offers_count?: number | null;
+  /** Joueur invité à rejoindre comme noirs (salon privé). */
+  invited_user_id?: string | null;
+  /** Partie terminée à l'origine de cette revanche. */
+  rematch_source_game_id?: string | null;
+}
+
+export interface PvpMoveRow {
+  id: number;
+  game_id: string;
+  ply: number;
+  uci: string;
+  played_by: string;
+  created_at: string;
+  /** Temps passé sur ce coup (ms), enregistré côté serveur pour les parties cadencées. */
+  time_spent_ms?: number | null;
+}
+
+export function replayGameFromUcis(ucis: string[]): Chess {
+  const game = new Chess();
+  for (const uci of ucis) {
+    const ok = applyUciMove(game, uci);
+    if (!ok) break;
+  }
+  return game;
+}
+
+export function normalizeUci(raw: string): string | null {
+  const s = raw.trim().toLowerCase();
+  if (s.length < 4 || s.length > 5) return null;
+  if (!/^[a-h][1-8][a-h][1-8][qrnb]?$/.test(s)) return null;
+  return s;
+}
+
+export function uciToLastMoveSquares(
+  uci: string | null | undefined
+): { from: string; to: string } | null {
+  if (!uci || uci.length < 4) return null;
+  return { from: uci.slice(0, 2), to: uci.slice(2, 4) };
+}
+
+/** Client-side validation before optimistic PvP move (mirrors server rules). */
+export function validateUciForPlayer(
+  ucis: string[],
+  uci: string,
+  role: "white" | "black"
+): { ok: true; uci: string } | { ok: false; reason: string } {
+  const normalized = normalizeUci(uci);
+  if (!normalized) return { ok: false, reason: "Invalid move" };
+
+  const chess = replayGameFromUcis(ucis);
+  const expectWhite = chess.turn() === "w";
+  if (expectWhite && role !== "white") return { ok: false, reason: "Not your turn" };
+  if (!expectWhite && role !== "black") return { ok: false, reason: "Not your turn" };
+
+  const next = new Chess(chess.fen());
+  if (!applyUciMove(next, normalized)) return { ok: false, reason: "Illegal move" };
+  return { ok: true, uci: normalized };
+}
+
+/** Returns PGN with minimal headers (chess.js). */
+export function buildPgnFromUcis(
+  ucis: string[],
+  headers: { white: string; black: string; result: string }
+): string {
+  const game = replayGameFromUcis(ucis);
+  game.header("Event", "Chess Avatar Online PvP");
+  game.header("White", headers.white);
+  game.header("Black", headers.black);
+  game.header("Result", headers.result);
+  return game.pgn();
+}

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isValidChessUsername } from "@/lib/chess-username";
 import { rateLimit } from "@/lib/rate-limit";
+import { pickLichessPlatformRating } from "@/lib/platform-rating";
 
 export async function GET(request: NextRequest) {
   const limited = rateLimit(request, { windowMs: 60_000, max: 40 });
@@ -29,14 +30,16 @@ export async function GET(request: NextRequest) {
     // 1. Récupérer le profil utilisateur pour l'avatar
     const profileResponse = await fetch(`https://lichess.org/api/user/${encodeURIComponent(username)}`);
     let avatarUrl = `https://lichess.org/assets/logo/lichess-pad3.svg`; // Avatar par défaut
+    let platformRating: number | undefined;
 
     if (profileResponse.ok) {
       const profileData: unknown = await profileResponse.json().catch(() => null);
       if (profileData && typeof profileData === "object" && profileData !== null) {
-        const profile = profileData as { profile?: { avatar?: string } };
+        const profile = profileData as { profile?: { avatar?: string }; perfs?: unknown };
         avatarUrl =
           profile.profile?.avatar ||
           `https://lichess1.org/assets/_Qr0fOa/logo/lichess-favicon-512.png`;
+        platformRating = pickLichessPlatformRating(profile.perfs);
       }
     }
 
@@ -76,7 +79,7 @@ export async function GET(request: NextRequest) {
       })
       .filter((game) => game !== null);
 
-    return NextResponse.json({ games, avatarUrl });
+    return NextResponse.json({ games, avatarUrl, platformRating: platformRating ?? null });
   } catch (error) {
     console.error("Server Error:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
