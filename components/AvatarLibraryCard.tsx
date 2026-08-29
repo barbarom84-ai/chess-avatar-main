@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo } from "react";
-import { Play, Download, Settings, Eye, EyeOff, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Play, Download, Settings, Eye, EyeOff, Trash2, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AvatarTradingCard from "@/components/AvatarTradingCard";
 import type { DbProfile } from "@/lib/supabase";
@@ -37,6 +38,7 @@ export default function AvatarLibraryCard({
   onSelectCompare,
 }: AvatarLibraryCardProps) {
   const { t, lang } = useLanguage();
+  const router = useRouter();
   const labels = useMemo(() => getAvatarCardLabels(t), [t]);
 
   const cardModel = useMemo(() => {
@@ -61,6 +63,15 @@ export default function AvatarLibraryCard({
         title={t.profile.playAgainst}
       >
         <Play className="h-3.5 w-3.5" />
+      </Button>
+      <Button
+        size="sm"
+        type="button"
+        onClick={() => router.push(`/coach/${profile.id}`)}
+        className="bg-cyan-700 hover:bg-cyan-600 h-8 w-8 px-0"
+        title={t.profileDetails.coach}
+      >
+        <MessageCircle className="h-3.5 w-3.5" />
       </Button>
       <Button
         size="sm"

@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Save, Database, Loader2, Trash2, Eye, EyeOff, Play, Download, Settings } from "lucide-react";
+import { Save, Database, Loader2, Trash2, Eye, EyeOff, Play, Download, Settings, MessageCircle } from "lucide-react";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { supabase, isSupabaseConfigured, type DbProfile } from "@/lib/supabase";
 import { getUserProfiles, deleteProfile, updateProfile } from "@/lib/supabase-storage";
@@ -149,6 +149,10 @@ export default function UserSavedAvatars() {
   const handlePlayAgainst = (profile: DbProfile) => {
     const configParam = encodeURIComponent(JSON.stringify(profile.config));
     router.push(`/play?config=${configParam}`);
+  };
+
+  const handleCoach = (profile: DbProfile) => {
+    router.push(`/coach/${profile.id}`);
   };
 
   const handleDownload = (profile: DbProfile) => {
@@ -390,7 +394,7 @@ export default function UserSavedAvatars() {
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-2 mt-3">
+                  <div className="grid grid-cols-4 gap-2 mt-3">
                     <Button
                       size="sm"
                       onClick={() => handlePlayAgainst(profile)}
@@ -398,6 +402,14 @@ export default function UserSavedAvatars() {
                       title={t.profile.playAgainst}
                     >
                       <Play className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => handleCoach(profile)}
+                      className="bg-cyan-700 hover:bg-cyan-600 text-white font-semibold shadow-md border border-cyan-800"
+                      title={t.profileDetails.coach}
+                    >
+                      <MessageCircle className="h-3 w-3" />
                     </Button>
                     <Button
                       size="sm"

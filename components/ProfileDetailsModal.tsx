@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { 
   Bot, Swords, Shield, Activity, Cpu, Clock, Target, BookOpen, TrendingUp, 
-  Zap, BarChart, Play, Pencil, User
+  Zap, BarChart, Play, Pencil, User, MessageCircle
 } from "lucide-react";
 import type { DbProfile } from "@/lib/supabase";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
@@ -59,6 +60,7 @@ export default function ProfileDetailsModal({
   onPlay
 }: ProfileDetailsModalProps) {
   const { t } = useLanguage();
+  const router = useRouter();
 
   // Translate style names
   const styleMap: Record<string, string> = {
@@ -215,6 +217,7 @@ export default function ProfileDetailsModal({
               </div>
             </div>
             
+            <div className="flex flex-col gap-2 shrink-0">
             <Button 
               onClick={() => onPlay?.(profile)}
               className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white font-bold shadow-lg"
@@ -222,6 +225,18 @@ export default function ProfileDetailsModal({
               <Play className="mr-2 h-4 w-4" />
               {t.profileDetails.play}
             </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                onOpenChange(false);
+                router.push(`/coach/${profile.id}`);
+              }}
+              className="border-cyan-500 text-cyan-200 hover:bg-cyan-500/10 font-bold"
+            >
+              <MessageCircle className="mr-2 h-4 w-4" />
+              {t.profileDetails.coach}
+            </Button>
+            </div>
           </div>
         </DialogHeader>
 

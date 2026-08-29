@@ -6,7 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Download, Bot, Swords, Shield, Activity, Cpu, Clock, Target, BookOpen, TrendingUp, Zap, Play, Settings, Save, Edit } from "lucide-react";
+import { Download, Bot, Swords, Shield, Activity, Cpu, Clock, Target, BookOpen, TrendingUp, Zap, Play, Settings, Save, Edit, MessageCircle } from "lucide-react";
 import type { PersonaStats, EngineConfig } from "@/lib/analysis";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -19,6 +19,7 @@ import { prepareConfigForExport } from "@/lib/forced-line-utils";
 import { OPENINGS_DATABASE } from "@/lib/openings-library";
 import AuthModal from "./AuthModal";
 import UpgradeModal from "./UpgradeModal";
+import AvatarChatPanel from "./AvatarChatPanel";
 import { useLanguage } from "@/lib/language-context";
 import { usePremium } from "@/hooks/usePremium";
 
@@ -55,11 +56,16 @@ export default function PersonaCard({ stats, config, profileId }: PersonaCardPro
   const [isAuth, setIsAuth] = useState(false);
   const [savingCloud, setSavingCloud] = useState(false);
   const [downloadingPack, setDownloadingPack] = useState(false);
+  const [savedProfileId, setSavedProfileId] = useState<string | undefined>(profileId);
   const { userId, email } = usePremium();
 
   useEffect(() => {
     setCustomConfig(config);
   }, [config]);
+
+  useEffect(() => {
+    if (profileId) setSavedProfileId(profileId);
+  }, [profileId]);
   
   // Sauvegarder automatiquement dans les récents
   useEffect(() => {
@@ -175,6 +181,7 @@ export default function PersonaCard({ stats, config, profileId }: PersonaCardPro
       setSavingCloud(false);
 
       if (result) {
+        setSavedProfileId(result.id);
         toast.success(t.personaCard.savedSuccess);
       } else {
         toast.error(t.personaCard.saveError);
@@ -361,6 +368,17 @@ export default function PersonaCard({ stats, config, profileId }: PersonaCardPro
             {t.personaCard.playAgainst}
           </Button>
 
+          {savedProfileId ? (
+            <Button
+              onClick={() => router.push(`/coach/${savedProfileId}`)}
+              variant="outline"
+              className="w-full border-2 border-cyan-500 bg-cyan-500/10 text-cyan-200 hover:bg-cyan-500/20 font-bold"
+            >
+              <MessageCircle className="mr-2 h-4 w-4" />
+              {t.personaCard.coach}
+            </Button>
+          ) : null}
+
           <div className="grid grid-cols-3 gap-2">
             <Button 
               onClick={() => {
@@ -418,6 +436,8 @@ export default function PersonaCard({ stats, config, profileId }: PersonaCardPro
             </Button>
           </div>
         </div>
+
+        <AvatarChatPanel stats={stats} config={customConfig} />
 
       </CardContent>
     </Card>

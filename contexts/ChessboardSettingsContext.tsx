@@ -157,6 +157,32 @@ export const BOARD_THEMES: BoardThemeWithPremium[] = [
     legalMoveEmpty: 'rgb(217 119 6)',
     legalMoveCapture: 'rgb(220 38 38)',
   },
+  {
+    id: 'wood',
+    name: 'Bois',
+    nameEn: 'Wood',
+    premium: false,
+    lightSquare: '#f0d9b5',
+    darkSquare: '#b58863',
+    selectedSquare: '#06b6d4',
+    lastMoveLight: '#fbbf24',
+    lastMoveDark: '#d97706',
+    legalMoveEmpty: 'rgb(6 182 212)',
+    legalMoveCapture: 'rgb(239 68 68)',
+  },
+  {
+    id: 'midnight',
+    name: 'Minuit',
+    nameEn: 'Midnight',
+    premium: false,
+    lightSquare: '#b6c2cf',
+    darkSquare: '#2b3a4b',
+    selectedSquare: '#22d3ee',
+    lastMoveLight: '#4ade80',
+    lastMoveDark: '#166534',
+    legalMoveEmpty: 'rgb(34 211 238)',
+    legalMoveCapture: 'rgb(244 63 94)',
+  },
 ];
 
 // Sets de pièces disponibles

@@ -57,6 +57,10 @@ export const en = {
         subtitle: "Cloud archive, stats, and quick PGN import",
         metaTitle: "My games",
       },
+      coach: {
+        title: "Coach",
+        metaTitle: "Coach",
+      },
       review: {
         title: "Move-by-move review",
         subtitle: "Move classification, evaluations, and suggested lines",
@@ -322,13 +326,45 @@ export const en = {
     },
 
     avatarChat: {
-      title: "Avatar Chat",
+      title: "Coach",
+      titleWithName: "Coach · {name}",
       subtitle: "Chat with your avatar in their style.",
-      placeholder: "Say something…",
+      welcome:
+        "Hey! I’m the clone of {name}. Ask me about my style, openings, or a position.",
+      placeholder: "Talk to your avatar…",
       send: "Send",
       thinking: "Thinking…",
+      quotaLeft: "{remaining} / {limit} messages left",
       quotaExceeded: "Daily chat quota exceeded.",
       notAuthenticated: "Sign in to use Avatar Chat.",
+      notFound: "Avatar not found.",
+      backToAvatars: "Back to avatars",
+      suggestionsLabel: "Try asking",
+      suggestions: [
+        "What's your favorite opening?",
+        "How do you play with Black?",
+        "What's your biggest weakness?",
+        "Are you aggressive or solid?",
+      ],
+      suggestionOpening: "Tell me about {opening}.",
+      emojisLabel: "Emojis",
+      emojiPieces: "Pieces",
+      emojiStickers: "ChessAvatar",
+      emojiStandard: "Standard",
+      emojiKing: "King",
+      emojiQueen: "Queen",
+      emojiRook: "Rook",
+      emojiBishop: "Bishop",
+      emojiKnight: "Knight",
+      emojiPawn: "Pawn",
+      emojiWhite: "White",
+      emojiBlack: "Black",
+      emojiCheck: "Check",
+      emojiBrilliancy: "Brilliancy",
+      emojiBlunder: "Blunder",
+      emojiTrophy: "Trophy",
+      emojiFire: "Fire",
+      emojiThink: "Think",
     },
 
     offlineSync: {
@@ -1795,6 +1831,7 @@ export const en = {
       analysisTab: "Analysis",
       configTab: "Configuration",
       play: "Play",
+      coach: "Coach",
       createdOn: "Created on",
       overallResults: "Overall Results",
       gamesAnalyzed: "Games Analyzed",
@@ -2002,7 +2039,8 @@ export const en = {
       packDownloadSuccess: "Engine pack downloaded!",
       packDownloadError: "Failed to download pack",
       jsonOnly: "JSON only",
-      jsonOnlyTooltip: "Download only the JSON profile (advanced users)"
+      jsonOnlyTooltip: "Download only the JSON profile (advanced users)",
+      coach: "Coach",
     },
 
     avatarCard: {
