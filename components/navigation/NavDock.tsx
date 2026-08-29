@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { LayoutGrid, Pin, PinOff, Info } from "lucide-react";
+import { MoreHorizontal, Pin, PinOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -13,7 +13,6 @@ import {
 import {
   NAV_FAMILIES,
   groupNavItemsByFamily,
-  type NavFamily,
   type NavItemDef,
 } from "@/lib/nav-items";
 import {
@@ -23,7 +22,7 @@ import {
 } from "@/lib/nav-utils";
 import { cn } from "@/lib/utils";
 import NavMobileSheet from "./NavMobileSheet";
-import { NavItemBadges, NavPieceIcon, type NavCommonProps } from "./NavShared";
+import { NavItemBadges, NavItemIcon, type NavCommonProps } from "./NavShared";
 
 const MOBILE_QUICK_HREFS = ["/play", "/online", "/learn", "/puzzles"] as const;
 
@@ -32,6 +31,7 @@ function DockLink({
   isActive,
   expanded,
   pieceSet,
+  navIconTheme,
   lang,
   t,
   navConfig,
@@ -41,6 +41,7 @@ function DockLink({
   isActive: boolean;
   expanded: boolean;
   pieceSet: NavCommonProps["pieceSet"];
+  navIconTheme: NavCommonProps["navIconTheme"];
   lang: NavCommonProps["lang"];
   t: NavCommonProps["t"];
   navConfig: NavCommonProps["navConfig"];
@@ -62,7 +63,7 @@ function DockLink({
           : "text-slate-400 hover:bg-slate-800/80 hover:text-cyan-300"
       )}
     >
-      <NavPieceIcon item={item} pieceSet={pieceSet} size={22} />
+      <NavItemIcon item={item} pieceSet={pieceSet} navIconTheme={navIconTheme} size={22} />
       {expanded && (
         <span className={cn("truncate", vertical ? "text-[10px] text-center leading-tight max-w-[4.5rem]" : "flex-1")}>
           {label}
@@ -83,7 +84,7 @@ function DockLink({
 }
 
 export default function NavDock(props: NavCommonProps) {
-  const { items, pathname, pieceSet, lang, t, navConfig, onOpenAbout } = props;
+  const { items, pathname, pieceSet, navIconTheme, lang, t, navConfig } = props;
   const grouped = groupNavItemsByFamily(items);
   const [pinned, setPinned] = useState(false);
   const [hovered, setHovered] = useState(false);
@@ -145,6 +146,7 @@ export default function NavDock(props: NavCommonProps) {
                         isActive={isNavItemActive(pathname, item.href)}
                         expanded={expanded}
                         pieceSet={pieceSet}
+                        navIconTheme={navIconTheme}
                         lang={lang}
                         t={t}
                         navConfig={navConfig}
@@ -156,25 +158,6 @@ export default function NavDock(props: NavCommonProps) {
             );
           })}
         </nav>
-        {onOpenAbout && (
-          <div className="border-t border-slate-800 p-1">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className={cn(
-                "w-full text-slate-400 hover:text-cyan-300",
-                expanded ? "justify-start gap-2 px-2" : "justify-center px-0"
-              )}
-              onClick={onOpenAbout}
-              aria-label={t.navigation.about.menu}
-              title={t.navigation.about.menu}
-            >
-              <Info className="h-4 w-4 shrink-0" />
-              {expanded && <span className="truncate text-sm">{t.navigation.about.menu}</span>}
-            </Button>
-          </div>
-        )}
       </aside>
   );
 
@@ -190,6 +173,7 @@ export default function NavDock(props: NavCommonProps) {
           isActive={isNavItemActive(pathname, item.href)}
           expanded={false}
           pieceSet={pieceSet}
+          navIconTheme={navIconTheme}
           lang={lang}
           t={t}
           navConfig={navConfig}
@@ -204,7 +188,7 @@ export default function NavDock(props: NavCommonProps) {
         onClick={() => setMobileMoreOpen(true)}
         aria-haspopup="dialog"
       >
-        <LayoutGrid className="h-5 w-5" />
+        <MoreHorizontal className="h-5 w-5" />
         <span className="text-[10px]">{t.navigation.dock.more[lang === "fr" ? "fr" : "en"]}</span>
       </Button>
 
@@ -236,7 +220,7 @@ export default function NavDock(props: NavCommonProps) {
                             : "text-slate-300 hover:bg-slate-800"
                         )}
                       >
-                        <NavPieceIcon item={item} pieceSet={pieceSet} />
+                        <NavItemIcon item={item} pieceSet={pieceSet} navIconTheme={navIconTheme} />
                         <span className="text-sm">
                           {navItemLabel(item, lang, t)}
                           <NavItemBadges
@@ -252,19 +236,6 @@ export default function NavDock(props: NavCommonProps) {
               </section>
             );
           })}
-          {onOpenAbout && (
-            <button
-              type="button"
-              onClick={() => {
-                setMobileMoreOpen(false);
-                onOpenAbout();
-              }}
-              className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-slate-300 hover:bg-slate-800"
-            >
-              <Info className="h-5 w-5 text-cyan-400" />
-              <span className="text-sm">{t.navigation.about.menu}</span>
-            </button>
-          )}
         </div>
       </NavMobileSheet>
     </nav>

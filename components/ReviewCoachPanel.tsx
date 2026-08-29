@@ -13,6 +13,7 @@ import {
   CHESS_AVATAR_PRO_STATS,
   slimCoachFromConfig,
 } from "@/lib/chess-avatar-pro-coach";
+import { dedupeReviewCoachAvatars } from "@/lib/review-coach-options";
 import type { ReviewedMove } from "@/lib/game-review";
 
 type ReviewCoachPanelProps = {
@@ -44,6 +45,11 @@ export default function ReviewCoachPanel({
     });
   }, []);
 
+  const uniqueAvatars = useMemo(
+    () => dedupeReviewCoachAvatars(avatars, opponentConfig),
+    [avatars, opponentConfig]
+  );
+
   const selected = useMemo(() => {
     if (coachId === "opponent" && opponentConfig) {
       return {
@@ -52,7 +58,7 @@ export default function ReviewCoachPanel({
         house: false,
       };
     }
-    const saved = avatars.find((a) => a.id === coachId);
+    const saved = uniqueAvatars.find((a) => a.id === coachId);
     if (saved) {
       return { config: saved.config, stats: saved.stats, house: false };
     }
@@ -61,7 +67,7 @@ export default function ReviewCoachPanel({
       stats: CHESS_AVATAR_PRO_STATS,
       house: true,
     };
-  }, [avatars, coachId, opponentConfig]);
+  }, [uniqueAvatars, coachId, opponentConfig]);
 
   const reviewContext = currentMove
     ? {
@@ -102,7 +108,7 @@ export default function ReviewCoachPanel({
               )}
             </option>
           )}
-          {avatars.map((a) => (
+          {uniqueAvatars.map((a) => (
             <option key={a.id} value={a.id}>
               {a.config.name || a.stats.username}
             </option>

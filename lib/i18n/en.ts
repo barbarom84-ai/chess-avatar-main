@@ -1490,6 +1490,11 @@ export const en = {
       toolbarTooltip:
         "Board: theme, pieces, sounds — general settings (all pages)",
       toolbarLabelShort: "Board",
+      navIcons: "Menu icons",
+      navIconsDesc:
+        "Navigation icon theme, independent of the board piece set",
+      navIconsAndroid: "Android",
+      navIconsPieces: "Pieces",
     },
 
     // Game viewer / analysis
@@ -2223,6 +2228,15 @@ export const en = {
         tagline: "Analyze your games and build a bot that plays like you.",
         version: "Version",
         build: "Build",
+      },
+      settings: {
+        menu: "Settings",
+        board: "Board",
+        language: "Language",
+        navIcons: "Menu icons",
+        navIconsAndroid: "Android",
+        navIconsPieces: "Pieces",
+        navIconsHint: "Independent of the board piece set",
       },
     },
 

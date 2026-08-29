@@ -1496,6 +1496,11 @@ export const fr = {
       toolbarTooltip:
         "Échiquier : thème, pièces, sons — paramètres généraux (toutes les pages)",
       toolbarLabelShort: "Échiquier",
+      navIcons: "Icônes du menu",
+      navIconsDesc:
+        "Thème des icônes de navigation, indépendant des pièces de l'échiquier",
+      navIconsAndroid: "Android",
+      navIconsPieces: "Pièces",
     },
 
     // Game viewer / analysis
@@ -2233,6 +2238,15 @@ export const fr = {
         tagline: "Analysez vos parties et créez un bot qui joue comme vous.",
         version: "Version",
         build: "Build",
+      },
+      settings: {
+        menu: "Paramètres",
+        board: "Échiquier",
+        language: "Langue",
+        navIcons: "Icônes du menu",
+        navIconsAndroid: "Android",
+        navIconsPieces: "Pièces",
+        navIconsHint: "Indépendant du set de pièces de l'échiquier",
       },
     },
 

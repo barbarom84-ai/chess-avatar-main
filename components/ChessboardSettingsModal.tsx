@@ -11,16 +11,16 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { 
   Settings, Palette, Image as ImageIcon, Zap, Volume2, VolumeX,
-  Grid, Eye, RotateCcw, Check, Lock, Crown
+  Eye, RotateCcw, Check, Lock, Crown, LayoutGrid
 } from "lucide-react";
 import { 
   useChessboardSettings, 
   BOARD_THEMES, 
   PIECE_SETS,
-  getPieceImagePath,
   type BoardTheme,
   type PieceSet,
   type ChessboardSettings,
+  type NavIconTheme,
 } from "@/contexts/ChessboardSettingsContext";
 import { useLanguage } from "@/lib/language-context";
 import { usePremium } from "@/hooks/usePremium";
@@ -441,6 +441,36 @@ export default function ChessboardSettingsModal({ open, onOpenChange }: Chessboa
                         </span>
                       </div>
                     </div>
+                  </div>
+                </div>
+
+                {/* Icônes du menu */}
+                <div>
+                  <h3 className="text-sm font-semibold text-slate-300 mb-4 flex items-center gap-2">
+                    <LayoutGrid className="h-4 w-4" />
+                    {t.chessboardSettings.navIcons}
+                  </h3>
+                  <p className="text-xs text-slate-400 mb-3">
+                    {t.chessboardSettings.navIconsDesc}
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {([
+                      { value: "android" as NavIconTheme, label: t.chessboardSettings.navIconsAndroid },
+                      { value: "pieces" as NavIconTheme, label: t.chessboardSettings.navIconsPieces },
+                    ]).map((theme) => (
+                      <button
+                        key={theme.value}
+                        type="button"
+                        onClick={() => updateSettings({ navIconTheme: theme.value })}
+                        className={`p-3 rounded-lg border-2 transition-all duration-200 ${
+                          settings.navIconTheme === theme.value
+                            ? "border-cyan-500 bg-cyan-500/10 text-cyan-300"
+                            : "border-slate-700 hover:border-cyan-500/50 bg-slate-900 text-slate-400"
+                        }`}
+                      >
+                        <p className="text-xs font-semibold">{theme.label}</p>
+                      </button>
+                    ))}
                   </div>
                 </div>
 

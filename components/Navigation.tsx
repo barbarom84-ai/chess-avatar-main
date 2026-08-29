@@ -12,6 +12,7 @@ import {
   User,
   Bot,
   Activity,
+  Settings,
   Settings2,
   Info,
 } from "lucide-react";
@@ -33,16 +34,18 @@ import AboutDialog from "./AboutDialog";
 export default function Navigation() {
   const pathname = usePathname();
   const { lang, setLang, t } = useLanguage();
-  const { settings } = useChessboardSettings();
+  const { settings, updateSettings } = useChessboardSettings();
   const [user, setUser] = useState<SupabaseUser | null>(null);
-  const [showSettings, setShowSettings] = useState(false);
+  const [showBoardSettings, setShowBoardSettings] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
   const { isPremium } = usePremium();
   const { isSuperUser, loading: superLoading } = useSuperUser();
   const { config: siteConfig } = useSiteConfig();
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const settingsMenuRef = useRef<HTMLDivElement>(null);
   const opsLabel = "Ops";
   const siteLabel = lang === "fr" ? "Site" : "Site";
 
@@ -55,10 +58,10 @@ export default function Navigation() {
     items: visibleNavItems,
     pathname,
     pieceSet: settings.pieceSet,
+    navIconTheme: settings.navIconTheme ?? "android",
     lang,
     t,
     navConfig: siteConfig.nav,
-    onOpenAbout: () => setShowAbout(true),
   };
 
   useEffect(() => {
@@ -80,6 +83,12 @@ export default function Navigation() {
         !userMenuRef.current.contains(e.target as Node)
       ) {
         setShowUserMenu(false);
+      }
+      if (
+        settingsMenuRef.current &&
+        !settingsMenuRef.current.contains(e.target as Node)
+      ) {
+        setShowSettingsMenu(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -158,17 +167,6 @@ export default function Navigation() {
                             <Bot className="h-4 w-4" />
                             {t.pages.avatars.title}
                           </Link>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setShowUserMenu(false);
-                              setShowAbout(true);
-                            }}
-                            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 transition-colors"
-                          >
-                            <Info className="h-4 w-4" />
-                            {t.navigation.about.menu}
-                          </button>
                           {isSuperUser && !superLoading && (
                             <>
                               <Link
@@ -213,58 +211,124 @@ export default function Navigation() {
                 </div>
               )}
 
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowAbout(true)}
-                className="text-slate-400 hover:text-cyan-300 gap-1"
-                aria-label={t.navigation.about.menu}
-                title={t.navigation.about.menu}
-              >
-                <Info className="h-4 w-4 shrink-0" />
-                <span className="hidden lg:inline text-xs whitespace-nowrap">
-                  {t.navigation.about.menu}
-                </span>
-              </Button>
+              <div className="relative" ref={settingsMenuRef}>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowSettingsMenu((open) => !open)}
+                  className="text-slate-400 hover:text-cyan-300"
+                  aria-label={t.navigation.settings.menu}
+                  title={t.navigation.settings.menu}
+                  aria-expanded={showSettingsMenu}
+                  aria-haspopup="menu"
+                >
+                  <Settings className="h-4 w-4 shrink-0" />
+                </Button>
+                {showSettingsMenu && (
+                  <div
+                    role="menu"
+                    className="absolute right-0 mt-2 w-64 text-left bg-slate-900 border border-slate-700 rounded-lg shadow-xl py-1 z-50"
+                  >
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        setShowSettingsMenu(false);
+                        setShowBoardSettings(true);
+                      }}
+                      className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 transition-colors"
+                    >
+                      <Palette className="h-4 w-4" />
+                      {t.navigation.settings.board}
+                    </button>
 
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowSettings(true)}
-                className="text-slate-400 hover:text-cyan-300 gap-1"
-                aria-label={t.chessboardSettings.toolbarTooltip}
-                title={t.chessboardSettings.toolbarTooltip}
-              >
-                <Palette className="h-4 w-4 shrink-0" />
-                <span className="hidden lg:inline text-xs whitespace-nowrap">
-                  {t.chessboardSettings.toolbarLabelShort}
-                </span>
-              </Button>
+                    <div className="px-3 py-2 border-t border-slate-800">
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                        {t.navigation.settings.language}
+                      </p>
+                      <div className="mt-1.5 flex gap-1">
+                        <Button
+                          type="button"
+                          variant={lang === "fr" ? "default" : "ghost"}
+                          size="sm"
+                          onClick={() => setLang("fr")}
+                          className={
+                            lang === "fr"
+                              ? "flex-1 bg-cyan-600 text-white"
+                              : "flex-1 text-slate-400 hover:text-cyan-300"
+                          }
+                        >
+                          <Globe className="mr-1 h-3 w-3" /> FR
+                        </Button>
+                        <Button
+                          type="button"
+                          variant={lang === "en" ? "default" : "ghost"}
+                          size="sm"
+                          onClick={() => setLang("en")}
+                          className={
+                            lang === "en"
+                              ? "flex-1 bg-cyan-600 text-white"
+                              : "flex-1 text-slate-400 hover:text-cyan-300"
+                          }
+                        >
+                          <Globe className="mr-1 h-3 w-3" /> EN
+                        </Button>
+                      </div>
+                    </div>
 
-              <Button
-                variant={lang === "fr" ? "default" : "ghost"}
-                size="sm"
-                onClick={() => setLang("fr")}
-                className={
-                  lang === "fr"
-                    ? "bg-cyan-600 text-white"
-                    : "text-slate-400 hover:text-cyan-300"
-                }
-              >
-                <Globe className="mr-1 h-3 w-3" /> FR
-              </Button>
-              <Button
-                variant={lang === "en" ? "default" : "ghost"}
-                size="sm"
-                onClick={() => setLang("en")}
-                className={
-                  lang === "en"
-                    ? "bg-cyan-600 text-white"
-                    : "text-slate-400 hover:text-cyan-300"
-                }
-              >
-                <Globe className="mr-1 h-3 w-3" /> EN
-              </Button>
+                    <div className="px-3 py-2 border-t border-slate-800">
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                        {t.navigation.settings.navIcons}
+                      </p>
+                      <div className="mt-1.5 flex gap-1">
+                        <Button
+                          type="button"
+                          variant={settings.navIconTheme === "android" ? "default" : "ghost"}
+                          size="sm"
+                          onClick={() => updateSettings({ navIconTheme: "android" })}
+                          className={
+                            settings.navIconTheme === "android"
+                              ? "flex-1 bg-cyan-600 text-white"
+                              : "flex-1 text-slate-400 hover:text-cyan-300"
+                          }
+                        >
+                          {t.navigation.settings.navIconsAndroid}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant={settings.navIconTheme === "pieces" ? "default" : "ghost"}
+                          size="sm"
+                          onClick={() => updateSettings({ navIconTheme: "pieces" })}
+                          className={
+                            settings.navIconTheme === "pieces"
+                              ? "flex-1 bg-cyan-600 text-white"
+                              : "flex-1 text-slate-400 hover:text-cyan-300"
+                          }
+                        >
+                          {t.navigation.settings.navIconsPieces}
+                        </Button>
+                      </div>
+                      <p className="mt-1.5 text-[10px] text-slate-500 leading-snug">
+                        {t.navigation.settings.navIconsHint}
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        setShowSettingsMenu(false);
+                        setShowAbout(true);
+                      }}
+                      className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 transition-colors border-t border-slate-800"
+                    >
+                      <Info className="h-4 w-4" />
+                      {t.navigation.about.menu}
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -302,8 +366,8 @@ export default function Navigation() {
         </div>
 
         <ChessboardSettingsModal
-          open={showSettings}
-          onOpenChange={setShowSettings}
+          open={showBoardSettings}
+          onOpenChange={setShowBoardSettings}
         />
 
         <AboutDialog open={showAbout} onOpenChange={setShowAbout} />

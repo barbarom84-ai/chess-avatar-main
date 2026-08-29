@@ -35,6 +35,8 @@ export interface PieceSet {
   premium?: boolean; // Requires premium to use
 }
 
+export type NavIconTheme = "android" | "pieces";
+
 export interface ChessboardSettings {
   boardTheme: BoardTheme;
   pieceSet: PieceSet;
@@ -45,6 +47,12 @@ export interface ChessboardSettings {
   lastMoveArrowOpacityPercent: number;
   animationSpeed: 'none' | 'fast' | 'normal' | 'slow';
   soundEnabled: boolean;
+  /** Menu icons only — independent of the board piece set. */
+  navIconTheme: NavIconTheme;
+}
+
+export function parseNavIconTheme(value: unknown): NavIconTheme {
+  return value === "pieces" ? "pieces" : "android";
 }
 
 // Thèmes d'échiquier prédéfinis
@@ -283,6 +291,7 @@ const defaultSettings: ChessboardSettings = {
   lastMoveArrowOpacityPercent: 45,
   animationSpeed: 'normal',
   soundEnabled: false,
+  navIconTheme: "android",
 };
 
 function persistToStorage(data: ChessboardSettings) {
@@ -330,6 +339,7 @@ export function ChessboardSettingsProvider({ children }: { children: ReactNode }
           boardTheme: savedTheme,
           pieceSet: savedPieceSet,
           lastMoveArrowOpacityPercent: clampedOp,
+          navIconTheme: parseNavIconTheme(parsed.navIconTheme),
         });
       }
     } catch (error) {
