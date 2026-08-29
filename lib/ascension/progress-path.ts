@@ -67,6 +67,38 @@ export function firstOpenStandardPuzzleIndex<
   return idx >= 0 ? idx : Math.max(0, standard.length - 1);
 }
 
+/**
+ * After solving the frontier standard puzzle, move to the next one.
+ * Replays of already-cleared puzzles do not move the token.
+ */
+export function nextFrontierAfterSolve(
+  standardIds: string[],
+  solvedId: string,
+  frontierIndex: number
+): { nextIndex: number; nextId: string | null } {
+  const solvedIdx = standardIds.indexOf(solvedId);
+  if (
+    solvedIdx >= 0 &&
+    solvedIdx === frontierIndex &&
+    solvedIdx < standardIds.length - 1
+  ) {
+    return {
+      nextIndex: solvedIdx + 1,
+      nextId: standardIds[solvedIdx + 1] ?? null,
+    };
+  }
+  return { nextIndex: frontierIndex, nextId: null };
+}
+
+export function nextItemAfterId<T extends { id: string }>(
+  items: T[],
+  id: string
+): T | null {
+  const idx = items.findIndex((item) => item.id === id);
+  if (idx < 0 || idx >= items.length - 1) return null;
+  return items[idx + 1] ?? null;
+}
+
 /** Spacing constants exposed so the path component can use them for bonus nodes. */
 export const BONUS_NODE_SPACING_PX = NODE_SPACING_PX;
 export const BONUS_NODE_X = 84; // fixed % from left for the bonus column

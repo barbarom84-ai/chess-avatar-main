@@ -27,7 +27,7 @@ import {
   updateChampionCard,
   type AscensionPuzzleListItem,
 } from "@/lib/ascension/client";
-import { firstOpenStandardPuzzleIndex } from "@/lib/ascension/progress-path";
+import { firstOpenStandardPuzzleIndex, nextFrontierAfterSolve, nextItemAfterId } from "@/lib/ascension/progress-path";
 import {
   applyPuzzleLocks,
   isMainCampaignComplete,
@@ -57,7 +57,6 @@ function shouldSkipPathAnim(unlockedSkills: string[]): boolean {
 
 type PendingAdvance = {
   toIndex: number;
-  nextPuzzleId: string | null;
 };
 
 function sortPuzzles(puzzles: AscensionPuzzleListItem[]) {
@@ -138,16 +137,13 @@ export default function AscensionPageClient() {
       setTrackUnlock(puzzleData.trackUnlock);
       setIsPremium(puzzleData.isPremium);
       setMainCampaignComplete(puzzleData.mainCampaignComplete);
-      if (puzzleData.tracks.length > 0 && !puzzleData.tracks.some((tr) => tr.slug === campaign)) {
-        setCampaign(puzzleData.tracks[0]!.slug);
-      }
-      if (!selectedPuzzleId && puzzleData.puzzles[0]) {
+      setSelectedPuzzleId((current) => {
+        if (current) return current;
         const sorted = sortPuzzles(puzzleData.puzzles);
         const standard = sorted.filter((p) => p.kind === "standard");
         const openIdx = firstOpenStandardPuzzleIndex(sorted);
-        // Prefer first open standard puzzle; fall back to first puzzle overall
-        setSelectedPuzzleId(standard[openIdx]?.id ?? sorted[0]?.id ?? null);
-      }
+        return standard[openIdx]?.id ?? sorted[0]?.id ?? null;
+      });
       if (!progressInitialized.current) {
         const sorted = sortPuzzles(puzzleData.puzzles);
         setProgressNodeIndex(firstOpenStandardPuzzleIndex(sorted));
@@ -158,11 +154,17 @@ export default function AscensionPageClient() {
     } finally {
       setLoading(false);
     }
-  }, [selectedPuzzleId, t.ascension.loadError]);
+  }, [t.ascension.loadError]);
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    if (tracks.length > 0 && !tracks.some((tr) => tr.slug === campaign)) {
+      setCampaign(tracks[0]!.slug);
+    }
+  }, [tracks, campaign]);
 
   const selectedPuzzle =
     activePuzzles.find((p) => p.id === selectedPuzzleId) ?? activePuzzles[0];
@@ -201,42 +203,64 @@ export default function AscensionPageClient() {
             return locked;
           });
 
-          setPendingReward({
-            xpGain: result.rewards.xpGain,
-            eloGain: result.rewards.eloGain,
-            newElo: result.rewards.newElo,
-            newXp: result.rewards.newXp,
-            newTier: result.rewards.newTier as ChampionTier,
-            previousTier,
-            achievement: result.achievement,
-          });
+          const isSpecialReward =
+            (result.rewards.newTier as ChampionTier) !== previousTier ||
+            Boolean(result.achievement);
+
+          setPendingReward(
+            isSpecialReward
+              ? {
+                  xpGain: result.rewards.xpGain,
+                  eloGain: result.rewards.eloGain,
+                  newElo: result.rewards.newElo,
+                  newXp: result.rewards.newXp,
+                  newTier: result.rewards.newTier as ChampionTier,
+                  previousTier,
+                  achievement: result.achievement,
+                }
+              : null
+          );
+
+          if (!isSpecialReward) {
+            toast.success(
+              t.ascension.rewardToast
+                .replace("{xp}", String(result.rewards.xpGain))
+                .replace("{elo}", String(result.rewards.eloGain))
+            );
+          }
 
           const trackPuzzles = sortedPuzzles.filter((p) => p.track === selectedPuzzle.track);
           const trackDef = tracks.find((tr) => tr.slug === selectedPuzzle.track);
+          const skipAnim = shouldSkipPathAnim(unlockedSkills);
 
           if (trackDef?.layout === "sequential" && selectedPuzzle.track !== "main") {
-            const trackIdx = trackPuzzles.findIndex((p) => p.id === selectedPuzzle.id);
-            const nextInTrack = trackPuzzles[trackIdx + 1] ?? null;
-            setPendingAdvance({
-              toIndex: progressNodeIndex,
-              nextPuzzleId: nextInTrack?.id ?? null,
-            });
+            const nextInTrack = nextItemAfterId(trackPuzzles, selectedPuzzle.id);
+            if (nextInTrack) {
+              setSelectedPuzzleId(nextInTrack.id);
+            } else {
+              setPuzzleSessionKey((k) => k + 1);
+            }
           } else if (isFantasy) {
-            // Bonus quest: don't advance the main path token, just reset the puzzle.
-            setPendingAdvance({ toIndex: progressNodeIndex, nextPuzzleId: null });
+            setPuzzleSessionKey((k) => k + 1);
           } else {
-            // Standard puzzle: advance the path token if this was the frontier.
-            const standardCompletedIdx = sortedStandard.findIndex(
-              (p) => p.id === selectedPuzzle.id
+            const { nextIndex, nextId } = nextFrontierAfterSolve(
+              sortedStandard.map((p) => p.id),
+              selectedPuzzle.id,
+              progressNodeIndex
             );
-            const nextStandard = sortedStandard[standardCompletedIdx + 1] ?? null;
-            const shouldAdvance =
-              standardCompletedIdx === progressNodeIndex &&
-              standardCompletedIdx < sortedStandard.length - 1;
-            setPendingAdvance({
-              toIndex: shouldAdvance ? standardCompletedIdx + 1 : progressNodeIndex,
-              nextPuzzleId: shouldAdvance ? nextStandard?.id ?? null : null,
-            });
+            if (nextId) {
+              setSelectedPuzzleId(nextId);
+            } else {
+              setPuzzleSessionKey((k) => k + 1);
+            }
+            if (nextIndex !== progressNodeIndex) {
+              if (skipAnim) {
+                setProgressNodeIndex(nextIndex);
+              } else {
+                setPendingAdvance({ toIndex: nextIndex });
+                setAnimateToIndex(nextIndex);
+              }
+            }
           }
 
           if (unlockedSkills.includes("skip_path_anim") && typeof window !== "undefined") {
@@ -261,10 +285,9 @@ export default function AscensionPageClient() {
       progressNodeIndex,
       unlockedSkills,
       t.ascension.completeError,
+      t.ascension.rewardToast,
     ]
   );
-
-  const skipPathAnim = shouldSkipPathAnim(unlockedSkills);
 
   const handleSelectCampaign = useCallback(
     (slug: string) => {
@@ -276,54 +299,21 @@ export default function AscensionPageClient() {
     },
     [sortedPuzzles]
   );
-  const handleRewardContinue = () => {
-    if (!pendingAdvance) {
-      setPendingReward(null);
-      return;
-    }
 
+  const handleRewardContinue = useCallback(() => {
     setPendingReward(null);
-    const { toIndex, nextPuzzleId } = pendingAdvance;
+  }, []);
 
-    if (skipPathAnim || toIndex === progressNodeIndex) {
-      if (toIndex !== progressNodeIndex) {
-        setProgressNodeIndex(toIndex);
+  const handlePathAnimationComplete = useCallback(() => {
+    setPendingAdvance((advance) => {
+      const to = advance?.toIndex;
+      if (to != null) {
+        queueMicrotask(() => setProgressNodeIndex(to));
       }
-      if (nextPuzzleId && nextPuzzleId !== selectedPuzzleId) {
-        setSelectedPuzzleId(nextPuzzleId);
-      } else {
-        setPuzzleSessionKey((k) => k + 1);
-      }
-      setPendingAdvance(null);
-      return;
-    }
-
-    if (toIndex !== progressNodeIndex) {
-      setAnimateToIndex(toIndex);
-    } else {
-      if (nextPuzzleId && nextPuzzleId !== selectedPuzzleId) {
-        setSelectedPuzzleId(nextPuzzleId);
-      } else {
-        setPuzzleSessionKey((k) => k + 1);
-      }
-      setPendingAdvance(null);
-    }
-  };
-
-  const handlePathAnimationComplete = () => {
-    if (!pendingAdvance) {
-      setAnimateToIndex(null);
-      return;
-    }
-
-    setProgressNodeIndex(pendingAdvance.toIndex);
+      return null;
+    });
     setAnimateToIndex(null);
-
-    if (pendingAdvance.nextPuzzleId) {
-      setSelectedPuzzleId(pendingAdvance.nextPuzzleId);
-    }
-    setPendingAdvance(null);
-  };
+  }, []);
 
   const handleUnlock = async (skillId: string) => {
     setUnlocking(skillId);
@@ -444,6 +434,7 @@ export default function AscensionPageClient() {
                   )}
 
                 <AscensionProgressPath
+                  key={campaign}
                   puzzles={activePuzzles}
                   card={cardModel}
                   selectedPuzzleId={selectedPuzzle?.id ?? null}
@@ -470,7 +461,7 @@ export default function AscensionPageClient() {
                         puzzle={selectedPuzzle}
                         unlockedSkills={unlockedSkills}
                         onComplete={handleComplete}
-                        frozen={!!pendingReward || animateToIndex != null}
+                        frozen={!!pendingReward}
                       />
                     ) : (
                       <div className="rounded-lg border border-slate-800 bg-slate-950/40 px-4 py-8 text-center">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { Check, Crown, Lock, Sparkles, Star } from "lucide-react";
 import type { AscensionPuzzleListItem } from "@/lib/ascension/client";
@@ -61,7 +61,7 @@ function PathChampionToken({
   const style = pathNodeToStyle(node);
   return (
     <div
-      className={`absolute z-20 -translate-x-1/2 -translate-y-1/2 pointer-events-none transition-[left,top] duration-700 ease-in-out ${
+      className={`absolute z-20 -translate-x-1/2 -translate-y-1/2 pointer-events-none transition-[left,top,transform] duration-500 ease-out ${
         isMoving ? "scale-110" : "scale-100"
       }`}
       style={style}
@@ -70,7 +70,7 @@ function PathChampionToken({
       }}
     >
       <div
-        className={`relative w-10 h-[52px] md:w-11 md:h-14 rounded-md border-2 bg-gradient-to-b from-slate-800 to-slate-950 shadow-[0_0_16px_rgba(34,211,238,0.45)] overflow-hidden ${
+        className={`relative w-10 h-[52px] md:w-11 md:h-14 rounded-md border-2 bg-gradient-to-b from-slate-800 to-slate-950 shadow-[0_0_18px_rgba(34,211,238,0.55)] overflow-hidden ring-2 ring-cyan-400/30 ${
           tier === "legendary"
             ? "border-purple-400"
             : tier === "gold"
@@ -159,6 +159,7 @@ export default function AscensionProgressPath({
   const eloPct = Math.min(100, (card.elo / 3000) * 100);
 
   const [visualIndex, setVisualIndex] = useState(progressNodeIndex);
+  const hasJumped = useRef(false);
 
   useEffect(() => {
     if (animateToIndex == null) {
@@ -174,16 +175,42 @@ export default function AscensionProgressPath({
     return () => cancelAnimationFrame(frame);
   }, [animateToIndex, progressNodeIndex]);
 
-  // Auto-scroll to keep the current progress node visible
+  const visualNode = standardNodes[visualIndex] ?? standardNodes[0];
+
+  useLayoutEffect(() => {
+    const container = scrollRef.current;
+    const targetNode = standardNodes[visualIndex];
+    if (!container || !targetNode || container.clientHeight < 40) return;
+    const desired = Math.max(0, targetNode.y - container.clientHeight / 2);
+    if (!hasJumped.current) {
+      container.scrollTop = desired;
+      hasJumped.current = true;
+    }
+  }, [visualIndex, standardNodes]);
+
   useEffect(() => {
     const container = scrollRef.current;
     const targetNode = standardNodes[visualIndex];
-    if (!container || !targetNode) return;
-    const desired = targetNode.y - container.clientHeight / 2;
-    container.scrollTo({ top: Math.max(0, desired), behavior: "smooth" });
-  }, [visualIndex, standardNodes]);
-
-  const visualNode = standardNodes[visualIndex] ?? standardNodes[0];
+    if (!container || !targetNode || container.clientHeight < 40) return;
+    const desired = Math.max(0, targetNode.y - container.clientHeight / 2);
+    if (!hasJumped.current) {
+      container.scrollTop = desired;
+      hasJumped.current = true;
+      return;
+    }
+    const viewTop = container.scrollTop;
+    const viewBottom = viewTop + container.clientHeight;
+    const margin = 72;
+    const inView =
+      targetNode.y >= viewTop + margin && targetNode.y <= viewBottom - margin;
+    if (inView && animateToIndex == null) return;
+    const delta = Math.abs(desired - container.scrollTop);
+    if (delta < 8) return;
+    container.scrollTo({
+      top: desired,
+      behavior: delta > 280 ? "auto" : "smooth",
+    });
+  }, [visualIndex, standardNodes, animateToIndex]);
 
   const handleTokenTransitionEnd = () => {
     if (animateToIndex == null || animationHandled.current) return;
@@ -225,6 +252,13 @@ export default function AscensionProgressPath({
             {card.elo} / 3000 ELO
           </span>
         </div>
+        {standardPuzzles[visualIndex] && (
+          <p className="text-[11px] text-cyan-200/90 truncate">
+            {t.ascension.currentNode} ·{" "}
+            {standardPuzzles[visualIndex]!.prompt[uiLang] ||
+              standardPuzzles[visualIndex]!.slug}
+          </p>
+        )}
         <div className="space-y-1">
           <div className="flex justify-between text-[10px] text-slate-500">
             <span>{t.ascension.tiers[card.tier]}</span>
@@ -256,7 +290,7 @@ export default function AscensionProgressPath({
       {/* ── Scrollable path ── */}
       <div
         ref={scrollRef}
-        className="relative overflow-y-auto"
+        className="relative overflow-y-auto overscroll-contain [scrollbar-width:thin] [scrollbar-color:rgb(8_145_178_/_0.5)_transparent]"
         style={{ maxHeight: MAX_VISIBLE_HEIGHT }}
       >
         {/* Top fade */}
@@ -316,6 +350,7 @@ export default function AscensionProgressPath({
             const isSelected = puzzle.id === selectedPuzzleId;
             const isTokenHere = visualIndex === idx;
             const isLocked = puzzle.locked && !puzzle.completed;
+            const isNext = !puzzle.completed && !isLocked && idx === visualIndex + 1;
 
             return (
               <button
@@ -326,7 +361,9 @@ export default function AscensionProgressPath({
                 title={
                   isLocked
                     ? t.ascension.puzzleLockedPrevious
-                    : (puzzle.prompt[uiLang] || puzzle.slug)
+                    : isNext
+                      ? `${t.ascension.nextNode} · ${puzzle.prompt[uiLang] || puzzle.slug}`
+                      : (puzzle.prompt[uiLang] || puzzle.slug)
                 }
                 className={`absolute -translate-x-1/2 -translate-y-1/2 group focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 rounded-full ${
                   isLocked ? "cursor-not-allowed" : ""
@@ -334,18 +371,21 @@ export default function AscensionProgressPath({
                 style={pathNodeToStyle(node)}
               >
                 <div
-                  className={`relative flex flex-col items-center gap-1 transition-transform ${
-                    isTokenHere ? "opacity-0" : isLocked ? "opacity-40" : "hover:scale-105"
+                  className={`relative flex flex-col items-center gap-1 transition-transform duration-300 ${
+                    isTokenHere ? "scale-95" : isLocked ? "opacity-40" : "hover:scale-105"
                   }`}
                 >
+                  {isNext && (
+                    <span className="absolute inset-[-5px] rounded-full border border-dashed border-cyan-400/50" />
+                  )}
                   <div
                     className={`w-11 h-11 rounded-full border-2 flex items-center justify-center text-sm font-bold shadow-lg transition-colors ${
                       isLocked
                         ? "border-slate-700/50 bg-slate-900/50 text-slate-600"
                         : puzzle.completed
                           ? "border-emerald-400 bg-emerald-950/80 text-emerald-300"
-                          : isSelected
-                            ? "border-cyan-400 bg-cyan-950/90 text-cyan-100 ring-2 ring-cyan-400/40"
+                          : isTokenHere || isSelected
+                            ? "border-cyan-400 bg-cyan-950/90 text-cyan-100 ring-2 ring-cyan-400/40 shadow-[0_0_14px_rgba(34,211,238,0.35)]"
                             : "border-slate-600 bg-slate-900/90 text-slate-300"
                     }`}
                   >
@@ -361,16 +401,13 @@ export default function AscensionProgressPath({
                     className={`max-w-[72px] text-[10px] leading-tight text-center line-clamp-2 ${
                       isLocked
                         ? "text-slate-600"
-                        : isSelected
+                        : isTokenHere || isSelected
                           ? "text-cyan-200 font-medium"
                           : "text-slate-400"
                     }`}
                   >
                     {puzzle.prompt[uiLang] || puzzle.slug}
                   </span>
-                  {isSelected && !isLocked && (
-                    <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]" />
-                  )}
                 </div>
               </button>
             );

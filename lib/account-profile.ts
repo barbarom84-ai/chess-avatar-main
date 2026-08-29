@@ -146,3 +146,15 @@ export function hasFriendsMigrated(): boolean {
     return true;
   }
 }
+
+export async function deleteOwnAccount(): Promise<{ ok: boolean; error: string | null }> {
+  const res = await fetch("/api/account/delete", {
+    method: "POST",
+    credentials: "include",
+    headers: await accountApiHeaders(false),
+  });
+  if (!res.ok) {
+    return { ok: false, error: await readAccountApiError(res, "DELETE_FAILED") };
+  }
+  return { ok: true, error: null };
+}

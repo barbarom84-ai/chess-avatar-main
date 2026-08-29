@@ -8,30 +8,41 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Database,
   Loader2,
   Crown,
-  Sparkles,
   Bot,
-  Library,
-  Search,
   History,
   Pencil,
   UserMinus,
   Users,
+  Star,
+  Gamepad2,
+  LogOut,
+  Trash2,
+  LogIn,
 } from "lucide-react";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
-import { getUserGames, getUserProfileCount } from "@/lib/supabase-storage";
+import { getUserProfileCount } from "@/lib/supabase-storage";
 import { useLanguage } from "@/lib/language-context";
 import { usePremium } from "@/hooks/usePremium";
 import UpgradeModal from "@/components/UpgradeModal";
 import AccountProfileEditor from "@/components/AccountProfileEditor";
-import GameHistoryList from "@/components/GameHistoryList";
+import AuthModal from "@/components/AuthModal";
 import { toast } from "sonner";
 import type { AccountFriend, AccountProfile } from "@/lib/account-types";
 import {
   accountProfileInitials,
+  deleteOwnAccount,
   fetchOwnAccountProfile,
 } from "@/lib/account-profile";
 import {
@@ -63,9 +74,11 @@ export default function UserProfileDashboard() {
   const [profile, setProfile] = useState<AccountProfile | null>(null);
   const [friends, setFriends] = useState<AccountFriend[]>([]);
   const [friendsLoading, setFriendsLoading] = useState(false);
-  const [gamesLoading, setGamesLoading] = useState(false);
-  const [recentGames, setRecentGames] = useState<Awaited<ReturnType<typeof getUserGames>>>([]);
   const [editorOpen, setEditorOpen] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
 
   const loadUser = useCallback(async () => {
     if (!supabase) {
@@ -100,16 +113,6 @@ export default function UserProfileDashboard() {
     }
   }, []);
 
-  const refreshGames = useCallback(async () => {
-    setGamesLoading(true);
-    try {
-      const games = await getUserGames(12);
-      setRecentGames(games);
-    } finally {
-      setGamesLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
     if (!isSupabaseConfigured || !supabase) {
       setLoading(false);
@@ -133,15 +136,13 @@ export default function UserProfileDashboard() {
     if (!user) {
       setProfile(null);
       setFriends([]);
-      setRecentGames([]);
       setAvatarCount(null);
       return;
     }
     void refreshAvatarCount();
     void refreshProfile(user);
     void refreshFriends();
-    void refreshGames();
-  }, [user, refreshAvatarCount, refreshProfile, refreshFriends, refreshGames]);
+  }, [user, refreshAvatarCount, refreshProfile, refreshFriends]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -176,6 +177,34 @@ export default function UserProfileDashboard() {
     toast.success(copy.friendRemoved);
   };
 
+  const handleSignOut = async () => {
+    if (!supabase) return;
+    setSigningOut(true);
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+    } finally {
+      setSigningOut(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeleting(true);
+    try {
+      const result = await deleteOwnAccount();
+      if (!result.ok) {
+        toast.error(result.error ?? copy.deleteAccountError);
+        return;
+      }
+      toast.success(copy.deleteAccountSuccess);
+      setDeleteOpen(false);
+      await supabase?.auth.signOut();
+      setUser(null);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   if (loading) {
     return (
       <Card className="bg-slate-900/90 border-slate-800 backdrop-blur-sm">
@@ -208,28 +237,60 @@ export default function UserProfileDashboard() {
 
   if (!user || !profile) {
     return (
-      <Card className="bg-slate-900/90 border-slate-800">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-slate-100">
-            <Database className="h-5 w-5 text-slate-500" />
-            {t.profile.notConnected}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Alert className="bg-blue-900/10 border-blue-700">
-            <AlertDescription className="text-blue-300 text-sm">{t.profile.signInPrompt}</AlertDescription>
-          </Alert>
-        </CardContent>
-      </Card>
+      <>
+        <Card className="bg-slate-900/90 border-slate-800">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-slate-100">
+              {t.profile.notConnected}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-slate-400">{copy.signInDesc}</p>
+            <Button className="bg-cyan-600 hover:bg-cyan-500" onClick={() => setAuthOpen(true)}>
+              <LogIn className="h-4 w-4 mr-2" />
+              {copy.signInCta}
+            </Button>
+          </CardContent>
+        </Card>
+        <AuthModal open={authOpen} onOpenChange={setAuthOpen} />
+      </>
     );
   }
 
   const email = profile.email ?? user.email ?? premiumEmail ?? "";
   const initials = accountProfileInitials(profile.displayName);
 
+  const shortcuts = [
+    {
+      href: "/avatars",
+      icon: Bot,
+      label: copy.ctaAvatars,
+      desc: copy.shortcutAvatarsDesc,
+      meta: avatarCount === null ? "—" : String(avatarCount),
+    },
+    {
+      href: "/games",
+      icon: History,
+      label: copy.ctaGames,
+      desc: copy.shortcutGamesDesc,
+    },
+    {
+      href: "/ascension",
+      icon: Star,
+      label: copy.ascensionLink,
+      desc: copy.shortcutAscensionDesc,
+    },
+    {
+      href: "/online",
+      icon: Gamepad2,
+      label: t.pages.online.nav,
+      desc: copy.shortcutPvpDesc,
+    },
+  ];
+
   return (
     <div className="space-y-6">
-      <div className="relative rounded-t-2xl overflow-hidden h-36 md:h-44 bg-gradient-to-r from-slate-900 via-cyan-950/80 to-slate-900 border border-b-0 border-slate-800/80">
+      <div className="relative rounded-t-2xl overflow-hidden h-28 md:h-32 bg-gradient-to-r from-slate-900 via-cyan-950/80 to-slate-900 border border-b-0 border-slate-800/80">
         <div
           className="absolute inset-0 opacity-30"
           style={{
@@ -239,7 +300,7 @@ export default function UserProfileDashboard() {
         />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
         <div className="space-y-6">
           <Card className="relative z-10 -mt-14 rounded-2xl border border-slate-700/90 bg-slate-900/95 shadow-xl shadow-black/40 backdrop-blur-md">
             <CardContent className="p-6 md:p-8 pt-4 md:pt-5">
@@ -262,67 +323,97 @@ export default function UserProfileDashboard() {
                   {profile.bio?.trim() ? profile.bio : copy.bioEmpty}
                 </p>
               </div>
-
-              <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="rounded-xl bg-slate-950/80 border border-slate-800 p-4 text-center">
-                  <p className="text-2xl font-bold text-cyan-400 tabular-nums">
-                    {avatarCount === null ? "—" : avatarCount}
-                  </p>
-                  <p className="text-xs text-slate-500 mt-1">{copy.savedAvatarsStat}</p>
-                </div>
-                <div className="rounded-xl bg-slate-950/80 border border-slate-800 p-4 text-center flex flex-col items-center justify-center gap-2">
-                  {isPremium ? (
-                    <Sparkles className="h-8 w-8 text-amber-400/90" />
-                  ) : (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="border-amber-500/40 text-amber-200"
-                      onClick={() => setUpgradeOpen(true)}
-                    >
-                      <Crown className="h-3.5 w-3.5 mr-1" />
-                      Premium
-                    </Button>
-                  )}
-                </div>
-                <RecentGamesStat copy={copy} gamesCount={recentGames.length} />
-              </div>
-
-              <div className="mt-8 flex flex-wrap gap-2">
-                <Button asChild className="bg-cyan-600 hover:bg-cyan-500">
-                  <Link href="/avatars" className="inline-flex items-center gap-2">
-                    <Bot className="h-4 w-4" />
-                    {copy.ctaAvatars}
-                  </Link>
-                </Button>
-                <Button asChild variant="outline" className="border-slate-600 text-slate-200">
-                  <Link href="/analyze" className="inline-flex items-center gap-2">
-                    <Search className="h-4 w-4" />
-                    {copy.ctaAnalyze}
-                  </Link>
-                </Button>
-                <Button asChild variant="outline" className="border-slate-600 text-slate-200">
-                  <Link href="/play" className="inline-flex items-center gap-2">
-                    <Library className="h-4 w-4" />
-                    {copy.ctaPublicLibrary}
-                  </Link>
-                </Button>
-              </div>
             </CardContent>
           </Card>
 
           <Card className="bg-slate-900/95 border-slate-700/90">
-            <CardHeader className="flex flex-row items-center justify-between gap-3">
-              <CardTitle className="text-cyan-100 flex items-center gap-2">
-                <History className="h-5 w-5" />
-                {copy.gameHistoryTitle}
-              </CardTitle>
-              <Button asChild variant="ghost" size="sm" className="text-cyan-300">
-                <Link href="/games">{copy.viewAllGames}</Link>
-              </Button>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base text-slate-100">{copy.shortcutsTitle}</CardTitle>
             </CardHeader>
-            <CardContent>
-              <GameHistoryList games={recentGames} loading={gamesLoading} compact limit={12} />
+            <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {shortcuts.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="group rounded-xl border border-slate-800 bg-slate-950/70 p-4 hover:border-cyan-500/40 hover:bg-slate-900 transition-colors"
+                >
+                  <div className="flex items-start gap-3">
+                    <item.icon className="h-5 w-5 text-cyan-400 shrink-0 mt-0.5" />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-sm font-medium text-slate-100">{item.label}</p>
+                        {"meta" in item && item.meta != null && (
+                          <span className="text-xs tabular-nums text-cyan-300">{item.meta}</span>
+                        )}
+                      </div>
+                      <p className="text-xs text-slate-500 mt-0.5">{item.desc}</p>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </CardContent>
+          </Card>
+
+          <Card className="bg-slate-900/95 border-slate-700/90">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base text-slate-100 flex items-center gap-2">
+                <Crown className="h-4 w-4 text-amber-400" />
+                {copy.subscriptionTitle}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                {isPremium ? (
+                  <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/50 gap-1 mb-2">
+                    <Crown className="h-3 w-3" />
+                    {copy.premiumBadge}
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="text-slate-400 border-slate-600 mb-2">
+                    {copy.freeAccount}
+                  </Badge>
+                )}
+                <p className="text-sm text-slate-400">
+                  {isPremium ? copy.subscriptionPremiumDesc : copy.subscriptionFreeDesc}
+                </p>
+              </div>
+              {!isPremium && !premiumLoading && (
+                <Button
+                  size="sm"
+                  className="bg-amber-600 hover:bg-amber-500 text-white"
+                  onClick={() => setUpgradeOpen(true)}
+                >
+                  <Crown className="h-3.5 w-3.5 mr-1" />
+                  {copy.upgradeCta}
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="bg-slate-900/95 border-slate-800/80">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base text-slate-300">{copy.accountSectionTitle}</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col sm:flex-row gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="border-slate-600 text-slate-200"
+                onClick={() => void handleSignOut()}
+                disabled={signingOut}
+              >
+                {signingOut ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <LogOut className="h-4 w-4 mr-2" />}
+                {copy.signOutCta}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="border-red-500/40 text-red-400 hover:bg-red-950/40"
+                onClick={() => setDeleteOpen(true)}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                {copy.deleteAccount}
+              </Button>
             </CardContent>
           </Card>
         </div>
@@ -405,6 +496,34 @@ export default function UserProfileDashboard() {
         email={premiumEmail ?? email}
         reason="profiles"
       />
+
+      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <DialogContent className="bg-slate-900 border-slate-700 max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-red-200">{copy.deleteAccountTitle}</DialogTitle>
+            <DialogDescription className="text-slate-400">{copy.deleteAccountBody}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:justify-end">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setDeleteOpen(false)}
+              disabled={deleting}
+            >
+              {copy.deleteAccountCancel}
+            </Button>
+            <Button
+              type="button"
+              className="bg-red-700 hover:bg-red-600 text-white"
+              onClick={() => void handleDeleteAccount()}
+              disabled={deleting}
+            >
+              {deleting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Trash2 className="h-4 w-4 mr-2" />}
+              {copy.deleteAccountConfirm}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -472,31 +591,11 @@ function ProfileIdentityRow({
           {!isPremium && !premiumLoading && (
             <Button type="button" size="sm" variant="ghost" className="text-amber-200" onClick={() => setUpgradeOpen(true)}>
               <Crown className="h-3.5 w-3.5 mr-1" />
-              Premium
-            </Button>
-          )}
-          {!premiumLoading && isPremium && (
-            <Button type="button" size="sm" variant="outline" className="border-cyan-600/50 text-cyan-200" asChild>
-              <Link href="/ascension">{copy.ascensionLink}</Link>
+              {copy.upgradeCta}
             </Button>
           )}
         </div>
       </div>
-    </div>
-  );
-}
-
-function RecentGamesStat({
-  copy,
-  gamesCount,
-}: {
-  copy: import("@/lib/i18n").TranslationKey["profileDashboard"];
-  gamesCount: number;
-}) {
-  return (
-    <div className="rounded-xl bg-slate-950/80 border border-slate-800 p-4 text-center">
-      <p className="text-2xl font-bold text-cyan-400 tabular-nums">{gamesCount}</p>
-      <p className="text-xs text-slate-500 mt-1">{copy.recentGamesStat}</p>
     </div>
   );
 }
