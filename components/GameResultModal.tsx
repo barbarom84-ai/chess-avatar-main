@@ -19,6 +19,7 @@ import {
   ChevronRight,
   BarChart3,
   Loader2,
+  MessageCircle,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/language-context";
@@ -50,6 +51,7 @@ interface GameResultModalProps {
   onSwitchColor: () => void;
   onConfigure: () => void;
   onDownloadPGN: () => void;
+  onAnalyzeWithCoach?: () => void;
 }
 
 export default function GameResultModal({
@@ -62,6 +64,7 @@ export default function GameResultModal({
   onSwitchColor,
   onConfigure,
   onDownloadPGN,
+  onAnalyzeWithCoach,
 }: GameResultModalProps) {
   const router = useRouter();
   const { t } = useLanguage();
@@ -266,6 +269,17 @@ export default function GameResultModal({
           </Card>
 
           <div className="space-y-2">
+            {onAnalyzeWithCoach && (
+              <Button
+                onClick={onAnalyzeWithCoach}
+                className="w-full bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-500 hover:to-teal-500 text-white font-bold"
+                size="sm"
+              >
+                <MessageCircle className="mr-2 h-4 w-4" />
+                {t.gameResult.analyzeWithCoach}
+              </Button>
+            )}
+
             <Button 
               onClick={onRematch}
               className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-bold"

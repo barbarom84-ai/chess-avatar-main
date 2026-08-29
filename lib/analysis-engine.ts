@@ -30,9 +30,15 @@ export interface MoveEvalInput {
   isMateBest?: boolean;
   /** Player move was a mate. Optional. */
   isMatePlayer?: boolean;
+  /**
+   * Sound sacrifice (piece offered and capturable) — used to promote
+   * best/excellent into "brilliant".
+   */
+  isSacrifice?: boolean;
 }
 
 export type MoveClassification =
+  | "brilliant"
   | "best"
   | "excellent"
   | "good"
@@ -44,6 +50,7 @@ export type MoveClassification =
 export interface GameAccuracyResult {
   accuracy: number;
   classifications: {
+    brilliant: number;
     best: number;
     excellent: number;
     good: number;
@@ -70,6 +77,7 @@ const TARGET_DISPLAYED_ACCURACY = 70;
 
 /** Quality weights per classification (for potential weighted average; we use exp formula). */
 const QUALITY_WEIGHTS: Record<MoveClassification, number> = {
+  brilliant: 100,
   best: 100,
   excellent: 85,
   good: 70,
@@ -128,10 +136,11 @@ function classifyFromScaledCpl(
 }
 
 /**
- * 1) Missed forced mate → miss.
+ * 1) Missed forced mate → miss (missed win / missed tactic).
  * 2) Otherwise if CPL alone says blunder → blunder (huge material loss stays "blunder", not only "miss").
  * 3) Else large eval swing → miss (tactical opportunity).
- * 4) Else CPL bucket.
+ * 4) Else a sound sacrifice that is still best/excellent → brilliant.
+ * 5) Else CPL bucket.
  */
 export function classifyMove(
   scaledCpl: number,
@@ -150,6 +159,9 @@ export function classifyMove(
   }
   if (swing > profile.missSwingPawns) {
     return "miss";
+  }
+  if (input.isSacrifice && (base === "best" || base === "excellent")) {
+    return "brilliant";
   }
   return base;
 }
@@ -177,6 +189,7 @@ function humanCurve(raw: number): number {
 // ---------------------------------------------------------------------------
 
 const EMPTY_CLASSIFICATIONS: GameAccuracyResult["classifications"] = {
+  brilliant: 0,
   best: 0,
   excellent: 0,
   good: 0,

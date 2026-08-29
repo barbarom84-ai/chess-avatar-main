@@ -29,6 +29,7 @@ import {
 import {
   REVIEW_CONTEXT_SESSION_KEY,
   REVIEW_PGN_SESSION_KEY,
+  setReviewSessionFromPlay,
 } from "@/lib/review-session";
 
 type GameHistoryListProps = {
@@ -48,11 +49,15 @@ type GameHistoryListProps = {
 function openGameReview(game: DbGame, router: ReturnType<typeof useRouter>) {
   if (typeof window === "undefined") return;
   try {
-    sessionStorage.setItem(REVIEW_PGN_SESSION_KEY, game.pgn);
-    sessionStorage.setItem(
-      REVIEW_CONTEXT_SESSION_KEY,
-      JSON.stringify({ playerName: game.opponent_name })
-    );
+    if (game.bot_config) {
+      setReviewSessionFromPlay(game.pgn, game.bot_config, game.opponent_name);
+    } else {
+      sessionStorage.setItem(REVIEW_PGN_SESSION_KEY, game.pgn);
+      sessionStorage.setItem(
+        REVIEW_CONTEXT_SESSION_KEY,
+        JSON.stringify({ playerName: game.opponent_name })
+      );
+    }
   } catch {
     /* ignore */
   }

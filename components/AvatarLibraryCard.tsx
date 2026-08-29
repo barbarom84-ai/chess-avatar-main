@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Play, Download, Settings, Eye, EyeOff, Trash2, MessageCircle } from "lucide-react";
+import { Play, Download, Settings, Eye, EyeOff, Trash2, MessageCircle, Star, FolderPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AvatarTradingCard from "@/components/AvatarTradingCard";
 import type { DbProfile } from "@/lib/supabase";
@@ -11,6 +11,7 @@ import { buildAvatarCardModel } from "@/lib/avatar-card-model";
 import { getAvatarCardLabels } from "@/lib/avatar-card-labels";
 import { useLanguage } from "@/lib/language-context";
 import type { ProfileMetadata } from "@/types/chess";
+import type { ProfileCollection } from "@/lib/profile-collections";
 
 type AvatarLibraryCardProps = {
   profile: DbProfile;
@@ -23,6 +24,10 @@ type AvatarLibraryCardProps = {
   selected?: boolean;
   compareMode?: boolean;
   onSelectCompare?: (profile: DbProfile) => void;
+  isFavorite?: boolean;
+  onToggleFavorite?: () => void;
+  collections?: ProfileCollection[];
+  onAddToCollection?: (collectionId: string) => void;
 };
 
 export default function AvatarLibraryCard({
@@ -36,6 +41,10 @@ export default function AvatarLibraryCard({
   selected = false,
   compareMode = false,
   onSelectCompare,
+  isFavorite = false,
+  onToggleFavorite,
+  collections,
+  onAddToCollection,
 }: AvatarLibraryCardProps) {
   const { t, lang } = useLanguage();
   const router = useRouter();
@@ -55,6 +64,22 @@ export default function AvatarLibraryCard({
 
   const footer = (
     <div className="flex items-center justify-center gap-0.5" data-card-action>
+      {onToggleFavorite && (
+        <Button
+          size="sm"
+          type="button"
+          variant="ghost"
+          onClick={onToggleFavorite}
+          className="h-8 w-8 px-0"
+          title={isFavorite ? t.collections.removeFavorite : t.collections.addFavorite}
+        >
+          <Star
+            className={`h-3.5 w-3.5 ${
+              isFavorite ? "fill-yellow-400 text-yellow-400" : "text-slate-400"
+            }`}
+          />
+        </Button>
+      )}
       <Button
         size="sm"
         type="button"
@@ -111,6 +136,28 @@ export default function AvatarLibraryCard({
             <EyeOff className="h-3.5 w-3.5 text-slate-500" />
           )}
         </Button>
+      )}
+      {onAddToCollection && collections && collections.length > 0 && (
+        <label className="relative h-8 w-8">
+          <FolderPlus className="pointer-events-none absolute inset-0 m-auto h-3.5 w-3.5 text-cyan-300" />
+          <select
+            aria-label={t.collections.addToCollection}
+            className="h-8 w-8 cursor-pointer opacity-0"
+            value=""
+            onClick={(e) => e.stopPropagation()}
+            onChange={(e) => {
+              const id = e.target.value;
+              if (id) onAddToCollection(id);
+            }}
+          >
+            <option value="">{t.collections.addToCollection}</option>
+            {collections.map((col) => (
+              <option key={col.id} value={col.id}>
+                {col.name}
+              </option>
+            ))}
+          </select>
+        </label>
       )}
       {onDelete && (
         <Button

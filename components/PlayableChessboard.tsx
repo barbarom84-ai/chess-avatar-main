@@ -24,6 +24,7 @@ import GameResultModal from "./GameResultModal";
 import PromotionDialog from "./PromotionDialog";
 import { useStockfish } from "@/hooks/useStockfish";
 import { saveGameToCloud } from "@/lib/supabase-storage";
+import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/language-context";
 import type { EngineConfig } from "@/lib/analysis";
 import { LICHESS_ARROW_COLORS } from "@/lib/chess-arrows";
@@ -33,6 +34,7 @@ import {
   chessWithExplorationStack,
   mainlineMoveTargetSquare,
 } from "@/lib/review-chess";
+import { setReviewSessionFromPlay } from "@/lib/review-session";
 import {
   analyzeParsedGameForReview,
   buildParsedGameFromSanHistory,
@@ -129,6 +131,7 @@ export default function PlayableChessboard({
   archivePgn,
   archiveViewLabel,
 }: PlayableChessboardProps) {
+  const router = useRouter();
   const isArchiveMode = Boolean(archivePgn?.trim());
   const [game, setGame] = useState(new Chess());
   const [gameOver, setGameOver] = useState(false);
@@ -1056,6 +1059,65 @@ export default function PlayableChessboard({
     URL.revokeObjectURL(url);
   };
 
+  const handleAnalyzeWithCoach = () => {
+    const date = new Date();
+    const dateStr = `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, "0")}.${String(date.getDate()).padStart(2, "0")}`;
+    const timeStr = `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}:${String(date.getSeconds()).padStart(2, "0")}`;
+
+    let pgnResult = "*";
+    if (gameResultType === "win") {
+      pgnResult = playerColor === "white" ? "1-0" : "0-1";
+    } else if (gameResultType === "loss") {
+      pgnResult = playerColor === "white" ? "0-1" : "1-0";
+    } else if (gameResultType === "draw") {
+      pgnResult = "1/2-1/2";
+    }
+
+    const whitePlayer =
+      playerColor === "white" ? t.playableBoard.player : currentConfig.name || "Bot IA";
+    const blackPlayer =
+      playerColor === "black" ? t.playableBoard.player : currentConfig.name || "Bot IA";
+
+    const headers = [
+      `[Event "Chess Avatar Game"]`,
+      `[Site "Chess Avatar"]`,
+      `[Date "${dateStr}"]`,
+      `[Time "${timeStr}"]`,
+      `[Round "1"]`,
+      `[White "${whitePlayer}"]`,
+      `[Black "${blackPlayer}"]`,
+      `[Result "${pgnResult}"]`,
+      `[TimeControl "-"]`,
+      `[WhiteElo "${playerColor === "white" ? "?" : currentConfig.difficulty ? currentConfig.difficulty * 400 : "?"}"]`,
+      `[BlackElo "${playerColor === "black" ? "?" : currentConfig.difficulty ? currentConfig.difficulty * 400 : "?"}"]`,
+      `[Termination "${gameResult}"]`,
+    ];
+
+    const moves = moveHistory;
+    let movesStr = "";
+    if (moves.length === 0) {
+      movesStr = pgnResult;
+    } else {
+      for (let i = 0; i < moves.length; i++) {
+        if (i % 2 === 0) {
+          movesStr += `${Math.floor(i / 2) + 1}. `;
+        }
+        movesStr += `${moves[i]} `;
+        if (i % 16 === 15 && i < moves.length - 1) {
+          movesStr += "\n";
+        }
+      }
+      movesStr += pgnResult;
+    }
+
+    setReviewSessionFromPlay(
+      `${headers.join("\n")}\n\n${movesStr}`,
+      currentConfig,
+      t.playableBoard.player
+    );
+    router.push("/review");
+  };
+
   // Gestion des callbacks du modal
   const handleRematch = () => {
     setShowResultModal(false);
@@ -1319,6 +1381,7 @@ export default function PlayableChessboard({
         onSwitchColor={handleSwitchColor}
         onConfigure={handleConfigure}
         onDownloadPGN={handleDownloadPGN}
+        onAnalyzeWithCoach={handleAnalyzeWithCoach}
       />
 
       {/* Layout principal: Échiquier CENTRÉ + Historique DROITE */}

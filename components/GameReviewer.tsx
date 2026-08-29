@@ -91,6 +91,7 @@ import {
   sanitizeForPgnFilenameSegment,
 } from "@/lib/pgn-annotated-export";
 import { isSupabaseConfigured } from "@/lib/supabase";
+import ReviewCoachPanel from "@/components/ReviewCoachPanel";
 
 const FREE_ENGINE_DEPTH = 12;
 const PREMIUM_DEPTH_OPTIONS = [14, 18, 22] as const;
@@ -143,6 +144,8 @@ interface GameReviewerProps {
    * du stockage local est utilisé.
    */
   paradoxAvatarConfig?: EngineConfig;
+  /** Opponent bot from Play — offered as an optional review coach. */
+  opponentCoachConfig?: EngineConfig | null;
   /** Affiche un indicateur "déjà sauvegardée" à côté du téléchargement annoté. */
   showSavedInGamesList?: boolean;
   /** Utilisateur connecté : permet d’enregistrer le PGN dans la table cloud `games`. */
@@ -169,6 +172,7 @@ export default function GameReviewer({
   cacheUserId,
   onRequestUpgrade,
   paradoxAvatarConfig,
+  opponentCoachConfig = null,
   showSavedInGamesList = false,
   authUserId = null,
   reviewCloudSavePlayerHint = null,
@@ -1133,6 +1137,11 @@ export default function GameReviewer({
           onNext={() => goToKeyMoment(1)}
           disabled={!effectiveResult || effectiveResult.keyMoments.length === 0}
         />
+        <ReviewCoachPanel
+          opponentConfig={opponentCoachConfig}
+          currentMove={currentMove}
+          fen={currentFen}
+        />
       </div>
       </div>
     </div>
@@ -1705,6 +1714,7 @@ function CurrentMoveDetail({
   }
   const colors = CLASSIFICATION_COLORS[move.classification];
   const labels: Record<string, string> = {
+    brilliant: t.review.classBrilliant,
     best: t.review.classBest,
     excellent: t.review.classExcellent,
     good: t.review.classGood,
@@ -1719,7 +1729,8 @@ function CurrentMoveDetail({
     !!move.bestMove &&
     !!fenBefore &&
     move.classification !== "best" &&
-    move.classification !== "excellent";
+    move.classification !== "excellent" &&
+    move.classification !== "brilliant";
 
   return (
     <Card className={`${colors.bg} ${colors.border} border`}>
@@ -2343,6 +2354,7 @@ function SideStat({
 }) {
   const { t } = useLanguage();
   const items: Array<{ key: keyof typeof counts; label: string }> = [
+    { key: "brilliant", label: t.review.classBrilliant },
     { key: "best", label: t.review.classBest },
     { key: "excellent", label: t.review.classExcellent },
     { key: "good", label: t.review.classGood },
@@ -2366,10 +2378,10 @@ function SideStat({
           </span>
         </div>
       </div>
-      <div className="grid grid-cols-7 gap-0.5">
+      <div className="grid grid-cols-4 sm:grid-cols-8 gap-0.5">
         {items.map((it) => {
           const c = CLASSIFICATION_COLORS[it.key];
-          const n = counts[it.key];
+          const n = counts[it.key] ?? 0;
           return (
             <div
               key={it.key}

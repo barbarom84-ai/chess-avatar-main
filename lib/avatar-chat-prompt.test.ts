@@ -21,4 +21,16 @@ describe("avatar-chat-prompt", () => {
     expect(prompt).toContain("MagnusClone");
     expect(prompt).toContain("français");
   });
+
+  it("uses the house-coach prompt for ChessAvatarPro", () => {
+    const prompt = buildSystemPrompt({
+      message: "why",
+      lang: "en",
+      role: "house",
+      stats: { username: "ChessAvatarPro", style: "Équilibré", winRate: 55 },
+      config: { playStyle: "équilibré", elo: 2400, favoriteOpening: "Italian" },
+    });
+    expect(prompt).toContain("ChessAvatarPro");
+    expect(prompt).toContain("official ChessAvatar coach");
+  });
 });

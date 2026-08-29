@@ -1,4 +1,4 @@
-import { Chess } from "chess.js";
+import { Chess, type Square } from "chess.js";
 import {
   classifyMove,
   computeGameAccuracy,
@@ -189,6 +189,7 @@ export function aggregateReview(
       evalBeforePawns: m.evalBefore,
       isMateBest: m.isMateBest,
       isMatePlayer: m.isMatePlayer,
+      isSacrifice: m.classification === "brilliant",
     };
     if (m.sideToMove === "white") {
       whiteInputs.push(input);
@@ -498,6 +499,7 @@ export async function analyzeParsedGameForReview(
         playerMateInMoves: playerIsBest
           ? bestMateInMovesWhite
           : playerMateInMovesWhite,
+        fenBefore,
       },
       analysisStrictness
     );
@@ -549,6 +551,45 @@ export function buildParsedGameFromSanHistory(
 const CONTEXT_WEIGHT_K = 1.2;
 const SCALED_CPL_CAP = 500;
 
+const PIECE_VALUES: Record<string, number> = {
+  p: 1,
+  n: 3,
+  b: 3,
+  r: 5,
+  q: 9,
+  k: 0,
+};
+
+/**
+ * True when the mover offers material (moved piece worth more than what it
+ * captured) and the opponent can recapture it on the arrival square.
+ */
+export function isOfferedSacrifice(fenBefore: string, uci: string): boolean {
+  if (!uci || uci.length < 4) return false;
+  try {
+    const board = new Chess(fenBefore);
+    const from = uci.slice(0, 2) as Square;
+    const to = uci.slice(2, 4) as Square;
+    const promotion = uci.length > 4 ? uci.slice(4, 5) : undefined;
+    const piece = board.get(from);
+    if (!piece) return false;
+    const moved = board.move({
+      from,
+      to,
+      ...(promotion ? { promotion } : {}),
+    });
+    if (!moved) return false;
+    const movedVal = PIECE_VALUES[piece.type] ?? 0;
+    const capturedVal = moved.captured ? (PIECE_VALUES[moved.captured] ?? 0) : 0;
+    if (movedVal <= capturedVal) return false;
+    return board
+      .moves({ verbose: true })
+      .some((m) => m.to === to && Boolean(m.captured));
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Build a single ReviewedMove from raw engine outputs.
  * Uses analysis-engine.classifyMove so the badge matches aggregated accuracy.
@@ -568,6 +609,7 @@ export function buildReviewedMove(
     isMatePlayer?: boolean;
     bestMateInMoves?: number;
     playerMateInMoves?: number;
+    fenBefore?: string;
   },
   strictness: AnalysisStrictnessId = DEFAULT_ANALYSIS_STRICTNESS
 ): ReviewedMove {
@@ -583,6 +625,10 @@ export function buildReviewedMove(
     1 + CONTEXT_WEIGHT_K / (1 + Math.abs(args.evalBefore));
   const scaledCpl = Math.min(SCALED_CPL_CAP, cpl * contextWeight);
 
+  const isSacrifice = Boolean(
+    args.fenBefore && isOfferedSacrifice(args.fenBefore, args.uci)
+  );
+
   const moveInput: MoveEvalInput = {
     bestEvalPawns: args.bestEval,
     playerEvalPawns: args.playerEval,
@@ -590,6 +636,7 @@ export function buildReviewedMove(
     evalBeforePawns: args.evalBefore,
     isMateBest: args.isMateBest,
     isMatePlayer: args.isMatePlayer,
+    isSacrifice,
   };
   const classification = classifyMove(scaledCpl, moveInput, profile);
 
@@ -640,6 +687,12 @@ export const CLASSIFICATION_COLORS: Record<
   MoveClassification,
   { bg: string; text: string; border: string; emoji: string }
 > = {
+  brilliant: {
+    bg: "bg-teal-500/20",
+    text: "text-teal-200",
+    border: "border-teal-400/50",
+    emoji: "!!",
+  },
   best: {
     bg: "bg-emerald-500/15",
     text: "text-emerald-300",
@@ -677,10 +730,10 @@ export const CLASSIFICATION_COLORS: Record<
     emoji: "??",
   },
   miss: {
-    bg: "bg-fuchsia-500/15",
-    text: "text-fuchsia-300",
-    border: "border-fuchsia-500/40",
-    emoji: "‼",
+    bg: "bg-sky-500/15",
+    text: "text-sky-300",
+    border: "border-sky-500/40",
+    emoji: "X",
   },
 };
 

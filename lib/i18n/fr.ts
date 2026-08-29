@@ -298,17 +298,27 @@ export const fr = {
 
     collections: {
       title: "Collections & Favoris",
+      hint:
+        "L’étoile ⭐ sur une carte met l’avatar en favori. Une collection est un dossier : créez-la, cliquez dessus pour filtrer, puis ajoutez des avatars avec l’icône dossier.",
       newPlaceholder: "Nom de la collection…",
       create: "Créer",
       created: "Collection créée",
       createError: "Impossible de créer la collection",
       deleted: "Collection supprimée",
-      empty: "Aucune collection. Créez-en une pour organiser vos avatars.",
+      empty: "Aucune collection. Créez-en une (ex. « Blitz », « À étudier ») puis rangez-y vos avatars.",
       profiles: "profils",
-      favoritesCount: "{count} profils favoris",
+      favoritesCount: "{count} favoris",
       addFavorite: "Ajouter aux favoris",
       removeFavorite: "Retirer des favoris",
-      addToCollection: "Ajouter à la collection",
+      addToCollection: "Ajouter à une collection",
+      removeFromCollection: "Retirer de la collection",
+      filterAll: "Tous",
+      filterFavorites: "Favoris",
+      showingCollection: "Collection : {name}",
+      emptyCollection: "Cette collection est vide. Ajoutez des avatars avec l’icône dossier sur une carte.",
+      noFavorites: "Aucun favori. Tapez l’étoile ⭐ sur une carte d’avatar.",
+      addedToCollection: "Ajouté à {name}",
+      removedFromCollection: "Retiré de la collection",
     },
 
     comparePage: {
@@ -331,6 +341,8 @@ export const fr = {
       subtitle: "Discutez avec votre avatar dans son style.",
       welcome:
         "Salut ! Je suis le clone de {name}. Pose-moi une question sur mon style, mes ouvertures ou une position.",
+      welcomeHouse:
+        "Salut ! Je suis ChessAvatarPro, ton coach. Choisis un coup dans la review et demande-moi pourquoi, ou change de coach ci-dessus.",
       placeholder: "Parle à ton avatar…",
       send: "Envoyer",
       thinking: "Réflexion…",
@@ -345,6 +357,12 @@ export const fr = {
         "Comment tu joues les noirs ?",
         "C’est quoi ta plus grosse faiblesse ?",
         "Tu es plutôt agressif ou solide ?",
+      ],
+      reviewSuggestions: [
+        "Pourquoi ce coup ?",
+        "Quelle était la meilleure suite ?",
+        "Où j’ai perdu l’avantage ?",
+        "Comment jouer cette position ?",
       ],
       suggestionOpening: "Parle-moi de {opening}.",
       emojisLabel: "Émojis",
@@ -1175,7 +1193,7 @@ export const fr = {
       home: "Accueil",
       precisionAnalyzing: "Analyse de la précision…",
       precisionAnalysisPlyCount: "{{current}} / {{total}} coups",
-      analyzeWithCoach: "Analyser avec le coach",
+      analyzeWithCoach: "Analyser avec Coach",
     },
 
     // Header / nav
@@ -1626,12 +1644,13 @@ export const fr = {
       pause: "Pause",
       playAuto: "Lecture",
       classBest: "Meilleur",
+      classBrilliant: "Brillant",
       classExcellent: "Excellent",
       classGood: "Bon",
       classInaccuracy: "Imprécision",
       classMistake: "Erreur",
       classBlunder: "Gaffe",
-      classMiss: "Tactique manquée",
+      classMiss: "Gain manqué",
       premiumBanner: "Premium : analyse profondeur 18, partie complète, flèches sur tous les coups sous-optimaux.",
       freeLimits: "Version gratuite : profondeur {depth}, {plies} demi-coups max.",
       upgradeForFull: "Passer Premium pour l'analyse complète",
@@ -1702,7 +1721,11 @@ export const fr = {
         openaiError: "Erreur lors de l'appel à OpenAI. Réessayez dans quelques secondes.",
         rateLimited: "Trop de requêtes. Patientez un instant.",
         network: "Problème réseau. Vérifiez votre connexion.",
-        invalidBody: "Données du coup invalides."
+        invalidBody: "Données du coup invalides.",
+        pickerLabel: "Coach de la review",
+        pickerDefault: "ChessAvatarPro (défaut)",
+        pickerOpponent: "Adverse · {name}",
+        pickerHint: "ChessAvatarPro est le coach par défaut. Tu peux le remplacer par un avatar.",
       },
       paradox: {
         title: "Paradoxe clone",

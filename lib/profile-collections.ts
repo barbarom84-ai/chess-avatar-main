@@ -88,6 +88,22 @@ export async function removeProfileFromCollection(
   return !error;
 }
 
+export async function getUserCollectionItemIds(): Promise<Record<string, string[]>> {
+  if (!isSupabaseConfigured || !supabase) return {};
+  const { data, error } = await supabase
+    .from("profile_collection_items")
+    .select("collection_id, profile_id");
+
+  if (error || !data) return {};
+  const map: Record<string, string[]> = {};
+  for (const row of data) {
+    const cid = row.collection_id as string;
+    const pid = row.profile_id as string;
+    (map[cid] ??= []).push(pid);
+  }
+  return map;
+}
+
 export async function getCollectionProfiles(collectionId: string): Promise<DbProfile[]> {
   if (!isSupabaseConfigured || !supabase) return [];
   const { data, error } = await supabase

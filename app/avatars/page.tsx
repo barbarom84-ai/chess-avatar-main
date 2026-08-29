@@ -8,9 +8,11 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Swords } from "lucide-react";
 import { useLanguage } from "@/lib/language-context";
+import { useAvatarOrganization } from "@/hooks/useAvatarOrganization";
 
 export default function AvatarsPage() {
   const { t } = useLanguage();
+  const organization = useAvatarOrganization();
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 text-slate-100 p-4 md:p-8">
@@ -28,8 +30,8 @@ export default function AvatarsPage() {
             </Button>
           </Link>
         </div>
-        <UserSavedAvatars />
-        <ProfileCollectionsPanel />
+        <UserSavedAvatars organization={organization} />
+        <ProfileCollectionsPanel organization={organization} />
         <ArenaChampionsLibrary />
       </div>
     </main>

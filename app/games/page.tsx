@@ -544,6 +544,7 @@ export default function GamesPage() {
             showSavedInGamesList={!!selectedGame}
             authUserId={userId}
             reviewCloudSavePlayerHint={null}
+            opponentCoachConfig={selectedGame?.bot_config ?? null}
             cloudSaveContext={{
               playerColor:
                 selectedGame?.player_color === "white" || selectedGame?.player_color === "black"

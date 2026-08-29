@@ -37,7 +37,13 @@ interface AvatarChatPanelProps {
   stats: PersonaStats;
   config: EngineConfig;
   avatarUrl?: string | null;
-  variant?: "card" | "page";
+  variant?: "card" | "page" | "review";
+  houseCoach?: boolean;
+  reviewContext?: {
+    fen?: string;
+    lastMove?: string;
+    classification?: string;
+  };
 }
 
 function pieceLetter(id: PieceEmojiId): "K" | "Q" | "R" | "B" | "N" | "P" {
@@ -140,6 +146,8 @@ export default function AvatarChatPanel({
   config,
   avatarUrl,
   variant = "card",
+  houseCoach = false,
+  reviewContext,
 }: AvatarChatPanelProps) {
   const { t, lang } = useLanguage();
   const { settings } = useChessboardSettings();
@@ -154,7 +162,9 @@ export default function AvatarChatPanel({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const photo = avatarUrl || config.avatarUrl || stats.avatarUrl;
-  const welcome = t.avatarChat.welcome.replace("{name}", stats.username);
+  const welcome = houseCoach
+    ? t.avatarChat.welcomeHouse
+    : t.avatarChat.welcome.replace("{name}", stats.username);
   const title = t.avatarChat.titleWithName.replace("{name}", stats.username);
   const quotaLabel =
     remaining != null && limit != null
@@ -191,6 +201,9 @@ export default function AvatarChatPanel({
   );
 
   const suggestions = useMemo(() => {
+    if (variant === "review") {
+      return [...t.avatarChat.reviewSuggestions].slice(0, 4);
+    }
     const base = [...t.avatarChat.suggestions];
     if (config.favoriteOpening) {
       base.unshift(
@@ -198,7 +211,13 @@ export default function AvatarChatPanel({
       );
     }
     return base.slice(0, 4);
-  }, [t.avatarChat.suggestions, t.avatarChat.suggestionOpening, config.favoriteOpening]);
+  }, [
+    t.avatarChat.suggestions,
+    t.avatarChat.reviewSuggestions,
+    t.avatarChat.suggestionOpening,
+    config.favoriteOpening,
+    variant,
+  ]);
 
   const sendText = useCallback(
     async (raw: string) => {
@@ -242,6 +261,8 @@ export default function AvatarChatPanel({
               elo: config.elo,
               favoriteOpening: config.favoriteOpening,
             },
+            role: houseCoach ? "house" : "persona",
+            review: reviewContext,
             history: [...messages, userMsg].slice(-8),
           }),
         });
@@ -265,7 +286,7 @@ export default function AvatarChatPanel({
         setLoading(false);
       }
     },
-    [loading, messages, stats, config, lang, t]
+    [loading, messages, stats, config, lang, t, houseCoach, reviewContext]
   );
 
   const insertToken = (token: string) => {
@@ -289,7 +310,7 @@ export default function AvatarChatPanel({
         ref={scrollRef}
         className={cn(
           "overflow-y-auto rounded-xl bg-slate-950/80 border border-cyan-500/20 p-3 space-y-3 text-sm",
-          variant === "page" ? "flex-1 min-h-[46vh]" : "h-52"
+          variant === "page" ? "flex-1 min-h-[46vh]" : variant === "review" ? "h-40" : "h-52"
         )}
       >
         <div className="flex items-start gap-2 py-1">

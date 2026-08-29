@@ -2,11 +2,15 @@
  * Session keys for /review when opening analysis from other pages (e.g. /analyze).
  */
 
+import type { EngineConfig } from "@/lib/analysis";
+import { slimCoachFromConfig } from "@/lib/chess-avatar-pro-coach";
+
 export const REVIEW_PGN_SESSION_KEY = "chess-avatar.review.pgn";
 export const REVIEW_CONTEXT_SESSION_KEY = "chess-avatar.review.context";
 
 export type ReviewSessionContext = {
   playerName: string;
+  opponent?: EngineConfig;
 };
 
 export function parseReviewSessionContext(raw: string | null): ReviewSessionContext | null {
@@ -16,7 +20,15 @@ export function parseReviewSessionContext(raw: string | null): ReviewSessionCont
     if (!o || typeof o !== "object") return null;
     const playerName = (o as { playerName?: unknown }).playerName;
     if (typeof playerName !== "string" || !playerName.trim()) return null;
-    return { playerName: playerName.trim() };
+    const opponentRaw = (o as { opponent?: unknown }).opponent;
+    let opponent: EngineConfig | undefined;
+    if (opponentRaw && typeof opponentRaw === "object" && opponentRaw !== null) {
+      const name = (opponentRaw as { name?: unknown }).name;
+      if (typeof name === "string" && name.trim()) {
+        opponent = opponentRaw as EngineConfig;
+      }
+    }
+    return { playerName: playerName.trim(), opponent };
   } catch {
     return null;
   }
@@ -35,6 +47,24 @@ export function clearReviewSessionContext(): void {
   if (typeof window === "undefined") return;
   try {
     sessionStorage.removeItem(REVIEW_CONTEXT_SESSION_KEY);
+  } catch {
+    // ignore
+  }
+}
+
+export function setReviewSessionFromPlay(
+  pgn: string,
+  opponent: EngineConfig,
+  playerName = "Player"
+): void {
+  if (typeof window === "undefined") return;
+  try {
+    const ctx: ReviewSessionContext = {
+      playerName: playerName.trim() || "Player",
+      opponent: slimCoachFromConfig(opponent),
+    };
+    sessionStorage.setItem(REVIEW_CONTEXT_SESSION_KEY, JSON.stringify(ctx));
+    sessionStorage.setItem(REVIEW_PGN_SESSION_KEY, pgn);
   } catch {
     // ignore
   }

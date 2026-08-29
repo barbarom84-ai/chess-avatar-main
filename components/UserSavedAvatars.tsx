@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Save, Database, Loader2, Trash2, Eye, EyeOff, Play, Download, Settings, MessageCircle } from "lucide-react";
+import { Save, Database, Loader2, Trash2, Eye, EyeOff, Play, Download, Settings, MessageCircle, Star } from "lucide-react";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { supabase, isSupabaseConfigured, type DbProfile } from "@/lib/supabase";
 import { getUserProfiles, deleteProfile, updateProfile } from "@/lib/supabase-storage";
@@ -33,8 +33,13 @@ import {
   type AvatarLibraryVisibilityFilter,
 } from "@/lib/avatar-library-filters";
 import { toast } from "sonner";
+import type { AvatarOrganization } from "@/hooks/useAvatarOrganization";
 
-export default function UserSavedAvatars() {
+export default function UserSavedAvatars({
+  organization,
+}: {
+  organization?: AvatarOrganization;
+}) {
   const router = useRouter();
   const { t, lang } = useLanguage();
   const [user, setUser] = useState<SupabaseUser | null>(null);
@@ -55,17 +60,30 @@ export default function UserSavedAvatars() {
     useState<AvatarLibraryVisibilityFilter>("all");
   const [sort, setSort] = useState<AvatarLibrarySort>("elo_desc");
 
-  const filteredProfiles = useMemo(
-    () =>
-      filterAvatarProfiles(profiles, {
-        search,
-        platform: platformFilter,
-        playStyle: playStyleFilter,
-        sort,
-        visibility: visibilityFilter,
-      }),
-    [profiles, search, platformFilter, playStyleFilter, sort, visibilityFilter]
-  );
+  const filteredProfiles = useMemo(() => {
+    let list = filterAvatarProfiles(profiles, {
+      search,
+      platform: platformFilter,
+      playStyle: playStyleFilter,
+      sort,
+      visibility: visibilityFilter,
+    });
+    if (organization?.filter === "favorites") {
+      list = list.filter((p) => organization.favorites.has(p.id));
+    } else if (organization && organization.filter !== "all") {
+      const ids = new Set(organization.itemsByCollection[organization.filter] ?? []);
+      list = list.filter((p) => ids.has(p.id));
+    }
+    return list;
+  }, [
+    profiles,
+    search,
+    platformFilter,
+    playStyleFilter,
+    sort,
+    visibilityFilter,
+    organization,
+  ]);
 
   useEffect(() => {
     setViewMode(readLibraryViewMode());
@@ -299,7 +317,11 @@ export default function UserSavedAvatars() {
           ) : filteredProfiles.length === 0 ? (
             <Alert className="bg-slate-950 border-slate-800">
               <AlertDescription className="text-slate-400 text-sm">
-                {t.avatarsPage.noFilterResults}
+                {organization?.filter === "favorites"
+                  ? t.collections.noFavorites
+                  : organization && organization.filter !== "all"
+                    ? t.collections.emptyCollection
+                    : t.avatarsPage.noFilterResults}
               </AlertDescription>
             </Alert>
           ) : viewMode === "cards" ? (
@@ -314,6 +336,31 @@ export default function UserSavedAvatars() {
                   onDownload={handleDownload}
                   onTogglePublic={handleTogglePublic}
                   onDelete={handleDelete}
+                  isFavorite={organization?.favorites.has(profile.id)}
+                  onToggleFavorite={
+                    organization
+                      ? () => void organization.handleToggleFavorite(profile.id)
+                      : undefined
+                  }
+                  collections={organization?.collections}
+                  onAddToCollection={
+                    organization
+                      ? async (collectionId) => {
+                          const ok = await organization.handleAddToCollection(
+                            collectionId,
+                            profile.id
+                          );
+                          if (ok) {
+                            const name =
+                              organization.collections.find((c) => c.id === collectionId)
+                                ?.name ?? "";
+                            toast.success(
+                              t.collections.addedToCollection.replace("{name}", name)
+                            );
+                          }
+                        }
+                      : undefined
+                  }
                 />
               ))}
             </AvatarTradingCardGrid>
@@ -344,6 +391,27 @@ export default function UserSavedAvatars() {
                       )}
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
+                      {organization && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => void organization.handleToggleFavorite(profile.id)}
+                          className="h-8 w-8 hover:bg-slate-800"
+                          title={
+                            organization.favorites.has(profile.id)
+                              ? t.collections.removeFavorite
+                              : t.collections.addFavorite
+                          }
+                        >
+                          <Star
+                            className={`h-4 w-4 ${
+                              organization.favorites.has(profile.id)
+                                ? "fill-yellow-400 text-yellow-400"
+                                : "text-slate-500"
+                            }`}
+                          />
+                        </Button>
+                      )}
                       <Button
                         size="icon"
                         variant="ghost"
