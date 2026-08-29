@@ -12,18 +12,27 @@ import {
   Shield,
   Swords,
   Sparkles,
-  TrendingUp,
   Cpu,
   Clock,
   ImageDown,
   RotateCw,
+  ScrollText,
+  TrendingUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { exportCardAsPng } from "@/lib/export-card-image";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import type { AvatarCardModel } from "@/lib/avatar-card-model";
 import type { AvatarCardLabels } from "@/lib/avatar-card-model";
+import { shortOpeningName } from "@/lib/avatar-card-model";
 import { useLanguage } from "@/lib/language-context";
 import { getAvatarCardLabels } from "@/lib/avatar-card-labels";
 
@@ -35,54 +44,47 @@ const ELEMENT_ICONS = {
   neutral: Circle,
 } as const;
 
-const FLIP_MIN_HEIGHT: Record<keyof typeof SIZE_CLASSES, number> = {
-  xs: 100,
-  sm: 220,
-  md: 360,
-  lg: 440,
-};
-
 const SIZE_CLASSES = {
   xs: {
-    root: "w-[88px] min-h-[100px] text-[9px]",
-    portrait: "h-[52px]",
+    root: "w-[88px]",
     title: "text-[10px]",
     cost: "h-5 w-5 text-[8px]",
     pad: "p-1 gap-0.5",
-    hideMorale: true,
+    artMin: "min-h-[2.75rem]",
+    badge: "text-[9px]",
     hideAbility: true,
     hideBadges: true,
     hideElementBadge: true,
   },
   sm: {
-    root: "w-[140px] min-h-[200px] text-[10px]",
-    portrait: "h-[72px]",
+    root: "w-[160px]",
     title: "text-xs",
     cost: "h-7 w-7 text-xs",
-    pad: "p-2 gap-1.5",
-    hideMorale: true,
+    pad: "p-1.5 gap-1",
+    artMin: "min-h-[6rem]",
+    badge: "text-[10px]",
     hideAbility: true,
     hideBadges: false,
     hideElementBadge: false,
   },
   md: {
-    root: "w-full max-w-[220px] min-h-[360px] text-xs",
-    portrait: "h-[120px]",
-    title: "text-sm",
-    cost: "h-9 w-9 text-sm",
-    pad: "p-3 gap-2",
-    hideMorale: false,
+    root: "w-full",
+    title: "text-base",
+    cost: "h-10 w-10 text-sm",
+    pad: "p-2.5 gap-2",
+    artMin: "min-h-[11rem]",
+    badge: "text-[11px]",
     hideAbility: false,
     hideBadges: false,
     hideElementBadge: false,
   },
   lg: {
-    root: "w-full max-w-[280px] min-h-[400px] text-sm",
-    portrait: "h-[150px]",
-    title: "text-base",
-    cost: "h-10 w-10 text-base",
-    pad: "p-4 gap-2.5",
-    hideMorale: false,
+    root: "w-full",
+    title: "text-lg",
+    cost: "h-11 w-11 text-sm",
+    pad: "p-3 gap-2",
+    artMin: "min-h-[13rem]",
+    badge: "text-xs",
     hideAbility: false,
     hideBadges: false,
     hideElementBadge: false,
@@ -98,22 +100,22 @@ export type AvatarTradingCardProps = {
   footer?: ReactNode;
   onClick?: () => void;
   className?: string;
-  /** Contenu verso (stats moteur détaillées) */
+  /** Contenu verso personnalisé (même cadre que le recto). */
   backContent?: ReactNode;
-  /** Bouton export PNG (phase 2) */
+  /** Bouton export PNG */
   exportable?: boolean;
+  /** Ouvre la fiche détaillée (bibliothèque). Sinon, dialogue interne. */
+  onDetails?: () => void;
 };
 
 function TraitList({
   title,
   items,
   variant,
-  compact = false,
 }: {
   title: string;
   items: string[];
   variant: "strength" | "weakness";
-  compact?: boolean;
 }) {
   if (!items.length) return null;
   const Icon = variant === "strength" ? Sparkles : Shield;
@@ -129,12 +131,10 @@ function TraitList({
         {items.map((item) => (
           <li
             key={item}
-            className="flex items-start gap-1 text-slate-300 leading-tight"
+            className="flex items-start gap-1 text-slate-300 leading-tight text-xs"
           >
             <Icon className={`h-3 w-3 shrink-0 mt-0.5 ${color}`} aria-hidden />
-            <span className={compact ? "line-clamp-3" : "line-clamp-2"}>
-              {item}
-            </span>
+            <span>{item}</span>
           </li>
         ))}
       </ul>
@@ -166,11 +166,20 @@ function StyleMeter({
   );
 }
 
-function FlipAffordance({ hint }: { hint: string }) {
+function FlipAffordance({
+  hint,
+  shortHint,
+}: {
+  hint: string;
+  shortHint: string;
+}) {
   return (
-    <p className="mt-auto pt-1 flex items-center justify-center gap-1 text-[9px] text-slate-500">
+    <p
+      className="flex items-center justify-center gap-1 text-[9px] text-slate-500 shrink-0"
+      title={hint}
+    >
       <RotateCw className="h-3 w-3 shrink-0 opacity-70" aria-hidden />
-      <span>{hint}</span>
+      <span className="truncate">{shortHint}</span>
     </p>
   );
 }
@@ -193,26 +202,9 @@ function CardFace({
   const elementLabel = labels.elements[model.element];
 
   return (
-    <div className={`avatar-card-face flex flex-col min-h-full ${sz.pad}`}>
-      {!sz.hideElementBadge ? (
-        <div className="flex items-start justify-between gap-1">
-          <Badge
-            variant="outline"
-            className="text-[9px] px-1 py-0 border-[var(--avatar-card-accent,#94a3b8)] text-[var(--avatar-card-accent,#94a3b8)]"
-          >
-            {elementLabel}
-          </Badge>
-          <div
-            className={`${sz.cost} shrink-0 rounded-full bg-amber-500/90 border-2 border-amber-200 flex items-center justify-center font-bold text-slate-950 shadow-md`}
-            title="ELO"
-          >
-            {model.elo}
-          </div>
-        </div>
-      ) : null}
-
+    <div className={`flex h-full min-h-0 w-full flex-col overflow-hidden ${sz.pad}`}>
       <div
-        className={`relative ${sz.portrait} w-full rounded-md overflow-hidden border border-slate-700/80 bg-slate-950`}
+        className={`avatar-card-art relative w-full ${sz.artMin} rounded-md overflow-hidden border border-slate-700/80 bg-slate-950`}
       >
         {model.avatarUrl ? (
           <Image
@@ -229,71 +221,65 @@ function CardFace({
             />
           </div>
         )}
-        {sz.hideElementBadge ? (
-          <div
-            className={`absolute top-0.5 right-0.5 ${sz.cost} rounded-full bg-amber-500/95 border border-amber-200 flex items-center justify-center font-bold text-slate-950 shadow`}
-            title="ELO"
+        {!sz.hideElementBadge ? (
+          <Badge
+            variant="outline"
+            className={`absolute top-1 left-1 ${sz.badge} px-1.5 py-0 border-[var(--avatar-card-accent,#94a3b8)] text-[var(--avatar-card-accent,#94a3b8)] bg-slate-950/70`}
           >
-            {model.elo}
-          </div>
+            {elementLabel}
+          </Badge>
         ) : null}
+        <div
+          className={`absolute top-1 right-1 ${sz.cost} rounded-full bg-amber-500/95 border-2 border-amber-200 flex items-center justify-center font-bold text-slate-950 shadow-md`}
+          title="ELO"
+        >
+          {model.elo}
+        </div>
         <div
           className={`absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent ${
             sizeKey === "xs" ? "px-1 py-0.5" : "px-2 py-1.5"
           }`}
         >
           <p
-            className={`font-serif font-bold text-amber-100 truncate ${sz.title}`}
+            className={`font-serif font-bold text-amber-100 leading-tight line-clamp-2 break-words ${sz.title}`}
           >
             {model.name}
           </p>
         </div>
-        {!sz.hideMorale && model.winRate != null && (
-          <div
-            className="absolute right-1 top-1 bottom-8 w-1.5 rounded-full bg-slate-800/80 overflow-hidden"
-            title={`${labels.morale}: ${model.winRate}%`}
-          >
-            <div
-              className="absolute bottom-0 left-0 right-0 bg-emerald-500/90 rounded-full transition-all"
-              style={{ height: `${Math.min(100, Math.max(0, model.winRate))}%` }}
-            />
-          </div>
-        )}
       </div>
 
       {!sz.hideBadges ? (
-      <div className="flex flex-wrap items-center gap-1">
-        <Badge
-          variant="outline"
-          className="text-[9px] capitalize border-slate-600 text-slate-300"
-        >
-          <ElementIcon className="h-3 w-3 mr-0.5" />
-          {classLabel}
-        </Badge>
-        <Badge
-          variant="outline"
-          className={`text-[9px] avatar-card-rarity-${model.rarity}`}
-        >
-          {rarityLabel}
-        </Badge>
-        {model.platform && (
-          <Badge variant="outline" className="text-[9px] border-slate-600">
-            {model.platform === "chesscom" ? "Chess.com" : "Lichess"}
+        <div className="flex flex-wrap items-center gap-1 shrink-0">
+          <Badge
+            variant="outline"
+            className={`${sz.badge} capitalize border-slate-600 text-slate-300`}
+          >
+            <ElementIcon className="h-3.5 w-3.5 mr-0.5" />
+            {classLabel}
           </Badge>
-        )}
-      </div>
+          <Badge
+            variant="outline"
+            className={`${sz.badge} avatar-card-rarity-${model.rarity}`}
+          >
+            {rarityLabel}
+          </Badge>
+        </div>
       ) : null}
 
       {!sz.hideAbility && (
-        <p className="text-slate-400 leading-snug line-clamp-3 italic flex-1 min-h-0">
-          <span className="text-amber-500/80 not-italic font-semibold text-[10px] uppercase mr-1">
+        <div className="shrink-0 space-y-0.5" title={model.abilityText}>
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-amber-500/90">
             {labels.ability}
-          </span>
-          {model.abilityText}
-        </p>
+          </p>
+          <p className="text-slate-200 text-sm leading-snug line-clamp-2">
+            {model.abilityText}
+          </p>
+        </div>
       )}
 
-      {showFlipHint && <FlipAffordance hint={labels.flipHint} />}
+      {showFlipHint && (
+        <FlipAffordance hint={labels.flipHint} shortHint={labels.flipHintShort} />
+      )}
     </div>
   );
 }
@@ -301,7 +287,129 @@ function CardFace({
 function DefaultCardBack({
   model,
   labels,
+  sizeKey,
+  onOpenDetails,
 }: {
+  model: AvatarCardModel;
+  labels: AvatarCardLabels;
+  sizeKey: keyof typeof SIZE_CLASSES;
+  onOpenDetails?: () => void;
+}) {
+  const { t } = useLanguage();
+  const sz = SIZE_CLASSES[sizeKey];
+  const classLabel = labels.playStyles[model.classKey] ?? model.classKey;
+  const compact = sizeKey === "xs" || sizeKey === "sm";
+  const fourth =
+    model.winRate != null
+      ? {
+          label: t.personaCard.winsPercent,
+          value: `${model.winRate}%`,
+          icon: Sparkles,
+        }
+      : {
+          label: labels.timeControl,
+          value:
+            model.timeControl != null ? `${model.timeControl} ms` : "—",
+          icon: Clock,
+        };
+  const FourthIcon = fourth.icon;
+
+  return (
+    <div
+      className={`avatar-card-back-inner flex h-full min-h-0 flex-col overflow-hidden ${sz.pad} text-xs text-slate-300`}
+    >
+      <div className="flex items-start justify-between gap-2 border-b border-slate-700/60 pb-1.5 shrink-0">
+        <div className="min-w-0">
+          <p className={`font-serif font-bold text-amber-100 truncate ${sz.title}`}>
+            {model.name}
+          </p>
+          <p className="text-[10px] text-slate-500 capitalize truncate">
+            {classLabel}
+          </p>
+        </div>
+        <div
+          className={`${sz.cost} shrink-0 rounded-full bg-amber-500/90 border-2 border-amber-200 flex items-center justify-center font-bold text-slate-950`}
+          title="ELO"
+        >
+          {model.elo}
+        </div>
+      </div>
+
+      <div className={`grid grid-cols-2 ${compact ? "gap-1 mt-1" : "gap-1.5 mt-1.5"} shrink-0`}>
+        <div className="bg-slate-950/80 rounded p-1.5 border border-slate-800">
+          <Swords className="h-3 w-3 text-red-400 mb-0.5" />
+          <span className="text-slate-500 text-[10px] block">
+            {t.personaCard.aggressiveness}
+          </span>
+          <p className="font-bold text-sm tabular-nums">{model.aggressiveness}%</p>
+        </div>
+        <div className="bg-slate-950/80 rounded p-1.5 border border-slate-800">
+          <TrendingUp className="h-3 w-3 text-purple-400 mb-0.5" />
+          <span className="text-slate-500 text-[10px] block">
+            {t.personaCard.depth}
+          </span>
+          <p className="font-bold text-sm tabular-nums">
+            {t.personaCard.depthLevel} {model.depth}
+          </p>
+        </div>
+        <div className="bg-slate-950/80 rounded p-1.5 border border-slate-800">
+          <Cpu className="h-3 w-3 text-cyan-400 mb-0.5" />
+          <span className="text-slate-500 text-[10px] block">
+            {labels.difficultyShort}
+          </span>
+          <p className="font-bold text-sm tabular-nums">{model.difficulty}/5</p>
+        </div>
+        <div className="bg-slate-950/80 rounded p-1.5 border border-slate-800">
+          <FourthIcon className="h-3 w-3 text-emerald-400 mb-0.5" />
+          <span className="text-slate-500 text-[10px] block">
+            {fourth.label}
+          </span>
+          <p className="font-bold text-sm tabular-nums">{fourth.value}</p>
+        </div>
+      </div>
+
+      {model.topOpening && !compact && (
+        <p className="mt-1.5 text-xs text-slate-300 leading-snug line-clamp-2 shrink-0">
+          <span className="text-slate-500 uppercase font-semibold mr-1">
+            {labels.backOpening}
+          </span>
+          {shortOpeningName(model.topOpening)}
+        </p>
+      )}
+
+      <div className="flex-1 min-h-0" />
+
+      {onOpenDetails && sizeKey !== "xs" && (
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          data-card-action
+          className="w-full h-8 shrink-0 border-cyan-700/70 text-cyan-200 hover:bg-cyan-950/50 text-[11px] gap-1"
+          onClick={(e) => {
+            e.stopPropagation();
+            onOpenDetails();
+          }}
+          title={labels.fullProfileHint}
+        >
+          <ScrollText className="h-3.5 w-3.5" />
+          {labels.fullProfile}
+        </Button>
+      )}
+
+      <FlipAffordance hint={labels.flipHint} shortHint={labels.flipHintShort} />
+    </div>
+  );
+}
+
+function CardDetailsDialog({
+  open,
+  onOpenChange,
+  model,
+  labels,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   model: AvatarCardModel;
   labels: AvatarCardLabels;
 }) {
@@ -314,173 +422,145 @@ function DefaultCardBack({
     model.styleOpening != null;
 
   return (
-    <div className="avatar-card-back-inner flex flex-col gap-2 p-3 text-xs text-slate-300 min-h-full overflow-y-auto">
-      <div className="flex items-start justify-between gap-2 border-b border-slate-700/60 pb-2">
-        <div className="min-w-0">
-          <p className="font-serif font-bold text-amber-100 truncate text-sm">
-            {model.name}
-          </p>
-          <p className="text-[10px] text-slate-500 capitalize">{classLabel}</p>
-        </div>
-        <div
-          className="h-8 w-8 shrink-0 rounded-full bg-amber-500/90 border-2 border-amber-200 flex items-center justify-center font-bold text-slate-950 text-xs"
-          title="ELO"
-        >
-          {model.elo}
-        </div>
-      </div>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent
+        className="theme-bg-secondary max-w-md border-slate-700 max-h-[85vh] overflow-y-auto"
+        data-card-action
+      >
+        <DialogHeader>
+          <DialogTitle className="text-cyan-300">{model.name}</DialogTitle>
+          <DialogDescription>
+            {classLabel} · ELO {model.elo} · {labels.difficultyShort}{" "}
+            {model.difficulty}/5
+          </DialogDescription>
+        </DialogHeader>
 
-      <section className="space-y-1.5">
-        <p className="font-semibold text-amber-400/90 uppercase text-[10px] tracking-wide">
-          {labels.backEngine}
-        </p>
-        <div className="grid grid-cols-2 gap-1.5">
-          <div className="bg-slate-950/80 rounded p-2 border border-slate-800">
-            <Swords className="h-3.5 w-3.5 text-red-400 mb-0.5" />
-            <span className="text-slate-500 text-[10px] block">
-              {t.personaCard.aggressiveness}
-            </span>
-            <p className="font-bold text-sm">{model.aggressiveness}%</p>
-          </div>
-          <div className="bg-slate-950/80 rounded p-2 border border-slate-800">
-            <TrendingUp className="h-3.5 w-3.5 text-purple-400 mb-0.5" />
-            <span className="text-slate-500 text-[10px] block">
-              {t.personaCard.depth}
-            </span>
-            <p className="font-bold text-sm">
-              {t.personaCard.depthLevel} {model.depth}
+        <div className="space-y-4 text-sm text-slate-300">
+          <section className="space-y-1.5">
+            <p className="font-semibold text-amber-400/90 uppercase text-[10px] tracking-wide">
+              {labels.backEngine}
             </p>
-          </div>
-          <div className="bg-slate-950/80 rounded p-2 border border-slate-800">
-            <Cpu className="h-3.5 w-3.5 text-cyan-400 mb-0.5" />
-            <span className="text-slate-500 text-[10px] block">
-              {labels.difficultyShort}
-            </span>
-            <p className="font-bold text-sm">{model.difficulty}/5</p>
-          </div>
-          <div className="bg-slate-950/80 rounded p-2 border border-slate-800">
-            <Clock className="h-3.5 w-3.5 text-blue-400 mb-0.5" />
-            <span className="text-slate-500 text-[10px] block">
-              {labels.timeControl}
-            </span>
-            <p className="font-bold text-sm">
-              {model.timeControl != null ? `${model.timeControl} ms` : "—"}
-            </p>
-          </div>
-        </div>
-        {model.threads != null && (
-          <p className="text-[10px] text-slate-500">
-            {labels.threads}:{" "}
-            <span className="text-slate-300 font-medium">{model.threads}</span>
-          </p>
-        )}
-      </section>
+            <div className="grid grid-cols-2 gap-2">
+              <p>
+                {t.personaCard.aggressiveness}:{" "}
+                <span className="font-medium text-slate-100">
+                  {model.aggressiveness}%
+                </span>
+              </p>
+              <p>
+                {t.personaCard.depth}:{" "}
+                <span className="font-medium text-slate-100">{model.depth}</span>
+              </p>
+              <p>
+                {labels.timeControl}:{" "}
+                <span className="font-medium text-slate-100">
+                  {model.timeControl != null ? `${model.timeControl} ms` : "—"}
+                </span>
+              </p>
+              <p>
+                {labels.threads}:{" "}
+                <span className="font-medium text-slate-100">
+                  {model.threads ?? "—"}
+                </span>
+              </p>
+            </div>
+          </section>
 
-      {(model.winRate != null ||
-        (model.gameCount != null && model.gameCount > 0)) && (
-        <section className="space-y-1">
-          <p className="font-semibold text-slate-400 uppercase text-[10px] tracking-wide">
-            {labels.backRecord}
-          </p>
-          {model.winRate != null && (
-            <div className="flex h-2 rounded-full overflow-hidden bg-slate-800">
-              <div
-                className="bg-emerald-500/90"
-                style={{ width: `${model.winRate}%` }}
-                title={`${labels.morale} ${model.winRate}%`}
+          {(model.winRate != null ||
+            (model.gameCount != null && model.gameCount > 0)) && (
+            <section className="space-y-1">
+              <p className="font-semibold text-slate-400 uppercase text-[10px] tracking-wide">
+                {labels.backRecord}
+              </p>
+              {model.winRate != null && (
+                <div className="flex h-2 rounded-full overflow-hidden bg-slate-800">
+                  <div
+                    className="bg-emerald-500/90"
+                    style={{ width: `${model.winRate}%` }}
+                  />
+                  <div
+                    className="bg-slate-500/80"
+                    style={{ width: `${model.drawRate ?? 0}%` }}
+                  />
+                  <div
+                    className="bg-rose-500/80"
+                    style={{ width: `${model.lossRate ?? 0}%` }}
+                  />
+                </div>
+              )}
+              <p className="text-xs text-slate-400 tabular-nums">
+                {t.personaCard.winsPercent} {model.winRate ?? 0}% ·{" "}
+                {t.personaCard.drawsPercent} {model.drawRate ?? 0}% ·{" "}
+                {t.personaCard.lossesPercent} {model.lossRate ?? 0}%
+                {model.gameCount != null && model.gameCount > 0
+                  ? ` · ${model.gameCount} ${labels.games}`
+                  : ""}
+              </p>
+            </section>
+          )}
+
+          {hasStyleMeters && (
+            <section className="space-y-1.5">
+              <p className="font-semibold text-slate-400 uppercase text-[10px] tracking-wide">
+                {labels.backStyle}
+              </p>
+              {model.styleTactical != null && (
+                <StyleMeter label={labels.tactical} value={model.styleTactical} />
+              )}
+              {model.stylePositional != null && (
+                <StyleMeter
+                  label={labels.positional}
+                  value={model.stylePositional}
+                />
+              )}
+              {model.styleEndgame != null && (
+                <StyleMeter label={labels.endgame} value={model.styleEndgame} />
+              )}
+              {model.styleOpening != null && (
+                <StyleMeter
+                  label={labels.openingTheory}
+                  value={model.styleOpening}
+                />
+              )}
+            </section>
+          )}
+
+          {(model.strengths.length > 0 || model.weaknesses.length > 0) && (
+            <section className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <TraitList
+                title={labels.strengths}
+                items={model.strengths}
+                variant="strength"
               />
-              <div
-                className="bg-slate-500/80"
-                style={{ width: `${model.drawRate ?? 0}%` }}
+              <TraitList
+                title={labels.weaknesses}
+                items={model.weaknesses}
+                variant="weakness"
               />
-              <div
-                className="bg-rose-500/80"
-                style={{ width: `${model.lossRate ?? 0}%` }}
-              />
+            </section>
+          )}
+
+          {model.topOpening && (
+            <section>
+              <p className="font-semibold text-slate-400 uppercase text-[10px] tracking-wide mb-1">
+                {labels.backOpening}
+              </p>
+              <p className="text-slate-300">{model.topOpening}</p>
+            </section>
+          )}
+
+          {model.tags && model.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {model.tags.map((tag) => (
+                <Badge key={tag} variant="secondary" className="text-[9px]">
+                  {tag}
+                </Badge>
+              ))}
             </div>
           )}
-          <p className="text-[10px] text-slate-400 tabular-nums">
-            {t.personaCard.winsPercent} {model.winRate ?? 0}% ·{" "}
-            {t.personaCard.drawsPercent} {model.drawRate ?? 0}% ·{" "}
-            {t.personaCard.lossesPercent} {model.lossRate ?? 0}%
-            {model.gameCount != null && model.gameCount > 0
-              ? ` · ${model.gameCount} ${labels.games}`
-              : ""}
-          </p>
-        </section>
-      )}
-
-      {hasStyleMeters && (
-        <section className="space-y-1.5">
-          <p className="font-semibold text-slate-400 uppercase text-[10px] tracking-wide">
-            {labels.backStyle}
-          </p>
-          {model.styleTactical != null && (
-            <StyleMeter label={labels.tactical} value={model.styleTactical} />
-          )}
-          {model.stylePositional != null && (
-            <StyleMeter
-              label={labels.positional}
-              value={model.stylePositional}
-            />
-          )}
-          {model.styleEndgame != null && (
-            <StyleMeter label={labels.endgame} value={model.styleEndgame} />
-          )}
-          {model.styleOpening != null && (
-            <StyleMeter
-              label={labels.openingTheory}
-              value={model.styleOpening}
-            />
-          )}
-        </section>
-      )}
-
-      {(model.strengths.length > 0 || model.weaknesses.length > 0) && (
-        <section className="space-y-1.5">
-          <p className="font-semibold text-slate-400 uppercase text-[10px] tracking-wide">
-            {labels.backTraits}
-          </p>
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-            <TraitList
-              title={labels.strengths}
-              items={model.strengths}
-              variant="strength"
-              compact
-            />
-            <TraitList
-              title={labels.weaknesses}
-              items={model.weaknesses}
-              variant="weakness"
-              compact
-            />
-          </div>
-        </section>
-      )}
-
-      {model.topOpening && (
-        <section className="space-y-0.5">
-          <p className="font-semibold text-slate-400 uppercase text-[10px] tracking-wide">
-            {labels.backOpening}
-          </p>
-          <p className="text-[11px] text-slate-300 leading-snug line-clamp-3">
-            {model.topOpening}
-          </p>
-        </section>
-      )}
-
-      {model.tags && model.tags.length > 0 && (
-        <div className="flex flex-wrap gap-1 pt-0.5">
-          {model.tags.map((tag) => (
-            <Badge key={tag} variant="secondary" className="text-[9px]">
-              {tag}
-            </Badge>
-          ))}
         </div>
-      )}
-
-      <FlipAffordance hint={labels.flipHint} />
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -495,11 +575,13 @@ export default function AvatarTradingCard({
   className = "",
   backContent,
   exportable = false,
+  onDetails,
 }: AvatarTradingCardProps) {
   const { t } = useLanguage();
   const labels = labelsProp ?? getAvatarCardLabels(t);
   const [flipped, setFlipped] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
   const exportRef = useRef<HTMLDivElement>(null);
   const sz = SIZE_CLASSES[size];
 
@@ -516,11 +598,24 @@ export default function AvatarTradingCard({
     } finally {
       setExporting(false);
     }
-  }, [exporting, model.name, t.avatarCard.exportImageError, t.avatarCard.exportImageSuccess]);
+  }, [
+    exporting,
+    model.name,
+    t.avatarCard.exportImageError,
+    t.avatarCard.exportImageSuccess,
+  ]);
 
   const toggleFlip = useCallback(() => {
     if (flippable) setFlipped((f) => !f);
   }, [flippable]);
+
+  const openDetails = useCallback(() => {
+    if (onDetails) {
+      onDetails();
+      return;
+    }
+    setShowDetails(true);
+  }, [onDetails]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -556,26 +651,34 @@ export default function AvatarTradingCard({
 
   const inner = (
     <>
-      {flippable ? (
-        <div className="avatar-card-flip-scene">
+      <div className="avatar-card-flip-scene">
+        {flippable ? (
           <div
             className={`avatar-card-flip-inner ${flipped ? "is-flipped" : ""}`}
-            style={{ minHeight: FLIP_MIN_HEIGHT[size] }}
           >
-            {faceBlock}
-            <div className="avatar-card-back">
+            <div className="avatar-card-face avatar-card-face--front">
+              {faceBlock}
+            </div>
+            <div className="avatar-card-face avatar-card-back">
               {backContent ?? (
-                <DefaultCardBack model={model} labels={labels} />
+                <DefaultCardBack
+                  model={model}
+                  labels={labels}
+                  sizeKey={size}
+                  onOpenDetails={openDetails}
+                />
               )}
             </div>
           </div>
-        </div>
-      ) : (
-        faceBlock
-      )}
+        ) : (
+          <div className="avatar-card-face avatar-card-face--static">
+            {faceBlock}
+          </div>
+        )}
+      </div>
       {footer ? (
         <div
-          className="border-t border-slate-700/50 p-2 bg-slate-950/50 rounded-b-[0.5rem]"
+          className="border-t border-slate-700/50 p-1.5 bg-slate-950/50 rounded-b-[0.5rem]"
           data-card-action
         >
           {footer}
@@ -605,6 +708,12 @@ export default function AvatarTradingCard({
         </Button>
       )}
       {inner}
+      <CardDetailsDialog
+        open={showDetails}
+        onOpenChange={setShowDetails}
+        model={model}
+        labels={labels}
+      />
     </div>
   );
 
@@ -651,7 +760,7 @@ export function AvatarTradingCardGrid({
 }: AvatarTradingCardGridProps) {
   return (
     <div
-      className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 justify-items-center ${className}`}
+      className={`grid w-full gap-5 [grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),1fr))] ${className}`}
     >
       {children}
     </div>

@@ -74,4 +74,5 @@ export type NavCommonProps = {
   lang: Language;
   t: Translations;
   navConfig: Record<string, { hidden?: boolean; badge?: NavPageBadge }>;
+  onOpenAbout?: () => void;
 };

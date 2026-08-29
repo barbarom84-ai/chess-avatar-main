@@ -13,6 +13,7 @@ import {
   Bot,
   Activity,
   Settings2,
+  Info,
 } from "lucide-react";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,7 @@ import { useSiteConfig } from "@/contexts/SiteConfigContext";
 import NavDock from "@/components/navigation/NavDock";
 import ChessboardSettingsModal from "./ChessboardSettingsModal";
 import AuthModal from "./AuthModal";
+import AboutDialog from "./AboutDialog";
 
 export default function Navigation() {
   const pathname = usePathname();
@@ -36,6 +38,7 @@ export default function Navigation() {
   const [showSettings, setShowSettings] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showAbout, setShowAbout] = useState(false);
   const { isPremium } = usePremium();
   const { isSuperUser, loading: superLoading } = useSuperUser();
   const { config: siteConfig } = useSiteConfig();
@@ -55,6 +58,7 @@ export default function Navigation() {
     lang,
     t,
     navConfig: siteConfig.nav,
+    onOpenAbout: () => setShowAbout(true),
   };
 
   useEffect(() => {
@@ -154,6 +158,17 @@ export default function Navigation() {
                             <Bot className="h-4 w-4" />
                             {t.pages.avatars.title}
                           </Link>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowUserMenu(false);
+                              setShowAbout(true);
+                            }}
+                            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 transition-colors"
+                          >
+                            <Info className="h-4 w-4" />
+                            {t.navigation.about.menu}
+                          </button>
                           {isSuperUser && !superLoading && (
                             <>
                               <Link
@@ -197,6 +212,20 @@ export default function Navigation() {
                   )}
                 </div>
               )}
+
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowAbout(true)}
+                className="text-slate-400 hover:text-cyan-300 gap-1"
+                aria-label={t.navigation.about.menu}
+                title={t.navigation.about.menu}
+              >
+                <Info className="h-4 w-4 shrink-0" />
+                <span className="hidden lg:inline text-xs whitespace-nowrap">
+                  {t.navigation.about.menu}
+                </span>
+              </Button>
 
               <Button
                 variant="ghost"
@@ -276,6 +305,8 @@ export default function Navigation() {
           open={showSettings}
           onOpenChange={setShowSettings}
         />
+
+        <AboutDialog open={showAbout} onOpenChange={setShowAbout} />
 
         <AuthModal open={showAuthModal} onOpenChange={setShowAuthModal} />
       </nav>

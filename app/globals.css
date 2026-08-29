@@ -312,3 +312,119 @@ nextjs-portal {
     color: rgb(148 163 184) !important; /* slate-400 */
   }
 }
+
+/* ========================================
+   AVATAR TRADING CARDS (Hearthstone / M&M)
+   Recto + verso, hauteur fixe, flip 3D.
+   ======================================== */
+
+.avatar-card {
+  --avatar-card-accent: #94a3b8;
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.75rem;
+  border: 2px solid color-mix(in srgb, var(--avatar-card-accent) 55%, #1e293b);
+  background:
+    linear-gradient(180deg, #1e293b 0%, #0b1220 100%);
+  box-shadow:
+    0 8px 20px rgb(0 0 0 / 0.35),
+    inset 0 1px 0 rgb(255 255 255 / 0.06);
+  user-select: none;
+}
+
+.avatar-card--flippable {
+  cursor: pointer;
+}
+
+.avatar-card--element-fire { --avatar-card-accent: #f97316; }
+.avatar-card--element-earth { --avatar-card-accent: #84cc16; }
+.avatar-card--element-water { --avatar-card-accent: #22d3ee; }
+.avatar-card--element-air { --avatar-card-accent: #38bdf8; }
+.avatar-card--element-neutral { --avatar-card-accent: #94a3b8; }
+
+.avatar-card--common { border-color: #64748b; }
+.avatar-card--rare { border-color: #3b82f6; }
+.avatar-card--epic { border-color: #a855f7; }
+.avatar-card--legendary {
+  border-color: #fbbf24;
+  box-shadow:
+    0 8px 20px rgb(0 0 0 / 0.35),
+    0 0 16px rgb(251 191 36 / 0.22),
+    inset 0 1px 0 rgb(255 255 255 / 0.08);
+}
+
+.avatar-card-rarity-common { border-color: #64748b; color: #cbd5e1; }
+.avatar-card-rarity-rare { border-color: #3b82f6; color: #93c5fd; }
+.avatar-card-rarity-epic { border-color: #a855f7; color: #d8b4fe; }
+.avatar-card-rarity-legendary { border-color: #fbbf24; color: #fde68a; }
+
+.avatar-card-interactive:hover {
+  box-shadow:
+    0 12px 28px rgb(0 0 0 / 0.45),
+    0 0 0 1px color-mix(in srgb, var(--avatar-card-accent) 70%, transparent);
+}
+
+.avatar-card-flip-scene {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 5 / 7;
+  perspective: 1200px;
+}
+
+.avatar-card-flip-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.55s cubic-bezier(0.4, 0.2, 0.2, 1);
+}
+
+.avatar-card-flip-inner.is-flipped {
+  transform: rotateY(180deg);
+}
+
+.avatar-card-face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border-radius: 0.55rem;
+  background: linear-gradient(180deg, #1e293b 0%, #0b1220 100%);
+}
+
+.avatar-card-face--front {
+  transform: rotateY(0deg);
+  z-index: 2;
+}
+
+.avatar-card-back {
+  transform: rotateY(180deg);
+  z-index: 1;
+}
+
+.avatar-card-face--static {
+  position: relative;
+  inset: auto;
+  height: 100%;
+  transform: none;
+}
+
+.avatar-card-face > * {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+}
+
+.avatar-card-art {
+  flex: 1 1 0%;
+  min-height: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .avatar-card-flip-inner {
+    transition: none;
+  }
+}

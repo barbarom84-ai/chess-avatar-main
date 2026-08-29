@@ -9,7 +9,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, Play, Search, Settings, Swords } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useLanguage } from "@/lib/language-context";
-import { getFilteredProfiles } from "@/lib/supabase-storage";
+import { getFilteredProfiles, updateProfile } from "@/lib/supabase-storage";
 import { isSupabaseConfigured, type DbProfile } from "@/lib/supabase";
 import { isFeaturedChampionConfig } from "@/lib/arena-featured-persist";
 import AvatarLibraryCard from "@/components/AvatarLibraryCard";
@@ -30,6 +30,7 @@ import {
   type AvatarLibrarySort,
 } from "@/lib/avatar-library-filters";
 import ProfileDetailsModal from "@/components/ProfileDetailsModal";
+import { toast } from "sonner";
 
 export default function ArenaChampionsLibrary() {
   const { t } = useLanguage();
@@ -258,6 +259,28 @@ export default function ArenaChampionsLibrary() {
           profile={selectedProfile}
           open={showModal}
           onOpenChange={setShowModal}
+          onUpdate={async (id, updates) => {
+            const res = await updateProfile(id, updates);
+            if (res.success) {
+              setSelectedProfile((prev) => {
+                if (!prev || prev.id !== id) return prev;
+                return {
+                  ...prev,
+                  ...updates,
+                  config: updates.config !== undefined ? updates.config : prev.config,
+                  stats: updates.stats !== undefined ? updates.stats : prev.stats,
+                  is_public:
+                    updates.is_public !== undefined ? updates.is_public : prev.is_public,
+                  updated_at: new Date().toISOString(),
+                };
+              });
+              await loadChampions();
+              toast.success(t.profile.profileUpdated);
+              return true;
+            }
+            toast.error(res.error || t.profileDetails.ownerOnlyEdit);
+            return false;
+          }}
           onPlay={(p) => {
             const configParam = encodeURIComponent(JSON.stringify(p.config));
             router.push(`/play?config=${configParam}`);

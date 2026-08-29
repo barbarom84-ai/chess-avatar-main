@@ -51,6 +51,9 @@ export type AvatarCardLabels = {
   games: string;
   morale: string;
   flipHint: string;
+  flipHintShort: string;
+  fullProfile: string;
+  fullProfileHint: string;
   backEngine: string;
   backTraits: string;
   backStyle: string;
@@ -173,6 +176,13 @@ function resolveCardClassKey(
   return config.playStyle;
 }
 
+/** Nom d'ouverture lisible sur une carte (sans coups ni sous-variante). */
+export function shortOpeningName(raw: string): string {
+  const noMoves = raw.replace(/\s+\d+\.[\s\S]*$/, "").trim();
+  const noFlavor = noMoves.split(/[:(\[]/)[0]?.trim() ?? noMoves;
+  return noFlavor || raw;
+}
+
 function buildAbilityText(
   config: EngineConfig,
   stats: PersonaStats | undefined,
@@ -182,23 +192,11 @@ function buildAbilityText(
     stats?.topOpenings?.[0]?.name ||
     config.favoriteOpening ||
     "";
-  const count = stats?.topOpenings?.[0]?.count;
-  let openingPart = "";
-  if (opening) {
-    openingPart =
-      count && count > 0
-        ? labels.abilityRepertoireWithCount
-            .replace("{opening}", opening)
-            .replace("{count}", String(count))
-        : config.favoriteOpening
-          ? labels.abilityOpeningFallback.replace("{opening}", opening)
-          : labels.abilityRepertoire.replace("{opening}", opening);
-  }
-  const aggPart = labels.abilityAggression.replace(
+  if (opening) return shortOpeningName(opening);
+  return labels.abilityAggression.replace(
     "{n}",
     String(config.aggressiveness)
   );
-  return [openingPart, aggPart].filter(Boolean).join(" · ");
 }
 
 /** Stats minimales quand seul EngineConfig est disponible (Arène, play bar). */

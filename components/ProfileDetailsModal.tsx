@@ -12,10 +12,13 @@ import {
   Zap, BarChart, Play, Pencil, User
 } from "lucide-react";
 import type { DbProfile } from "@/lib/supabase";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import type { EngineConfig, PersonaStats } from "@/lib/analysis";
 import EngineConfigPanel from "./EngineConfigPanel";
+import PerformanceCharts from "./PerformanceCharts";
 import Image from "next/image";
 import { useLanguage } from "@/lib/language-context";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface ProfileDetailsModalProps {
   open: boolean;
@@ -31,7 +34,22 @@ const playStyleIcons = {
   équilibré: { icon: Activity, color: "text-green-400" },
   positionnel: { icon: Target, color: "text-purple-400" },
   tactique: { icon: Zap, color: "text-yellow-400" },
-};
+} as const;
+
+type PlayStyleKey = keyof typeof playStyleIcons;
+
+function clampDifficulty(raw: unknown): 1 | 2 | 3 | 4 | 5 {
+  const n = typeof raw === "string" ? Number.parseInt(raw, 10) : Number(raw);
+  if (!Number.isFinite(n)) return 3;
+  return Math.min(5, Math.max(1, Math.round(n))) as 1 | 2 | 3 | 4 | 5;
+}
+
+function resolvePlayStyle(raw: unknown): PlayStyleKey {
+  if (typeof raw === "string" && raw in playStyleIcons) {
+    return raw as PlayStyleKey;
+  }
+  return "équilibré";
+}
 
 export default function ProfileDetailsModal({
   open,
@@ -68,6 +86,7 @@ export default function ProfileDetailsModal({
   const [isEditing, setIsEditing] = useState(false);
   const [editedConfig, setEditedConfig] = useState<EngineConfig | null>(null);
   const [saving, setSaving] = useState(false);
+  const [viewerUserId, setViewerUserId] = useState<string | null>(null);
 
   const profileIdForEffect = profile?.id;
 
@@ -78,13 +97,43 @@ export default function ProfileDetailsModal({
     setEditedConfig(null);
   }, [open, profileIdForEffect]);
 
+  useEffect(() => {
+    if (!open || !isSupabaseConfigured || !supabase) {
+      setViewerUserId(null);
+      return;
+    }
+    void supabase.auth.getUser().then(({ data }) => {
+      setViewerUserId(data.user?.id ?? null);
+    });
+  }, [open]);
+
   if (!profile) return null;
 
-  const stats = profile.stats as PersonaStats;
-  const config = editedConfig || (profile.config as EngineConfig);
-  const difficultyInfo = difficultyLabels[config.difficulty];
-  const styleIcon = playStyleIcons[config.playStyle];
-  const StyleIcon = styleIcon?.icon || Activity;
+  const rawStats = (profile.stats ?? {}) as Partial<PersonaStats>;
+  const stats: PersonaStats = {
+    username: rawStats.username || profile.username,
+    avatarUrl: rawStats.avatarUrl,
+    platform: rawStats.platform,
+    gameCount: Number(rawStats.gameCount) || 0,
+    winRate: Number(rawStats.winRate) || 0,
+    drawRate: Number(rawStats.drawRate) || 0,
+    lossRate: Number(rawStats.lossRate) || 0,
+    style: rawStats.style || "Équilibré",
+    topOpenings: Array.isArray(rawStats.topOpenings) ? rawStats.topOpenings : [],
+    avgMoves: Number(rawStats.avgMoves) || 0,
+  };
+  const rawConfig = (editedConfig || profile.config || {}) as EngineConfig;
+  const difficulty = clampDifficulty(rawConfig.difficulty);
+  const playStyle = resolvePlayStyle(rawConfig.playStyle);
+  const config: EngineConfig = {
+    ...rawConfig,
+    difficulty,
+    playStyle,
+  };
+  const difficultyInfo = difficultyLabels[difficulty];
+  const styleIcon = playStyleIcons[playStyle];
+  const StyleIcon = styleIcon.icon;
+  const canEdit = Boolean(onUpdate) && viewerUserId === profile.user_id;
 
   const handleSaveChanges = async () => {
     if (!onUpdate || saving) return;
@@ -177,10 +226,14 @@ export default function ProfileDetailsModal({
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
-          <TabsList className="grid w-full grid-cols-2 bg-slate-800 border border-slate-700">
+          <TabsList className="grid w-full grid-cols-3 bg-slate-800 border border-slate-700">
             <TabsTrigger value="stats">
               <BarChart className="mr-2 h-4 w-4" />
               {t.profileDetails.statsTab}
+            </TabsTrigger>
+            <TabsTrigger value="analysis">
+              <Activity className="mr-2 h-4 w-4" />
+              {t.profileDetails.analysisTab}
             </TabsTrigger>
             <TabsTrigger value="config">
               <Cpu className="mr-2 h-4 w-4" />
@@ -228,7 +281,7 @@ export default function ProfileDetailsModal({
               <CardContent className="pt-6">
                 <h3 className="text-sm font-semibold text-slate-300 mb-3">{t.profileDetails.playStyleDetected}</h3>
                 <div className="flex items-center gap-3 bg-slate-900 p-4 rounded-lg border border-slate-800">
-                  <div className={`p-3 rounded-lg bg-${styleIcon.color.split('-')[1]}-500/20`}>
+                  <div className="p-3 rounded-lg bg-slate-800">
                     <StyleIcon className={`h-6 w-6 ${styleIcon.color}`} />
                   </div>
                   <div>
@@ -261,7 +314,7 @@ export default function ProfileDetailsModal({
                 </div>
 
                 <div className="flex flex-wrap gap-2">
-                  {stats.topOpenings.map((op, i) => (
+                  {(stats.topOpenings ?? []).map((op, i) => (
                     <Badge 
                       key={i} 
                       className={i === 0 
@@ -277,15 +330,26 @@ export default function ProfileDetailsModal({
             </Card>
           </TabsContent>
 
+          <TabsContent value="analysis" className="space-y-4">
+            <PerformanceCharts stats={stats} embedded />
+          </TabsContent>
+
           {/* ONGLET CONFIGURATION */}
           <TabsContent value="config" className="space-y-4">
+            {!canEdit && (
+              <Alert className="bg-slate-950 border-slate-700">
+                <AlertDescription className="text-slate-300 text-sm">
+                  {t.profileDetails.ownerOnlyEdit}
+                </AlertDescription>
+              </Alert>
+            )}
             {!isEditing ? (
               <>
                 <Card className="bg-slate-950 border-slate-800">
                   <CardContent className="pt-6">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-sm font-semibold text-slate-300">{t.engineConfig.engineParams}</h3>
-                      {onUpdate && (
+                      {canEdit && (
                         <Button
                           type="button"
                           size="sm"

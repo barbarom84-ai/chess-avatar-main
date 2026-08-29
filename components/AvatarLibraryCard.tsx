@@ -52,12 +52,12 @@ export default function AvatarLibraryCard({
   }, [profile, metadata, labels, lang]);
 
   const footer = (
-    <div className="grid grid-cols-3 gap-1" data-card-action>
+    <div className="flex items-center justify-center gap-0.5" data-card-action>
       <Button
         size="sm"
         type="button"
         onClick={() => onPlay(profile)}
-        className="bg-blue-600 hover:bg-blue-500 h-8 px-1"
+        className="bg-blue-600 hover:bg-blue-500 h-8 w-8 px-0"
         title={t.profile.playAgainst}
       >
         <Play className="h-3.5 w-3.5" />
@@ -66,7 +66,7 @@ export default function AvatarLibraryCard({
         size="sm"
         type="button"
         onClick={() => onDetails(profile)}
-        className="bg-purple-600 hover:bg-purple-500 h-8 px-1"
+        className="bg-purple-600 hover:bg-purple-500 h-8 w-8 px-0"
         title={t.profile.viewDetails}
       >
         <Settings className="h-3.5 w-3.5" />
@@ -77,7 +77,7 @@ export default function AvatarLibraryCard({
           type="button"
           variant="outline"
           onClick={() => onDownload(profile)}
-          className="border-green-500/50 h-8 px-1"
+          className="border-green-500/50 h-8 w-8 px-0"
           title={t.profile.exportJson}
         >
           <Download className="h-3.5 w-3.5" />
@@ -89,7 +89,7 @@ export default function AvatarLibraryCard({
           type="button"
           variant="ghost"
           onClick={() => onTogglePublic(profile)}
-          className="h-8 px-1 col-span-1"
+          className="h-8 w-8 px-0"
           aria-label={
             profile.is_public ? t.profile.makePrivate : t.profile.makePublic
           }
@@ -107,7 +107,7 @@ export default function AvatarLibraryCard({
           type="button"
           variant="ghost"
           onClick={() => onDelete(profile.id)}
-          className="h-8 px-1 text-red-400"
+          className="h-8 w-8 px-0 text-red-400"
           aria-label={t.profile.deleteProfile}
         >
           <Trash2 className="h-3.5 w-3.5" />
@@ -146,9 +146,10 @@ export default function AvatarLibraryCard({
       <AvatarTradingCard
         model={cardModel}
         labels={labels}
-        size="md"
+        size="lg"
         flippable={!compareMode}
         footer={footer}
+        onDetails={() => onDetails(profile)}
         className="w-full"
       />
     </div>

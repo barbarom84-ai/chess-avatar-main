@@ -309,14 +309,24 @@ export async function updateProfile(
     if (updates.stats !== undefined) updateData.stats = updates.stats;
     if (updates.is_public !== undefined) updateData.is_public = updates.is_public;
 
-    const { error } = await supabase
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return { success: false, error: "Non authentifié." };
+    }
+
+    const { data, error } = await supabase
       .from('profiles')
       .update(updateData)
-      .eq('id', id);
+      .eq('id', id)
+      .eq('user_id', user.id)
+      .select('id');
 
     if (error) {
       console.error('Erreur Supabase updateProfile:', error);
       return { success: false, error: error.message || 'Erreur inconnue lors de la mise à jour.' };
+    }
+    if (!data?.length) {
+      return { success: false, error: "Seul le créateur de cet avatar peut le modifier." };
     }
 
     return { success: true };
@@ -334,10 +344,14 @@ export async function deleteProfile(id: string): Promise<boolean> {
   if (!isSupabaseConfigured || !supabase) return false;
 
   try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return false;
+
     const { error } = await supabase
       .from('profiles')
       .delete()
-      .eq('id', id);
+      .eq('id', id)
+      .eq('user_id', user.id);
 
     if (error) throw error;
 

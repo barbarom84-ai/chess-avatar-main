@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { LayoutGrid, Pin, PinOff } from "lucide-react";
+import { LayoutGrid, Pin, PinOff, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -83,7 +83,7 @@ function DockLink({
 }
 
 export default function NavDock(props: NavCommonProps) {
-  const { items, pathname, pieceSet, lang, t, navConfig } = props;
+  const { items, pathname, pieceSet, lang, t, navConfig, onOpenAbout } = props;
   const grouped = groupNavItemsByFamily(items);
   const [pinned, setPinned] = useState(false);
   const [hovered, setHovered] = useState(false);
@@ -156,6 +156,25 @@ export default function NavDock(props: NavCommonProps) {
             );
           })}
         </nav>
+        {onOpenAbout && (
+          <div className="border-t border-slate-800 p-1">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className={cn(
+                "w-full text-slate-400 hover:text-cyan-300",
+                expanded ? "justify-start gap-2 px-2" : "justify-center px-0"
+              )}
+              onClick={onOpenAbout}
+              aria-label={t.navigation.about.menu}
+              title={t.navigation.about.menu}
+            >
+              <Info className="h-4 w-4 shrink-0" />
+              {expanded && <span className="truncate text-sm">{t.navigation.about.menu}</span>}
+            </Button>
+          </div>
+        )}
       </aside>
   );
 
@@ -233,6 +252,19 @@ export default function NavDock(props: NavCommonProps) {
               </section>
             );
           })}
+          {onOpenAbout && (
+            <button
+              type="button"
+              onClick={() => {
+                setMobileMoreOpen(false);
+                onOpenAbout();
+              }}
+              className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-slate-300 hover:bg-slate-800"
+            >
+              <Info className="h-5 w-5 text-cyan-400" />
+              <span className="text-sm">{t.navigation.about.menu}</span>
+            </button>
+          )}
         </div>
       </NavMobileSheet>
     </nav>

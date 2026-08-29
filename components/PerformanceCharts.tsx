@@ -14,9 +14,11 @@ import type { PersonaStats } from "@/lib/analysis";
 
 interface PerformanceChartsProps {
   stats: PersonaStats;
+  /** Sans le cadre Card (fiche profil). */
+  embedded?: boolean;
 }
 
-export default function PerformanceCharts({ stats }: PerformanceChartsProps) {
+export default function PerformanceCharts({ stats, embedded = false }: PerformanceChartsProps) {
   const { t } = useLanguage();
   
   // Translate style name
@@ -53,10 +55,10 @@ export default function PerformanceCharts({ stats }: PerformanceChartsProps) {
   ];
 
   // 3. Données pour le graphique des ouvertures
-  const openingsData = stats.topOpenings.map(op => ({
+  const openingsData = (stats.topOpenings ?? []).map(op => ({
     name: op.name.length > 15 ? op.name.substring(0, 15) + '...' : op.name,
     parties: op.count,
-    percentage: ((op.count / stats.gameCount) * 100).toFixed(1)
+    percentage: stats.gameCount > 0 ? ((op.count / stats.gameCount) * 100).toFixed(1) : "0"
   }));
 
   // 4. Données pour l'analyse par phase de jeu (simulées pour démo)
@@ -68,16 +70,7 @@ export default function PerformanceCharts({ stats }: PerformanceChartsProps) {
 
   const styleMetrics = calculateStyleMetrics();
 
-  return (
-    <Card className="bg-slate-900 border-slate-800">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Activity className="h-5 w-5 text-green-400" />
-          {t.performanceCharts.title}
-        </CardTitle>
-      </CardHeader>
-
-      <CardContent>
+  const charts = (
         <Tabs defaultValue="style" className="w-full">
           <TabsList className="grid w-full grid-cols-4 bg-slate-950 border border-slate-800">
             <TabsTrigger value="style" className="data-[state=active]:bg-green-600">
@@ -330,7 +323,21 @@ export default function PerformanceCharts({ stats }: PerformanceChartsProps) {
           </TabsContent>
 
         </Tabs>
-      </CardContent>
+  );
+
+  if (embedded) {
+    return charts;
+  }
+
+  return (
+    <Card className="bg-slate-900 border-slate-800">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Activity className="h-5 w-5 text-green-400" />
+          {t.performanceCharts.title}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>{charts}</CardContent>
     </Card>
   );
 }

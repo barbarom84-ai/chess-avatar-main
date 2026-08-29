@@ -29,10 +29,10 @@ export default function ArenaMatchupBanner({
           labels={labels}
           size="md"
           flippable
-          className="w-full max-w-[220px]"
+          className="w-full max-w-[280px]"
         />
       ) : (
-        <div className="w-[220px] h-[320px] rounded-xl border border-dashed border-slate-700 flex items-center justify-center text-slate-500 text-xs">
+        <div className="w-[280px] aspect-[5/7] rounded-xl border border-dashed border-slate-700 flex items-center justify-center text-slate-500 text-xs">
           —
         </div>
       )}
@@ -45,10 +45,10 @@ export default function ArenaMatchupBanner({
           labels={labels}
           size="md"
           flippable
-          className="w-full max-w-[220px]"
+          className="w-full max-w-[280px]"
         />
       ) : (
-        <div className="w-[220px] h-[320px] rounded-xl border border-dashed border-slate-700 flex items-center justify-center text-slate-500 text-xs">
+        <div className="w-[280px] aspect-[5/7] rounded-xl border border-dashed border-slate-700 flex items-center justify-center text-slate-500 text-xs">
           —
         </div>
       )}

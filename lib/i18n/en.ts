@@ -160,7 +160,7 @@ export const en = {
       level: "Level",
       style: "Style",
       playAgainst: "Play against this profile",
-      viewDetails: "View details and edit",
+      viewDetails: "View details",
       exportJson: "Export as JSON",
       createdOn: "Created on",
       databaseNotConfigured: "Database Not Configured",
@@ -281,7 +281,7 @@ export const en = {
 
     avatarsPage: {
       title: "My saved avatars",
-      subtitle: "Manage your cloud-saved bots: play, edit, share, or export.",
+      subtitle: "Manage your cloud-saved bots: play, edit, share, or export. Only the creator of an avatar can edit it.",
       cardTitle: "Cloud avatars",
       championsTitle: "Arena champions (public)",
       championsHint:
@@ -1792,6 +1792,7 @@ export const en = {
     // Profile details modal (Statistics, Configuration, Avatar tabs)
     profileDetails: {
       statsTab: "Statistics",
+      analysisTab: "Analysis",
       configTab: "Configuration",
       play: "Play",
       createdOn: "Created on",
@@ -1814,7 +1815,8 @@ export const en = {
       saveAndApply: "Save and apply",
       saving: "Saving…",
       cancel: "Cancel",
-      createdBy: "Created by"
+      createdBy: "Created by",
+      ownerOnlyEdit: "Only the creator of this avatar can edit it.",
     },
 
     // Performance charts
@@ -2010,6 +2012,9 @@ export const en = {
       games: "games",
       morale: "Morale",
       flipHint: "Click to flip the card",
+      flipHintShort: "Flip",
+      fullProfile: "Full profile",
+      fullProfileHint: "Open the detailed sheet",
       backEngine: "Engine settings",
       backTraits: "Strengths & weaknesses",
       backStyle: "Playing style",
@@ -2150,6 +2155,13 @@ export const en = {
       mega: {
         openFamily: { fr: "Ouvrir le menu", en: "Open menu" },
         mobileTitle: { fr: "Explorer Chess Avatar", en: "Explore Chess Avatar" },
+      },
+      about: {
+        menu: "About",
+        title: "About Chess Avatar",
+        tagline: "Analyze your games and build a bot that plays like you.",
+        version: "Version",
+        build: "Build",
       },
     },
 

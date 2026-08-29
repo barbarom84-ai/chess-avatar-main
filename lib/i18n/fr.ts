@@ -160,7 +160,7 @@ export const fr = {
       level: "Niveau",
       style: "Style",
       playAgainst: "Jouer contre ce profil",
-      viewDetails: "Voir les détails et modifier",
+      viewDetails: "Voir les détails",
       exportJson: "Exporter en JSON",
       createdOn: "Créé le",
       databaseNotConfigured: "Base de données Non Configurée",
@@ -281,7 +281,7 @@ export const fr = {
 
     avatarsPage: {
       title: "Mes avatars sauvegardés",
-      subtitle: "Gérez vos bots sauvegardés dans le cloud : jouer, modifier, partager ou exporter.",
+      subtitle: "Gérez vos bots sauvegardés dans le cloud : jouer, modifier, partager ou exporter. Seul le créateur d’un avatar peut le modifier.",
       cardTitle: "Avatars cloud",
       championsTitle: "Champions Arène (publics)",
       championsHint:
@@ -1802,6 +1802,7 @@ export const fr = {
     // Profile details modal (Statistics, Configuration, Avatar tabs)
     profileDetails: {
       statsTab: "Statistiques",
+      analysisTab: "Analyse",
       configTab: "Configuration",
       play: "Jouer",
       createdOn: "Créé le",
@@ -1824,7 +1825,8 @@ export const fr = {
       saveAndApply: "Enregistrer et appliquer",
       saving: "Enregistrement…",
       cancel: "Annuler",
-      createdBy: "Créé par"
+      createdBy: "Créé par",
+      ownerOnlyEdit: "Seul le créateur de cet avatar peut le modifier.",
     },
 
     // Performance charts
@@ -2020,6 +2022,9 @@ export const fr = {
       games: "parties",
       morale: "Moral",
       flipHint: "Cliquer pour retourner la carte",
+      flipHintShort: "Retourner",
+      fullProfile: "Profil complet",
+      fullProfileHint: "Ouvrir la fiche détaillée",
       backEngine: "Paramètres moteur",
       backTraits: "Forces & faiblesses",
       backStyle: "Style de jeu",
@@ -2160,6 +2165,13 @@ export const fr = {
       mega: {
         openFamily: { fr: "Ouvrir le menu", en: "Open menu" },
         mobileTitle: { fr: "Explorer Chess Avatar", en: "Explore Chess Avatar" },
+      },
+      about: {
+        menu: "À propos",
+        title: "À propos de Chess Avatar",
+        tagline: "Analysez vos parties et créez un bot qui joue comme vous.",
+        version: "Version",
+        build: "Build",
       },
     },
 
