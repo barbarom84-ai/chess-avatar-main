@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
-import { ArrowLeft, Crown, AlertCircle } from "lucide-react";
+import { ArrowLeft, AlertCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -104,42 +104,21 @@ function ReviewContent() {
   const showAllBestArrows = isPremium;
 
   return (
-    <main className="min-h-screen theme-gradient theme-text-primary p-3 md:p-6">
-      <div className="max-w-[1500px] mx-auto space-y-4">
-        <div className="flex items-center justify-between gap-2">
+    <main className="theme-gradient theme-text-primary p-2 md:px-3 lg:h-[calc(100dvh-4rem)] lg:overflow-hidden">
+      <div className="w-full max-w-[1920px] mx-auto flex flex-col gap-1 lg:h-full min-h-0">
+        <div className="flex items-center gap-2 shrink-0">
           <Link href="/games">
-            <Button variant="ghost" className="text-cyan-300 hover:text-cyan-100">
-              <ArrowLeft className="mr-2 h-4 w-4" />
+            <Button variant="ghost" size="sm" className="text-cyan-300 hover:text-cyan-100 h-7 px-2">
+              <ArrowLeft className="mr-1.5 h-4 w-4" />
               {t.backToHome}
             </Button>
           </Link>
-          <h1 className="text-xl md:text-2xl font-bold text-cyan-400">
+          <h1 className="text-sm md:text-base font-bold text-cyan-400 truncate">
             {t.review.pageTitle}
           </h1>
-          <div className="w-32 hidden md:block"></div>
         </div>
 
-        {!isPremium && (
-          <Card className="bg-amber-900/20 border-amber-500/30">
-            <CardContent className="py-3 flex items-center justify-between gap-3 flex-wrap">
-              <div className="text-xs text-amber-200">
-                {t.review.freeLimits
-                  .replace("{depth}", String(12))
-                  .replace("{plies}", String(FREE_MAX_PLIES))}
-              </div>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setShowUpgrade(true)}
-                className="border-amber-500/50 text-amber-200 hover:bg-amber-500/10"
-              >
-                <Crown className="h-4 w-4 mr-2" />
-                {t.review.upgradeForFull}
-              </Button>
-            </CardContent>
-          </Card>
-        )}
-
+        <div className="flex-1 min-h-0">
         <GameReviewer
           pgn={pgn}
           isPremium={isPremium}
@@ -151,9 +130,11 @@ function ReviewContent() {
           reviewCloudSavePlayerHint={reviewCtx?.playerName ?? null}
           opponentCoachConfig={reviewCtx?.opponent ?? null}
           cloudSaveContext={{
+            playerColor: reviewCtx?.playerColor,
             emailLocalPart: email?.split("@")[0] ?? null,
           }}
         />
+        </div>
       </div>
 
       <UpgradeModal

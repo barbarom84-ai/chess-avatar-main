@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { Send, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,8 @@ import {
   useChessboardSettings,
   type PieceSet,
 } from "@/contexts/ChessboardSettingsContext";
+import { isReviewWhyQuestion, reviewContextCanExplain, type ReviewChatContext } from "@/lib/review-coach-context";
+import type { CoachToneId } from "@/lib/coach-tone";
 import {
   PIECE_EMOJI_IDS,
   STANDARD_CHAT_EMOJIS,
@@ -26,6 +28,7 @@ import {
   type PieceEmojiId,
   type StickerEmojiId,
 } from "@/lib/chat-emojis";
+import CoachSanText from "@/components/CoachSanText";
 import { ChessAvatarSticker } from "@/components/chat/chess-avatar-stickers";
 
 interface ChatMessage {
@@ -39,11 +42,9 @@ interface AvatarChatPanelProps {
   avatarUrl?: string | null;
   variant?: "card" | "page" | "review";
   houseCoach?: boolean;
-  reviewContext?: {
-    fen?: string;
-    lastMove?: string;
-    classification?: string;
-  };
+  reviewContext?: ReviewChatContext;
+  playerColor?: "white" | "black" | null;
+  coachTone?: CoachToneId;
 }
 
 function pieceLetter(id: PieceEmojiId): "K" | "Q" | "R" | "B" | "N" | "P" {
@@ -148,6 +149,8 @@ export default function AvatarChatPanel({
   variant = "card",
   houseCoach = false,
   reviewContext,
+  playerColor = null,
+  coachTone = "pedagogical",
 }: AvatarChatPanelProps) {
   const { t, lang } = useLanguage();
   const { settings } = useChessboardSettings();
@@ -162,9 +165,21 @@ export default function AvatarChatPanel({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const photo = avatarUrl || config.avatarUrl || stats.avatarUrl;
-  const welcome = houseCoach
-    ? t.avatarChat.welcomeHouse
-    : t.avatarChat.welcome.replace("{name}", stats.username);
+  const welcome =
+    variant === "review"
+      ? playerColor === "black"
+        ? t.avatarChat.welcomeReviewBlack
+        : playerColor === "white"
+          ? t.avatarChat.welcomeReviewWhite
+          : t.avatarChat.welcomeReviewUnknown
+      : houseCoach
+        ? t.avatarChat.welcomeHouse
+        : t.avatarChat.welcome.replace("{name}", stats.username);
+
+  useEffect(() => {
+    if (variant !== "review") return;
+    setMessages([]);
+  }, [variant, reviewContext?.fenBefore, reviewContext?.lastMoveUci]);
   const title = t.avatarChat.titleWithName.replace("{name}", stats.username);
   const quotaLabel =
     remaining != null && limit != null
@@ -240,7 +255,77 @@ export default function AvatarChatPanel({
       setMessages((prev) => [...prev, userMsg]);
       setLoading(true);
 
+      const scrollToEnd = () =>
+        setTimeout(
+          () =>
+            scrollRef.current?.scrollTo({
+              top: scrollRef.current.scrollHeight,
+              behavior: "smooth",
+            }),
+          50
+        );
+
       try {
+        if (
+          variant === "review" &&
+          isReviewWhyQuestion(text, lang) &&
+          reviewContext?.lastExplanation
+        ) {
+          setMessages((prev) => [
+            ...prev,
+            { role: "assistant", content: reviewContext.lastExplanation! },
+          ]);
+          scrollToEnd();
+          return;
+        }
+
+        if (
+          variant === "review" &&
+          isReviewWhyQuestion(text, lang) &&
+          reviewContextCanExplain(reviewContext) &&
+          reviewContext
+        ) {
+          const res = await fetch("/api/coach/explain", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({
+              fenBefore: reviewContext.fenBefore,
+              uciPlayed: reviewContext.lastMoveUci,
+              uciBest: reviewContext.bestMoveUci,
+              cpl: reviewContext.cpl,
+              classification: reviewContext.classification,
+              sideToMove: reviewContext.sideToMove,
+              lang,
+              moveNumber: reviewContext.moveNumber,
+              sanPlayed: reviewContext.lastMove,
+              sanBest: reviewContext.bestMove,
+              coachTone,
+            }),
+          });
+          const data = (await res.json().catch(() => null)) as {
+            explanation?: unknown;
+            remaining?: unknown;
+            limit?: unknown;
+            error?: unknown;
+          } | null;
+          if (!res.ok || typeof data?.explanation !== "string") {
+            if (data?.error === "QUOTA_EXCEEDED") toast.error(t.avatarChat.quotaExceeded);
+            else toast.error(t.errors.genericError);
+            return;
+          }
+          if (typeof data.remaining === "number") setRemaining(data.remaining);
+          if (typeof data.limit === "number") setLimit(data.limit);
+          setMessages((prev) => [
+            ...prev,
+            { role: "assistant", content: data.explanation as string },
+          ]);
+          scrollToEnd();
+          return;
+        }
+
         const res = await fetch("/api/coach/chat", {
           method: "POST",
           headers: {
@@ -278,15 +363,12 @@ export default function AvatarChatPanel({
         if (typeof data.limit === "number") setLimit(data.limit);
 
         setMessages((prev) => [...prev, { role: "assistant", content: data.reply }]);
-        setTimeout(
-          () => scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" }),
-          50
-        );
+        scrollToEnd();
       } finally {
         setLoading(false);
       }
     },
-    [loading, messages, stats, config, lang, t, houseCoach, reviewContext]
+    [loading, messages, stats, config, lang, t, houseCoach, reviewContext, variant, coachTone]
   );
 
   const insertToken = (token: string) => {
@@ -310,7 +392,7 @@ export default function AvatarChatPanel({
         ref={scrollRef}
         className={cn(
           "overflow-y-auto rounded-xl bg-slate-950/80 border border-cyan-500/20 p-3 space-y-3 text-sm",
-          variant === "page" ? "flex-1 min-h-[46vh]" : variant === "review" ? "h-40" : "h-52"
+          variant === "page" ? "flex-1 min-h-[46vh]" : variant === "review" ? "h-[4.5rem] lg:h-[5.25rem]" : "h-52"
         )}
       >
         <div className="flex items-start gap-2 py-1">
@@ -333,7 +415,14 @@ export default function AvatarChatPanel({
                   : "rounded-bl-sm bg-slate-800 text-slate-200 border border-slate-700"
               )}
             >
-              <ChatRichText text={m.content} pieceSet={pieceSet} markTitle={markTitle} />
+              {variant === "review" && m.role === "assistant" ? (
+                <CoachSanText
+                  text={m.content}
+                  side={reviewContext?.sideToMove}
+                />
+              ) : (
+                <ChatRichText text={m.content} pieceSet={pieceSet} markTitle={markTitle} />
+              )}
             </div>
           </div>
         ))}
@@ -346,17 +435,22 @@ export default function AvatarChatPanel({
       </div>
 
       <div>
-        <p className="text-[11px] uppercase tracking-wide text-slate-500 mb-2">
+        {variant !== "review" && (
+        <p className="text-[11px] uppercase tracking-wide text-slate-500 mb-1">
           {t.avatarChat.suggestionsLabel}
         </p>
-        <div className="flex flex-wrap gap-2">
+        )}
+        <div className={cn("flex gap-1.5", variant === "review" ? "overflow-x-auto flex-nowrap pb-0.5" : "flex-wrap")}>
           {suggestions.map((q) => (
             <button
               key={q}
               type="button"
               disabled={loading}
               onClick={() => void sendText(q)}
-              className="text-left text-xs rounded-full border border-cyan-500/40 bg-cyan-500/10 px-3 py-1.5 text-cyan-100 hover:bg-cyan-500/20 transition-colors disabled:opacity-50"
+              className={cn(
+                "text-left text-xs rounded-full border border-cyan-500/40 bg-cyan-500/10 text-cyan-100 hover:bg-cyan-500/20 transition-colors disabled:opacity-50",
+                variant === "review" ? "px-2 py-1 whitespace-nowrap shrink-0" : "px-3 py-1.5"
+              )}
             >
               {q}
             </button>
@@ -369,7 +463,10 @@ export default function AvatarChatPanel({
           type="button"
           variant="outline"
           size="icon"
-          className="shrink-0 border-cyan-500/40 text-cyan-200 hover:bg-cyan-500/10 h-10 w-10"
+          className={cn(
+            "shrink-0 border-cyan-500/40 text-cyan-200 hover:bg-cyan-500/10",
+            variant === "review" ? "h-8 w-8" : "h-10 w-10"
+          )}
           aria-label={t.avatarChat.emojisLabel}
           onClick={() => setPickerOpen((o) => !o)}
         >
@@ -437,14 +534,20 @@ export default function AvatarChatPanel({
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder={t.avatarChat.placeholder}
-          className="bg-slate-950 border-slate-700 h-10"
+          className={cn(
+            "bg-slate-950 border-slate-700",
+            variant === "review" ? "h-8" : "h-10"
+          )}
           onKeyDown={(e) => e.key === "Enter" && void sendText(input)}
           disabled={loading}
         />
         <Button
           onClick={() => void sendText(input)}
           disabled={loading || !input.trim()}
-          className="h-10 bg-cyan-500 hover:bg-cyan-400 text-slate-950"
+          className={cn(
+            "bg-cyan-500 hover:bg-cyan-400 text-slate-950",
+            variant === "review" ? "h-8 px-2" : "h-10"
+          )}
         >
           <Send className="h-4 w-4" />
         </Button>
@@ -459,6 +562,10 @@ export default function AvatarChatPanel({
         {thread}
       </div>
     );
+  }
+
+  if (variant === "review") {
+    return <div className="space-y-1.5">{thread}</div>;
   }
 
   return (

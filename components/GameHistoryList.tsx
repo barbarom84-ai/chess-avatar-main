@@ -49,13 +49,25 @@ type GameHistoryListProps = {
 function openGameReview(game: DbGame, router: ReturnType<typeof useRouter>) {
   if (typeof window === "undefined") return;
   try {
+    const playerColor =
+      game.player_color === "white" || game.player_color === "black"
+        ? game.player_color
+        : undefined;
     if (game.bot_config) {
-      setReviewSessionFromPlay(game.pgn, game.bot_config, game.opponent_name);
+      setReviewSessionFromPlay(
+        game.pgn,
+        game.bot_config,
+        game.opponent_name,
+        playerColor
+      );
     } else {
       sessionStorage.setItem(REVIEW_PGN_SESSION_KEY, game.pgn);
       sessionStorage.setItem(
         REVIEW_CONTEXT_SESSION_KEY,
-        JSON.stringify({ playerName: game.opponent_name })
+        JSON.stringify({
+          playerName: game.opponent_name,
+          ...(playerColor ? { playerColor } : {}),
+        })
       );
     }
   } catch {

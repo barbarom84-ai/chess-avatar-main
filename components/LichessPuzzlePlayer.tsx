@@ -2,7 +2,6 @@
 
 import { Chess } from "chess.js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { flushSync } from "react-dom";
 import SimpleChessboard from "@/components/SimpleChessboard";
 import PromotionDialog from "@/components/PromotionDialog";
 import { Button } from "@/components/ui/button";
@@ -45,37 +44,46 @@ export default function LichessPuzzlePlayer({ puzzle, labels }: LichessPuzzlePla
 
   const chessRef = useRef(new Chess(initialFen));
   const moveIndexRef = useRef(0);
+  const opponentTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [fen, setFen] = useState(initialFen);
   const [lastMove, setLastMove] = useState<{ from: string; to: string } | null>(null);
   const [wrongFlash, setWrongFlash] = useState(false);
   const [solved, setSolved] = useState(false);
   const [promotionOpen, setPromotionOpen] = useState(false);
   const [promotionOptions, setPromotionOptions] = useState<string[]>([]);
+  const [awaitingReply, setAwaitingReply] = useState(false);
+
+  const clearOpponentTimer = useCallback(() => {
+    if (opponentTimerRef.current != null) {
+      clearTimeout(opponentTimerRef.current);
+      opponentTimerRef.current = null;
+    }
+  }, []);
 
   const sync = useCallback(() => {
     const g = chessRef.current;
-    const snap = () => {
-      setFen(g.fen());
-      const h = g.history({ verbose: true });
-      const last = h[h.length - 1];
-      setLastMove(last ? { from: last.from, to: last.to } : null);
-    };
-    flushSync(snap);
+    setFen(g.fen());
+    const h = g.history({ verbose: true });
+    const last = h[h.length - 1];
+    setLastMove(last ? { from: last.from, to: last.to } : null);
   }, []);
 
   const reset = useCallback(() => {
+    clearOpponentTimer();
     chessRef.current = new Chess(initialFen);
     moveIndexRef.current = 0;
     setSolved(false);
     setWrongFlash(false);
     setPromotionOpen(false);
     setPromotionOptions([]);
+    setAwaitingReply(false);
     sync();
-  }, [initialFen, sync]);
+  }, [clearOpponentTimer, initialFen, sync]);
 
   useEffect(() => {
     reset();
-  }, [puzzle.puzzleId, initialFen, reset]);
+    return () => clearOpponentTimer();
+  }, [puzzle.puzzleId, initialFen, reset, clearOpponentTimer]);
 
   const orientation = useMemo(() => {
     const stm = initialFen.split(" ")[1];
@@ -88,18 +96,30 @@ export default function LichessPuzzlePlayer({ puzzle, labels }: LichessPuzzlePla
     let idx = moveIndexRef.current;
     if (idx >= solution.length) {
       setSolved(true);
+      setAwaitingReply(false);
       return;
     }
     const opp = solution[idx];
     if (!applyUci(chessRef.current, opp)) {
       console.warn("[LichessPuzzlePlayer] failed opponent move", opp);
+      setAwaitingReply(false);
       return;
     }
     idx += 1;
     moveIndexRef.current = idx;
+    setAwaitingReply(false);
     sync();
     if (idx >= solution.length) setSolved(true);
   }, [solution, sync]);
+
+  const scheduleOpponent = useCallback(() => {
+    clearOpponentTimer();
+    setAwaitingReply(true);
+    opponentTimerRef.current = setTimeout(() => {
+      opponentTimerRef.current = null;
+      autoPlayOpponent();
+    }, 280);
+  }, [autoPlayOpponent, clearOpponentTimer]);
 
   const onPromotionPick = useCallback(
     (piece: "q" | "r" | "b" | "n") => {
@@ -127,14 +147,14 @@ export default function LichessPuzzlePlayer({ puzzle, labels }: LichessPuzzlePla
         setSolved(true);
         return;
       }
-      autoPlayOpponent();
+      scheduleOpponent();
     },
-    [autoPlayOpponent, promotionOptions, solution, sync]
+    [promotionOptions, scheduleOpponent, solution, sync]
   );
 
   const handleDrop = useCallback(
     (from: string, to: string): boolean => {
-      if (solved) return false;
+      if (solved || awaitingReply) return false;
       const idx = moveIndexRef.current;
       if (idx >= solution.length) return false;
       const expected = solution[idx];
@@ -156,10 +176,10 @@ export default function LichessPuzzlePlayer({ puzzle, labels }: LichessPuzzlePla
         setSolved(true);
         return true;
       }
-      autoPlayOpponent();
+      scheduleOpponent();
       return true;
     },
-    [autoPlayOpponent, solved, solution, sync]
+    [awaitingReply, scheduleOpponent, solved, solution, sync]
   );
 
   const stmLabel =
@@ -210,7 +230,7 @@ export default function LichessPuzzlePlayer({ puzzle, labels }: LichessPuzzlePla
         <SimpleChessboard
           position={fen}
           orientation={orientation}
-          onDrop={solved ? undefined : handleDrop}
+          onDrop={solved || awaitingReply ? undefined : handleDrop}
           lastMove={lastMove}
         />
       </div>

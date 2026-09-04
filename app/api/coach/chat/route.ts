@@ -4,6 +4,7 @@ import { createAnonSupabase, createServiceSupabase } from "@/lib/supabase-servic
 import { rateLimit } from "@/lib/rate-limit";
 import { hasActivePremiumAccess } from "@/lib/subscription-access";
 import { buildSystemPrompt, type ChatRequest } from "@/lib/avatar-chat-prompt";
+import { localizeFrenchCoachText } from "@/lib/localized-san";
 
 export const runtime = "nodejs";
 
@@ -78,6 +79,12 @@ export async function POST(req: NextRequest) {
 
   const openai = new OpenAI({ apiKey: openaiKey });
   const system = buildSystemPrompt(body);
+  const isReview = Boolean(
+    body.review?.fen ||
+      body.review?.fenBefore ||
+      body.review?.lastMove ||
+      body.review?.playerColor
+  );
   const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
     { role: "system", content: system },
     ...(body.history ?? []).slice(-6).map((h) => ({
@@ -91,11 +98,18 @@ export async function POST(req: NextRequest) {
     const completion = await openai.chat.completions.create({
       model: MODEL,
       messages,
-      max_tokens: 180,
-      temperature: 0.85,
+      max_tokens: isReview ? 220 : 180,
+      temperature: isReview ? 0.4 : 0.85,
     });
 
-    const reply = completion.choices[0]?.message?.content?.trim() ?? "";
+    const raw = completion.choices[0]?.message?.content?.trim() ?? "";
+    const reply =
+      body.lang === "fr"
+        ? localizeFrenchCoachText(raw, [
+            body.review?.lastMove ?? "",
+            body.review?.bestMove ?? "",
+          ])
+        : raw;
 
     let remaining: number | null = null;
     if (!isPremium) {

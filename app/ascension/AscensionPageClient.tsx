@@ -2,13 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { ChevronDown, Crown, Pencil, Settings2 } from "lucide-react";
+import { ChevronDown, Pencil, Settings2 } from "lucide-react";
 import AscensionLoadingScreen from "@/components/ascension/AscensionLoadingScreen";
-import UpgradeModal from "@/components/UpgradeModal";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 import AscensionProgressPath from "@/components/ascension/AscensionProgressPath";
 import AscensionRewardModal, {
   type AscensionRewardData,
@@ -37,14 +35,9 @@ import {
   trackLabel,
   type DbCampaignTrack,
 } from "@/lib/ascension/campaign-tracks";
-import {
-  ASCENSION_FREE_PUZZLES_PER_TRACK,
-  ASCENSION_PREMIUM_PUZZLES_PER_TRACK,
-} from "@/lib/ascension/constants";
 import type { ChampionTier, DbPlayerChampionCard } from "@/lib/ascension/types";
 import { useLanguage } from "@/lib/language-context";
 import { useSuperUser } from "@/hooks/useSuperUser";
-import { usePremium } from "@/hooks/usePremium";
 import { track } from "@/lib/track";
 
 const SKIP_PATH_ANIM_KEY = "ascension_skip_path_anim";
@@ -66,14 +59,12 @@ function sortPuzzles(puzzles: AscensionPuzzleListItem[]) {
 export default function AscensionPageClient() {
   const { t, lang } = useLanguage();
   const { isSuperUser, loading: superLoading } = useSuperUser();
-  const { email, userId } = usePremium();
   const [card, setCard] = useState<DbPlayerChampionCard | null>(null);
   const [unlockedSkills, setUnlockedSkills] = useState<string[]>([]);
   const [puzzles, setPuzzles] = useState<AscensionPuzzleListItem[]>([]);
   const [tracks, setTracks] = useState<DbCampaignTrack[]>([]);
   const [trackUnlock, setTrackUnlock] = useState<Record<string, boolean>>({});
   const [isPremium, setIsPremium] = useState(false);
-  const [showUpgrade, setShowUpgrade] = useState(false);
   const [selectedPuzzleId, setSelectedPuzzleId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [unlocking, setUnlocking] = useState<string | null>(null);
@@ -366,24 +357,6 @@ export default function AscensionPageClient() {
             <AscensionLoadingScreen />
           ) : (
             <>
-            {!isPremium && (
-              <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-600/30 bg-amber-950/30 px-3 py-2">
-                <p className="text-xs text-amber-200/90">
-                  {t.ascension.freePlanBanner
-                    .replace("{free}", String(ASCENSION_FREE_PUZZLES_PER_TRACK))
-                    .replace("{premium}", String(ASCENSION_PREMIUM_PUZZLES_PER_TRACK))}
-                </p>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-7 text-xs border-amber-600/40 text-amber-200 hover:bg-amber-900/40"
-                  onClick={() => setShowUpgrade(true)}
-                >
-                  <Crown className="h-3 w-3 mr-1" />
-                  {t.ascension.upgradeCta}
-                </Button>
-              </div>
-            )}
             {/* ── 3-column layout on lg: path (wider) | puzzle | card ── */}
             <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr_220px] xl:grid-cols-[380px_1fr_240px] 2xl:grid-cols-[420px_1fr_260px] gap-4">
 
@@ -587,15 +560,6 @@ export default function AscensionPageClient() {
         reward={pendingReward}
         onContinue={handleRewardContinue}
       />
-      {userId && (
-        <UpgradeModal
-          open={showUpgrade}
-          onOpenChange={setShowUpgrade}
-          userId={userId}
-          email={email}
-          reason="ascension"
-        />
-      )}
     </AscensionGate>
   );
 }

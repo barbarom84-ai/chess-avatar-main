@@ -1113,7 +1113,8 @@ export default function PlayableChessboard({
     setReviewSessionFromPlay(
       `${headers.join("\n")}\n\n${movesStr}`,
       currentConfig,
-      t.playableBoard.player
+      t.playableBoard.player,
+      playerColor
     );
     router.push("/review");
   };

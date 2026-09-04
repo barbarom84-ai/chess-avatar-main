@@ -364,6 +364,12 @@ export const fr = {
         "Salut ! Je suis le clone de {name}. Pose-moi une question sur mon style, mes ouvertures ou une position.",
       welcomeHouse:
         "Salut ! Je suis ChessAvatarPro, ton coach. Choisis un coup dans la review et demande-moi pourquoi, ou change de coach ci-dessus.",
+      welcomeReviewWhite:
+        "Tu joues les Blancs. Je t’explique cette position de ton côté — pose-moi une question sur le coup affiché.",
+      welcomeReviewBlack:
+        "Tu joues les Noirs. Je t’explique cette position de ton côté — pose-moi une question sur le coup affiché.",
+      welcomeReviewUnknown:
+        "Indique ta couleur (Blancs/Noirs ci-dessus), puis pose-moi une question sur le coup affiché.",
       placeholder: "Parle à ton avatar…",
       send: "Envoyer",
       thinking: "Réflexion…",
@@ -410,6 +416,18 @@ export const fr = {
       offlineMode: "Mode hors ligne — les modifications se synchroniseront au retour en ligne.",
       pendingSync: "Modifications en attente de sync",
       syncNow: "Synchroniser",
+    },
+
+    notifications: {
+      title: "Notifications",
+      empty: "Aucune notification",
+      open: "Ouvrir",
+      freePlanTitle: "Version gratuite",
+      freePlanBody:
+        "Analyse : profondeur {depth}, {plies} demi-coups max. Ascension : {free} puzzles par piste (Premium : {premium}+).",
+      upgradeCta: "Passer Premium",
+      offlineTitle: "Hors ligne",
+      pendingTitle: "Synchronisation en attente",
     },
 
     pvpTournaments: {
@@ -1732,10 +1750,10 @@ export const fr = {
       coach: {
         whyButton: "Pourquoi ?",
         loading: "Le coach réfléchit…",
-        title: "Coach IA",
+        title: "Analyse du coup",
         retry: "Réessayer",
         unavailable: "Coach indisponible.",
-        loginRequired: "Connectez-vous pour utiliser le coach IA.",
+        loginRequired: "Connectez-vous pour utiliser le coach.",
         quotaReached: "Quota gratuit atteint ({used}/{limit} aujourd'hui).",
         quotaRemaining: "{remaining}/{limit} explications restantes aujourd'hui.",
         unlimited: "Premium : explications illimitées.",
@@ -1748,10 +1766,14 @@ export const fr = {
         rateLimited: "Trop de requêtes. Patientez un instant.",
         network: "Problème réseau. Vérifiez votre connexion.",
         invalidBody: "Données du coup invalides.",
-        pickerLabel: "Coach de la review",
+        pickerLabel: "Coach",
         pickerDefault: "ChessAvatarPro (défaut)",
         pickerOpponent: "Adverse · {name}",
-        pickerHint: "ChessAvatarPro est le coach par défaut. Tu peux le remplacer par un avatar.",
+        pickerHint: "Un seul coach : l’analyse du coup et le chat partagent la même position et ta couleur.",
+        playingAsWhite: "Tu joues les Blancs",
+        playingAsBlack: "Tu joues les Noirs",
+        playingAsUnknown: "Quelle couleur joues-tu ?",
+        pickAMove: "Navigue jusqu’à un coup pour voir l’analyse du coach.",
       },
       paradox: {
         title: "Paradoxe clone",

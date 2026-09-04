@@ -6,6 +6,11 @@ import OpenAI from "openai";
 import { rateLimit } from "@/lib/rate-limit";
 import { hasActivePremiumAccess } from "@/lib/subscription-access";
 import { type CoachToneId, isCoachToneId } from "@/lib/coach-tone";
+import {
+  frenchNotationSystemHint,
+  localizeFrenchCoachText,
+  localizeSan,
+} from "@/lib/localized-san";
 
 export const runtime = "nodejs";
 
@@ -76,13 +81,16 @@ function isValidFen(fen: unknown): fen is string {
   );
 }
 
-function buildCacheKey(req: ExplainRequest): string {
+function buildCacheKey(
+  req: ExplainRequest,
+  lang: "fr" | "en" = req.lang,
+): string {
   // Bucketize CPL so similar blunders share an explanation.
   const cplBucket = Math.min(20, Math.floor(req.cpl / 50));
   const tone = req.coachTone ?? "pedagogical";
   const payload = [
     MODEL,
-    req.lang,
+    lang,
     tone,
     req.fenBefore,
     req.uciPlayed,
@@ -97,11 +105,11 @@ function coachSystemPrompt(lang: "fr" | "en", tone: CoachToneId): string {
   if (lang === "fr") {
     switch (tone) {
       case "concise":
-        return "Tu es un coach d'échecs ultra-bref : une ou deux phrases maximum, aucune variante longue, aucune liste.";
+        return `Tu es un coach d'échecs ultra-bref : une ou deux phrases maximum, aucune variante longue, aucune liste. ${frenchNotationSystemHint()}`;
       case "witty":
-        return "Tu es un coach d'échecs avec une pointe d'humour léger et bienveillant — sans moquerie du joueur. Reste factuel sur l'échiquier. 2 à 4 phrases courtes.";
+        return `Tu es un coach d'échecs avec une pointe d'humour léger et bienveillant — sans moquerie du joueur. Reste factuel sur l'échiquier. 2 à 4 phrases courtes. ${frenchNotationSystemHint()}`;
       default:
-        return "Tu es un coach d'échecs concis. Tu expliques pourquoi un coup est sous-optimal en 2 à 4 phrases courtes. Pas de variantes longues, pas de notation algébrique multi-coups, pas de listes — juste une explication claire et pédagogique.";
+        return `Tu es un coach d'échecs concis. Tu expliques pourquoi un coup est sous-optimal en 2 à 4 phrases courtes. Pas de variantes longues, pas de notation algébrique multi-coups, pas de listes — juste une explication claire et pédagogique. ${frenchNotationSystemHint()}`;
     }
   }
   switch (tone) {
@@ -120,8 +128,8 @@ function buildPrompt(req: ExplainRequest): { system: string; user: string } {
   const sideLabel = req.sideToMove === "white"
     ? (isFr ? "les Blancs" : "White")
     : (isFr ? "les Noirs" : "Black");
-  const moveLabel = req.sanPlayed ?? req.uciPlayed;
-  const bestLabel = req.sanBest ?? req.uciBest;
+  const moveLabel = localizeSan(req.sanPlayed ?? req.uciPlayed, req.lang);
+  const bestLabel = localizeSan(req.sanBest ?? req.uciBest, req.lang);
   const cpInfo = isFr
     ? `Perte évaluée à ${req.cpl} centipions (${req.classification}).`
     : `Estimated loss: ${req.cpl} centipawns (${req.classification}).`;
@@ -206,30 +214,32 @@ export async function POST(req: NextRequest) {
   });
 
   const cacheKey = buildCacheKey(explainReq);
+  const siblingLang = explainReq.lang === "fr" ? "en" : "fr";
+  const siblingCacheKey = buildCacheKey(explainReq, siblingLang);
 
   // Tracks whether DB-side persistence (cache + quota) is available. When the
   // migration hasn't been run yet, we degrade gracefully: skip cache reads,
   // skip quota writes, and surface a `warning` field on success.
   let dbWarning: string | null = null;
 
+  const polish = (text: string) =>
+    explainReq.lang === "fr"
+      ? localizeFrenchCoachText(text, [
+          explainReq.sanPlayed ?? "",
+          explainReq.sanBest ?? "",
+        ])
+      : text;
+
   // 4) Try the shared cache first (best-effort).
-  let cachedExplanation: string | null = null;
-  {
-    const { data, error } = await adminClient
-      .from("coach_explanations")
-      .select("explanation")
-      .eq("cache_key", cacheKey)
-      .maybeSingle();
-    if (error) {
-      if (error.code === PG_UNDEFINED_TABLE) {
-        dbWarning = "coach_explanations_missing";
-      } else {
-        console.error("coach_explanations select error:", error);
-      }
-    }
-    const row = data as { explanation?: string } | null;
-    if (row?.explanation) cachedExplanation = row.explanation;
-  }
+  const thisLangCache = await readCachedExplanation(adminClient, cacheKey);
+  if (thisLangCache.tableMissing) dbWarning = "coach_explanations_missing";
+  let cachedExplanation = thisLangCache.explanation;
+
+  const siblingCache = cachedExplanation
+    ? { explanation: null as string | null, tableMissing: thisLangCache.tableMissing }
+    : await readCachedExplanation(adminClient, siblingCacheKey);
+  if (siblingCache.tableMissing) dbWarning = "coach_explanations_missing";
+  const hasSiblingLanguage = Boolean(siblingCache.explanation);
 
   // 5) Premium check (decides quota path).
   const { data: subRow } = await userClient
@@ -244,7 +254,7 @@ export async function POST(req: NextRequest) {
       ? null
       : await getRemainingQuota(adminClient, user.id);
     return NextResponse.json({
-      explanation: cachedExplanation,
+      explanation: polish(cachedExplanation),
       cached: true,
       remaining,
       limit: isPremium ? null : FREE_DAILY_QUOTA,
@@ -252,16 +262,19 @@ export async function POST(req: NextRequest) {
     } satisfies ExplainSuccess);
   }
 
-  // 6) Quota check for non-premium users (only counts cache MISS).
-  if (!isPremium) {
+  // 6) Quota check for non-premium users (only counts a *new position*,
+  // not a language switch of a move already explained today).
+  const billable = !hasSiblingLanguage;
+  if (!isPremium && billable) {
     const usage = await getUsageCount(adminClient, user.id);
     if (usage.tableMissing) {
       dbWarning = "coach_usage_missing";
     }
     if (usage.count >= FREE_DAILY_QUOTA) {
       return errorResponse("QUOTA_EXCEEDED", 429, {
-        used: usage.count,
+        used: Math.min(usage.count, FREE_DAILY_QUOTA),
         limit: FREE_DAILY_QUOTA,
+        remaining: 0,
       });
     }
   }
@@ -286,7 +299,7 @@ export async function POST(req: NextRequest) {
     if (typeof choice !== "string" || choice.trim().length === 0) {
       return errorResponse("OPENAI_ERROR", 502, { detail: "EMPTY_COMPLETION" });
     }
-    explanation = choice.trim();
+    explanation = polish(choice.trim());
     promptTokens = completion.usage?.prompt_tokens ?? 0;
     completionTokens = completion.usage?.completion_tokens ?? 0;
   } catch (err) {
@@ -316,17 +329,19 @@ export async function POST(req: NextRequest) {
       console.error("coach_explanations insert error:", error);
     });
 
-  // 9) Increment usage for non-premium.
+  // 9) Increment usage for non-premium (new positions only).
   let remaining: number | null = null;
   if (!isPremium) {
-    const result = await incrementUsage(adminClient, user.id);
-    if (result.tableMissing) {
-      dbWarning = "coach_usage_missing";
-      // Tables missing: we can't enforce quota — return null so the UI doesn't
-      // show a misleading "9 left" counter.
-      remaining = null;
+    if (billable) {
+      const result = await incrementUsage(adminClient, user.id);
+      if (result.tableMissing) {
+        dbWarning = "coach_usage_missing";
+        remaining = null;
+      } else {
+        remaining = Math.max(0, FREE_DAILY_QUOTA - result.count);
+      }
     } else {
-      remaining = Math.max(0, FREE_DAILY_QUOTA - result.count);
+      remaining = await getRemainingQuota(adminClient, user.id);
     }
   }
 
@@ -353,6 +368,29 @@ type AdminClient = SupabaseClient<any, any, any>;
 interface UsageReadResult {
   count: number;
   tableMissing: boolean;
+}
+
+async function readCachedExplanation(
+  client: AdminClient,
+  cacheKey: string,
+): Promise<{ explanation: string | null; tableMissing: boolean }> {
+  const { data, error } = await client
+    .from("coach_explanations")
+    .select("explanation")
+    .eq("cache_key", cacheKey)
+    .maybeSingle();
+  if (error) {
+    if (error.code === PG_UNDEFINED_TABLE) {
+      return { explanation: null, tableMissing: true };
+    }
+    console.error("coach_explanations select error:", error);
+    return { explanation: null, tableMissing: false };
+  }
+  const row = data as { explanation?: string } | null;
+  return {
+    explanation: typeof row?.explanation === "string" ? row.explanation : null,
+    tableMissing: false,
+  };
 }
 
 async function getUsageCount(
@@ -402,6 +440,9 @@ async function incrementUsage(
   const today = new Date().toISOString().slice(0, 10);
   const current = await getUsageCount(client, userId);
   if (current.tableMissing) return { count: 0, tableMissing: true };
+  if (current.count >= FREE_DAILY_QUOTA) {
+    return { count: current.count, tableMissing: false };
+  }
   const next = current.count + 1;
   // Upsert on (user_id, day) — atomic enough for a per-user quota; race
   // conditions can at worst over/under-count by 1, which is acceptable.

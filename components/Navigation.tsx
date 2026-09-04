@@ -30,6 +30,7 @@ import NavDock from "@/components/navigation/NavDock";
 import ChessboardSettingsModal from "./ChessboardSettingsModal";
 import AuthModal from "./AuthModal";
 import AboutDialog from "./AboutDialog";
+import NotificationBell from "./NotificationBell";
 
 export default function Navigation() {
   const pathname = usePathname();
@@ -105,7 +106,7 @@ export default function Navigation() {
   return (
     <>
       <nav className="bg-slate-950/80 backdrop-blur-sm border-b border-slate-800 sticky top-0 z-[100]">
-        <div className="max-w-7xl mx-auto px-4 overflow-visible">
+        <div className="max-w-[1920px] mx-auto px-3 md:px-4 overflow-visible">
           <div className="flex items-center justify-between min-h-16 gap-2">
             <Link
               href="/"
@@ -210,6 +211,8 @@ export default function Navigation() {
                   )}
                 </div>
               )}
+
+              <NotificationBell />
 
               <div className="relative" ref={settingsMenuRef}>
                 <Button

@@ -58,7 +58,7 @@ function tryParsePieceLedMove(
   s: string,
   i: number,
   lang: "fr" | "en"
-): { end: number; prefix: string; body: string; pieceLetter: string } | null {
+): { end: number; prefix: string; body: string; pieceLetter: string; lang: "fr" | "en" } | null {
   if (i > 0) {
     const prev = s[i - 1];
     if (/[A-Za-zÀ-ÿ]/.test(prev)) return null;
@@ -86,7 +86,18 @@ function tryParsePieceLedMove(
   if (lang === "fr" && !FR_PIECE.has(pieceLetter)) return null;
 
   const body = m[0];
-  return { end: pos + body.length, prefix, body, pieceLetter };
+  return { end: pos + body.length, prefix, body, pieceLetter, lang };
+}
+
+function tryParsePieceLedMoveEither(
+  s: string,
+  i: number,
+  preferred: "fr" | "en"
+) {
+  return (
+    tryParsePieceLedMove(s, i, preferred) ??
+    tryParsePieceLedMove(s, i, preferred === "fr" ? "en" : "fr")
+  );
 }
 
 function tryParsePawnCapture(
@@ -239,8 +250,9 @@ export function commentTextToNodes(
   let key = 0;
 
   while (i < text.length) {
-    const pawn = tryParsePawnCapture(text, i, lang);
-    const pieceLed = tryParsePieceLedMove(text, i, lang);
+    const pawn = tryParsePawnCapture(text, i, lang) ??
+      tryParsePawnCapture(text, i, lang === "fr" ? "en" : "fr");
+    const pieceLed = tryParsePieceLedMoveEither(text, i, lang);
 
     type Choice =
       | { kind: "pawn"; data: NonNullable<typeof pawn> }
@@ -269,7 +281,7 @@ export function commentTextToNodes(
           prefix={d.prefix}
           body={d.body}
           pieceLetter={d.pieceLetter}
-          lang={lang}
+          lang={d.lang}
           defaultPieceColor={defaultPieceColor}
           pieceSet={pieceSet}
         />

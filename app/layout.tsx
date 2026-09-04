@@ -8,6 +8,7 @@ import SiteMaintenanceOverlay from "@/components/SiteMaintenanceOverlay";
 import { ChessboardSettingsProvider } from "@/contexts/ChessboardSettingsContext";
 import { SiteConfigProvider } from "@/contexts/SiteConfigContext";
 import { LanguageProvider } from "@/lib/language-context";
+import { SiteNotificationsProvider } from "@/contexts/SiteNotificationsContext";
 import { Toaster } from "sonner";
 import MonitoringProviders from "@/components/MonitoringProviders";
 
@@ -56,6 +57,7 @@ export default function RootLayout({
         <LanguageProvider>
           <SiteConfigProvider>
             <ChessboardSettingsProvider>
+              <SiteNotificationsProvider>
               <Navigation />
               <NavContentOffset>{children}</NavContentOffset>
               <SiteMaintenanceOverlay />
@@ -76,6 +78,7 @@ export default function RootLayout({
                 },
               }}
             />
+              </SiteNotificationsProvider>
           </ChessboardSettingsProvider>
           </SiteConfigProvider>
         </LanguageProvider>

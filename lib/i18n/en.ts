@@ -364,6 +364,12 @@ export const en = {
         "Hey! I’m the clone of {name}. Ask me about my style, openings, or a position.",
       welcomeHouse:
         "Hi — I’m ChessAvatarPro, your coach. Pick a move in the review and ask me why, or switch coach above.",
+      welcomeReviewWhite:
+        "You’re playing White. I’ll explain this position from your side — ask me about the current move.",
+      welcomeReviewBlack:
+        "You’re playing Black. I’ll explain this position from your side — ask me about the current move.",
+      welcomeReviewUnknown:
+        "Tell me which color you’re playing (White/Black above), then ask about the current move.",
       placeholder: "Talk to your avatar…",
       send: "Send",
       thinking: "Thinking…",
@@ -410,6 +416,18 @@ export const en = {
       offlineMode: "Offline mode — changes will sync when you're back online.",
       pendingSync: "Pending changes to sync",
       syncNow: "Sync now",
+    },
+
+    notifications: {
+      title: "Notifications",
+      empty: "No notifications",
+      open: "Open",
+      freePlanTitle: "Free plan",
+      freePlanBody:
+        "Analysis: depth {depth}, {plies} plies max. Ascension: {free} puzzles per track (Premium: {premium}+).",
+      upgradeCta: "Upgrade to Premium",
+      offlineTitle: "Offline",
+      pendingTitle: "Sync pending",
     },
 
     pvpTournaments: {
@@ -1726,10 +1744,10 @@ export const en = {
       coach: {
         whyButton: "Why?",
         loading: "Coach is thinking…",
-        title: "AI Coach",
+        title: "Move analysis",
         retry: "Retry",
         unavailable: "Coach unavailable.",
-        loginRequired: "Sign in to use the AI coach.",
+        loginRequired: "Sign in to use the coach.",
         quotaReached: "Free quota reached ({used}/{limit} today).",
         quotaRemaining: "{remaining}/{limit} explanations left today.",
         unlimited: "Premium: unlimited explanations.",
@@ -1742,10 +1760,14 @@ export const en = {
         rateLimited: "Too many requests. Please wait a moment.",
         network: "Network problem. Check your connection.",
         invalidBody: "Invalid move data.",
-        pickerLabel: "Review coach",
+        pickerLabel: "Coach",
         pickerDefault: "ChessAvatarPro (default)",
         pickerOpponent: "Opponent · {name}",
-        pickerHint: "ChessAvatarPro is the default coach. You can switch to an avatar.",
+        pickerHint: "One coach: move analysis and chat share this position and your color.",
+        playingAsWhite: "You’re playing White",
+        playingAsBlack: "You’re playing Black",
+        playingAsUnknown: "Which color are you playing?",
+        pickAMove: "Go to a move to see the coach analysis.",
       },
       paradox: {
         title: "Clone paradox",

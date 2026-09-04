@@ -1,3 +1,6 @@
+import type { ReviewChatContext } from "@/lib/review-coach-context";
+import { frenchNotationSystemHint, localizeFrenchCoachText, localizeSan } from "@/lib/localized-san";
+
 export interface ChatRequest {
   message: string;
   lang: "fr" | "en";
@@ -14,30 +17,95 @@ export interface ChatRequest {
   };
   /** House coach (ChessAvatarPro) instead of a player clone. */
   role?: "house" | "persona";
-  review?: {
-    fen?: string;
-    lastMove?: string;
-    classification?: string;
-  };
+  review?: ReviewChatContext;
 }
 
-function reviewBlurb(req: ChatRequest, lang: "fr" | "en"): string {
+function sideLabel(side: "white" | "black" | undefined, lang: "fr" | "en"): string {
+  if (side === "black") return lang === "fr" ? "les Noirs" : "Black";
+  if (side === "white") return lang === "fr" ? "les Blancs" : "White";
+  return lang === "fr" ? "couleur inconnue" : "unknown side";
+}
+
+export function reviewBlurb(req: ChatRequest, lang: "fr" | "en"): string {
   const r = req.review;
-  if (!r?.lastMove && !r?.fen) return "";
+  if (!r?.lastMove && !r?.fen && !r?.fenBefore && !r?.playerColor) return "";
+
+  const player = sideLabel(r.playerColor, lang);
+  const mover = sideLabel(r.sideToMove, lang);
+  const moveLabel = localizeSan(r.lastMove ?? r.lastMoveUci ?? "", lang);
+  const bestLabel = localizeSan(r.bestMove ?? r.bestMoveUci ?? "", lang);
+  const ownMove =
+    r.isPlayerMove === true
+      ? lang === "fr"
+        ? "C'EST un coup du joueur (l'élève)."
+        : "This IS the student's own move."
+      : r.isPlayerMove === false
+        ? lang === "fr"
+          ? "Ce n'est PAS un coup du joueur — c'est l'adversaire."
+          : "This is NOT the student's move — it is the opponent."
+        : "";
+
   if (lang === "fr") {
-    const bits = [
-      r.lastMove ? `Coup en cours : ${r.lastMove}` : "",
-      r.classification ? `Évaluation : ${r.classification}` : "",
-      r.fen ? `FEN : ${r.fen}` : "",
+    const facts = [
+      r.playerColor
+        ? `L'élève joue ${player}${r.whiteName || r.blackName ? ` (Blancs: ${r.whiteName ?? "?"}, Noirs: ${r.blackName ?? "?"})` : ""}.`
+        : "La couleur de l'élève n'est pas confirmée : déduis-la seulement si le FEN et les noms le permettent, sinon reste neutre.",
+      r.sideToMove && moveLabel ? `Coup affiché, joué par ${mover} : ${moveLabel}. ${ownMove}` : "",
+      r.classification ? `Classification moteur : ${r.classification}.` : "",
+      typeof r.cpl === "number" ? `Perte : ${r.cpl} centipions.` : "",
+      bestLabel ? `Meilleur coup moteur : ${bestLabel}. Ne propose PAS un autre « meilleur coup ».` : "",
+      typeof r.playerEval === "number" && typeof r.bestEval === "number"
+        ? `Éval après le coup joué : ${r.playerEval.toFixed(2)} (POV Blancs). Éval du meilleur coup : ${r.bestEval.toFixed(2)}.`
+        : "",
+      r.opening ? `Ouverture : ${r.opening}.` : "",
+      r.fenBefore ? `FEN avant le coup : ${r.fenBefore}` : "",
+      r.fen ? `FEN après le coup (échiquier actuel) : ${r.fen}` : "",
+      r.lastExplanation
+        ? `Explication déjà donnée pour ce coup (reste cohérent) : ${localizeFrenchCoachText(
+            r.lastExplanation,
+            [r.lastMove ?? "", r.bestMove ?? ""]
+          )}`
+        : "",
     ].filter(Boolean);
-    return `\nPartie en review. ${bits.join(". ")}.`;
+
+    return `
+RÈGLES DE REVIEW (prioritaires) :
+- Adresse-toi à l'élève selon SA couleur (${player}). N'inverse jamais Blancs et Noirs.
+- Ne dis jamais « tu as joué X » si X a été joué par l'adversaire.
+- Ne parle que des pièces présentes dans le FEN. N'invente pas de position.
+- Reste sur CE coup et CETTE position, pas une autre ouverture générique.
+- ${frenchNotationSystemHint()}
+${facts.join("\n")}`;
   }
-  const bits = [
-    r.lastMove ? `Current move: ${r.lastMove}` : "",
-    r.classification ? `Label: ${r.classification}` : "",
-    r.fen ? `FEN: ${r.fen}` : "",
+
+  const facts = [
+    r.playerColor
+      ? `The student plays ${player}${r.whiteName || r.blackName ? ` (White: ${r.whiteName ?? "?"}, Black: ${r.blackName ?? "?"})` : ""}.`
+      : "The student's color is unconfirmed: infer it only from FEN/names if obvious, otherwise stay neutral.",
+    r.sideToMove && moveLabel ? `Displayed move, played by ${mover}: ${moveLabel}. ${ownMove}` : "",
+    r.classification ? `Engine label: ${r.classification}.` : "",
+    typeof r.cpl === "number" ? `Loss: ${r.cpl} centipawns.` : "",
+    bestLabel
+      ? `Engine best move: ${bestLabel}. Do NOT invent a different best move.`
+      : "",
+    typeof r.playerEval === "number" && typeof r.bestEval === "number"
+      ? `Eval after the played move: ${r.playerEval.toFixed(2)} (White POV). Best-move eval: ${r.bestEval.toFixed(2)}.`
+      : "",
+    r.opening ? `Opening: ${r.opening}.` : "",
+    r.fenBefore ? `FEN before the move: ${r.fenBefore}` : "",
+    r.fen ? `FEN after the move (current board): ${r.fen}` : "",
+    r.lastExplanation
+      ? `Explanation already given for this move (stay consistent): ${r.lastExplanation}`
+      : "",
   ].filter(Boolean);
-  return `\nGame review. ${bits.join(". ")}.`;
+
+  return `
+REVIEW RULES (highest priority):
+- Address the student as playing ${player}. Never swap White and Black.
+- Never say "you played X" if X was the opponent's move.
+- Only mention pieces that appear in the FEN. Do not invent a position.
+- Stay on THIS move and THIS position, not a generic opening lecture.
+${facts.join("\n")}`;
 }
 
 export function buildSystemPrompt(req: ChatRequest): string {
@@ -51,7 +119,8 @@ export function buildSystemPrompt(req: ChatRequest): string {
       return `Tu es ChessAvatarPro, le coach officiel de ChessAvatar.
 Tu aides le joueur à comprendre la partie : idées, plans, et erreurs, sans jargon inutile.
 Réponds TOUJOURS en français, à la première personne, pédagogue et précis (2-4 phrases).
-Tu peux citer un coup en SAN court. Pas de listes.${review}`;
+${frenchNotationSystemHint()}
+Pas de listes.${review}`;
     }
     return `You are ChessAvatarPro, the official ChessAvatar coach.
 Help the player understand the game: ideas, plans, and mistakes, without fluff.
