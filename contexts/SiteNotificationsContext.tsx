@@ -6,7 +6,6 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -160,22 +159,7 @@ export function SiteNotificationsProvider({ children }: { children: ReactNode })
       });
     }
     return list;
-  }, [
-    premiumLoading,
-    isPremium,
-    offline.online,
-    offline.pendingCount,
-    offline.syncNow,
-    openUpgrade,
-    t.notifications.freePlanTitle,
-    t.notifications.freePlanBody,
-    t.notifications.upgradeCta,
-    t.notifications.offlineTitle,
-    t.notifications.pendingTitle,
-    t.offlineSync.offlineMode,
-    t.offlineSync.pendingSync,
-    t.offlineSync.syncNow,
-  ]);
+  }, [premiumLoading, isPremium, offline, openUpgrade, t]);
 
   const items = useMemo(() => {
     const extraList = Object.values(extras);
@@ -225,33 +209,4 @@ export function useSiteNotifications() {
     throw new Error("useSiteNotifications must be used within SiteNotificationsProvider");
   }
   return ctx;
-}
-
-/** Register a page-specific notice while the caller is mounted. */
-export function useSiteNotification(item: SiteNotification | null) {
-  const ctx = useContext(SiteNotificationsContext);
-  const actionRef = useRef(item?.onAction);
-  actionRef.current = item?.onAction;
-
-  const id = item?.id ?? null;
-  const kind = item?.kind;
-  const title = item?.title;
-  const body = item?.body;
-  const href = item?.href;
-  const actionLabel = item?.actionLabel;
-  const hasAction = Boolean(item?.onAction);
-
-  useEffect(() => {
-    if (!ctx || !id || !kind || !title || !body) return;
-    ctx.register({
-      id,
-      kind,
-      title,
-      body,
-      href,
-      actionLabel,
-      onAction: hasAction ? () => actionRef.current?.() : undefined,
-    });
-    return () => ctx.unregister(id);
-  }, [ctx, id, kind, title, body, href, actionLabel, hasAction]);
 }

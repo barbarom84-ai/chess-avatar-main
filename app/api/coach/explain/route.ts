@@ -233,7 +233,7 @@ export async function POST(req: NextRequest) {
   // 4) Try the shared cache first (best-effort).
   const thisLangCache = await readCachedExplanation(adminClient, cacheKey);
   if (thisLangCache.tableMissing) dbWarning = "coach_explanations_missing";
-  let cachedExplanation = thisLangCache.explanation;
+  const cachedExplanation = thisLangCache.explanation;
 
   const siblingCache = cachedExplanation
     ? { explanation: null as string | null, tableMissing: thisLangCache.tableMissing }
