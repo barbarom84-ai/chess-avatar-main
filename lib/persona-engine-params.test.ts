@@ -15,6 +15,8 @@ import {
   javaStringHashCode,
   multiPvCountForArena,
   multiPvCountForDifficulty,
+  multiPvCountForPlay,
+  personaLineBias,
   pickPersonaBiasedMove,
   prepareArenaEngineConfig,
   skillLevelFromDifficulty,
@@ -138,6 +140,33 @@ describe("persona engine params (aligned with Android)", () => {
     const opts = engineOptionsForConfig(fixture({ difficulty: 2, elo: 1400 }));
     assert.equal(opts.skill, 5);
     assert.equal(opts.multiPv, 3);
+  });
+
+  it("keeps MultiPV for personality opponents at GM difficulty", () => {
+    const cfg = fixture({
+      difficulty: 5,
+      aggressiveness: 90,
+      personalityId: "tal",
+      playStyle: "tactique",
+    });
+    assert.equal(multiPvCountForDifficulty(5), 1);
+    assert.equal(multiPvCountForPlay(cfg), 3);
+    assert.equal(engineOptionsForConfig(cfg).multiPv, 3);
+  });
+
+  it("biases tactical personas off PV1 more than positional ones", () => {
+    const tal = fixture({ playStyle: "tactique", aggressiveness: 90, difficulty: 5 });
+    const capa = fixture({ playStyle: "positionnel", aggressiveness: 30, difficulty: 5 });
+    assert.ok(personaLineBias(tal) > personaLineBias(capa));
+    const lines = new Map([
+      [1, "e2e4"],
+      [2, "d2d4"],
+      [3, "c2c4"],
+    ]);
+    const talMove = pickPersonaBiasedMove("e2e4", lines, tal, seq([0.2]));
+    const capaMove = pickPersonaBiasedMove("e2e4", lines, capa, seq([0.2]));
+    assert.equal(talMove, "c2c4");
+    assert.equal(capaMove, "e2e4");
   });
 });
 

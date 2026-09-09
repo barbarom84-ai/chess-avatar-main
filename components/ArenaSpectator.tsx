@@ -166,7 +166,7 @@ export default function ArenaSpectator({
           recentProfiles: t.arenaPage.recentProfiles,
           cloudLibrary: t.arenaPage.cloudLibrary,
           featuredChampions: t.arenaPage.featuredChampions,
-        })
+        }, lang)
       );
     } finally {
       setListLoading(false);
@@ -176,6 +176,7 @@ export default function ArenaSpectator({
     t.arenaPage.recentProfiles,
     t.arenaPage.cloudLibrary,
     t.arenaPage.featuredChampions,
+    lang,
   ]);
 
   useEffect(() => {

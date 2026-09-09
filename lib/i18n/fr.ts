@@ -867,6 +867,28 @@ export const fr = {
         chessAvatarWeakHint:
           "ChessAvatar en WASM atteint ~profondeur 10–12 (≈1800–2200 Elo). Pour un bot à 2600+ Elo, choisissez Stockfish ou Auto.",
       },
+      personalities: {
+        personalitiesTab: "Personnalités",
+        libraryTab: "Bibliothèque publique",
+        subtitle:
+          "Affrontez des légendes et des styles nommés — ouvertures et biais de milieu de jeu, pas seulement un moteur bridé.",
+        legends: "Légendes",
+        archetypes: "Styles",
+        filterAll: "Tous",
+        tweakTitle: "Curseurs de style",
+        tweakHint: "Les réglages s’appliquent à cette partie. Le répertoire d’ouvertures reste celui de la personnalité.",
+        aggression: "Agressivité",
+        risk: "Prise de risque",
+        positional: "Positionnel vs tactique",
+        positionalHint: "Gauche : tactique. Droite : positionnel.",
+        startGame: "Jouer contre cet adversaire",
+        changeOpponent: "Adversaires",
+        resetSliders: "Réinitialiser",
+        openings: "Ouvertures",
+        white: "Blancs",
+        black: "Noirs",
+        badge: "Personnalité",
+      },
     },
 
     playOnline: {

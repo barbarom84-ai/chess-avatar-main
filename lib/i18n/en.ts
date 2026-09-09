@@ -863,6 +863,28 @@ export const en = {
         chessAvatarWeakHint:
           "ChessAvatar in WASM reaches ~depth 10–12 (≈1800–2200 Elo). For a 2600+ Elo bot, choose Stockfish or Auto.",
       },
+      personalities: {
+        personalitiesTab: "Personalities",
+        libraryTab: "Public library",
+        subtitle:
+          "Face legendary players and named styles — openings and middlegame bias, not just a strength throttle.",
+        legends: "Legends",
+        archetypes: "Styles",
+        filterAll: "All",
+        tweakTitle: "Style sliders",
+        tweakHint: "Tweaks apply to this game. Opening repertoire stays with the personality.",
+        aggression: "Aggressiveness",
+        risk: "Risk-taking",
+        positional: "Positional vs tactical",
+        positionalHint: "Left: tactical. Right: positional.",
+        startGame: "Play this opponent",
+        changeOpponent: "Opponents",
+        resetSliders: "Reset",
+        openings: "Openings",
+        white: "White",
+        black: "Black",
+        badge: "Personality",
+      },
     },
 
     playOnline: {

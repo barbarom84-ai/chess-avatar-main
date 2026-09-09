@@ -93,11 +93,44 @@ export function multiPvCountForArena(config: EngineConfig): number {
   return Math.max(base, 2);
 }
 
+/**
+ * Vs-human play: personality opponents keep MultiPV so aggressiveness / playStyle
+ * can diverge lines the same way arena bots do. Regular avatars stay on the
+ * difficulty curve.
+ */
+export function multiPvCountForPlay(config: EngineConfig): number {
+  if (config.personalityId) return multiPvCountForArena(config);
+  return multiPvCountForDifficulty(config.difficulty);
+}
+
+/**
+ * Extra chance to leave PV1 from aggressiveness, playStyle, and (optionally) arena.
+ * Tactical/aggressive personas speculate more; positional/solid ones stay on the main line.
+ */
+export function personaLineBias(config: EngineConfig, arenaStyle = false): number {
+  const agg =
+    Math.min(100, Math.max(0, Number(config.aggressiveness) || 0)) / 100;
+  let bump = agg * 0.2 + (arenaStyle ? 0.08 : 0);
+  switch (config.playStyle) {
+    case "tactique":
+    case "agressif":
+      bump += 0.08;
+      break;
+    case "positionnel":
+    case "solide":
+      bump -= 0.05;
+      break;
+    default:
+      break;
+  }
+  return bump;
+}
+
 export function engineOptionsForConfig(config: EngineConfig): EngineOptions {
   return {
     skill: skillLevelFromDifficulty(config.difficulty),
     uciElo: uciEloFromConfig(config.elo),
-    multiPv: multiPvCountForDifficulty(config.difficulty),
+    multiPv: multiPvCountForPlay(config),
     depth: Math.min(20, Math.max(4, config.depth)),
     movetimeMs: Math.min(5000, Math.max(100, config.timeControl)),
   };
@@ -148,9 +181,7 @@ export function pickPersonaBiasedMove(
   if (n < 2 || !bestFromEngine) return bestFromEngine;
 
   const difficulty = config.difficulty;
-  const agg =
-    Math.min(100, Math.max(0, Number(config.aggressiveness) || 0)) / 100;
-  const bump = agg * 0.2 + (arenaStyle ? 0.08 : 0);
+  const bump = personaLineBias(config, arenaStyle);
   const r = rng();
   let pickRank = 1;
 
@@ -162,10 +193,10 @@ export function pickPersonaBiasedMove(
     if (r < 0.1 + bump) pickRank = 3;
     else if (r < 0.3 + bump * 0.6) pickRank = 2;
   } else if (difficulty === 3) {
-    if (r < 0.14 + bump * 0.8) pickRank = 2;
+    if (r < Math.max(0, 0.14 + bump * 0.8)) pickRank = 2;
   } else if (arenaStyle || difficulty >= 4) {
-    if (r < 0.06 + bump * 0.9) pickRank = 3;
-    else if (r < 0.16 + bump) pickRank = 2;
+    if (r < Math.max(0, 0.06 + bump * 0.9)) pickRank = 3;
+    else if (r < Math.max(0, 0.16 + bump)) pickRank = 2;
   }
 
   if (pickRank === 1) return bestFromEngine;

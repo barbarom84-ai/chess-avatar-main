@@ -17,7 +17,7 @@ import {
 import {
   engineOptionsForArena,
   engineOptionsForConfig,
-  multiPvCountForDifficulty,
+  multiPvCountForPlay,
   pickPersonaBiasedMove,
   skillLevelFromDifficulty,
   uciEloFromConfig,
@@ -231,7 +231,7 @@ export function useStockfish() {
     const playWithChessAvatar = () => {
       const baseMultiPv = arenaStyle
         ? engineOpts.multiPv
-        : multiPvCountForDifficulty(config.difficulty);
+        : multiPvCountForPlay(config);
       const hbInterval =
         config.humanBlunderInterval === 0
           ? 0
@@ -262,7 +262,7 @@ export function useStockfish() {
         const lineMoves = new Map<number, string>();
         const baseMultiPv = arenaStyle
         ? engineOpts.multiPv
-        : multiPvCountForDifficulty(config.difficulty);
+        : multiPvCountForPlay(config);
         const hbInterval =
           config.humanBlunderInterval === 0
             ? 0
@@ -386,7 +386,7 @@ export function useStockfish() {
       const movetime = Math.min(opts?.movetime ?? config.timeControl, 1200);
       const skill = skillLevelFromDifficulty(config.difficulty);
       const threads = Math.max(2, config.threads);
-      const baseMulti = multiPvCountForDifficulty(config.difficulty);
+      const baseMulti = multiPvCountForPlay(config);
       const multiPv = Math.max(2, baseMulti);
 
       return stockfishClient.enqueue<string>((ctx) => {
@@ -469,7 +469,7 @@ export function useStockfish() {
       );
 
       if (resolved === "chessavatar") {
-        const personaMultiPv = Math.max(2, multiPvCountForDifficulty(config.difficulty));
+        const personaMultiPv = Math.max(2, multiPvCountForPlay(config));
         return chessAvatarGetBestMove(fen, {
           skillLevel: skill,
           depth: personaLimits.depth,

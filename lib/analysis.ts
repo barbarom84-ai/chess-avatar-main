@@ -62,6 +62,8 @@ export interface EngineConfig {
   humanBlunderInterval?: number;
   /** Seeded champion from the featured arena pool (not a user clone). */
   featuredSeed?: boolean;
+  /** Built-in Fritz-style personality opponent (legend or named style archetype). */
+  personalityId?: string;
 }
 
 function normalizeOpeningName(raw?: string | null): string | null {

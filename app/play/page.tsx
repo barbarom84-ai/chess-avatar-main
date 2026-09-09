@@ -1,15 +1,23 @@
 "use client";
 
 import { useEffect, useState, Suspense, useMemo } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
-import { Bot, AlertCircle } from "lucide-react";
+import { Bot, AlertCircle, Crown, Library, ArrowLeft } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { EngineConfig } from "@/lib/analysis";
 import PublicProfiles from "@/components/PublicProfiles";
+import PersonalityOpponentPicker from "@/components/PersonalityOpponentPicker";
 import { useLanguage } from "@/lib/language-context";
+import { getPersonalityOpponent } from "@/lib/personality-opponents";
+import {
+  parsePersonalityQuery,
+  personalityToEngineConfig,
+} from "@/lib/personality-to-engine";
 
 function PlayBoardLoading() {
   const { t } = useLanguage();
@@ -27,13 +35,23 @@ const PlayableChessboard = dynamic(() => import("@/components/PlayableChessboard
 
 function PlayContent() {
   const searchParams = useSearchParams();
-  const { t } = useLanguage();
+  const router = useRouter();
+  const { t, lang } = useLanguage();
   const [config, setConfig] = useState<EngineConfig | null>(null);
   const [playerColor, setPlayerColor] = useState<'white' | 'black'>('white');
   const [error, setError] = useState("");
   const [showBotSelection, setShowBotSelection] = useState(false);
 
   const urlConfigResult = useMemo(() => {
+    const personality = parsePersonalityQuery(searchParams);
+    if (personality) {
+      const opponent = getPersonalityOpponent(personality.id);
+      if (!opponent) return { kind: "error" as const };
+      return {
+        kind: "ok" as const,
+        config: personalityToEngineConfig(opponent, personality.overrides, lang),
+      };
+    }
     const configParam = searchParams.get("config");
     if (!configParam) return { kind: "none" as const };
     try {
@@ -44,7 +62,7 @@ function PlayContent() {
     } catch {
       return { kind: "error" as const };
     }
-  }, [searchParams]);
+  }, [searchParams, lang]);
 
   useEffect(() => {
     if (urlConfigResult.kind === "error") {
@@ -88,7 +106,7 @@ function PlayContent() {
     return (
       <main className="min-h-screen theme-gradient theme-text-primary p-4 md:p-8">
         <div className="max-w-6xl mx-auto space-y-6">
-          <div className="text-center mb-8">
+          <div className="text-center mb-4">
             <h1 className="text-4xl font-bold text-cyan-400 mb-2 flex items-center justify-center gap-3">
               <span
                 aria-hidden
@@ -107,10 +125,30 @@ function PlayContent() {
               {t.play.selectOpponent}
             </h1>
             <p className="theme-text-secondary">
-              {t.play.selectBotDescription}
+              {t.play.personalities.subtitle}
             </p>
           </div>
-          <PublicProfiles />
+          <Tabs defaultValue="personalities" className="w-full">
+            <TabsList className="bg-slate-900 border border-slate-700 w-full sm:w-auto">
+              <TabsTrigger value="personalities" className="flex-1 sm:flex-none">
+                <Crown className="h-4 w-4" />
+                {t.play.personalities.personalitiesTab}
+              </TabsTrigger>
+              <TabsTrigger value="library" className="flex-1 sm:flex-none">
+                <Library className="h-4 w-4" />
+                {t.play.personalities.libraryTab}
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="personalities" className="mt-4">
+              <PersonalityOpponentPicker onPlay={(href) => router.push(href)} />
+            </TabsContent>
+            <TabsContent value="library" className="mt-4">
+              <p className="text-sm text-slate-400 mb-4">
+                {t.play.selectBotDescription}
+              </p>
+              <PublicProfiles />
+            </TabsContent>
+          </Tabs>
         </div>
       </main>
     );
@@ -121,7 +159,7 @@ function PlayContent() {
       <main className="min-h-screen theme-gradient theme-text-primary flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-cyan-500 mx-auto mb-4"></div>
-          <p className="text-cyan-400/70">Chargement de la configuration...</p>
+          <p className="text-cyan-400/70">{t.play.loading}</p>
         </div>
       </main>
     );
@@ -136,8 +174,26 @@ function PlayContent() {
           <div className="flex items-center justify-between gap-2">
             {/* Gauche: Info Bot */}
             <div className="flex items-center gap-1.5 min-w-0">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-slate-400 hover:text-cyan-200 shrink-0"
+                onClick={() => router.push("/play")}
+                title={t.play.personalities.changeOpponent}
+              >
+                <ArrowLeft className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline text-xs">
+                  {t.play.personalities.changeOpponent}
+                </span>
+              </Button>
               <Bot className="h-4 w-4 text-cyan-400 shrink-0" />
               <span className="text-sm font-semibold text-cyan-100 truncate">{config.name}</span>
+              {config.personalityId ? (
+                <Badge variant="outline" className="text-[10px] h-4 px-1.5 border-amber-400/50 text-amber-200 hidden sm:inline-flex shrink-0">
+                  {t.play.personalities.badge}
+                </Badge>
+              ) : null}
               <Badge variant="outline" className="text-[10px] h-4 px-1.5 border-cyan-400/50 hidden sm:inline-flex shrink-0">
                 Niv {config.difficulty}
               </Badge>

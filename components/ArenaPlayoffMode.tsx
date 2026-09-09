@@ -153,7 +153,7 @@ export default function ArenaPlayoffMode({
         recentProfiles: t.arenaPage.recentProfiles,
         cloudLibrary: t.arenaPage.cloudLibrary,
         featuredChampions: t.arenaPage.featuredChampions,
-      });
+      }, lang);
       setRawOptions(merged);
     } finally {
       setListLoading(false);
@@ -163,6 +163,7 @@ export default function ArenaPlayoffMode({
     t.arenaPage.recentProfiles,
     t.arenaPage.cloudLibrary,
     t.arenaPage.featuredChampions,
+    lang,
   ]);
 
   useEffect(() => {

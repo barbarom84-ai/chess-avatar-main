@@ -5,6 +5,8 @@ import { normalizeEnginePlatform } from "@/lib/normalize-engine-platform";
 import { getSavedConfigs, getRecentConfigs } from "@/lib/storage";
 import { getFilteredProfiles } from "@/lib/supabase-storage";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase";
+import { personalityToArenaOption } from "@/lib/personality-to-engine";
+import { listPersonalityOpponents } from "@/lib/personality-opponents";
 
 export type ProfilePlatformFilter = "all" | "lichess" | "chesscom";
 
@@ -150,13 +152,20 @@ export function featuredChampionsFromPool(
   return pool.filter((o) => isFeaturedChampionConfig(o.config));
 }
 
-/** Charge le pool Arène : champions en base + bibliothèque locale/cloud. */
-export async function loadArenaProfilePool(labels: {
-  savedProfiles: string;
-  recentProfiles: string;
-  cloudLibrary: string;
-  featuredChampions: string;
-}): Promise<ProfileOption[]> {
+export function personalityArenaOptions(lang: string = "en"): ProfileOption[] {
+  return listPersonalityOpponents().map((p) => personalityToArenaOption(p, lang));
+}
+
+/** Charge le pool Arène : personnalités + champions en base + bibliothèque locale/cloud. */
+export async function loadArenaProfilePool(
+  labels: {
+    savedProfiles: string;
+    recentProfiles: string;
+    cloudLibrary: string;
+    featuredChampions: string;
+  },
+  lang: string = "en"
+): Promise<ProfileOption[]> {
   const [local, cloud, dbChampions] = await Promise.all([
     Promise.resolve(
       buildRawOptions(labels.savedProfiles, labels.recentProfiles)
@@ -171,7 +180,8 @@ export async function loadArenaProfilePool(labels: {
       : featuredChampionsFromPool(cloud);
 
   const merged = mergeLocalAndCloud(local, cloud);
-  return mergeFeaturedFirst(champions, merged);
+  const personalities = personalityArenaOptions(lang);
+  return mergeFeaturedFirst(personalities, mergeFeaturedFirst(champions, merged));
 }
 
 export function filterByPlatform(
