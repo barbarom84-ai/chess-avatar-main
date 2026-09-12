@@ -45,6 +45,7 @@ import { buildVerboseHistoryFromSan } from "@/lib/move-history-verbose";
 import { Input } from "@/components/ui/input";
 import SanNotation from "./SanNotation";
 import EvaluationBar from "./EvaluationBar";
+import { toWhitePovEval, type WhitePovEval } from "@/lib/engine-eval";
 import { Switch } from "@/components/ui/switch";
 import {
   computePlayOpeningHints,
@@ -191,7 +192,7 @@ export default function PlayableChessboard({
   /** Incremented on reset so in-flight post-game analysis does not apply stale state. */
   const postGameStatsCancelRef = useRef(0);
 
-  const [liveEval, setLiveEval] = useState<number | null>(null);
+  const [liveEval, setLiveEval] = useState<WhitePovEval | null>(null);
   const [showEvalBar, setShowEvalBar] = useState(false);
   const [showTheoryHints, setShowTheoryHints] = useState(false);
   const liveEvalRequestRef = useRef(0);
@@ -201,7 +202,7 @@ export default function PlayableChessboard({
     isThinking,
     getBestMove,
     getBestMoveAndEval,
-    getPositionEvaluation,
+    getPositionEvaluationDetails,
     resetForcedLine,
     remainingForcedMoves,
     stopThinking,
@@ -258,16 +259,16 @@ export default function PlayableChessboard({
       setLiveEval(null);
       return;
     }
-    if (isArchiveMode || reviewMode || gameOver || !isReady || isThinking) {
+    if (isArchiveMode || reviewMode || gameOver || !isReady) {
       return;
     }
     const fen = game.fen();
     const id = ++liveEvalRequestRef.current;
     let cancelled = false;
-    getPositionEvaluation(fen, LIVE_EVAL_DEPTH)
-      .then((v) => {
+    getPositionEvaluationDetails(fen, LIVE_EVAL_DEPTH)
+      .then((score) => {
         if (cancelled || id !== liveEvalRequestRef.current) return;
-        setLiveEval(v);
+        setLiveEval(toWhitePovEval(fen, score));
       })
       .catch(() => {
         if (cancelled || id !== liveEvalRequestRef.current) return;
@@ -282,9 +283,8 @@ export default function PlayableChessboard({
     reviewMode,
     gameOver,
     isReady,
-    isThinking,
     game,
-    getPositionEvaluation,
+    getPositionEvaluationDetails,
     moveHistory.length,
   ]);
 
@@ -1539,7 +1539,11 @@ export default function PlayableChessboard({
         {/* COLONNE CENTRALE : Échiquier (7/12) */}
         <div className="order-1 lg:order-2 lg:col-span-7 space-y-3">
           {showEvalBar && !isArchiveMode && !reviewMode && (
-            <EvaluationBar evaluation={liveEval} />
+            <EvaluationBar
+              evaluation={liveEval?.evalWhitePov ?? null}
+              isMate={liveEval?.isMate}
+              mateInMoves={liveEval?.mateInMovesWhite}
+            />
           )}
           {reviewMode && (
             <div

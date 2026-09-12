@@ -26,6 +26,13 @@ describe("personality opponents seed", () => {
     expect(listPersonalityOpponents("archetype").length).toBeGreaterThanOrEqual(3);
   });
 
+  it("gives every legend a cartoon portrait path", () => {
+    for (const p of listPersonalityOpponents("legend")) {
+      expect(p.portraitUrl, p.id).toMatch(/^\/personalities\/[a-z-]+\.webp$/);
+      expect(p.difficulty).toBe(5);
+    }
+  });
+
   it("uses opening ids that exist in the core library", () => {
     for (const p of PERSONALITY_OPPONENTS) {
       expect(getOpeningById(p.favoriteOpeningId), p.favoriteOpeningId).toBeTruthy();
@@ -75,10 +82,8 @@ describe("personality → EngineConfig mapping", () => {
     });
     expect(cfg.aggressiveness).toBe(90);
     expect(cfg.playStyle).toBe("tactique");
-    expect(cfg.humanBlunderInterval).toBe(humanBlunderIntervalFromRisk(95));
-    expect(cfg.humanBlunderInterval).toBeLessThan(
-      humanBlunderIntervalFromRisk(karpov.style.risk)
-    );
+    expect(cfg.humanBlunderInterval).toBe(0);
+    expect(cfg.avatarUrl).toBe("/personalities/karpov.webp");
   });
 
   it("maps very low risk to disabled human blunders", () => {
@@ -93,11 +98,15 @@ describe("personality → EngineConfig mapping", () => {
     expect(playStyleFromPositional(50, "solide")).toBe("solide");
   });
 
-  it("keeps MultiPV for aggressive GM personalities", () => {
+  it("plays GM legends on a single PV (opening book keeps their style)", () => {
     const tal = personalityToEngineConfig(getPersonalityOpponent("tal")!);
     const capa = personalityToEngineConfig(getPersonalityOpponent("capablanca")!);
-    expect(multiPvCountForPlay(tal)).toBeGreaterThanOrEqual(3);
-    expect(multiPvCountForPlay(capa)).toBeGreaterThanOrEqual(2);
+    const romantic = personalityToEngineConfig(getPersonalityOpponent("romantic")!);
+    expect(multiPvCountForPlay(tal)).toBe(1);
+    expect(multiPvCountForPlay(capa)).toBe(1);
+    expect(tal.humanBlunderInterval).toBe(0);
+    expect(capa.humanBlunderInterval).toBe(0);
+    expect(multiPvCountForPlay(romantic)).toBeGreaterThanOrEqual(2);
     expect(personaLineBias(tal)).toBeGreaterThan(personaLineBias(capa));
   });
 

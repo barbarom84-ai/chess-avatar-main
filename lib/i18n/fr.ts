@@ -1412,6 +1412,8 @@ export const fr = {
       blackSlight: "Léger avantage noirs",
       blackClear: "Avantage noirs",
       blackWinning: "Les noirs sont gagnants",
+      whiteMate: "Mat des Blancs en {n}",
+      blackMate: "Mat des Noirs en {n}",
       black: "Noir",
       white: "Blanc"
     },

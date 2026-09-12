@@ -37,6 +37,8 @@ export interface PersonalityOpponent {
   archetype: LocalizedText;
   years?: string;
   portraitInitials: string;
+  /** Cartoon caricature under /public/personalities — never a real photo. */
+  portraitUrl?: string;
   accent: PersonalityAccent;
   style: PersonalityStyleDimensions;
   playStyle: EngineConfig["playStyle"];
@@ -63,6 +65,7 @@ export const PERSONALITY_OPPONENTS: PersonalityOpponent[] = [
     archetype: { fr: "Romantique", en: "Romantic" },
     years: "1837–1884",
     portraitInitials: "PM",
+    portraitUrl: "/personalities/morphy.webp",
     accent: "amber",
     style: {
       aggression: 88,
@@ -75,7 +78,7 @@ export const PERSONALITY_OPPONENTS: PersonalityOpponent[] = [
     },
     playStyle: "agressif",
     elo: 2700,
-    difficulty: 4,
+    difficulty: 5,
     favoriteOpeningId: "evans-gambit",
     whiteOpenings: [
       { id: "evans-gambit", weight: 45 },
@@ -86,8 +89,8 @@ export const PERSONALITY_OPPONENTS: PersonalityOpponent[] = [
       { id: "italian-game", weight: 55 },
       { id: "evans-gambit", weight: 45 },
     ],
-    depth: 14,
-    timeControl: 700,
+    depth: 16,
+    timeControl: 900,
     threads: 2,
   },
   {
@@ -102,6 +105,7 @@ export const PERSONALITY_OPPONENTS: PersonalityOpponent[] = [
     archetype: { fr: "Pragmatique", en: "Pragmatic" },
     years: "1868–1941",
     portraitInitials: "EL",
+    portraitUrl: "/personalities/lasker.webp",
     accent: "violet",
     style: {
       aggression: 55,
@@ -114,7 +118,7 @@ export const PERSONALITY_OPPONENTS: PersonalityOpponent[] = [
     },
     playStyle: "équilibré",
     elo: 2720,
-    difficulty: 4,
+    difficulty: 5,
     favoriteOpeningId: "spanish-opening",
     whiteOpenings: [
       { id: "spanish-opening", weight: 55 },
@@ -126,8 +130,8 @@ export const PERSONALITY_OPPONENTS: PersonalityOpponent[] = [
       { id: "sicilian-defense", weight: 30 },
       { id: "italian-game", weight: 25 },
     ],
-    depth: 15,
-    timeControl: 750,
+    depth: 16,
+    timeControl: 900,
     threads: 2,
   },
   {
@@ -142,6 +146,7 @@ export const PERSONALITY_OPPONENTS: PersonalityOpponent[] = [
     archetype: { fr: "Positionnel", en: "Positional" },
     years: "1888–1942",
     portraitInitials: "JC",
+    portraitUrl: "/personalities/capablanca.webp",
     accent: "cyan",
     style: {
       aggression: 32,
@@ -182,6 +187,7 @@ export const PERSONALITY_OPPONENTS: PersonalityOpponent[] = [
     archetype: { fr: "Tactique", en: "Tactical" },
     years: "1936–1992",
     portraitInitials: "MT",
+    portraitUrl: "/personalities/tal.webp",
     accent: "rose",
     style: {
       aggression: 96,
@@ -194,7 +200,7 @@ export const PERSONALITY_OPPONENTS: PersonalityOpponent[] = [
     },
     playStyle: "tactique",
     elo: 2750,
-    difficulty: 4,
+    difficulty: 5,
     favoriteOpeningId: "sicilian-defense",
     whiteOpenings: [
       { id: "italian-game", weight: 30 },
@@ -206,8 +212,8 @@ export const PERSONALITY_OPPONENTS: PersonalityOpponent[] = [
       { id: "sicilian-defense", weight: 70 },
       { id: "kings-indian-defense", weight: 30 },
     ],
-    depth: 14,
-    timeControl: 650,
+    depth: 16,
+    timeControl: 900,
     threads: 2,
   },
   {
@@ -222,6 +228,7 @@ export const PERSONALITY_OPPONENTS: PersonalityOpponent[] = [
     archetype: { fr: "Théoricien", en: "Theoretician" },
     years: "1943–2008",
     portraitInitials: "BF",
+    portraitUrl: "/personalities/fischer.webp",
     accent: "orange",
     style: {
       aggression: 78,
@@ -261,6 +268,7 @@ export const PERSONALITY_OPPONENTS: PersonalityOpponent[] = [
     archetype: { fr: "Solide", en: "Solid" },
     years: "1951–",
     portraitInitials: "AK",
+    portraitUrl: "/personalities/karpov.webp",
     accent: "emerald",
     style: {
       aggression: 28,

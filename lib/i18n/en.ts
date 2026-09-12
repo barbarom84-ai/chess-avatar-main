@@ -1406,6 +1406,8 @@ export const en = {
       blackSlight: "Slight advantage for Black",
       blackClear: "Clear advantage for Black",
       blackWinning: "Black is winning",
+      whiteMate: "White mates in {n}",
+      blackMate: "Black mates in {n}",
       black: "Black",
       white: "White"
     },

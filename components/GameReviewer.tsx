@@ -770,6 +770,10 @@ export default function GameReviewer({
     currentIndex === 0
       ? 0
       : effectiveMoves[currentIndex - 1]?.playerEval ?? null;
+  const evalMateInMoves =
+    currentIndex === 0
+      ? undefined
+      : effectiveMoves[currentIndex - 1]?.playerMateInMoves;
 
   const goToKeyMoment = (direction: 1 | -1) => {
     if (!effectiveResult) return;
@@ -929,7 +933,16 @@ export default function GameReviewer({
 
       {/* CENTER — Board + chat + move detail */}
       <div className="order-1 lg:order-2 flex flex-col gap-1.5 lg:min-h-0 lg:h-full lg:overflow-hidden">
-        <EvaluationBar evaluation={evalForBar} compact />
+        <EvaluationBar
+          evaluation={evalForBar}
+          compact
+          isMate={typeof evalMateInMoves === "number" && evalMateInMoves !== 0}
+          mateInMoves={
+            typeof evalMateInMoves === "number" && evalMateInMoves !== 0
+              ? evalMateInMoves
+              : undefined
+          }
+        />
 
         <div className="flex-1 min-h-[min(70vw,48vh)] lg:min-h-0 w-full [container-type:size] flex items-center justify-center">
           <SimpleChessboard
