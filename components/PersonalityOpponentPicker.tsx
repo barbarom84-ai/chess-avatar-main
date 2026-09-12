@@ -222,12 +222,20 @@ export default function PersonalityOpponentPicker({
                 }`}
               >
                 <div className="flex items-start gap-3">
-                  <div
-                    className={`h-12 w-12 shrink-0 rounded-full border ${accent.border} ${accent.bg} ${accent.text} flex items-center justify-center font-bold text-sm`}
-                    aria-hidden
-                  >
-                    {p.portraitInitials}
-                  </div>
+                  {p.portraitUrl ? (
+                    <img
+                      src={p.portraitUrl}
+                      alt=""
+                      className={`h-12 w-12 shrink-0 rounded-full border ${accent.border} object-cover bg-slate-950`}
+                    />
+                  ) : (
+                    <div
+                      className={`h-12 w-12 shrink-0 rounded-full border ${accent.border} ${accent.bg} ${accent.text} flex items-center justify-center font-bold text-sm`}
+                      aria-hidden
+                    >
+                      {p.portraitInitials}
+                    </div>
+                  )}
                   <div className="min-w-0 flex-1">
                     <p className="font-semibold text-slate-100 truncate">
                       {personalityDisplayName(p, lang)}
@@ -265,11 +273,19 @@ export default function PersonalityOpponentPicker({
           <Card className="bg-slate-900 border-slate-700/80 lg:sticky lg:top-20">
             <CardContent className="pt-5 space-y-4">
               <div className="flex items-start gap-3">
-                <div
-                  className={`h-14 w-14 shrink-0 rounded-full border ${ACCENT[selected.accent].border} ${ACCENT[selected.accent].bg} ${ACCENT[selected.accent].text} flex items-center justify-center font-bold`}
-                >
-                  {selected.portraitInitials}
-                </div>
+                {selected.portraitUrl ? (
+                  <img
+                    src={selected.portraitUrl}
+                    alt=""
+                    className={`h-14 w-14 shrink-0 rounded-full border ${ACCENT[selected.accent].border} object-cover bg-slate-950`}
+                  />
+                ) : (
+                  <div
+                    className={`h-14 w-14 shrink-0 rounded-full border ${ACCENT[selected.accent].border} ${ACCENT[selected.accent].bg} ${ACCENT[selected.accent].text} flex items-center justify-center font-bold`}
+                  >
+                    {selected.portraitInitials}
+                  </div>
+                )}
                 <div>
                   <h2 className="text-lg font-bold text-cyan-100">
                     {personalityDisplayName(selected, lang)}

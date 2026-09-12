@@ -28,7 +28,9 @@ import {
   stockfishGetBestMoveAndEval,
   stockfishGetBestMoveForFen,
   stockfishGetPositionEvaluation,
+  stockfishGetPositionEvaluationDetails,
 } from "@/lib/stockfish-client";
+import { parseEngineScoreLine, toWhitePovEval } from "@/lib/engine-eval";
 import {
   chessAvatarClient,
   chessAvatarGetBestMove,
@@ -530,6 +532,14 @@ export function useStockfish() {
     [isReady]
   );
 
+  const getPositionEvaluationDetails = useCallback(
+    (fen: string, depth = 18) => {
+      if (!isReady) return Promise.reject(new Error("Stockfish not ready"));
+      return stockfishGetPositionEvaluationDetails(fen, depth);
+    },
+    [isReady]
+  );
+
   const debouncedIdleEvalRef = useRef<
     ReturnType<typeof debounce<(fen: string, depth: number) => void>> | null
   >(null);
@@ -538,17 +548,9 @@ export function useStockfish() {
     if (!isReady) return;
     debouncedIdleEvalRef.current = debounce((fen: string, depth: number) => {
       stockfishClient.requestIdleAnalysis(fen, depth, (line) => {
-        if (line.includes("score cp")) {
-          const match = line.match(/score cp (-?\d+)/);
-          if (match) setCurrentEval(parseInt(match[1], 10) / 100);
-        }
-        if (line.includes("score mate")) {
-          const match = line.match(/score mate (-?\d+)/);
-          if (match) {
-            const mateIn = parseInt(match[1], 10);
-            setCurrentEval(mateIn > 0 ? 10 : -10);
-          }
-        }
+        const parsed = parseEngineScoreLine(line);
+        if (!parsed) return;
+        setCurrentEval(toWhitePovEval(fen, parsed).evalWhitePov);
       });
     }, 400);
     return () => debouncedIdleEvalRef.current?.cancel();
@@ -586,6 +588,7 @@ export function useStockfish() {
     getBestMoveForFen,
     getBestMoveAndEval,
     getPositionEvaluation,
+    getPositionEvaluationDetails,
     analyzePosition,
     stopThinking,
     sendCommand,

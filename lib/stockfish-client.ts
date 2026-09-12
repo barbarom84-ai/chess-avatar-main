@@ -5,6 +5,8 @@
  * High-priority tasks (review, bot moves) run before low-priority UI eval.
  */
 
+import { parseEngineScoreLine } from "@/lib/engine-eval";
+
 const DEBUG =
   typeof window !== "undefined" &&
   (window as unknown as { __CHESS_DEBUG?: boolean }).__CHESS_DEBUG;
@@ -445,21 +447,25 @@ export async function stockfishGetPositionEvaluation(
   fen: string,
   depth: number
 ): Promise<number> {
+  const details = await stockfishGetPositionEvaluationDetails(fen, depth);
+  return details.evalPawnsStm;
+}
+
+/** Side-to-move score plus mate metadata (convert with `toWhitePovEval`). */
+export async function stockfishGetPositionEvaluationDetails(
+  fen: string,
+  depth: number
+): Promise<import("@/lib/engine-eval").EngineStmScore> {
   return stockfishClient.enqueue((ctx) => {
-    let lastEval: number | null = null;
+    let last: import("@/lib/engine-eval").EngineStmScore = {
+      evalPawnsStm: 0,
+      isMate: false,
+    };
     ctx.onLine((line) => {
-      const cpMatch = line.match(/\bscore\s+cp\s+(-?\d+)/);
-      if (cpMatch) {
-        lastEval = parseInt(cpMatch[1], 10) / 100;
-      } else {
-        const mateMatch = line.match(/\bscore\s+mate\s+(-?\d+)/);
-        if (mateMatch) {
-          const mateIn = parseInt(mateMatch[1], 10);
-          lastEval = mateIn > 0 ? 10 : -10;
-        }
-      }
+      const parsed = parseEngineScoreLine(line);
+      if (parsed) last = parsed;
       if (line.startsWith("bestmove")) {
-        return lastEval ?? 0;
+        return last;
       }
       return undefined;
     });

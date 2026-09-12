@@ -1,10 +1,15 @@
 "use client";
 
+import { formatEvalLabel } from "@/lib/engine-eval";
 import { useLanguage } from "@/lib/language-context";
 
 interface EvaluationBarProps {
   /** Stockfish-style eval in pawns from White's perspective */
   evaluation: number | null;
+  /** True when the engine reports a forced mate. */
+  isMate?: boolean;
+  /** Positive = White mates in N; negative = Black mates in N. */
+  mateInMoves?: number;
   /** Hide verdict row (Black / Equal / White labels) */
   compact?: boolean;
 }
@@ -18,7 +23,8 @@ type WhitePovVerdict =
   | "blackClear"
   | "blackWinning";
 
-function whitePovVerdict(evalWhite: number): WhitePovVerdict {
+function whitePovVerdict(evalWhite: number, isMate?: boolean): WhitePovVerdict {
+  if (isMate) return evalWhite >= 0 ? "whiteWinning" : "blackWinning";
   if (evalWhite >= 3) return "whiteWinning";
   if (evalWhite >= 2) return "whiteClear";
   if (evalWhite >= 1) return "whiteSlight";
@@ -28,7 +34,12 @@ function whitePovVerdict(evalWhite: number): WhitePovVerdict {
   return "equal";
 }
 
-export default function EvaluationBar({ evaluation, compact = false }: EvaluationBarProps) {
+export default function EvaluationBar({
+  evaluation,
+  isMate = false,
+  mateInMoves,
+  compact = false,
+}: EvaluationBarProps) {
   const { t } = useLanguage();
 
   if (evaluation === null) {
@@ -42,29 +53,36 @@ export default function EvaluationBar({ evaluation, compact = false }: Evaluatio
   const displayEval = evaluation;
   const clampedEval = Math.max(-10, Math.min(10, displayEval));
   const percentage = ((clampedEval + 10) / 20) * 100;
-  const verdict = whitePovVerdict(displayEval);
+  const verdict = whitePovVerdict(displayEval, isMate);
   let verdictLabel: string;
-  switch (verdict) {
-    case "equal":
-      verdictLabel = t.evaluationBar.equal;
-      break;
-    case "whiteSlight":
-      verdictLabel = t.evaluationBar.whiteSlight;
-      break;
-    case "whiteClear":
-      verdictLabel = t.evaluationBar.whiteClear;
-      break;
-    case "whiteWinning":
-      verdictLabel = t.evaluationBar.whiteWinning;
-      break;
-    case "blackSlight":
-      verdictLabel = t.evaluationBar.blackSlight;
-      break;
-    case "blackClear":
-      verdictLabel = t.evaluationBar.blackClear;
-      break;
-    default:
-      verdictLabel = t.evaluationBar.blackWinning;
+  if (isMate && mateInMoves != null && mateInMoves !== 0) {
+    verdictLabel =
+      mateInMoves > 0
+        ? t.evaluationBar.whiteMate.replace("{n}", String(Math.abs(mateInMoves)))
+        : t.evaluationBar.blackMate.replace("{n}", String(Math.abs(mateInMoves)));
+  } else {
+    switch (verdict) {
+      case "equal":
+        verdictLabel = t.evaluationBar.equal;
+        break;
+      case "whiteSlight":
+        verdictLabel = t.evaluationBar.whiteSlight;
+        break;
+      case "whiteClear":
+        verdictLabel = t.evaluationBar.whiteClear;
+        break;
+      case "whiteWinning":
+        verdictLabel = t.evaluationBar.whiteWinning;
+        break;
+      case "blackSlight":
+        verdictLabel = t.evaluationBar.blackSlight;
+        break;
+      case "blackClear":
+        verdictLabel = t.evaluationBar.blackClear;
+        break;
+      default:
+        verdictLabel = t.evaluationBar.blackWinning;
+    }
   }
 
   const centerTone =
@@ -87,9 +105,8 @@ export default function EvaluationBar({ evaluation, compact = false }: Evaluatio
         />
         <div className="absolute top-0 left-1/2 w-0.5 h-full bg-amber-500/50 -ml-0.5" />
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className={`text-xs font-bold ${centerTone}`}>
-            {evaluation > 0 ? "+" : ""}
-            {evaluation.toFixed(2)}
+          <span className={`text-xs font-bold tabular-nums ${centerTone}`}>
+            {formatEvalLabel(evaluation, isMate, mateInMoves)}
           </span>
         </div>
       </div>

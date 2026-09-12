@@ -1244,6 +1244,7 @@ export const fr = {
       captures: "Captures",
       checks: "Échecs",
       precisionAndElo: "Précision & ELO estimés",
+      eloFromThisGame: "Estimé d’après la précision de cette partie — pas votre classement.",
       precision: "Précision",
       whiteSide: "Blancs",
       blackSide: "Noirs",
@@ -1412,6 +1413,8 @@ export const fr = {
       blackSlight: "Léger avantage noirs",
       blackClear: "Avantage noirs",
       blackWinning: "Les noirs sont gagnants",
+      whiteMate: "Mat des Blancs en {n}",
+      blackMate: "Mat des Noirs en {n}",
       black: "Noir",
       white: "Blanc"
     },

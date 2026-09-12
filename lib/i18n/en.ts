@@ -1240,6 +1240,7 @@ export const en = {
       captures: "Captures",
       checks: "Checks",
       precisionAndElo: "Precision & estimated ELO",
+      eloFromThisGame: "Estimated from this game’s accuracy — not your rating.",
       precision: "Precision",
       whiteSide: "White",
       blackSide: "Black",
@@ -1406,6 +1407,8 @@ export const en = {
       blackSlight: "Slight advantage for Black",
       blackClear: "Clear advantage for Black",
       blackWinning: "Black is winning",
+      whiteMate: "White mates in {n}",
+      blackMate: "Black mates in {n}",
       black: "Black",
       white: "White"
     },

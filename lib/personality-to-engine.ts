@@ -169,7 +169,11 @@ export function personalityToEngineConfig(
     forcedLineSource: "openings",
     forcedLineWhite: white,
     forcedLineBlack: black,
-    humanBlunderInterval: humanBlunderIntervalFromRisk(resolved.risk),
+    humanBlunderInterval:
+      opponent.kind === "legend"
+        ? 0
+        : humanBlunderIntervalFromRisk(resolved.risk),
+    avatarUrl: opponent.portraitUrl,
     creatorName: "Chess Avatar",
   };
 }
