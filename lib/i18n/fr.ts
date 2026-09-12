@@ -1244,6 +1244,7 @@ export const fr = {
       captures: "Captures",
       checks: "Échecs",
       precisionAndElo: "Précision & ELO estimés",
+      eloFromThisGame: "Estimé d’après la précision de cette partie — pas votre classement.",
       precision: "Précision",
       whiteSide: "Blancs",
       blackSide: "Noirs",

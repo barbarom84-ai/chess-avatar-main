@@ -52,6 +52,7 @@ import {
   PLAY_EVAL_BAR_STORAGE_KEY,
   PLAY_THEORY_ARROWS_STORAGE_KEY,
 } from "@/lib/play-opening-hints";
+import { estimatedGameElos, winnerFromPlayerResult } from "@/lib/game-result-elo";
 
 const REVIEW_EMOJI_CHOICES = ["💡", "🔥", "❓", "!!", "!?", "⭐", "👍", "📌"];
 
@@ -60,25 +61,6 @@ const POST_GAME_REVIEW_DEPTH = 14;
 
 /** Live evaluation bar depth during play (single Stockfish worker). */
 const LIVE_EVAL_DEPTH = 12;
-
-/**
- * Heuristic display ELO: performance rating plus accuracy vs baseline (~70 from analysis curve).
- * Not a Glicko/Lichess official rating.
- */
-function hybridEstimatedElo(
-  perfElo: number,
-  accuracyPercent: number | null,
-  baseline = 70,
-  k = 3,
-  clampAmt = 80
-): number {
-  if (accuracyPercent == null || !Number.isFinite(accuracyPercent)) return perfElo;
-  const delta = Math.min(
-    clampAmt,
-    Math.max(-clampAmt, k * (accuracyPercent - baseline))
-  );
-  return Math.round(perfElo + delta);
-}
 
 interface PlayableChessboardProps {
   config: EngineConfig;
@@ -758,12 +740,6 @@ export default function PlayableChessboard({
     const seconds = duration % 60;
     const durationStr = `${minutes}m ${seconds}s`;
 
-    const botElo = config.elo ?? 1400;
-    const playerScore = finalResultType === 'win' ? 1 : finalResultType === 'draw' ? 0.5 : 0;
-    const playerPerfElo = Math.round(botElo + 400 * (playerScore - 0.5));
-    const eloWhite = playerColor === 'white' ? playerPerfElo : botElo;
-    const eloBlack = playerColor === 'black' ? playerPerfElo : botElo;
-
     setGameStats({
       totalMoves: currentMoveHistory.length,
       captures,
@@ -774,8 +750,8 @@ export default function PlayableChessboard({
       averageEval: null,
       precisionWhite: null,
       precisionBlack: null,
-      eloWhite,
-      eloBlack,
+      eloWhite: null,
+      eloBlack: null,
     });
 
     const statsRunToken = postGameStatsCancelRef.current;
@@ -807,18 +783,18 @@ export default function PlayableChessboard({
 
         const precW = Math.round(review.white.accuracy * 10) / 10;
         const precB = Math.round(review.black.accuracy * 10) / 10;
-        const humanAccuracy =
-          playerColor === 'white' ? review.white.accuracy : review.black.accuracy;
-        const eloHumanHybrid = hybridEstimatedElo(playerPerfElo, humanAccuracy);
+        const { eloWhite, eloBlack } = estimatedGameElos({
+          accuracyWhite: review.white.accuracy,
+          accuracyBlack: review.black.accuracy,
+          winner: winnerFromPlayerResult(playerColor, finalResultType),
+        });
 
         setGameStats((prev) => ({
           ...prev,
           precisionWhite: precW,
           precisionBlack: precB,
-          eloWhite:
-            playerColor === 'white' ? eloHumanHybrid : botElo,
-          eloBlack:
-            playerColor === 'black' ? eloHumanHybrid : botElo,
+          eloWhite,
+          eloBlack,
         }));
       } catch (err) {
         if (err instanceof ReviewCancelledError) return;

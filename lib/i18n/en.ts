@@ -1240,6 +1240,7 @@ export const en = {
       captures: "Captures",
       checks: "Checks",
       precisionAndElo: "Precision & estimated ELO",
+      eloFromThisGame: "Estimated from this game’s accuracy — not your rating.",
       precision: "Precision",
       whiteSide: "White",
       blackSide: "Black",

@@ -200,6 +200,9 @@ export default function GameResultModal({
                     </p>
                   </div>
                 )}
+                <p className="text-[10px] text-slate-500 leading-snug">
+                  {t.gameResult.eloFromThisGame}
+                </p>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="bg-slate-900 p-2 rounded border border-slate-800">
                     <p className="text-[10px] text-slate-500 mb-1">⚪ {t.gameResult.whiteSide}</p>
