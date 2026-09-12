@@ -5,6 +5,7 @@ import { rateLimit } from "@/lib/rate-limit";
 import { hasActivePremiumAccess } from "@/lib/subscription-access";
 import { buildSystemPrompt, type ChatRequest } from "@/lib/avatar-chat-prompt";
 import { localizeFrenchCoachText } from "@/lib/localized-san";
+import { hydrateReviewChatContext, expandReviewCoachUserMessage } from "@/lib/review-coach-context";
 
 export const runtime = "nodejs";
 
@@ -78,20 +79,33 @@ export async function POST(req: NextRequest) {
   }
 
   const openai = new OpenAI({ apiKey: openaiKey });
-  const system = buildSystemPrompt(body);
+  const review = hydrateReviewChatContext(body.review);
+  const promptBody = { ...body, review };
+  const system = buildSystemPrompt(promptBody);
   const isReview = Boolean(
-    body.review?.fen ||
-      body.review?.fenBefore ||
-      body.review?.lastMove ||
-      body.review?.playerColor
+    review?.fen ||
+      review?.fenBefore ||
+      review?.lastMove ||
+      review?.playerColor
   );
+  const trimmed = body.message.trim();
+  const userContent = isReview
+    ? expandReviewCoachUserMessage(trimmed, review, body.lang)
+    : trimmed;
+  const prior = (body.history ?? []).slice(-6);
+  const history =
+    prior.length &&
+    prior[prior.length - 1]?.role === "user" &&
+    prior[prior.length - 1]?.content === trimmed
+      ? prior.slice(0, -1)
+      : prior;
   const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
     { role: "system", content: system },
-    ...(body.history ?? []).slice(-6).map((h) => ({
+    ...history.map((h) => ({
       role: h.role as "user" | "assistant",
       content: h.content,
     })),
-    { role: "user", content: body.message.trim() },
+    { role: "user", content: userContent },
   ];
 
   try {
@@ -99,15 +113,16 @@ export async function POST(req: NextRequest) {
       model: MODEL,
       messages,
       max_tokens: isReview ? 220 : 180,
-      temperature: isReview ? 0.4 : 0.85,
+      temperature: isReview ? 0.25 : 0.85,
     });
 
     const raw = completion.choices[0]?.message?.content?.trim() ?? "";
     const reply =
       body.lang === "fr"
         ? localizeFrenchCoachText(raw, [
-            body.review?.lastMove ?? "",
-            body.review?.bestMove ?? "",
+            review?.lastMove ?? "",
+            review?.bestMove ?? "",
+            ...(review?.legalMovesNow ?? []),
           ])
         : raw;
 

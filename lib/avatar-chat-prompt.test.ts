@@ -31,10 +31,10 @@ describe("avatar-chat-prompt", () => {
       config: { playStyle: "équilibré", elo: 2400, favoriteOpening: "Italian" },
     });
     expect(prompt).toContain("ChessAvatarPro");
-    expect(prompt).toContain("official ChessAvatar coach");
+    expect(prompt).toContain("Stay side-neutral");
   });
 
-  it("tells the review coach the student is Black and that c3 is White's move", () => {
+  it("tells the review coach about White's c3 without taking the student's side", () => {
     const prompt = buildSystemPrompt({
       message: "Pourquoi ce coup ?",
       lang: "fr",
@@ -53,6 +53,8 @@ describe("avatar-chat-prompt", () => {
         sideToMove: "white",
         turnToMove: "black",
         boardPieces: "White: Ra1 Nb1 Bc1 Qd1 Ke1 Bf1 Ng1 Rh1 Pa2 Pb2 Pc3 Pd3 Pe4 Pf2 Pg2 Ph2; Black: Ra8 Bc8 Qd8 Ke8 Rh8 Pa7 Pb7 Pc7 Pd7 Pe5 Pf7 Pg7 Ph7 Nc6 Nf6 Bc5",
+        legalMovesNow: ["a6", "a5", "Nf6", "O-O"],
+        boardAscii: "8 | r . b q k . . r",
         playerColor: "black",
         isPlayerMove: false,
       },
@@ -61,13 +63,16 @@ describe("avatar-chat-prompt", () => {
     expect(prompt).toContain("les Blancs");
     expect(prompt).toContain("c3");
     expect(prompt).toContain("O-O");
-    expect(prompt).toContain("PAS un coup du joueur");
-    expect(prompt).toContain("N'inverse jamais Blancs et Noirs");
+    expect(prompt).toContain("Reste NEUTRE");
+    expect(prompt).not.toContain("L'élève joue");
+    expect(prompt).not.toContain("PAS un coup du joueur");
     expect(prompt).toContain("T=tour");
     expect(prompt).toContain("TRAIT ACTUEL");
     expect(prompt).toContain("n'est PAS le camp qui vient de jouer");
     expect(prompt).toContain("Nc6");
-    expect(prompt).toContain("n'invente aucune pièce");
+    expect(prompt).not.toContain("Coups LÉGAUX MAINTENANT");
+    expect(prompt).toContain("DERNIER COUP DÉJÀ JOUÉ");
+    expect(prompt).toContain("DIAGRAMME ACTUEL");
   });
 
   it("tells the English review coach Black is to move after White's displayed move", () => {
@@ -82,6 +87,8 @@ describe("avatar-chat-prompt", () => {
         sideToMove: "white",
         turnToMove: "black",
         boardPieces: "White: Ke1 Pc3; Black: ke8",
+        legalMovesNow: ["a6", "Nf6"],
+        bestMove: "O-O",
         playerColor: "black",
         isPlayerMove: false,
       },
@@ -90,6 +97,51 @@ describe("avatar-chat-prompt", () => {
     expect(prompt).toContain("Black");
     expect(prompt).toContain("That side no longer has the move");
     expect(prompt).toContain("White: Ke1 Pc3");
+    expect(prompt).not.toContain("Legal moves NOW");
+    expect(prompt).toContain("Stay NEUTRAL");
+    expect(prompt).not.toContain("The student plays");
+    expect(prompt).toContain("Stay side-neutral");
+  });
+
+  it("lists legal moves when asked how to play the position", () => {
+    const prompt = buildSystemPrompt({
+      message: "Comment jouer cette position ?",
+      lang: "fr",
+      role: "house",
+      stats: { username: "ChessAvatarPro", style: "Équilibré", winRate: 55 },
+      config: { playStyle: "équilibré", elo: 2400, favoriteOpening: "Italian" },
+      review: {
+        lastMove: "Qg7",
+        lastMoveUci: "g5g7",
+        sideToMove: "black",
+        turnToMove: "white",
+        legalMovesNow: ["c5", "Qd2"],
+        playerColor: "white",
+        isPlayerMove: false,
+      },
+    });
+    expect(prompt).toContain("Coups LÉGAUX MAINTENANT");
+    expect(prompt).toContain("comment jouer MAINTENANT");
+    expect(prompt).not.toContain("INTENTION : expliquer le DERNIER COUP");
+  });
+
+  it("does not invent a best continuation when the engine alternative is missing", () => {
+    const prompt = buildSystemPrompt({
+      message: "Quelle était la meilleure suite ?",
+      lang: "fr",
+      role: "house",
+      stats: { username: "ChessAvatarPro", style: "Équilibré", winRate: 55 },
+      config: { playStyle: "équilibré", elo: 2400, favoriteOpening: "Italian" },
+      review: {
+        lastMove: "Qxg7",
+        sideToMove: "black",
+        turnToMove: "white",
+        boardPieces: "Black: Pc6 Nb8",
+      },
+    });
+    expect(prompt).toContain("AUCUNE alternative moteur");
+    expect(prompt).toContain("INTERDIT d'inventer un coup");
+    expect(prompt).toContain("Reste NEUTRE");
   });
 
   it("uses French piece letters in the review prompt (Te1, not Re1)", () => {

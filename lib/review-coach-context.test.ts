@@ -1,9 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
   buildReviewChatContext,
+  classifyReviewCoachQuestion,
+  expandReviewCoachUserMessage,
+  hydrateReviewChatContext,
+  inferPlayedMoveFromFens,
   inferReviewPlayerColor,
   isExplainableReviewedMove,
   isReviewWhyQuestion,
+  legalMovesFromFen,
   pieceInventoryFromFen,
   reviewContextCanExplain,
   turnFromFen,
@@ -75,6 +80,9 @@ describe("review-coach-context", () => {
     expect(ctx?.boardPieces).toContain("Nf3");
     expect(ctx?.boardPieces).toContain("Nc6");
     expect(ctx?.boardPieces).not.toContain("Nc5");
+    expect(ctx?.legalMovesNow?.length).toBeGreaterThan(10);
+    expect(ctx?.legalMovesNow).toEqual(expect.arrayContaining(["O-O", "d6"]));
+    expect(ctx?.boardAscii).toContain("r");
   });
 
   it("lists only pieces that appear on the FEN", () => {
@@ -84,6 +92,8 @@ describe("review-coach-context", () => {
     );
     expect(turnFromFen(start)).toBe("white");
     expect(turnFromFen("not-a-fen")).toBeUndefined();
+    expect(legalMovesFromFen(start)).toEqual(expect.arrayContaining(["e4", "Nf3"]));
+    expect(legalMovesFromFen("not-a-fen")).toEqual([]);
   });
 
   it("does not offer an explanation on best/excellent/brilliant moves", () => {
@@ -97,6 +107,79 @@ describe("review-coach-context", () => {
     expect(isReviewWhyQuestion("Pourquoi ce coup ?", "fr")).toBe(true);
     expect(isReviewWhyQuestion("Why this move?", "en")).toBe(true);
     expect(isReviewWhyQuestion("Comment jouer cette position ?", "fr")).toBe(false);
+    expect(classifyReviewCoachQuestion("Pourquoi ce coup ?", "fr")).toBe("why_last");
+    expect(classifyReviewCoachQuestion("Quelle était la meilleure suite ?", "fr")).toBe(
+      "best_line"
+    );
+    expect(classifyReviewCoachQuestion("Comment jouer cette position ?", "fr")).toBe(
+      "how_to_play"
+    );
+  });
+
+  it("fills last-move identity from the PGN ply when analysis has not reached it", () => {
+    const ctx = buildReviewChatContext({
+      fen: "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2",
+      fenBefore: "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1",
+      lastMoveSan: "e5",
+      lastMoveUci: "e7e5",
+      lastMoveSide: "black",
+      playerColor: "white",
+    });
+    expect(ctx?.lastMove).toBe("e5");
+    expect(ctx?.lastMoveUci).toBe("e7e5");
+    expect(ctx?.sideToMove).toBe("black");
+    expect(ctx?.isPlayerMove).toBe(false);
+  });
+
+  it("recovers the played move from before/after FENs", () => {
+    expect(
+      inferPlayedMoveFromFens(
+        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+        "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1"
+      )
+    ).toEqual({ san: "e4", uci: "e2e4", side: "white" });
+  });
+
+  it("hydrates a missing last move from the two FENs", () => {
+    const hydrated = hydrateReviewChatContext({
+      fenBefore: "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1",
+      fen: "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2",
+      playerColor: "white",
+    });
+    expect(hydrated?.lastMove).toBe("e5");
+    expect(hydrated?.lastMoveUci).toBe("e7e5");
+    expect(hydrated?.sideToMove).toBe("black");
+    expect(hydrated?.isPlayerMove).toBe(false);
+  });
+
+  it("expands why-this-move to name the yellow-arrow ply", () => {
+    const expanded = expandReviewCoachUserMessage(
+      "Pourquoi ce coup ?",
+      {
+        lastMove: "Qg7",
+        lastMoveUci: "g5g7",
+        sideToMove: "black",
+        turnToMove: "white",
+      },
+      "fr"
+    );
+    expect(expanded).toContain("Dg7");
+    expect(expanded).toContain("les Noirs");
+    expect(expanded).toContain("N'indique aucun coup à jouer maintenant");
+  });
+
+  it("refuses to invent a best continuation before engine data exists", () => {
+    const expanded = expandReviewCoachUserMessage(
+      "Quelle était la meilleure suite ?",
+      {
+        lastMove: "Qxg7",
+        sideToMove: "black",
+        turnToMove: "white",
+      },
+      "fr"
+    );
+    expect(expanded).toContain("n'est pas encore disponible");
+    expect(expanded).toContain("pas de Cc6");
   });
 
   it("requires engine fields before explain API can run", () => {

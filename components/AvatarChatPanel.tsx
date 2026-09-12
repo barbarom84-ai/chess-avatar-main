@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import Image from "next/image";
 import { Send, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,8 @@ import {
   useChessboardSettings,
   type PieceSet,
 } from "@/contexts/ChessboardSettingsContext";
-import { isReviewWhyQuestion, reviewContextCanExplain, type ReviewChatContext } from "@/lib/review-coach-context";
+import { isReviewWhyQuestion, reviewContextCanExplain, classifyReviewCoachQuestion, type ReviewChatContext } from "@/lib/review-coach-context";
+import { coachBoardSight } from "@/lib/coach-board-sight";
 import type { CoachToneId } from "@/lib/coach-tone";
 import {
   PIECE_EMOJI_IDS,
@@ -29,6 +30,7 @@ import {
   type StickerEmojiId,
 } from "@/lib/chat-emojis";
 import CoachSanText from "@/components/CoachSanText";
+import ReviewCoachSightBoard from "@/components/ReviewCoachSightBoard";
 import { ChessAvatarSticker } from "@/components/chat/chess-avatar-stickers";
 
 interface ChatMessage {
@@ -45,6 +47,8 @@ interface AvatarChatPanelProps {
   reviewContext?: ReviewChatContext;
   playerColor?: "white" | "black" | null;
   coachTone?: CoachToneId;
+  orientation?: "white" | "black";
+  headerActions?: ReactNode;
 }
 
 function pieceLetter(id: PieceEmojiId): "K" | "Q" | "R" | "B" | "N" | "P" {
@@ -151,6 +155,8 @@ export default function AvatarChatPanel({
   reviewContext,
   playerColor = null,
   coachTone = "pedagogical",
+  orientation = "white",
+  headerActions,
 }: AvatarChatPanelProps) {
   const { t, lang } = useLanguage();
   const { settings } = useChessboardSettings();
@@ -167,11 +173,7 @@ export default function AvatarChatPanel({
   const photo = avatarUrl || config.avatarUrl || stats.avatarUrl;
   const welcome =
     variant === "review"
-      ? playerColor === "black"
-        ? t.avatarChat.welcomeReviewBlack
-        : playerColor === "white"
-          ? t.avatarChat.welcomeReviewWhite
-          : t.avatarChat.welcomeReviewUnknown
+      ? t.avatarChat.welcomeReview
       : houseCoach
         ? t.avatarChat.welcomeHouse
         : t.avatarChat.welcome.replace("{name}", stats.username);
@@ -383,11 +385,29 @@ export default function AvatarChatPanel({
         : t.review.coach.turnToMoveWhite
       : null;
 
+  const lastAssistantText =
+    [...messages].reverse().find((m) => m.role === "assistant")?.content ??
+    reviewContext?.lastExplanation ??
+    "";
+
+  const sight =
+    variant === "review"
+      ? coachBoardSight({
+          fen: reviewContext?.fen,
+          lastMoveUci: reviewContext?.lastMoveUci,
+          lastMoveSan: reviewContext?.lastMove,
+          bestMoveSan: reviewContext?.bestMove,
+          text: lastAssistantText,
+        })
+      : null;
+
   const identity = (
     <div className="flex items-center gap-3 min-w-0">
       <CoachFace src={photo} name={stats.username} size={variant === "page" ? 48 : 36} />
       <div className="min-w-0">
-        <div className="font-semibold text-cyan-100 truncate">{title}</div>
+        <div className={cn("font-semibold text-cyan-100", variant !== "review" && "truncate")}>
+          {title}
+        </div>
         <p className="text-xs text-slate-500 truncate">
           {turnBadge ? (
             <span className="text-cyan-300/90">{turnBadge}</span>
@@ -404,6 +424,7 @@ export default function AvatarChatPanel({
 
   const thread = (
     <>
+      <div className={cn("relative flex-1 min-h-0", variant === "review" && "min-h-[10rem]")}>
       <div
         ref={scrollRef}
         className={cn(
@@ -411,7 +432,7 @@ export default function AvatarChatPanel({
           variant === "page"
             ? "flex-1 min-h-[46vh]"
             : variant === "review"
-              ? "flex-1 min-h-[10rem]"
+              ? "h-full pr-[9.5rem]"
               : "h-52"
         )}
       >
@@ -438,7 +459,28 @@ export default function AvatarChatPanel({
               {variant === "review" && m.role === "assistant" ? (
                 <CoachSanText
                   text={m.content}
-                  side={reviewContext?.sideToMove}
+                  side={(() => {
+                    const prevUser = [...messages.slice(0, i)]
+                      .reverse()
+                      .find((x) => x.role === "user")?.content ?? "";
+                    const intent = classifyReviewCoachQuestion(prevUser, lang);
+                    const forNow =
+                      intent === "how_to_play" || intent === "other";
+                    const chosen = forNow
+                      ? reviewContext?.turnToMove ?? reviewContext?.sideToMove
+                      : reviewContext?.sideToMove ?? reviewContext?.turnToMove;
+                    return chosen;
+                  })()}
+                  coloredMoves={[
+                    {
+                      san: reviewContext?.lastMove,
+                      side: reviewContext?.sideToMove,
+                    },
+                    {
+                      san: reviewContext?.bestMove,
+                      side: reviewContext?.sideToMove,
+                    },
+                  ]}
                 />
               ) : (
                 <ChatRichText text={m.content} pieceSet={pieceSet} markTitle={markTitle} />
@@ -452,6 +494,12 @@ export default function AvatarChatPanel({
             {t.avatarChat.thinking}
           </div>
         )}
+      </div>
+      {sight ? (
+        <div className="absolute top-2 right-2 z-10 pointer-events-none">
+          <ReviewCoachSightBoard sight={sight} orientation={orientation} />
+        </div>
+      ) : null}
       </div>
 
       <div className={variant === "review" ? "shrink-0" : undefined}>
@@ -587,7 +635,10 @@ export default function AvatarChatPanel({
   if (variant === "review") {
     return (
       <div className="flex flex-col gap-1.5 flex-1 min-h-0 h-full">
-        <div className="shrink-0">{identity}</div>
+        <div className="shrink-0 flex flex-wrap items-center gap-2">
+          {identity}
+          {headerActions}
+        </div>
         <div className="flex flex-col gap-1.5 flex-1 min-h-0">{thread}</div>
       </div>
     );

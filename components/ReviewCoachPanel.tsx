@@ -36,6 +36,9 @@ export type ReviewCoachPanelProps = {
   currentMove?: ReviewedMove | null;
   fen?: string | null;
   fenBefore?: string | null;
+  lastMoveSan?: string | null;
+  lastMoveUci?: string | null;
+  lastMoveSide?: ReviewPlayerColor | null;
   moveNumber?: number;
   openingName?: string | null;
   whiteName?: string | null;
@@ -43,6 +46,7 @@ export type ReviewCoachPanelProps = {
   playerColor?: ReviewPlayerColor | null;
   onPlayerColorChange?: (color: ReviewPlayerColor) => void;
   coachTone: CoachToneId;
+  orientation?: "white" | "black";
   onRequestUpgrade?: () => void;
   children?: ReactNode;
 };
@@ -64,6 +68,7 @@ type ReviewCoachCtx = {
   fenBefore?: string | null;
   moveNumber?: number;
   coachTone: CoachToneId;
+  orientation?: "white" | "black";
   onRequestUpgrade?: () => void;
   handleExplanationChange: (text: string | null) => void;
 };
@@ -83,6 +88,9 @@ export function ReviewCoachProvider({
   currentMove,
   fen,
   fenBefore,
+  lastMoveSan,
+  lastMoveUci,
+  lastMoveSide,
   moveNumber,
   openingName,
   whiteName,
@@ -90,6 +98,7 @@ export function ReviewCoachProvider({
   playerColor = null,
   onPlayerColorChange,
   coachTone,
+  orientation = "white",
   onRequestUpgrade,
   children,
 }: ReviewCoachPanelProps) {
@@ -141,6 +150,9 @@ export function ReviewCoachProvider({
         fen,
         fenBefore,
         move: currentMove,
+        lastMoveSan,
+        lastMoveUci,
+        lastMoveSide,
         playerColor,
         openingName,
         whiteName,
@@ -152,6 +164,9 @@ export function ReviewCoachProvider({
       fen,
       fenBefore,
       currentMove,
+      lastMoveSan,
+      lastMoveUci,
+      lastMoveSide,
       playerColor,
       openingName,
       whiteName,
@@ -179,6 +194,7 @@ export function ReviewCoachProvider({
       fenBefore,
       moveNumber,
       coachTone,
+      orientation,
       onRequestUpgrade,
       handleExplanationChange,
     }),
@@ -194,6 +210,7 @@ export function ReviewCoachProvider({
       fenBefore,
       moveNumber,
       coachTone,
+      orientation,
       onRequestUpgrade,
       handleExplanationChange,
     ]
@@ -206,7 +223,11 @@ export function ReviewCoachProvider({
   );
 }
 
-export function ReviewCoachSidebar() {
+export function ReviewCoachSidebar({
+  showAnalysis = true,
+}: {
+  showAnalysis?: boolean;
+}) {
   const { t } = useLanguage();
   const {
     opponentConfig,
@@ -284,6 +305,7 @@ export function ReviewCoachSidebar() {
         </div>
       </div>
 
+      <div className={showAnalysis ? undefined : "hidden"}>
       <ReviewCoachAnalysis
         move={currentMove}
         fenBefore={fenBefore}
@@ -292,12 +314,13 @@ export function ReviewCoachSidebar() {
         onRequestUpgrade={onRequestUpgrade}
         onExplanationChange={handleExplanationChange}
       />
+      </div>
     </div>
   );
 }
 
-export function ReviewCoachChat() {
-  const { coachId, selected, reviewContext, playerColor, coachTone } =
+export function ReviewCoachChat({ toolbar }: { toolbar?: ReactNode }) {
+  const { coachId, selected, reviewContext, playerColor, coachTone, orientation } =
     useReviewCoach();
   return (
     <AvatarChatPanel
@@ -310,6 +333,8 @@ export function ReviewCoachChat() {
       reviewContext={reviewContext}
       playerColor={playerColor}
       coachTone={coachTone}
+      orientation={orientation}
+      headerActions={toolbar}
     />
   );
 }

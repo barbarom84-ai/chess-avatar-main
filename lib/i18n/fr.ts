@@ -364,12 +364,14 @@ export const fr = {
         "Salut ! Je suis le clone de {name}. Pose-moi une question sur mon style, mes ouvertures ou une position.",
       welcomeHouse:
         "Salut ! Je suis ChessAvatarPro, ton coach. Choisis un coup dans la review et demande-moi pourquoi, ou change de coach ci-dessus.",
+      welcomeReview:
+        "J’explique la position affichée, sans parti pris pour un camp. Pose une question sur le dernier coup ou la suite.",
       welcomeReviewWhite:
-        "Tu joues les Blancs. Je t’explique cette position de ton côté — pose-moi une question sur le coup affiché.",
+        "J’explique la position affichée, sans parti pris pour un camp. Pose une question sur le dernier coup ou la suite.",
       welcomeReviewBlack:
-        "Tu joues les Noirs. Je t’explique cette position de ton côté — pose-moi une question sur le coup affiché.",
+        "J’explique la position affichée, sans parti pris pour un camp. Pose une question sur le dernier coup ou la suite.",
       welcomeReviewUnknown:
-        "Indique ta couleur (Blancs/Noirs ci-dessus), puis pose-moi une question sur le coup affiché.",
+        "J’explique la position affichée, sans parti pris pour un camp. Pose une question sur le dernier coup ou la suite.",
       placeholder: "Parle à ton avatar…",
       send: "Envoyer",
       thinking: "Réflexion…",
@@ -1656,6 +1658,7 @@ export const fr = {
       layout: {
         settingsToggle: "Paramètres",
         settingsCollapse: "Masquer paramètres",
+        panelsLabel: "Affichage",
         tabMoves: "Coups",
         tabEngine: "Moteur",
         tabDetails: "Détails",
@@ -1801,6 +1804,10 @@ export const fr = {
         pickAMove: "Navigue jusqu’à un coup pour voir l’analyse du coach.",
         turnToMoveWhite: "Trait aux Blancs",
         turnToMoveBlack: "Trait aux Noirs",
+        sightTitle: "Vue du coach",
+        sightHint: "Position envoyée au coach.",
+        sightCited: "Il cite : {moves}",
+        sightIllegal: "Pas légal ici : {moves}",
       },
       paradox: {
         title: "Paradoxe clone",

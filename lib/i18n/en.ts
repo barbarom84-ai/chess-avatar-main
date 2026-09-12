@@ -364,12 +364,14 @@ export const en = {
         "Hey! I’m the clone of {name}. Ask me about my style, openings, or a position.",
       welcomeHouse:
         "Hi — I’m ChessAvatarPro, your coach. Pick a move in the review and ask me why, or switch coach above.",
+      welcomeReview:
+        "I’ll explain the position on the board, without taking a side. Ask about the last move or the continuation.",
       welcomeReviewWhite:
-        "You’re playing White. I’ll explain this position from your side — ask me about the current move.",
+        "I’ll explain the position on the board, without taking a side. Ask about the last move or the continuation.",
       welcomeReviewBlack:
-        "You’re playing Black. I’ll explain this position from your side — ask me about the current move.",
+        "I’ll explain the position on the board, without taking a side. Ask about the last move or the continuation.",
       welcomeReviewUnknown:
-        "Tell me which color you’re playing (White/Black above), then ask about the current move.",
+        "I’ll explain the position on the board, without taking a side. Ask about the last move or the continuation.",
       placeholder: "Talk to your avatar…",
       send: "Send",
       thinking: "Thinking…",
@@ -1650,6 +1652,7 @@ export const en = {
       layout: {
         settingsToggle: "Settings",
         settingsCollapse: "Hide settings",
+        panelsLabel: "Display",
         tabMoves: "Moves",
         tabEngine: "Engine",
         tabDetails: "Details",
@@ -1795,6 +1798,10 @@ export const en = {
         pickAMove: "Go to a move to see the coach analysis.",
         turnToMoveWhite: "White to move",
         turnToMoveBlack: "Black to move",
+        sightTitle: "Coach's board",
+        sightHint: "Position sent to the coach.",
+        sightCited: "Cites: {moves}",
+        sightIllegal: "Not legal here: {moves}",
       },
       paradox: {
         title: "Clone paradox",

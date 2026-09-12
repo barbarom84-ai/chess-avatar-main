@@ -1,4 +1,5 @@
 import type { ReviewChatContext } from "@/lib/review-coach-context";
+import { classifyReviewCoachQuestion } from "@/lib/review-coach-context";
 import { frenchNotationSystemHint, localizeFrenchCoachText, localizeSan } from "@/lib/localized-san";
 
 export interface ChatRequest {
@@ -30,39 +31,56 @@ export function reviewBlurb(req: ChatRequest, lang: "fr" | "en"): string {
   const r = req.review;
   if (!r?.lastMove && !r?.fen && !r?.fenBefore && !r?.playerColor) return "";
 
-  const player = sideLabel(r.playerColor, lang);
   const mover = sideLabel(r.sideToMove, lang);
   const nowToMove = sideLabel(r.turnToMove, lang);
   const moveLabel = localizeSan(r.lastMove ?? r.lastMoveUci ?? "", lang);
   const bestLabel = localizeSan(r.bestMove ?? r.bestMoveUci ?? "", lang);
-  const ownMove =
-    r.isPlayerMove === true
-      ? lang === "fr"
-        ? "C'EST un coup du joueur (l'élève)."
-        : "This IS the student's own move."
-      : r.isPlayerMove === false
-        ? lang === "fr"
-          ? "Ce n'est PAS un coup du joueur — c'est l'adversaire."
-          : "This is NOT the student's move — it is the opponent."
-        : "";
+  const intent = classifyReviewCoachQuestion(req.message, lang);
+  const suggestNow = intent === "how_to_play" || intent === "other";
+  const beforeSans = (r.legalMovesBefore ?? []).map((san) => localizeSan(san, lang));
 
   if (lang === "fr") {
+    const intentBlock =
+      intent === "why_last" && moveLabel
+        ? `INTENTION : expliquer le DERNIER COUP DÉJÀ JOUÉ (${moveLabel} par ${mover}, flèche jaune). Neutre : pas de « tu joues les Blancs/Noirs ». INTERDIT de proposer un coup à ${nowToMove}.`
+        : intent === "best_line"
+          ? bestLabel
+            ? `INTENTION : la meilleure suite est UNIQUEMENT ${bestLabel}, un coup de ${mover} À LA PLACE de ${moveLabel || "ce coup"}, depuis le FEN AVANT. INTERDIT d'inventer un autre SAN (pas de Cc6 / b8-c6 s'ils ne sont pas ${bestLabel}). Ce n'est pas un coup de l'échiquier actuel.`
+            : `INTENTION : meilleure suite, mais AUCUNE alternative moteur n'est fournie. Dis que l'analyse n'est pas prête. INTERDIT d'inventer un coup (Cc6, b8-c6, développement générique…).`
+          : intent === "how_to_play"
+            ? `INTENTION : comment jouer MAINTENANT. Tu peux citer des coups de la liste légale pour ${nowToMove}. Reste descriptif, sans « tu dois ».`
+            : intent === "lost_advantage"
+              ? `INTENTION : où l'évaluation a glissé. Parle du coup affiché (${moveLabel || "?"}) et de sa classification, pas d'un coup futur, et sans prendre parti pour un camp.`
+              : "";
     const facts = [
-      r.playerColor
-        ? `L'élève joue ${player}${r.whiteName || r.blackName ? ` (Blancs: ${r.whiteName ?? "?"}, Noirs: ${r.blackName ?? "?"})` : ""}.`
-        : "La couleur de l'élève n'est pas confirmée : déduis-la seulement si le FEN et les noms le permettent, sinon reste neutre.",
+      r.whiteName || r.blackName
+        ? `Partie : Blancs ${r.whiteName ?? "?"} — Noirs ${r.blackName ?? "?"}.`
+        : "",
       r.turnToMove
-        ? `TRAIT ACTUEL (échiquier affiché, MAINTENANT) : ${nowToMove}. C'est à eux de jouer. Le 2e champ du FEN (w/b) le confirme. N'invente JAMAIS le trait.`
+        ? `TRAIT ACTUEL (échiquier affiché) : ${nowToMove}. Le 2e champ du FEN (w/b) le confirme.`
         : "",
       r.sideToMove && moveLabel
-        ? `Dernier coup DÉJÀ joué (il est sur l'échiquier) : ${moveLabel}, joué par ${mover}. ${ownMove} Ce camp n'a plus le trait.`
+        ? `Dernier coup DÉJÀ joué : ${moveLabel}, par ${mover}. Ce camp n'a plus le trait.`
         : "",
       r.boardPieces
-        ? `Pièces réellement présentes (seules celles-ci existent — n'invente aucune pièce, case ou capture) : ${r.boardPieces}`
+        ? `Pièces réellement présentes (seules celles-ci existent) : ${r.boardPieces}`
+        : "",
+      r.boardAscii
+        ? `DIAGRAMME ACTUEL (8e rangée en haut) — après ${moveLabel || "le coup"} :\n${r.boardAscii}`
+        : "",
+      suggestNow && r.legalMovesNow?.length
+        ? `Coups LÉGAUX MAINTENANT (seuls ceux-ci peuvent être proposés comme suite) : ${r.legalMovesNow
+            .map((san) => localizeSan(san, lang))
+            .join(", ")}.`
+        : "",
+      intent === "best_line" && beforeSans.length
+        ? `Coups LÉGAUX AVANT ${moveLabel || "ce coup"} (seuls ceux-ci pouvaient le remplacer) : ${beforeSans.join(", ")}.`
         : "",
       r.classification ? `Classification moteur : ${r.classification}.` : "",
       typeof r.cpl === "number" ? `Perte : ${r.cpl} centipions.` : "",
-      bestLabel ? `Meilleur coup moteur : ${bestLabel}. Ne propose PAS un autre « meilleur coup ».` : "",
+      bestLabel
+        ? `Alternative moteur MANQUÉE (depuis le FEN AVANT, à la place de ${moveLabel || "ce coup"}) : ${bestLabel}.`
+        : "",
       typeof r.playerEval === "number" && typeof r.bestEval === "number"
         ? `Éval après le coup joué : ${r.playerEval.toFixed(2)} (POV Blancs). Éval du meilleur coup : ${r.bestEval.toFixed(2)}.`
         : "",
@@ -79,32 +97,55 @@ export function reviewBlurb(req: ChatRequest, lang: "fr" | "en"): string {
 
     return `
 RÈGLES DE REVIEW (prioritaires) :
-- Adresse-toi à l'élève selon SA couleur (${player}). N'inverse jamais Blancs et Noirs.
-- Ne dis jamais « tu as joué X » si X a été joué par l'adversaire.
-- Le trait ACTUEL n'est PAS le camp qui vient de jouer. Si les Blancs viennent de jouer, c'est aux Noirs de jouer, et inversement.
-- Ne parle que des pièces listées. N'invente pas de cavalier, fou, ou capture absents de l'inventaire (pas de « Cc6 » / « prise en c5 » si ces pièces/cases ne sont pas listées).
-- Reste sur CE coup et CETTE position, pas une autre ouverture générique.
+- Reste NEUTRE : n'adresse jamais le joueur comme « tu joues les Blancs » ou « tu joues les Noirs ». Décris les deux camps à la 3e personne.
+- Ne dis jamais « tu as joué X ».
+- Le trait ACTUEL n'est PAS le camp qui vient de jouer.
+- Ne parle que des pièces du diagramme. N'invente pas de cavalier ou de case occupée (pas de « Cc6 » si un pion est déjà en c6).
+- Un coup proposé MAINTENANT doit être dans la liste légale actuelle. Une meilleure suite se joue dans le FEN AVANT.
+- Reste sur CE coup et CETTE position, pas une ouverture générique.
 - ${frenchNotationSystemHint()}
-${facts.join("\n")}`;
+${intentBlock ? `${intentBlock}\n` : ""}${facts.join("\n")}`;
   }
 
+  const enIntentBlock =
+    intent === "why_last" && moveLabel
+      ? `INTENT: explain the LAST MOVE ALREADY PLAYED (${moveLabel} by ${mover}, yellow arrow). Stay side-neutral. Do NOT suggest a move for ${nowToMove}.`
+      : intent === "best_line"
+        ? bestLabel
+          ? `INTENT: the only best continuation is ${bestLabel}, a ${mover} move INSTEAD of ${moveLabel || "this move"} from the BEFORE FEN. Do NOT invent another SAN.`
+          : `INTENT: best continuation, but NO engine alternative is provided. Say analysis is not ready. Do NOT invent a move (Nc6, b8-c6, generic development…).`
+        : intent === "how_to_play"
+          ? `INTENT: how to play NOW. You may cite legal moves for ${nowToMove}. Stay descriptive.`
+          : intent === "lost_advantage"
+            ? `INTENT: where the evaluation slipped. Talk about the displayed move (${moveLabel || "?"}), without taking a side.`
+            : "";
+
   const facts = [
-    r.playerColor
-      ? `The student plays ${player}${r.whiteName || r.blackName ? ` (White: ${r.whiteName ?? "?"}, Black: ${r.blackName ?? "?"})` : ""}.`
-      : "The student's color is unconfirmed: infer it only from FEN/names if obvious, otherwise stay neutral.",
+    r.whiteName || r.blackName
+      ? `Game: White ${r.whiteName ?? "?"} — Black ${r.blackName ?? "?"}.`
+      : "",
     r.turnToMove
-      ? `SIDE TO MOVE NOW (displayed board): ${nowToMove}. It is their turn. The FEN's second field (w/b) confirms this. NEVER invent whose turn it is.`
+      ? `SIDE TO MOVE NOW (displayed board): ${nowToMove}. The FEN's second field (w/b) confirms this.`
       : "",
     r.sideToMove && moveLabel
-      ? `Last move ALREADY played (it is on the board): ${moveLabel}, played by ${mover}. ${ownMove} That side no longer has the move.`
+      ? `Last move ALREADY played: ${moveLabel}, by ${mover}. That side no longer has the move.`
       : "",
     r.boardPieces
-      ? `Pieces actually on the board (only these exist — invent no piece, square, or capture): ${r.boardPieces}`
+      ? `Pieces actually on the board (only these exist): ${r.boardPieces}`
+      : "",
+    r.boardAscii
+      ? `CURRENT DIAGRAM (rank 8 at the top) — after ${moveLabel || "the move"}:\n${r.boardAscii}`
+      : "",
+    suggestNow && r.legalMovesNow?.length
+      ? `Legal moves NOW (only these may be suggested as a continuation): ${r.legalMovesNow.join(", ")}.`
+      : "",
+    intent === "best_line" && beforeSans.length
+      ? `Legal moves BEFORE ${moveLabel || "this move"} (only these could replace it): ${beforeSans.join(", ")}.`
       : "",
     r.classification ? `Engine label: ${r.classification}.` : "",
     typeof r.cpl === "number" ? `Loss: ${r.cpl} centipawns.` : "",
     bestLabel
-      ? `Engine best move: ${bestLabel}. Do NOT invent a different best move.`
+      ? `MISSED engine alternative (from the BEFORE FEN, instead of ${moveLabel || "the played move"}): ${bestLabel}.`
       : "",
     typeof r.playerEval === "number" && typeof r.bestEval === "number"
       ? `Eval after the played move: ${r.playerEval.toFixed(2)} (White POV). Best-move eval: ${r.bestEval.toFixed(2)}.`
@@ -119,12 +160,13 @@ ${facts.join("\n")}`;
 
   return `
 REVIEW RULES (highest priority):
-- Address the student as playing ${player}. Never swap White and Black.
-- Never say "you played X" if X was the opponent's move.
-- The side to move NOW is NOT the side that just moved. If White just played, it is Black to move, and vice versa.
-- Only mention listed pieces. Do not invent a knight, bishop, or capture missing from the inventory (no "Nc6" / "take on c5" unless those pieces/squares are listed).
+- Stay NEUTRAL: never address the player as "you play White" or "you play Black". Describe both sides in the third person.
+- Never say "you played X".
+- The side to move NOW is NOT the side that just moved.
+- Only mention pieces on the diagram. Do not invent a knight onto an occupied square (no "Nc6" if a pawn is already on c6).
+- A move to play NOW must be in the current legal list. A better continuation is played from the BEFORE FEN.
 - Stay on THIS move and THIS position, not a generic opening lecture.
-${facts.join("\n")}`;
+${enIntentBlock ? `${enIntentBlock}\n` : ""}${facts.join("\n")}`;
 }
 
 export function buildSystemPrompt(req: ChatRequest): string {
@@ -136,13 +178,15 @@ export function buildSystemPrompt(req: ChatRequest): string {
   if (isHouse) {
     if (lang === "fr") {
       return `Tu es ChessAvatarPro, le coach officiel de ChessAvatar.
-Tu aides le joueur à comprendre la partie : idées, plans, et erreurs, sans jargon inutile.
+Tu aides à comprendre la partie : idées, plans et erreurs, sans jargon inutile.
+Reste neutre vis-à-vis des deux camps : jamais « tu joues les Blancs/Noirs ».
 Réponds TOUJOURS en français, à la première personne, pédagogue et précis (2-4 phrases).
 ${frenchNotationSystemHint()}
 Pas de listes.${review}`;
     }
     return `You are ChessAvatarPro, the official ChessAvatar coach.
-Help the player understand the game: ideas, plans, and mistakes, without fluff.
+Help understand the game: ideas, plans, and mistakes, without fluff.
+Stay side-neutral: never "you play White/Black".
 Always reply in English, first person, pedagogical and precise (2-4 sentences).
 Short SAN is fine. No lists.${review}`;
   }
