@@ -901,9 +901,9 @@ export default function GameReviewer({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[minmax(13rem,1fr)_minmax(22rem,2.4fr)_minmax(16rem,1.15fr)] gap-2 lg:flex-1 lg:min-h-0 lg:overflow-hidden">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(12rem,0.85fr)_minmax(20rem,1.65fr)_minmax(22rem,1.5fr)] gap-2 lg:flex-1 lg:min-h-0 lg:overflow-hidden">
       {/* LEFT — Move list */}
-      <div className="order-2 lg:order-1 lg:min-h-0 lg:h-full">
+      <div className="order-3 lg:order-1 lg:min-h-0 lg:h-full">
         <Card className="bg-slate-900/60 border-cyan-500/20 h-full flex flex-col min-h-0 overflow-hidden">
           <CardHeader className="pb-1 py-2 shrink-0">
             <CardTitle className="text-xs uppercase tracking-wider text-slate-400 font-bold">
@@ -927,7 +927,7 @@ export default function GameReviewer({
         </Card>
       </div>
 
-      {/* CENTER — Board + chat + move detail */}
+      {/* CENTER — Board + move detail */}
       <div className="order-1 lg:order-2 flex flex-col gap-1.5 lg:min-h-0 lg:h-full lg:overflow-hidden">
         <EvaluationBar evaluation={evalForBar} compact />
 
@@ -1014,11 +1014,7 @@ export default function GameReviewer({
           </Button>
         </div>
 
-        <div className="shrink-0">
-        <ReviewCoachChat />
-        </div>
-
-        <div className="lg:max-h-[9.5rem] lg:min-h-0 lg:overflow-y-auto shrink-0">
+        <div className="lg:max-h-[11rem] lg:min-h-0 lg:overflow-y-auto shrink-0">
           <CurrentMoveDetail
             move={currentMove}
             explorerFen={currentFen}
@@ -1047,90 +1043,96 @@ export default function GameReviewer({
         </div>
       </div>
 
-      {/* RIGHT — Summary + analysis */}
-      <div className="order-3 space-y-2 lg:min-h-0 lg:h-full lg:overflow-y-auto">
-        {effectiveStatus === "done" && (
-          <Card className="bg-slate-950/70 border-slate-700/80">
-            <CardContent className="pt-2 pb-2 space-y-1.5">
-              <div className="flex items-center gap-2">
-                <Save className="h-3.5 w-3.5 text-cyan-400 shrink-0" />
-                <p className="text-[11px] font-semibold text-slate-200 truncate">
-                  {t.review.saveToCloudTitle}
-                </p>
-              </div>
-              {!authUserId ? (
-                <p className="text-[11px] text-amber-200/90">
-                  {t.review.saveToCloudNeedLogin}
-                </p>
-              ) : (
-                <div className="flex gap-1.5 items-end">
-                  <div className="flex-1 min-w-0">
-                    {savePlayerOptions.length > 0 ? (
-                      <select
-                        id="review-save-player-select"
-                        value={savePlayerName}
-                        onChange={(e) => setSavePlayerName(e.target.value)}
+      {/* RIGHT — compact digest + chat as the main panel */}
+      <div className="order-2 lg:order-3 flex flex-col gap-1.5 lg:min-h-0 lg:h-full lg:overflow-hidden">
+        <div className="shrink-0 space-y-1">
+          {effectiveStatus === "done" && (
+            <Card className="bg-slate-950/70 border-slate-700/80">
+              <CardContent className="py-1.5 px-2">
+                <div className="flex gap-1.5 items-center">
+                  <Save className="h-3.5 w-3.5 text-cyan-400 shrink-0" />
+                  {!authUserId ? (
+                    <p className="text-[11px] text-amber-200/90 truncate">
+                      {t.review.saveToCloudNeedLogin}
+                    </p>
+                  ) : (
+                    <>
+                      <div className="flex-1 min-w-0">
+                        {savePlayerOptions.length > 0 ? (
+                          <select
+                            id="review-save-player-select"
+                            value={savePlayerName}
+                            onChange={(e) => setSavePlayerName(e.target.value)}
+                            disabled={saveBusy}
+                            className="flex h-7 w-full rounded-md border border-slate-700 bg-slate-950 px-2 text-xs text-slate-200"
+                          >
+                            <option value="">
+                              {t.review.saveToCloudSelectPlaceholder}
+                            </option>
+                            {savePlayerOptions.map((n) => (
+                              <option key={n} value={n}>
+                                {n}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <Input
+                            id="review-save-player-select"
+                            value={savePlayerName}
+                            onChange={(e) => setSavePlayerName(e.target.value)}
+                            placeholder={t.review.saveToCloudPlaceholder}
+                            className="h-7 bg-slate-900 border-slate-700 text-slate-100 text-xs"
+                            autoComplete="off"
+                          />
+                        )}
+                      </div>
+                      <Button
+                        type="button"
+                        size="sm"
                         disabled={saveBusy}
-                        className="flex h-8 w-full rounded-md border border-slate-700 bg-slate-950 px-2 text-xs text-slate-200"
+                        onClick={() => void handleSaveGameToCloud()}
+                        className="h-7 bg-cyan-700 hover:bg-cyan-600 text-white shrink-0 px-2"
                       >
-                        <option value="">
-                          {t.review.saveToCloudSelectPlaceholder}
-                        </option>
-                        {savePlayerOptions.map((n) => (
-                          <option key={n} value={n}>
-                            {n}
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      <Input
-                        id="review-save-player-select"
-                        value={savePlayerName}
-                        onChange={(e) => setSavePlayerName(e.target.value)}
-                        placeholder={t.review.saveToCloudPlaceholder}
-                        className="h-8 bg-slate-900 border-slate-700 text-slate-100 text-xs"
-                        autoComplete="off"
-                      />
-                    )}
-                  </div>
-                  <Button
-                    type="button"
-                    size="sm"
-                    disabled={saveBusy}
-                    onClick={() => void handleSaveGameToCloud()}
-                    className="h-8 bg-cyan-700 hover:bg-cyan-600 text-white shrink-0 px-2"
-                  >
-                    {saveBusy ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                      <Save className="h-3.5 w-3.5" />
-                    )}
-                  </Button>
+                        {saveBusy ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Save className="h-3.5 w-3.5" />
+                        )}
+                      </Button>
+                    </>
+                  )}
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
-        <SummaryCard
-          parsed={parsed}
-          review={effectiveResult}
-          status={effectiveStatus}
-        />
-        <KeyMomentsCard
-          count={effectiveResult?.keyMoments.length ?? 0}
-          onPrev={() => goToKeyMoment(-1)}
-          onNext={() => goToKeyMoment(1)}
-          disabled={!effectiveResult || effectiveResult.keyMoments.length === 0}
-        />
-        <ReviewCoachSidebar />
+              </CardContent>
+            </Card>
+          )}
+          <SummaryCard
+            parsed={parsed}
+            review={effectiveResult}
+            status={effectiveStatus}
+            compact
+          />
+          <KeyMomentsCard
+            count={effectiveResult?.keyMoments.length ?? 0}
+            onPrev={() => goToKeyMoment(-1)}
+            onNext={() => goToKeyMoment(1)}
+            disabled={!effectiveResult || effectiveResult.keyMoments.length === 0}
+            compact
+          />
+        </div>
+        <div className="shrink-0">
+          <ReviewCoachSidebar />
+        </div>
+        <div className="flex-1 min-h-[16rem] lg:min-h-0 flex flex-col">
+          <ReviewCoachChat />
+        </div>
         {evalSeries.length > 1 && (
-          <Card className="bg-slate-900/60 border-cyan-500/20">
-            <CardHeader className="py-2 pb-1">
-              <CardTitle className="text-xs uppercase tracking-wider text-slate-400 font-bold">
+          <Card className="bg-slate-900/60 border-cyan-500/20 shrink-0">
+            <CardHeader className="py-1 pb-0">
+              <CardTitle className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">
                 {t.review.evalGraph}
               </CardTitle>
             </CardHeader>
-            <CardContent className="h-20 pb-2">
+            <CardContent className="h-14 pb-1.5 pt-0">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={evalSeries}>
                   <XAxis dataKey="ply" hide />
@@ -2125,16 +2127,51 @@ function SummaryCard({
   parsed,
   review,
   status,
+  compact = false,
 }: {
   parsed: ParsedGameForReview;
   review: import("@/lib/game-review").GameReviewResult | null;
   status: ReviewStatus;
+  compact?: boolean;
 }) {
   const { t } = useLanguage();
   const whiteName = parsed.headers.White ?? t.review.white;
   const blackName = parsed.headers.Black ?? t.review.black;
   const result = parsed.headers.Result ?? "*";
   const event = parsed.headers.Event;
+
+  if (compact) {
+    return (
+      <Card className="bg-slate-900/60 border-cyan-500/20">
+        <CardContent className="py-1.5 px-2 space-y-1 text-xs">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-[10px] uppercase tracking-wider text-slate-500 font-bold shrink-0">
+              {t.review.summaryTitle}
+            </span>
+            <span className="text-slate-200 truncate">{whiteName}</span>
+            <span className="text-cyan-300 font-mono shrink-0">{result}</span>
+            <span className="text-slate-200 truncate">{blackName}</span>
+          </div>
+          {review ? (
+            <div className="flex items-center gap-3 text-[11px] text-slate-400">
+              <span className="truncate">
+                {whiteName}:{" "}
+                <strong className="text-cyan-300">{review.white.accuracy.toFixed(0)}%</strong>
+              </span>
+              <span className="truncate">
+                {blackName}:{" "}
+                <strong className="text-cyan-300">{review.black.accuracy.toFixed(0)}%</strong>
+              </span>
+            </div>
+          ) : (
+            <div className="text-[11px] text-slate-500">
+              {status === "running" ? t.review.computing : t.review.notYetAvailable}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="bg-slate-900/60 border-cyan-500/20">
@@ -2239,13 +2276,47 @@ function KeyMomentsCard({
   onPrev,
   onNext,
   disabled,
+  compact = false,
 }: {
   count: number;
   onPrev: () => void;
   onNext: () => void;
   disabled: boolean;
+  compact?: boolean;
 }) {
   const { t } = useLanguage();
+  if (compact) {
+    return (
+      <div className="flex items-center gap-2 rounded-md border border-amber-500/20 bg-slate-900/60 px-2 py-1">
+        <span className="text-[10px] uppercase tracking-wider text-amber-300 font-bold truncate">
+          {t.review.keyMomentsTitle}{" "}
+          <span className="text-slate-400 font-normal">({count})</span>
+        </span>
+        <div className="ml-auto flex gap-1 shrink-0">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={onPrev}
+            disabled={disabled}
+            className="h-6 w-7 p-0 border-amber-500/40 text-amber-200 hover:bg-amber-500/10"
+            title={t.review.prev}
+          >
+            <ChevronLeft className="h-3.5 w-3.5" />
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={onNext}
+            disabled={disabled}
+            className="h-6 w-7 p-0 border-amber-500/40 text-amber-200 hover:bg-amber-500/10"
+            title={t.review.next}
+          >
+            <ChevronRight className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      </div>
+    );
+  }
   return (
     <Card className="bg-slate-900/60 border-amber-500/20">
       <CardHeader className="py-2 pb-1">

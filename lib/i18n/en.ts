@@ -1790,6 +1790,8 @@ export const en = {
         playingAsBlack: "You’re playing Black",
         playingAsUnknown: "Which color are you playing?",
         pickAMove: "Go to a move to see the coach analysis.",
+        turnToMoveWhite: "White to move",
+        turnToMoveBlack: "Black to move",
       },
       paradox: {
         title: "Clone paradox",

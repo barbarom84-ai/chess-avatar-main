@@ -4,7 +4,9 @@ import {
   inferReviewPlayerColor,
   isExplainableReviewedMove,
   isReviewWhyQuestion,
+  pieceInventoryFromFen,
   reviewContextCanExplain,
+  turnFromFen,
 } from "@/lib/review-coach-context";
 import type { ReviewedMove } from "@/lib/game-review";
 
@@ -54,6 +56,34 @@ describe("review-coach-context", () => {
     expect(ctx?.isPlayerMove).toBe(false);
     expect(ctx?.playerColor).toBe("black");
     expect(ctx?.sideToMove).toBe("white");
+    expect(ctx?.turnToMove).toBe("black");
+  });
+
+  it("reads whose turn it is from the displayed FEN, not from who just moved", () => {
+    const afterC3 =
+      "r1bqk2r/pppp1ppp/2n2n2/2b1p3/2B1P3/2PP1N2/PP3PPP/RNBQK2R b KQkq - 0 6";
+    expect(turnFromFen(afterC3)).toBe("black");
+    const ctx = buildReviewChatContext({
+      fen: afterC3,
+      fenBefore: "r1bqk2r/pppp1ppp/2n2n2/2b1p3/2B1P3/3P1N2/PPP2PPP/RNBQK2R w KQkq - 0 6",
+      move: move({ sideToMove: "white" }),
+      playerColor: "black",
+    });
+    expect(ctx?.sideToMove).toBe("white");
+    expect(ctx?.turnToMove).toBe("black");
+    expect(ctx?.boardPieces).toContain("Pc3");
+    expect(ctx?.boardPieces).toContain("Nf3");
+    expect(ctx?.boardPieces).toContain("Nc6");
+    expect(ctx?.boardPieces).not.toContain("Nc5");
+  });
+
+  it("lists only pieces that appear on the FEN", () => {
+    const start = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+    expect(pieceInventoryFromFen(start)).toBe(
+      "White: Ke1 Qd1 Ra1 Rh1 Bc1 Bf1 Nb1 Ng1 Pa2 Pb2 Pc2 Pd2 Pe2 Pf2 Pg2 Ph2; Black: Ke8 Qd8 Ra8 Rh8 Bc8 Bf8 Nb8 Ng8 Pa7 Pb7 Pc7 Pd7 Pe7 Pf7 Pg7 Ph7"
+    );
+    expect(turnFromFen(start)).toBe("white");
+    expect(turnFromFen("not-a-fen")).toBeUndefined();
   });
 
   it("does not offer an explanation on best/excellent/brilliant moves", () => {

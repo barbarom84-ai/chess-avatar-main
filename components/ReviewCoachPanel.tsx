@@ -224,13 +224,11 @@ export function ReviewCoachSidebar() {
   } = useReviewCoach();
 
   return (
-    <div className="space-y-2">
-      <div>
-        <Label className="text-[11px] uppercase tracking-wide text-slate-500">
-          {t.review.coach.pickerLabel}
-        </Label>
+    <div className="space-y-1.5">
+      <div className="flex items-center gap-2">
+        <Label className="sr-only">{t.review.coach.pickerLabel}</Label>
         <select
-          className="mt-1 w-full rounded-md border border-cyan-500/30 bg-slate-950 px-2 py-1.5 text-xs text-slate-200"
+          className="flex-1 min-w-0 rounded-md border border-cyan-500/30 bg-slate-950 px-2 py-1 text-xs text-slate-200"
           value={
             coachId === "opponent" && !opponentConfig
               ? CHESS_AVATAR_PRO_COACH_ID
@@ -258,16 +256,6 @@ export function ReviewCoachSidebar() {
             </option>
           ))}
         </select>
-      </div>
-
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-[11px] text-slate-400 leading-snug">
-          {playerColor === "white"
-            ? t.review.coach.playingAsWhite
-            : playerColor === "black"
-              ? t.review.coach.playingAsBlack
-              : t.review.coach.playingAsUnknown}
-        </p>
         <div className="flex rounded-md border border-slate-700 overflow-hidden shrink-0">
           <button
             type="button"

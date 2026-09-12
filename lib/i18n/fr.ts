@@ -1796,6 +1796,8 @@ export const fr = {
         playingAsBlack: "Tu joues les Noirs",
         playingAsUnknown: "Quelle couleur joues-tu ?",
         pickAMove: "Navigue jusqu’à un coup pour voir l’analyse du coach.",
+        turnToMoveWhite: "Trait aux Blancs",
+        turnToMoveBlack: "Trait aux Noirs",
       },
       paradox: {
         title: "Paradoxe clone",

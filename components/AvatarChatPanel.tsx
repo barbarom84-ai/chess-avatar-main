@@ -376,12 +376,28 @@ export default function AvatarChatPanel({
     inputRef.current?.focus();
   };
 
+  const turnBadge =
+    variant === "review" && reviewContext?.turnToMove
+      ? reviewContext.turnToMove === "black"
+        ? t.review.coach.turnToMoveBlack
+        : t.review.coach.turnToMoveWhite
+      : null;
+
   const identity = (
     <div className="flex items-center gap-3 min-w-0">
-      <CoachFace src={photo} name={stats.username} size={variant === "page" ? 48 : 40} />
+      <CoachFace src={photo} name={stats.username} size={variant === "page" ? 48 : 36} />
       <div className="min-w-0">
         <div className="font-semibold text-cyan-100 truncate">{title}</div>
-        <p className="text-xs text-slate-500 truncate">{quotaLabel}</p>
+        <p className="text-xs text-slate-500 truncate">
+          {turnBadge ? (
+            <span className="text-cyan-300/90">{turnBadge}</span>
+          ) : (
+            quotaLabel
+          )}
+          {turnBadge && remaining != null && limit != null ? (
+            <span className="text-slate-600"> · {quotaLabel}</span>
+          ) : null}
+        </p>
       </div>
     </div>
   );
@@ -392,7 +408,11 @@ export default function AvatarChatPanel({
         ref={scrollRef}
         className={cn(
           "overflow-y-auto rounded-xl bg-slate-950/80 border border-cyan-500/20 p-3 space-y-3 text-sm",
-          variant === "page" ? "flex-1 min-h-[46vh]" : variant === "review" ? "h-[4.5rem] lg:h-[5.25rem]" : "h-52"
+          variant === "page"
+            ? "flex-1 min-h-[46vh]"
+            : variant === "review"
+              ? "flex-1 min-h-[10rem]"
+              : "h-52"
         )}
       >
         <div className="flex items-start gap-2 py-1">
@@ -434,7 +454,7 @@ export default function AvatarChatPanel({
         )}
       </div>
 
-      <div>
+      <div className={variant === "review" ? "shrink-0" : undefined}>
         {variant !== "review" && (
         <p className="text-[11px] uppercase tracking-wide text-slate-500 mb-1">
           {t.avatarChat.suggestionsLabel}
@@ -458,7 +478,7 @@ export default function AvatarChatPanel({
         </div>
       </div>
 
-      <div className="relative flex gap-2 items-end">
+      <div className="relative flex gap-2 items-end shrink-0">
         <Button
           type="button"
           variant="outline"
@@ -565,7 +585,12 @@ export default function AvatarChatPanel({
   }
 
   if (variant === "review") {
-    return <div className="space-y-1.5">{thread}</div>;
+    return (
+      <div className="flex flex-col gap-1.5 flex-1 min-h-0 h-full">
+        <div className="shrink-0">{identity}</div>
+        <div className="flex flex-col gap-1.5 flex-1 min-h-0">{thread}</div>
+      </div>
+    );
   }
 
   return (
