@@ -71,8 +71,6 @@ export function usePositionTopLines(options: {
   const [gameOver, setGameOver] = useState(false);
 
   const sequenceRef = useRef(0);
-  const fenRef = useRef<string | null>(fen);
-  fenRef.current = fen;
 
   useEffect(() => {
     stockfishClient.acquire();
@@ -125,7 +123,7 @@ export function usePositionTopLines(options: {
             multipv,
             priority: "low",
           });
-          if (seq !== sequenceRef.current || fenRef.current !== nextFen) return;
+          if (seq !== sequenceRef.current) return;
           const clean = sanitizeSnapshot(nextFen, snapshot);
           if (!clean) {
             setLines([]);
