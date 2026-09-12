@@ -23,31 +23,31 @@ export function snapshotToEngineLines(
   fen: string,
   snapshot: ContinuousAnalysisSnapshot
 ): ReviewEngineLine[] {
-  return snapshot.lines
-    .map((line) => {
-      const pvSan = uciPvToSan(fen, line.pvUci);
-      const san = pvSan[0];
-      const uci = line.pvUci[0];
-      if (!san || !uci) return null;
-      const white = toWhitePovEval(fen, {
-        evalPawnsStm: line.evalPawns,
-        isMate: Boolean(line.isMate),
-        mateInMovesStm: line.mateInMoves,
-      });
-      return {
-        rank: line.multipv,
-        san,
-        uci,
-        pvSan,
-        evalWhitePov: white.evalWhitePov,
-        isMate: white.isMate || undefined,
-        mateInMovesWhite:
-          white.isMate && line.mateInMoves != null
-            ? stmMateToWhitePov(fen, line.mateInMoves)
-            : white.mateInMovesWhite,
-      } satisfies ReviewEngineLine;
-    })
-    .filter((line): line is ReviewEngineLine => line !== null);
+  const out: ReviewEngineLine[] = [];
+  for (const line of snapshot.lines) {
+    const pvSan = uciPvToSan(fen, line.pvUci);
+    const san = pvSan[0];
+    const uci = line.pvUci[0];
+    if (!san || !uci) continue;
+    const white = toWhitePovEval(fen, {
+      evalPawnsStm: line.evalPawns,
+      isMate: Boolean(line.isMate),
+      mateInMovesStm: line.mateInMoves,
+    });
+    out.push({
+      rank: line.multipv,
+      san,
+      uci,
+      pvSan,
+      evalWhitePov: white.evalWhitePov,
+      isMate: white.isMate || undefined,
+      mateInMovesWhite:
+        white.isMate && line.mateInMoves != null
+          ? stmMateToWhitePov(fen, line.mateInMoves)
+          : white.mateInMovesWhite,
+    });
+  }
+  return out;
 }
 
 export function usePositionTopLines(options: {
