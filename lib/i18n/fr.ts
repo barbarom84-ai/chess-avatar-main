@@ -364,14 +364,10 @@ export const fr = {
         "Salut ! Je suis le clone de {name}. Pose-moi une question sur mon style, mes ouvertures ou une position.",
       welcomeHouse:
         "Salut ! Je suis ChessAvatarPro, ton coach. Choisis un coup dans la review et demande-moi pourquoi, ou change de coach ci-dessus.",
-      welcomeReview:
-        "J’explique la position affichée, sans parti pris pour un camp. Pose une question sur le dernier coup ou la suite.",
-      welcomeReviewWhite:
-        "J’explique la position affichée, sans parti pris pour un camp. Pose une question sur le dernier coup ou la suite.",
-      welcomeReviewBlack:
-        "J’explique la position affichée, sans parti pris pour un camp. Pose une question sur le dernier coup ou la suite.",
-      welcomeReviewUnknown:
-        "J’explique la position affichée, sans parti pris pour un camp. Pose une question sur le dernier coup ou la suite.",
+      welcomeReview: "Analysons ensemble",
+      welcomeReviewWhite: "Analysons ensemble",
+      welcomeReviewBlack: "Analysons ensemble",
+      welcomeReviewUnknown: "Analysons ensemble",
       placeholder: "Parle à ton avatar…",
       send: "Envoyer",
       thinking: "Réflexion…",
@@ -1654,6 +1650,12 @@ export const fr = {
         pausedDuringReview: "Pause pendant l'analyse complète",
         inactiveHint: "Activez l'analyse en continu pour voir l'évaluation et les lignes en temps réel.",
         engineName: "Stockfish",
+      },
+      topLines: {
+        title: "Meilleurs coups",
+        depth: "Prof. {n}",
+        computing: "Calcul des lignes…",
+        paused: "Pause pendant l'analyse complète",
       },
       layout: {
         settingsToggle: "Paramètres",

@@ -8,6 +8,28 @@ export type TerminalAnalysisDisplay = {
   bestMoveUci: null;
 };
 
+/** Convert a UCI PV into SAN from `fen`. Stops at the first illegal ply. */
+export function uciPvToSan(fen: string, pvUci: string[]): string[] {
+  try {
+    const game = new Chess(fen);
+    const sans: string[] = [];
+    for (const uci of pvUci) {
+      if (uci.length < 4) break;
+      const from = uci.slice(0, 2);
+      const to = uci.slice(2, 4);
+      const promotion = uci.length > 4 ? uci[4] : undefined;
+      const move = game.move(
+        promotion ? { from, to, promotion } : { from, to }
+      );
+      if (!move) break;
+      sans.push(move.san);
+    }
+    return sans;
+  } catch {
+    return [];
+  }
+}
+
 /** Returns true if `uci` is a legal move in `fen`. */
 export function isLegalUciMove(fen: string, uci: string): boolean {
   if (!uci || uci.length < 4) return false;

@@ -11,6 +11,7 @@ import {
   legalMovesFromFen,
   pieceInventoryFromFen,
   reviewContextCanExplain,
+  sanitizeEngineLinesNow,
   turnFromFen,
 } from "@/lib/review-coach-context";
 import type { ReviewedMove } from "@/lib/game-review";
@@ -180,6 +181,48 @@ describe("review-coach-context", () => {
     );
     expect(expanded).toContain("n'est pas encore disponible");
     expect(expanded).toContain("pas de Cc6");
+  });
+
+  it("grounds how-to-play on Stockfish top lines instead of inventing SAN", () => {
+    const expanded = expandReviewCoachUserMessage(
+      "Comment jouer cette position ?",
+      {
+        turnToMove: "white",
+        engineLinesNow: [
+          {
+            rank: 1,
+            san: "Nf3",
+            uci: "g1f3",
+            pvSan: ["Nf3", "Nc6"],
+            evalWhitePov: 0.32,
+          },
+          {
+            rank: 2,
+            san: "d4",
+            uci: "d2d4",
+            pvSan: ["d4"],
+            evalWhitePov: 0.28,
+          },
+        ],
+      },
+      "fr"
+    );
+    expect(expanded).toContain("Cf3");
+    expect(expanded).toContain("d4");
+    expect(expanded).toContain("UNIQUEMENT");
+    expect(expanded).not.toContain("pas encore prêts");
+  });
+
+  it("drops engine lines that are illegal on the displayed FEN", () => {
+    const start = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+    expect(
+      sanitizeEngineLinesNow(start, [
+        { rank: 1, san: "e4", uci: "e2e4", pvSan: ["e4"], evalWhitePov: 0.3 },
+        { rank: 2, san: "Nc6", uci: "b8c6", pvSan: ["Nc6"], evalWhitePov: 0 },
+      ])
+    ).toEqual([
+      { rank: 1, san: "e4", uci: "e2e4", pvSan: ["e4"], evalWhitePov: 0.3 },
+    ]);
   });
 
   it("requires engine fields before explain API can run", () => {

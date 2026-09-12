@@ -125,6 +125,54 @@ describe("avatar-chat-prompt", () => {
     expect(prompt).not.toContain("INTENTION : expliquer le DERNIER COUP");
   });
 
+  it("grounds how-to-play on Stockfish's top 3 instead of the full legal list", () => {
+    const prompt = buildSystemPrompt({
+      message: "Comment jouer cette position ?",
+      lang: "fr",
+      role: "house",
+      stats: { username: "ChessAvatarPro", style: "Équilibré", winRate: 55 },
+      config: { playStyle: "équilibré", elo: 2400, favoriteOpening: "Italian" },
+      review: {
+        lastMove: "e5",
+        lastMoveUci: "e7e5",
+        sideToMove: "black",
+        turnToMove: "white",
+        legalMovesNow: ["c5", "Qd2", "Nf3", "a3"],
+        engineLinesNow: [
+          {
+            rank: 1,
+            san: "Nf3",
+            uci: "g1f3",
+            pvSan: ["Nf3"],
+            evalWhitePov: 0.32,
+          },
+          {
+            rank: 2,
+            san: "d4",
+            uci: "d2d4",
+            pvSan: ["d4"],
+            evalWhitePov: 0.28,
+          },
+          {
+            rank: 3,
+            san: "c4",
+            uci: "c2c4",
+            pvSan: ["c4"],
+            evalWhitePov: 0.2,
+          },
+        ],
+        playerColor: "white",
+        isPlayerMove: false,
+      },
+    });
+    expect(prompt).toContain("3 MEILLEURS COUPS Stockfish");
+    expect(prompt).toContain("Cf3");
+    expect(prompt).toContain("d4");
+    expect(prompt).toContain("c4");
+    expect(prompt).not.toContain("Coups LÉGAUX MAINTENANT");
+    expect(prompt).toContain("INTERDIT d'inventer un autre SAN");
+  });
+
   it("does not invent a best continuation when the engine alternative is missing", () => {
     const prompt = buildSystemPrompt({
       message: "Quelle était la meilleure suite ?",

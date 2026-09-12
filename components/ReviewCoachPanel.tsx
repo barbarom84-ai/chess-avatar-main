@@ -25,6 +25,7 @@ import {
 import { dedupeReviewCoachAvatars } from "@/lib/review-coach-options";
 import {
   buildReviewChatContext,
+  type ReviewEngineLine,
   type ReviewPlayerColor,
 } from "@/lib/review-coach-context";
 import type { CoachToneId } from "@/lib/coach-tone";
@@ -39,6 +40,7 @@ export type ReviewCoachPanelProps = {
   lastMoveSan?: string | null;
   lastMoveUci?: string | null;
   lastMoveSide?: ReviewPlayerColor | null;
+  engineLinesNow?: ReviewEngineLine[] | null;
   moveNumber?: number;
   openingName?: string | null;
   whiteName?: string | null;
@@ -91,6 +93,7 @@ export function ReviewCoachProvider({
   lastMoveSan,
   lastMoveUci,
   lastMoveSide,
+  engineLinesNow,
   moveNumber,
   openingName,
   whiteName,
@@ -159,6 +162,7 @@ export function ReviewCoachProvider({
         blackName,
         moveNumber,
         lastExplanation,
+        engineLinesNow,
       }),
     [
       fen,
@@ -173,6 +177,7 @@ export function ReviewCoachProvider({
       blackName,
       moveNumber,
       lastExplanation,
+      engineLinesNow,
     ]
   );
 

@@ -364,14 +364,10 @@ export const en = {
         "Hey! I’m the clone of {name}. Ask me about my style, openings, or a position.",
       welcomeHouse:
         "Hi — I’m ChessAvatarPro, your coach. Pick a move in the review and ask me why, or switch coach above.",
-      welcomeReview:
-        "I’ll explain the position on the board, without taking a side. Ask about the last move or the continuation.",
-      welcomeReviewWhite:
-        "I’ll explain the position on the board, without taking a side. Ask about the last move or the continuation.",
-      welcomeReviewBlack:
-        "I’ll explain the position on the board, without taking a side. Ask about the last move or the continuation.",
-      welcomeReviewUnknown:
-        "I’ll explain the position on the board, without taking a side. Ask about the last move or the continuation.",
+      welcomeReview: "Let's analyze together",
+      welcomeReviewWhite: "Let's analyze together",
+      welcomeReviewBlack: "Let's analyze together",
+      welcomeReviewUnknown: "Let's analyze together",
       placeholder: "Talk to your avatar…",
       send: "Send",
       thinking: "Thinking…",
@@ -1648,6 +1644,12 @@ export const en = {
         pausedDuringReview: "Paused during full analysis",
         inactiveHint: "Enable continuous analysis to see live evaluation and principal variations.",
         engineName: "Stockfish",
+      },
+      topLines: {
+        title: "Best moves",
+        depth: "Depth {n}",
+        computing: "Computing lines…",
+        paused: "Paused during full analysis",
       },
       layout: {
         settingsToggle: "Settings",

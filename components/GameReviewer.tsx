@@ -38,6 +38,8 @@ import {
 
 import SimpleChessboard from "./SimpleChessboard";
 import EvaluationBar from "./EvaluationBar";
+import PositionTopLines from "./PositionTopLines";
+import { usePositionTopLines } from "@/hooks/usePositionTopLines";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
@@ -629,6 +631,19 @@ export default function GameReviewer({
     [parsed]
   );
 
+  const displayedFen = useMemo(() => {
+    if (!parsed) return null;
+    if (currentIndex === 0) return parsed.fenBefore[0] ?? null;
+    return (
+      parsed.fenAfter[Math.min(currentIndex, parsed.fenAfter.length) - 1] ?? null
+    );
+  }, [parsed, currentIndex]);
+
+  const topLines = usePositionTopLines({
+    fen: displayedFen,
+    blocked: effectiveStatus === "running" || effectiveStatus === "engine-loading",
+  });
+
   // Per-ply tactical flags computed entirely from the FEN snapshots that
   // chess.js already produced. No engine round-trips, runs once when the
   // game changes and is then memoized.
@@ -819,6 +834,7 @@ export default function GameReviewer({
       lastMoveSide={
         currentIndex > 0 ? parsed.sideToMove[currentIndex - 1] : undefined
       }
+      engineLinesNow={topLines.lines.length > 0 ? topLines.lines : undefined}
       moveNumber={
         currentIndex > 0 ? Math.floor((currentIndex - 1) / 2) + 1 : undefined
       }
@@ -881,6 +897,16 @@ export default function GameReviewer({
               ? evalMateInMoves
               : undefined
           }
+        />
+        <PositionTopLines
+          fen={displayedFen}
+          engineReady={topLines.engineReady}
+          isAnalyzing={topLines.isAnalyzing}
+          paused={topLines.paused}
+          gameOver={topLines.gameOver}
+          lines={topLines.lines}
+          depth={topLines.depth}
+          targetDepth={topLines.targetDepth}
         />
 
         <div className="flex-1 min-h-[min(70vw,48vh)] lg:min-h-0 w-full [container-type:size] flex items-center justify-center">

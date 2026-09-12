@@ -1,5 +1,6 @@
-import type { ReviewChatContext } from "@/lib/review-coach-context";
+import type { ReviewChatContext, ReviewEngineLine } from "@/lib/review-coach-context";
 import { classifyReviewCoachQuestion } from "@/lib/review-coach-context";
+import { formatEvalLabel } from "@/lib/engine-eval";
 import { frenchNotationSystemHint, localizeFrenchCoachText, localizeSan } from "@/lib/localized-san";
 
 export interface ChatRequest {
@@ -27,6 +28,28 @@ function sideLabel(side: "white" | "black" | undefined, lang: "fr" | "en"): stri
   return lang === "fr" ? "couleur inconnue" : "unknown side";
 }
 
+function formatEngineLinesBlurb(
+  lines: ReviewEngineLine[] | undefined,
+  lang: "fr" | "en"
+): string {
+  if (!lines?.length) return "";
+  return lines
+    .map((line) => {
+      const san = localizeSan(line.san, lang);
+      const evalLabel = formatEvalLabel(
+        line.evalWhitePov,
+        line.isMate,
+        line.mateInMovesWhite
+      );
+      const rest = line.pvSan
+        .slice(1, 4)
+        .map((ply) => localizeSan(ply, lang))
+        .join(" ");
+      return `${line.rank}. ${san} (${evalLabel})${rest ? ` ${rest}` : ""}`;
+    })
+    .join(" ; ");
+}
+
 export function reviewBlurb(req: ChatRequest, lang: "fr" | "en"): string {
   const r = req.review;
   if (!r?.lastMove && !r?.fen && !r?.fenBefore && !r?.playerColor) return "";
@@ -38,6 +61,7 @@ export function reviewBlurb(req: ChatRequest, lang: "fr" | "en"): string {
   const intent = classifyReviewCoachQuestion(req.message, lang);
   const suggestNow = intent === "how_to_play" || intent === "other";
   const beforeSans = (r.legalMovesBefore ?? []).map((san) => localizeSan(san, lang));
+  const engineNow = formatEngineLinesBlurb(r.engineLinesNow, lang);
 
   if (lang === "fr") {
     const intentBlock =
@@ -48,7 +72,9 @@ export function reviewBlurb(req: ChatRequest, lang: "fr" | "en"): string {
             ? `INTENTION : la meilleure suite est UNIQUEMENT ${bestLabel}, un coup de ${mover} À LA PLACE de ${moveLabel || "ce coup"}, depuis le FEN AVANT. INTERDIT d'inventer un autre SAN (pas de Cc6 / b8-c6 s'ils ne sont pas ${bestLabel}). Ce n'est pas un coup de l'échiquier actuel.`
             : `INTENTION : meilleure suite, mais AUCUNE alternative moteur n'est fournie. Dis que l'analyse n'est pas prête. INTERDIT d'inventer un coup (Cc6, b8-c6, développement générique…).`
           : intent === "how_to_play"
-            ? `INTENTION : comment jouer MAINTENANT. Tu peux citer des coups de la liste légale pour ${nowToMove}. Reste descriptif, sans « tu dois ».`
+            ? engineNow
+              ? `INTENTION : comment jouer MAINTENANT. Cite UNIQUEMENT un ou plusieurs des 3 coups Stockfish : ${engineNow}. INTERDIT d'inventer un autre SAN.`
+              : `INTENTION : comment jouer MAINTENANT, mais les 3 coups moteur ne sont pas prêts. Dis-le. INTERDIT d'inventer un coup.`
             : intent === "lost_advantage"
               ? `INTENTION : où l'évaluation a glissé. Parle du coup affiché (${moveLabel || "?"}) et de sa classification, pas d'un coup futur, et sans prendre parti pour un camp.`
               : "";
@@ -68,7 +94,10 @@ export function reviewBlurb(req: ChatRequest, lang: "fr" | "en"): string {
       r.boardAscii
         ? `DIAGRAMME ACTUEL (8e rangée en haut) — après ${moveLabel || "le coup"} :\n${r.boardAscii}`
         : "",
-      suggestNow && r.legalMovesNow?.length
+      suggestNow && engineNow
+        ? `3 MEILLEURS COUPS Stockfish MAINTENANT (seuls ceux-ci peuvent être proposés) : ${engineNow}.`
+        : "",
+      suggestNow && !engineNow && r.legalMovesNow?.length
         ? `Coups LÉGAUX MAINTENANT (seuls ceux-ci peuvent être proposés comme suite) : ${r.legalMovesNow
             .map((san) => localizeSan(san, lang))
             .join(", ")}.`
@@ -101,7 +130,7 @@ RÈGLES DE REVIEW (prioritaires) :
 - Ne dis jamais « tu as joué X ».
 - Le trait ACTUEL n'est PAS le camp qui vient de jouer.
 - Ne parle que des pièces du diagramme. N'invente pas de cavalier ou de case occupée (pas de « Cc6 » si un pion est déjà en c6).
-- Un coup proposé MAINTENANT doit être dans la liste légale actuelle. Une meilleure suite se joue dans le FEN AVANT.
+- Un coup proposé MAINTENANT doit être l'un des 3 coups Stockfish s'ils sont fournis, sinon un coup de la liste légale. Une meilleure suite se joue dans le FEN AVANT.
 - Reste sur CE coup et CETTE position, pas une ouverture générique.
 - ${frenchNotationSystemHint()}
 ${intentBlock ? `${intentBlock}\n` : ""}${facts.join("\n")}`;
@@ -115,7 +144,9 @@ ${intentBlock ? `${intentBlock}\n` : ""}${facts.join("\n")}`;
           ? `INTENT: the only best continuation is ${bestLabel}, a ${mover} move INSTEAD of ${moveLabel || "this move"} from the BEFORE FEN. Do NOT invent another SAN.`
           : `INTENT: best continuation, but NO engine alternative is provided. Say analysis is not ready. Do NOT invent a move (Nc6, b8-c6, generic development…).`
         : intent === "how_to_play"
-          ? `INTENT: how to play NOW. You may cite legal moves for ${nowToMove}. Stay descriptive.`
+          ? engineNow
+            ? `INTENT: how to play NOW. Cite ONLY Stockfish's top 3: ${engineNow}. Do NOT invent another SAN.`
+            : `INTENT: how to play NOW, but the engine's top 3 are not ready. Say so. Do NOT invent a move.`
           : intent === "lost_advantage"
             ? `INTENT: where the evaluation slipped. Talk about the displayed move (${moveLabel || "?"}), without taking a side.`
             : "";
@@ -136,7 +167,10 @@ ${intentBlock ? `${intentBlock}\n` : ""}${facts.join("\n")}`;
     r.boardAscii
       ? `CURRENT DIAGRAM (rank 8 at the top) — after ${moveLabel || "the move"}:\n${r.boardAscii}`
       : "",
-    suggestNow && r.legalMovesNow?.length
+    suggestNow && engineNow
+      ? `Stockfish TOP 3 NOW (only these may be suggested): ${engineNow}.`
+      : "",
+    suggestNow && !engineNow && r.legalMovesNow?.length
       ? `Legal moves NOW (only these may be suggested as a continuation): ${r.legalMovesNow.join(", ")}.`
       : "",
     intent === "best_line" && beforeSans.length
@@ -164,7 +198,7 @@ REVIEW RULES (highest priority):
 - Never say "you played X".
 - The side to move NOW is NOT the side that just moved.
 - Only mention pieces on the diagram. Do not invent a knight onto an occupied square (no "Nc6" if a pawn is already on c6).
-- A move to play NOW must be in the current legal list. A better continuation is played from the BEFORE FEN.
+- A move to play NOW must be one of Stockfish's top 3 if provided, otherwise a move from the legal list. A better continuation is played from the BEFORE FEN.
 - Stay on THIS move and THIS position, not a generic opening lecture.
 ${enIntentBlock ? `${enIntentBlock}\n` : ""}${facts.join("\n")}`;
 }

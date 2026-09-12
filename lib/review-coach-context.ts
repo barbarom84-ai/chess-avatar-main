@@ -85,6 +85,16 @@ export function asciiBoardFromFen(fen?: string | null): string | undefined {
 }
 
 /** Structured board facts sent to /api/coach/chat (and reused by the review UI). */
+export type ReviewEngineLine = {
+  rank: number;
+  san: string;
+  uci: string;
+  pvSan: string[];
+  evalWhitePov: number;
+  isMate?: boolean;
+  mateInMovesWhite?: number;
+};
+
 export type ReviewChatContext = {
   fen?: string;
   fenBefore?: string;
@@ -108,6 +118,8 @@ export type ReviewChatContext = {
   legalMovesBefore?: string[];
   /** ASCII diagram of the displayed board. */
   boardAscii?: string;
+  /** Stockfish MultiPV lines for the displayed FEN (side to move now). */
+  engineLinesNow?: ReviewEngineLine[];
   playerColor?: ReviewPlayerColor;
   isPlayerMove?: boolean;
   opening?: string;
@@ -153,6 +165,7 @@ export function buildReviewChatContext(args: {
   blackName?: string | null;
   moveNumber?: number | null;
   lastExplanation?: string | null;
+  engineLinesNow?: ReviewEngineLine[] | null;
 }): ReviewChatContext | undefined {
   const move = args.move ?? null;
   const fen = args.fen?.trim() || undefined;
@@ -183,6 +196,7 @@ export function buildReviewChatContext(args: {
     legalMovesNow: fen ? legalMovesFromFen(fen) : undefined,
     legalMovesBefore: fenBefore ? legalMovesFromFen(fenBefore) : undefined,
     boardAscii: fen ? asciiBoardFromFen(fen) : undefined,
+    engineLinesNow: sanitizeEngineLinesNow(fen, args.engineLinesNow),
     playerColor,
     isPlayerMove,
     opening: args.openingName?.trim() || undefined,
@@ -264,7 +278,20 @@ export function hydrateReviewChatContext(
       ? legalMovesFromFen(review.fenBefore)
       : review.legalMovesBefore,
     boardAscii: asciiBoardFromFen(fen),
+    engineLinesNow: sanitizeEngineLinesNow(fen, review.engineLinesNow),
   };
+}
+
+/** Keep only engine lines whose first SAN is legal on the displayed FEN. */
+export function sanitizeEngineLinesNow(
+  fen?: string,
+  lines?: ReviewEngineLine[] | null
+): ReviewEngineLine[] | undefined {
+  if (!lines?.length) return undefined;
+  const legal = new Set(legalMovesFromFen(fen));
+  if (legal.size === 0) return undefined;
+  const kept = lines.filter((line) => line.san && line.uci && legal.has(line.san));
+  return kept.length ? kept : undefined;
 }
 
 export type ReviewCoachQuestionIntent =
@@ -385,7 +412,46 @@ Instructions: the only best continuation is ${best}, a ${mover} move INSTEAD of 
 Instructions: the engine alternative is not available yet. Say so clearly. Do not invent a move (no Nc6, no b8-c6, no generic developing idea).`;
   }
 
+  if (intent === "how_to_play") {
+    const engineList = formatReviewEngineLines(review?.engineLinesNow, lang);
+    if (lang === "fr") {
+      if (engineList) {
+        return `${message.trim()}
+
+Consignes : propose UNIQUEMENT parmi les 3 meilleurs coups Stockfish de ${now} : ${engineList}. N'invente aucun autre SAN.`;
+      }
+      return `${message.trim()}
+
+Consignes : les meilleurs coups moteur ne sont pas encore prêts. Dis-le clairement. N'invente aucun coup.`;
+    }
+    if (engineList) {
+      return `${message.trim()}
+
+Instructions: suggest ONLY among Stockfish's top 3 moves for ${now}: ${engineList}. Do not invent any other SAN.`;
+    }
+    return `${message.trim()}
+
+Instructions: the engine's best moves are not ready yet. Say so clearly. Do not invent a move.`;
+  }
+
   return message.trim();
+}
+
+function formatReviewEngineLines(
+  lines: ReviewEngineLine[] | undefined,
+  lang: "fr" | "en"
+): string {
+  if (!lines?.length) return "";
+  return lines
+    .map((line) => {
+      const san = localizeSan(line.san, lang);
+      const rest = line.pvSan
+        .slice(1, 4)
+        .map((ply) => localizeSan(ply, lang))
+        .join(" ");
+      return `${line.rank}. ${san}${rest ? ` ${rest}` : ""}`;
+    })
+    .join(" ; ");
 }
 
 export function reviewContextCanExplain(
