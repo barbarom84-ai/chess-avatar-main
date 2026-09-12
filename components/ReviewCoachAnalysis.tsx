@@ -123,7 +123,7 @@ export default function ReviewCoachAnalysis({
           </span>
         ) : null}
       </div>
-      <p className="text-xs text-slate-100 leading-relaxed whitespace-pre-wrap line-clamp-5">
+      <p className="text-xs text-slate-100 leading-relaxed whitespace-pre-wrap line-clamp-3">
         <CoachSanText text={explanation} side={move?.sideToMove} />
       </p>
       <div className="flex items-center justify-between pt-1 border-t border-purple-500/20 gap-2">

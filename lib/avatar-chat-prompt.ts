@@ -32,6 +32,7 @@ export function reviewBlurb(req: ChatRequest, lang: "fr" | "en"): string {
 
   const player = sideLabel(r.playerColor, lang);
   const mover = sideLabel(r.sideToMove, lang);
+  const nowToMove = sideLabel(r.turnToMove, lang);
   const moveLabel = localizeSan(r.lastMove ?? r.lastMoveUci ?? "", lang);
   const bestLabel = localizeSan(r.bestMove ?? r.bestMoveUci ?? "", lang);
   const ownMove =
@@ -50,7 +51,15 @@ export function reviewBlurb(req: ChatRequest, lang: "fr" | "en"): string {
       r.playerColor
         ? `L'élève joue ${player}${r.whiteName || r.blackName ? ` (Blancs: ${r.whiteName ?? "?"}, Noirs: ${r.blackName ?? "?"})` : ""}.`
         : "La couleur de l'élève n'est pas confirmée : déduis-la seulement si le FEN et les noms le permettent, sinon reste neutre.",
-      r.sideToMove && moveLabel ? `Coup affiché, joué par ${mover} : ${moveLabel}. ${ownMove}` : "",
+      r.turnToMove
+        ? `TRAIT ACTUEL (échiquier affiché, MAINTENANT) : ${nowToMove}. C'est à eux de jouer. Le 2e champ du FEN (w/b) le confirme. N'invente JAMAIS le trait.`
+        : "",
+      r.sideToMove && moveLabel
+        ? `Dernier coup DÉJÀ joué (il est sur l'échiquier) : ${moveLabel}, joué par ${mover}. ${ownMove} Ce camp n'a plus le trait.`
+        : "",
+      r.boardPieces
+        ? `Pièces réellement présentes (seules celles-ci existent — n'invente aucune pièce, case ou capture) : ${r.boardPieces}`
+        : "",
       r.classification ? `Classification moteur : ${r.classification}.` : "",
       typeof r.cpl === "number" ? `Perte : ${r.cpl} centipions.` : "",
       bestLabel ? `Meilleur coup moteur : ${bestLabel}. Ne propose PAS un autre « meilleur coup ».` : "",
@@ -72,7 +81,8 @@ export function reviewBlurb(req: ChatRequest, lang: "fr" | "en"): string {
 RÈGLES DE REVIEW (prioritaires) :
 - Adresse-toi à l'élève selon SA couleur (${player}). N'inverse jamais Blancs et Noirs.
 - Ne dis jamais « tu as joué X » si X a été joué par l'adversaire.
-- Ne parle que des pièces présentes dans le FEN. N'invente pas de position.
+- Le trait ACTUEL n'est PAS le camp qui vient de jouer. Si les Blancs viennent de jouer, c'est aux Noirs de jouer, et inversement.
+- Ne parle que des pièces listées. N'invente pas de cavalier, fou, ou capture absents de l'inventaire (pas de « Cc6 » / « prise en c5 » si ces pièces/cases ne sont pas listées).
 - Reste sur CE coup et CETTE position, pas une autre ouverture générique.
 - ${frenchNotationSystemHint()}
 ${facts.join("\n")}`;
@@ -82,7 +92,15 @@ ${facts.join("\n")}`;
     r.playerColor
       ? `The student plays ${player}${r.whiteName || r.blackName ? ` (White: ${r.whiteName ?? "?"}, Black: ${r.blackName ?? "?"})` : ""}.`
       : "The student's color is unconfirmed: infer it only from FEN/names if obvious, otherwise stay neutral.",
-    r.sideToMove && moveLabel ? `Displayed move, played by ${mover}: ${moveLabel}. ${ownMove}` : "",
+    r.turnToMove
+      ? `SIDE TO MOVE NOW (displayed board): ${nowToMove}. It is their turn. The FEN's second field (w/b) confirms this. NEVER invent whose turn it is.`
+      : "",
+    r.sideToMove && moveLabel
+      ? `Last move ALREADY played (it is on the board): ${moveLabel}, played by ${mover}. ${ownMove} That side no longer has the move.`
+      : "",
+    r.boardPieces
+      ? `Pieces actually on the board (only these exist — invent no piece, square, or capture): ${r.boardPieces}`
+      : "",
     r.classification ? `Engine label: ${r.classification}.` : "",
     typeof r.cpl === "number" ? `Loss: ${r.cpl} centipawns.` : "",
     bestLabel
@@ -103,7 +121,8 @@ ${facts.join("\n")}`;
 REVIEW RULES (highest priority):
 - Address the student as playing ${player}. Never swap White and Black.
 - Never say "you played X" if X was the opponent's move.
-- Only mention pieces that appear in the FEN. Do not invent a position.
+- The side to move NOW is NOT the side that just moved. If White just played, it is Black to move, and vice versa.
+- Only mention listed pieces. Do not invent a knight, bishop, or capture missing from the inventory (no "Nc6" / "take on c5" unless those pieces/squares are listed).
 - Stay on THIS move and THIS position, not a generic opening lecture.
 ${facts.join("\n")}`;
 }
