@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import {
   ChevronLeft,
   ChevronRight,
@@ -9,19 +8,15 @@ import {
   RotateCw,
   Square,
   Crown,
-  AlertTriangle,
   Download,
   Pause,
   Play,
-  Sparkles,
   Loader2,
-  BarChart3,
   BookOpen,
   ShieldAlert,
   Skull,
   Lock,
   LogOut,
-  Bot,
   Check,
   Save,
 } from "lucide-react";
@@ -67,18 +62,14 @@ import { type CoachToneId } from "@/lib/coach-tone";
 import { loadCachedReview, saveReview } from "@/lib/game-review-storage";
 import { useLanguage } from "@/lib/language-context";
 import { getOpeningName, type Opening } from "@/lib/openings-library";
-import { findBestOpeningByPrefix } from "@/lib/openings-registry";
 import {
-  describeTheoryHitsForUi,
-  getOpeningTheorySans,
-  type TheoryTranspositionHit,
-} from "@/lib/opening-theory";
+  findBestOpeningByPrefix,
+  findCompletedOpening,
+} from "@/lib/openings-registry";
 import { buildVerboseHistoryFromSan } from "@/lib/move-history-verbose";
-import { uciToVerboseMoveFromFen } from "@/lib/learn-chess-utils";
 import SanNotation from "@/components/SanNotation";
 import { useChessboardSettings } from "@/contexts/ChessboardSettingsContext";
 import type { EngineConfig } from "@/lib/analysis";
-import { getRecentConfigs } from "@/lib/storage";
 import { toast } from "sonner";
 import { saveGameToCloud } from "@/lib/supabase-storage";
 import {
@@ -154,11 +145,6 @@ interface GameReviewerProps {
   cacheUserId?: string | null;
   /** Triggered when the Coach UI asks the user to upgrade (e.g. quota reached). */
   onRequestUpgrade?: () => void;
-  /**
-   * Profil moteur pour le paradoxe clone. Si absent, le dernier profil « récent »
-   * du stockage local est utilisé.
-   */
-  paradoxAvatarConfig?: EngineConfig;
   /** Opponent bot from Play — offered as an optional review coach. */
   opponentCoachConfig?: EngineConfig | null;
   /** Affiche un indicateur "déjà sauvegardée" à côté du téléchargement annoté. */
@@ -186,7 +172,6 @@ export default function GameReviewer({
   showAllBestArrows,
   cacheUserId,
   onRequestUpgrade,
-  paradoxAvatarConfig,
   opponentCoachConfig = null,
   showSavedInGamesList = false,
   authUserId = null,
@@ -217,30 +202,6 @@ export default function GameReviewer({
   }, []);
 
   const engineDepth = isPremium ? premiumDepth : FREE_ENGINE_DEPTH;
-
-  const [storedPersona, setStoredPersona] = useState<EngineConfig | null>(null);
-  useEffect(() => {
-    const sync = () => {
-      try {
-        setStoredPersona(getRecentConfigs()[0]?.config ?? null);
-      } catch {
-        setStoredPersona(null);
-      }
-    };
-    sync();
-    window.addEventListener("focus", sync);
-    return () => window.removeEventListener("focus", sync);
-  }, []);
-
-  useEffect(() => {
-    try {
-      setStoredPersona(getRecentConfigs()[0]?.config ?? null);
-    } catch {
-      setStoredPersona(null);
-    }
-  }, [pgn]);
-
-  const effectivePersona = paradoxAvatarConfig ?? storedPersona;
 
   const inferredPlayerColor = useMemo(
     () =>
@@ -603,28 +564,10 @@ export default function GameReviewer({
     return result;
   }, [parsed]);
 
-  /** Ligne théorique + transpositions pour le coup courant (revue). */
-  const openingTheorySnapshot = useMemo(() => {
-    if (!parsed || currentIndex === 0) return null;
-    const slice = parsed.uci.slice(0, currentIndex);
-    const { opening, matchedPlies } = findBestOpeningByPrefix(slice);
-    if (!opening) return null;
-    const sans = getOpeningTheorySans(opening);
-    if (sans.length === 0) return null;
-    const fen = parsed.fenAfter[currentIndex - 1];
-    const aligned = matchedPlies === slice.length;
-    const transpositionHints = describeTheoryHitsForUi(fen, lang, {
-      skipOpeningId: aligned ? opening.id : undefined,
-      skipTheoryStep: aligned ? matchedPlies : undefined,
-    });
-    return {
-      opening,
-      matchedPlies,
-      sans,
-      aligned,
-      transpositionHints,
-    };
-  }, [parsed, currentIndex, lang]);
+  const displayedOpening = useMemo(() => {
+    if (!parsed || currentIndex <= 0) return null;
+    return findCompletedOpening(parsed.uci.slice(0, currentIndex));
+  }, [parsed, currentIndex]);
 
   const verboseMainline = useMemo(
     () => (parsed ? buildVerboseHistoryFromSan(parsed.san) : null),
@@ -778,8 +721,6 @@ export default function GameReviewer({
   // The move that just played to reach currentFen (when currentIndex > 0).
   const currentMove: ReviewedMove | undefined =
     currentIndex > 0 ? effectiveMoves[currentIndex - 1] : undefined;
-  const currentOpening =
-    currentIndex > 0 ? openingByPly[currentIndex - 1] : null;
   const lastMoveSquares =
     currentIndex > 0 ? uciToSquares(parsed.uci[currentIndex - 1]) : null;
 
@@ -801,14 +742,26 @@ export default function GameReviewer({
     bestIsCritical: isCriticalBest,
   });
 
-  const evalForBar =
-    currentIndex === 0
-      ? 0
-      : effectiveMoves[currentIndex - 1]?.playerEval ?? null;
-  const evalMateInMoves =
-    currentIndex === 0
-      ? undefined
-      : effectiveMoves[currentIndex - 1]?.playerMateInMoves;
+  const plyEval =
+    currentIndex > 0
+      ? (effectiveMoves[currentIndex - 1]?.playerEval ?? null)
+      : null;
+  const plyMate =
+    currentIndex > 0
+      ? effectiveMoves[currentIndex - 1]?.playerMateInMoves
+      : undefined;
+  const liveEval = topLines.liveEval;
+  const preferPlyEval = topLines.paused && plyEval != null;
+  const evalForBar = preferPlyEval
+    ? plyEval
+    : (liveEval?.evalWhitePov ?? plyEval);
+  const evalMateInMoves = preferPlyEval
+    ? plyMate
+    : (liveEval?.mateInMovesWhite ?? plyMate);
+  const evalIsMate = preferPlyEval
+    ? typeof evalMateInMoves === "number" && evalMateInMoves !== 0
+    : Boolean(liveEval?.isMate) ||
+      (typeof evalMateInMoves === "number" && evalMateInMoves !== 0);
 
   const goToKeyMoment = (direction: 1 | -1) => {
     if (!effectiveResult) return;
@@ -839,7 +792,7 @@ export default function GameReviewer({
         currentIndex > 0 ? Math.floor((currentIndex - 1) / 2) + 1 : undefined
       }
       openingName={
-        currentOpening ? getOpeningName(currentOpening, lang) : undefined
+        displayedOpening ? getOpeningName(displayedOpening, lang) : undefined
       }
       whiteName={parsed.headers.White}
       blackName={parsed.headers.Black}
@@ -851,6 +804,10 @@ export default function GameReviewer({
       coachTone={coachTone}
       orientation={orientation}
       onRequestUpgrade={onRequestUpgrade}
+      autoExplain={
+        effectiveStatus !== "running" && effectiveStatus !== "engine-loading"
+      }
+      sessionKey={pgnHash}
     >
     <div className="min-h-0 flex flex-col gap-1.5 lg:h-full lg:overflow-hidden">
       <div className={cn(
@@ -864,9 +821,23 @@ export default function GameReviewer({
       <div className="order-3 lg:order-1 lg:min-h-0 lg:h-full">
         <Card className="bg-slate-900/60 border-cyan-500/20 h-full flex flex-col min-h-0 overflow-hidden">
           <CardHeader className="pb-1 py-2 shrink-0">
-            <CardTitle className="text-xs uppercase tracking-wider text-slate-400 font-bold">
-              {t.review.movesTitle}
-            </CardTitle>
+            <div className="flex items-baseline justify-between gap-2 min-w-0">
+              <CardTitle className="text-xs uppercase tracking-wider text-slate-400 font-bold shrink-0">
+                {t.review.movesTitle}
+              </CardTitle>
+              {displayedOpening ? (
+                <span
+                  className="truncate text-[11px] font-medium text-cyan-300/90"
+                  title={`${getOpeningName(displayedOpening, lang)} (${displayedOpening.eco})`}
+                >
+                  {getOpeningName(displayedOpening, lang)}
+                  <span className="text-slate-500 font-normal">
+                    {" "}
+                    {displayedOpening.eco}
+                  </span>
+                </span>
+              ) : null}
+            </div>
           </CardHeader>
           <CardContent className="p-2 pt-0 flex-1 min-h-0 overflow-hidden">
             <ScrollArea className="h-[40vh] lg:h-full pr-2">
@@ -891,9 +862,9 @@ export default function GameReviewer({
         <EvaluationBar
           evaluation={evalForBar}
           compact
-          isMate={typeof evalMateInMoves === "number" && evalMateInMoves !== 0}
+          isMate={evalIsMate}
           mateInMoves={
-            typeof evalMateInMoves === "number" && evalMateInMoves !== 0
+            evalIsMate && typeof evalMateInMoves === "number"
               ? evalMateInMoves
               : undefined
           }
@@ -991,36 +962,6 @@ export default function GameReviewer({
             )}
           </Button>
         </div>
-
-        {uiPrefs.moveDetail ? (
-        <div className="lg:max-h-[11rem] lg:min-h-0 lg:overflow-y-auto shrink-0">
-          <CurrentMoveDetail
-            move={currentMove}
-            explorerFen={currentFen}
-            fenBefore={
-              currentIndex > 0 ? parsed.fenBefore[currentIndex - 1] : undefined
-            }
-            opening={
-              currentIndex > 0 ? openingByPly[currentIndex - 1] ?? null : null
-            }
-            previousOpening={
-              currentIndex > 1 ? openingByPly[currentIndex - 2] ?? null : null
-            }
-            flags={
-              currentIndex > 0
-                ? moveFlagsByPly[currentIndex - 1] ?? null
-                : null
-            }
-            isExitingTheory={
-              currentIndex > 0 && exitTheoryPly === currentIndex - 1
-            }
-            theorySnapshot={openingTheorySnapshot}
-            personaConfig={effectivePersona}
-            getPersonaStyleMove={review.getPersonaStyleMove}
-            reviewBlocked={effectiveStatus === "running"}
-          />
-        </div>
-        ) : null}
       </div>
 
       {/* RIGHT — compact digest + chat as the main panel */}
@@ -1559,609 +1500,6 @@ function MoveCell({
         </span>
       )}
     </button>
-  );
-}
-
-interface MastersExplorerBody {
-  white?: number;
-  draws?: number;
-  black?: number;
-  moves?: Array<{
-    san?: string;
-    uci?: string;
-    white?: number;
-    draws?: number;
-    black?: number;
-  }>;
-}
-
-function OpeningExplorerPanel({ fen }: { fen: string }) {
-  const { t } = useLanguage();
-  const { settings } = useChessboardSettings();
-  const sideToMove = useMemo(() => {
-    try {
-      return fen.split(" ")[1] === "b" ? "b" : "w";
-    } catch {
-      return "w";
-    }
-  }, [fen]);
-  const [expanded, setExpanded] = useState(false);
-  const [pool, setPool] = useState<"masters" | "lichess">("lichess");
-  const [body, setBody] = useState<MastersExplorerBody | null>(null);
-  const [fromCache, setFromCache] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(false);
-
-  useEffect(() => {
-    if (!expanded || !fen) return;
-    let cancelled = false;
-    setLoading(true);
-    setError(false);
-    void (async () => {
-      try {
-        const res = await fetch(
-          `/api/openings/explorer?fen=${encodeURIComponent(fen)}&pool=${pool}`
-        );
-        const json = (await res.json().catch(() => null)) as {
-          data?: MastersExplorerBody;
-          cached?: boolean;
-        } | null;
-        if (cancelled) return;
-        if (!res.ok || !json?.data) {
-          setError(true);
-          setBody(null);
-          return;
-        }
-        setBody(json.data);
-        setFromCache(Boolean(json.cached));
-      } catch {
-        if (!cancelled) setError(true);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [expanded, fen, pool]);
-
-  return (
-    <div className="rounded border border-sky-500/25 bg-sky-950/30 px-2 py-2 text-[11px]">
-      <button
-        type="button"
-        onClick={() => setExpanded((e) => !e)}
-        className="flex items-center gap-2 w-full text-left font-semibold text-sky-200 hover:text-sky-100"
-      >
-        <BarChart3 className="h-3.5 w-3.5 shrink-0" />
-        {t.review.opening.explorerTitle}
-      </button>
-      {expanded && (
-        <div className="mt-2 space-y-1">
-          <div className="flex flex-wrap items-center gap-1">
-            <button
-              type="button"
-              onClick={() => setPool("masters")}
-              className={`rounded px-2 py-0.5 text-[10px] border transition-colors ${
-                pool === "masters"
-                  ? "border-sky-400 bg-sky-900/80 text-sky-100"
-                  : "border-sky-800/60 text-slate-400 hover:border-sky-600"
-              }`}
-            >
-              {t.review.opening.explorerPoolMasters}
-            </button>
-            <button
-              type="button"
-              onClick={() => setPool("lichess")}
-              className={`rounded px-2 py-0.5 text-[10px] border transition-colors ${
-                pool === "lichess"
-                  ? "border-sky-400 bg-sky-900/80 text-sky-100"
-                  : "border-sky-800/60 text-slate-400 hover:border-sky-600"
-              }`}
-            >
-              {t.review.opening.explorerPoolLichess}
-            </button>
-          </div>
-          <p className="text-[10px] text-slate-500 leading-snug">{t.review.opening.explorerPoolHint}</p>
-        </div>
-      )}
-      {expanded && loading && (
-        <div className="flex items-center gap-2 mt-2 text-sky-300">
-          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          {t.review.opening.explorerLoading}
-        </div>
-      )}
-      {expanded && error && (
-        <p className="mt-2 text-red-300">{t.review.opening.explorerError}</p>
-      )}
-      {expanded && body?.moves && body.moves.length > 0 && (
-        <ul className="mt-2 space-y-1 max-h-56 overflow-y-auto">
-          {body.moves.map((m, i) => (
-            <li
-              key={`${m.uci ?? m.san}-${i}`}
-              className="flex justify-between gap-2 font-mono text-[10px] text-slate-200 items-center"
-            >
-              <span className="inline-flex items-center min-w-0">
-                <SanNotation
-                  verboseMove={
-                    m.uci ? uciToVerboseMoveFromFen(fen, m.uci) : null
-                  }
-                  fallbackSan={m.san ?? m.uci ?? ""}
-                  movingColor={sideToMove}
-                  pieceSet={settings.pieceSet}
-                  size="sm"
-                />
-              </span>
-              <span className="text-slate-500 shrink-0">
-                W{m.white ?? 0} · D{m.draws ?? 0} · B{m.black ?? 0}
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
-      {expanded && fromCache && !loading && (
-        <p className="text-[10px] text-slate-500 mt-1">{t.review.opening.explorerCached}</p>
-      )}
-    </div>
-  );
-}
-
-function CurrentMoveDetail({
-  move,
-  explorerFen,
-  fenBefore,
-  opening,
-  previousOpening,
-  flags,
-  isExitingTheory,
-  theorySnapshot,
-  personaConfig,
-  getPersonaStyleMove,
-  reviewBlocked,
-}: {
-  move?: ReviewedMove;
-  /** Position affichée (explorer Lichess : stats depuis cette position). */
-  explorerFen: string;
-  fenBefore?: string;
-  opening?: Opening | null;
-  previousOpening?: Opening | null;
-  flags?: MoveFlags | null;
-  isExitingTheory?: boolean;
-  theorySnapshot:
-    | {
-        opening: Opening;
-        matchedPlies: number;
-        sans: string[];
-        aligned: boolean;
-        transpositionHints: TheoryTranspositionHit[];
-      }
-    | null;
-  personaConfig: EngineConfig | null;
-  getPersonaStyleMove: (
-    fen: string,
-    config: EngineConfig,
-    opts?: { depth?: number; movetime?: number }
-  ) => Promise<string>;
-  reviewBlocked: boolean;
-}) {
-  const { t, lang } = useLanguage();
-  const { settings: boardSettings } = useChessboardSettings();
-
-  const MAX_TRANSPOSITIONS_VISIBLE = 6;
-  const [showAllTranspositions, setShowAllTranspositions] = useState(false);
-
-  const theoryVerbose = useMemo(() => {
-    if (!theorySnapshot?.sans?.length) return null;
-    return buildVerboseHistoryFromSan(theorySnapshot.sans);
-  }, [theorySnapshot]);
-
-  useEffect(() => {
-    setShowAllTranspositions(false);
-  }, [theorySnapshot]);
-
-  if (!move) {
-    return (
-      <Card className="bg-slate-900/60 border-cyan-500/20">
-        <CardContent className="py-3 text-xs text-slate-400">
-          {t.review.startPosition}
-        </CardContent>
-      </Card>
-    );
-  }
-  const colors = CLASSIFICATION_COLORS[move.classification];
-  const labels: Record<string, string> = {
-    brilliant: t.review.classBrilliant,
-    best: t.review.classBest,
-    excellent: t.review.classExcellent,
-    good: t.review.classGood,
-    inaccuracy: t.review.classInaccuracy,
-    mistake: t.review.classMistake,
-    blunder: t.review.classBlunder,
-    miss: t.review.classMiss,
-  };
-  const isSubOptimal = move.uci !== move.bestMove;
-  const showCoach =
-    isSubOptimal &&
-    !!move.bestMove &&
-    !!fenBefore &&
-    move.classification !== "best" &&
-    move.classification !== "excellent" &&
-    move.classification !== "brilliant";
-
-  return (
-    <Card className={`${colors.bg} ${colors.border} border`}>
-      <CardContent className="py-2 space-y-2">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Badge className={`${colors.bg} ${colors.text} ${colors.border} border font-bold`}>
-              {colors.emoji} {labels[move.classification]}
-            </Badge>
-            <span className="text-sm font-mono text-slate-100 inline-flex items-center gap-1">
-              <SanNotation
-                verboseMove={
-                  fenBefore && move.uci
-                    ? uciToVerboseMoveFromFen(fenBefore, move.uci)
-                    : null
-                }
-                fallbackSan={move.san}
-                movingColor={move.sideToMove === "white" ? "w" : "b"}
-                pieceSet={boardSettings.pieceSet}
-                size="md"
-              />
-            </span>
-          </div>
-          <div className="text-right text-xs text-slate-400 space-y-0.5">
-            <div>
-              {t.review.cpl}:{" "}
-              <strong className="text-slate-200">{move.cpl}</strong>
-            </div>
-            {isSubOptimal && (
-              <div className="text-[10px]">
-                {t.review.evalSwing}:{" "}
-                <span className="font-mono text-slate-300">
-                  {Math.abs(move.bestEval - move.playerEval).toFixed(2)}
-                </span>{" "}
-                {t.review.evalSwingUnit}
-              </div>
-            )}
-          </div>
-        </div>
-        {opening ? (
-          <div className="flex items-center gap-1.5 text-[11px] text-amber-200/90 bg-amber-500/10 border border-amber-500/30 rounded px-2 py-1">
-            <BookOpen className="h-3 w-3 shrink-0" />
-            <span className="font-semibold uppercase tracking-wider text-amber-300/90">
-              {t.review.opening.theory}
-            </span>
-            <span className="text-amber-100">
-              {getOpeningName(opening, lang)}
-            </span>
-            <span className="font-mono text-amber-300/70">({opening.eco})</span>
-          </div>
-        ) : isExitingTheory && previousOpening ? (
-          <div className="flex items-center gap-1.5 text-[11px] text-orange-100 bg-orange-500/15 border border-orange-500/40 rounded px-2 py-1">
-            <LogOut className="h-3.5 w-3.5 shrink-0 text-orange-300" />
-            <span className="uppercase tracking-wider font-bold text-orange-200">
-              {t.review.opening.exitTheoryNow}
-            </span>
-            <span className="text-orange-200/70">·</span>
-            <span className="text-orange-100">
-              {getOpeningName(previousOpening, lang)}
-            </span>
-            <span className="font-mono text-orange-300/80">
-              ({previousOpening.eco})
-            </span>
-          </div>
-        ) : null}
-        {theorySnapshot && (
-          <div className="rounded border border-amber-500/25 bg-amber-950/40 px-2 py-2 space-y-1.5 text-[11px]">
-            <div className="font-semibold text-amber-200/95 flex items-center gap-1.5">
-              <BookOpen className="h-3.5 w-3.5 shrink-0" />
-              {t.review.opening.theoryMainLine}
-            </div>
-            <p className="text-amber-100/90">
-              {getOpeningName(theorySnapshot.opening, lang)}
-              <span className="font-mono text-amber-300/60 ml-1">
-                ({theorySnapshot.opening.eco})
-              </span>
-            </p>
-            {!theorySnapshot.aligned && (
-              <p className="text-orange-300/95">{t.review.opening.divergedFromBook}</p>
-            )}
-            <p className="text-slate-300 leading-relaxed break-words font-mono text-[10px] inline-flex flex-wrap items-center gap-x-1 gap-y-0.5">
-              {theorySnapshot.sans.map((san, i) => (
-                <span
-                  key={`${san}-${i}`}
-                  className={
-                    i < theorySnapshot.matchedPlies
-                      ? "text-amber-100 font-semibold inline-flex items-center"
-                      : "text-slate-500 inline-flex items-center"
-                  }
-                >
-                  <SanNotation
-                    verboseMove={theoryVerbose?.[i] ?? null}
-                    fallbackSan={san}
-                    movingColor={i % 2 === 0 ? "w" : "b"}
-                    pieceSet={boardSettings.pieceSet}
-                    size="sm"
-                  />
-                </span>
-              ))}
-            </p>
-            {theorySnapshot.transpositionHints.length > 0 && (
-              <div className="border-t border-amber-500/20 pt-1.5 space-y-1.5">
-                <div className="text-slate-500 text-[10px]">
-                  {t.review.opening.transpositions}
-                </div>
-                <div className="inline-flex flex-wrap items-center gap-1">
-                  {(showAllTranspositions
-                    ? theorySnapshot.transpositionHints
-                    : theorySnapshot.transpositionHints.slice(
-                        0,
-                        MAX_TRANSPOSITIONS_VISIBLE
-                      )
-                  ).map((hit) => (
-                    <Badge
-                      key={`${hit.openingId}-${hit.theoryStep}`}
-                      variant="outline"
-                      className="border-slate-700/60 bg-slate-800/60 font-normal text-[10px] px-1.5 py-0 text-slate-300 max-w-[min(100%,14rem)]"
-                    >
-                      <span className="truncate">{hit.name}</span>
-                      <span className="font-mono text-amber-300/70 shrink-0 ml-1">
-                        · {lang === "en" ? "move" : "coup"} {hit.theoryStep}
-                      </span>
-                    </Badge>
-                  ))}
-                  {theorySnapshot.transpositionHints.length >
-                    MAX_TRANSPOSITIONS_VISIBLE && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 px-2 text-[10px] text-slate-400 hover:text-slate-200"
-                      onClick={() =>
-                        setShowAllTranspositions((v) => !v)
-                      }
-                    >
-                      {showAllTranspositions
-                        ? t.review.opening.showLessTranspositions
-                        : t.review.opening.showMoreTranspositions.replace(
-                            "{n}",
-                            String(
-                              theorySnapshot.transpositionHints.length -
-                                MAX_TRANSPOSITIONS_VISIBLE
-                            )
-                          )}
-                    </Button>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-        <OpeningExplorerPanel fen={explorerFen} />
-        {(flags?.isCheckmate ||
-          flags?.isCheck ||
-          flags?.isForced ||
-          (typeof move.bestMateInMoves === "number" &&
-            move.bestMateInMoves !== 0) ||
-          (typeof move.playerMateInMoves === "number" &&
-            move.playerMateInMoves !== 0)) && (
-          <div className="flex flex-wrap items-center gap-1.5">
-            {flags?.isCheckmate && (
-              <Badge className="bg-rose-500/15 text-rose-200 border-rose-500/40 border font-bold">
-                <Skull className="h-3 w-3 mr-1" />
-                {t.review.flags.checkmate}
-              </Badge>
-            )}
-            {flags?.isCheck && !flags?.isCheckmate && (
-              <Badge className="bg-orange-500/15 text-orange-200 border-orange-500/40 border font-semibold">
-                <ShieldAlert className="h-3 w-3 mr-1" />
-                {t.review.flags.check}
-              </Badge>
-            )}
-            {flags?.isForced && (
-              <Badge className="bg-sky-500/15 text-sky-200 border-sky-500/40 border font-semibold">
-                <Lock className="h-3 w-3 mr-1" />
-                {t.review.flags.forced}
-              </Badge>
-            )}
-            {typeof move.bestMateInMoves === "number" &&
-              move.bestMateInMoves !== 0 && (
-                <Badge className="bg-emerald-500/15 text-emerald-200 border-emerald-500/40 border font-mono">
-                  {formatMateBadge(
-                    t.review.flags.mateInBest,
-                    move.bestMateInMoves,
-                    t.review.flags.whiteShort,
-                    t.review.flags.blackShort
-                  )}
-                </Badge>
-              )}
-            {typeof move.playerMateInMoves === "number" &&
-              move.playerMateInMoves !== 0 &&
-              move.playerMateInMoves !== move.bestMateInMoves && (
-                <Badge className="bg-purple-500/15 text-purple-200 border-purple-500/40 border font-mono">
-                  {formatMateBadge(
-                    t.review.flags.mateInPlayer,
-                    move.playerMateInMoves,
-                    t.review.flags.whiteShort,
-                    t.review.flags.blackShort
-                  )}
-                </Badge>
-              )}
-          </div>
-        )}
-        <div className="text-xs text-slate-300 space-y-1">
-          <div>
-            {t.review.evalAfterPlayed}:{" "}
-            <span className="font-mono">{formatEval(move.playerEval)}</span>
-          </div>
-          {isSubOptimal && move.bestMove && (
-            <div className="flex items-start gap-1 text-emerald-300 flex-wrap">
-              <AlertTriangle className="h-3 w-3 shrink-0 mt-0.5" />
-              <span className="inline-flex flex-wrap items-center gap-x-1 gap-y-0.5">
-                {t.review.bestWas}{" "}
-                <strong className="inline-flex items-center font-mono font-semibold">
-                  <SanNotation
-                    verboseMove={
-                      fenBefore && move.bestMove
-                        ? uciToVerboseMoveFromFen(fenBefore, move.bestMove)
-                        : null
-                    }
-                    fallbackSan={move.bestSan || move.bestMove}
-                    movingColor={
-                      move.sideToMove === "white" ? "w" : "b"
-                    }
-                    pieceSet={boardSettings.pieceSet}
-                    size="sm"
-                  />
-                </strong>
-                {move.bestSan && (
-                  <span className="text-[10px] text-emerald-400/60 font-mono">
-                    ({move.bestMove})
-                  </span>
-                )}
-                <span className="font-mono">({formatEval(move.bestEval)})</span>
-              </span>
-            </div>
-          )}
-        </div>
-
-        {showCoach && (
-          <CloneParadoxCard
-            move={move}
-            fenBefore={fenBefore!}
-            personaConfig={personaConfig}
-            getPersonaStyleMove={getPersonaStyleMove}
-            reviewBlocked={reviewBlocked}
-          />
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-/**
- * Coup « style clone » (Stockfish + MultiPV + profil) pour les coups sous-optimaux.
- */
-function CloneParadoxCard({
-  move,
-  fenBefore,
-  personaConfig,
-  getPersonaStyleMove,
-  reviewBlocked,
-}: {
-  move: ReviewedMove;
-  fenBefore: string;
-  personaConfig: EngineConfig | null;
-  getPersonaStyleMove: (
-    fen: string,
-    config: EngineConfig,
-    opts?: { depth?: number; movetime?: number }
-  ) => Promise<string>;
-  reviewBlocked: boolean;
-}) {
-  const { t } = useLanguage();
-  const { settings: boardSettings } = useChessboardSettings();
-  const [status, setStatus] = useState<"idle" | "loading" | "ready" | "error">(
-    "idle"
-  );
-  const [cloneUci, setCloneUci] = useState<string | null>(null);
-
-  useEffect(() => {
-    setStatus("idle");
-    setCloneUci(null);
-  }, [move.ply, move.uci]);
-
-  const handleClick = useCallback(() => {
-    if (!personaConfig || reviewBlocked) return;
-    setStatus("loading");
-    void getPersonaStyleMove(fenBefore, personaConfig, {
-      depth: Math.min(14, personaConfig.depth),
-      movetime: Math.min(800, personaConfig.timeControl),
-    })
-      .then((uci) => {
-        setCloneUci(uci);
-        setStatus("ready");
-      })
-      .catch(() => setStatus("error"));
-  }, [personaConfig, reviewBlocked, fenBefore, getPersonaStyleMove]);
-
-  const cloneSan =
-    cloneUci && fenBefore ? uciToSan(fenBefore, cloneUci) : null;
-
-  return (
-    <div className="pt-2 border-t border-cyan-500/25 mt-2 space-y-2">
-      <div className="flex items-center gap-2 text-[11px] font-semibold text-cyan-200/90 uppercase tracking-wide">
-        <Bot className="h-3.5 w-3.5 shrink-0" />
-        {t.review.paradox.title}
-      </div>
-      <p className="text-[10px] text-slate-500 leading-snug">
-        {t.review.paradox.subtitle}
-      </p>
-      {!personaConfig ? (
-        <p className="text-xs text-slate-400">
-          {t.review.paradox.noPersona}{" "}
-          <Link href="/analyze" className="text-cyan-400 hover:underline">
-            {t.review.paradox.openAnalyze}
-          </Link>
-        </p>
-      ) : reviewBlocked ? (
-        <p className="text-xs text-amber-200/80">{t.review.paradox.busy}</p>
-      ) : status === "idle" ? (
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={handleClick}
-          className="border-cyan-500/40 bg-cyan-500/10 text-cyan-100 hover:bg-cyan-500/20"
-        >
-          <Sparkles className="h-3.5 w-3.5 mr-1.5" />
-          {t.review.paradox.button}
-        </Button>
-      ) : status === "loading" ? (
-        <div className="rounded border border-cyan-500/30 bg-cyan-500/10 px-3 py-2 text-xs text-cyan-100 flex items-center gap-2">
-          <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
-          {t.review.paradox.loading}
-        </div>
-      ) : status === "error" ? (
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs text-red-300">{t.review.paradox.error}</span>
-          <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={handleClick}>
-            {t.review.paradox.retry}
-          </Button>
-        </div>
-      ) : (
-        <div className="rounded border border-cyan-500/25 bg-slate-950/50 px-3 py-2 text-xs space-y-1.5">
-          <div className="text-cyan-200/90 font-medium">
-            {t.review.paradox.cloneWouldPlay}
-          </div>
-          {cloneUci && move.bestMove && cloneUci === move.bestMove && (
-            <p className="text-emerald-300/90">{t.review.paradox.sameAsEngine}</p>
-          )}
-          {cloneUci && cloneUci === move.uci && cloneUci !== move.bestMove && (
-            <p className="text-amber-200/90">{t.review.paradox.sameAsPlayed}</p>
-          )}
-          {cloneSan && (
-            <div className="inline-flex items-center gap-1 font-mono text-slate-100">
-              <SanNotation
-                verboseMove={uciToVerboseMoveFromFen(fenBefore, cloneUci!)}
-                fallbackSan={cloneSan}
-                movingColor={move.sideToMove === "white" ? "w" : "b"}
-                pieceSet={boardSettings.pieceSet}
-                size="sm"
-              />
-              <span className="text-[10px] text-slate-500">({cloneUci})</span>
-            </div>
-          )}
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-7 text-[11px] text-slate-400"
-            onClick={handleClick}
-          >
-            {t.review.paradox.retry}
-          </Button>
-        </div>
-      )}
-    </div>
   );
 }
 

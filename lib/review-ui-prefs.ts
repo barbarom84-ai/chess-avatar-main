@@ -1,6 +1,5 @@
 export const REVIEW_UI_PREF_KEYS = [
   "moves",
-  "moveDetail",
   "summary",
   "keyMoments",
   "evalGraph",
@@ -12,7 +11,6 @@ export type ReviewUiPrefs = Record<ReviewUiPrefKey, boolean>;
 
 export const DEFAULT_REVIEW_UI_PREFS: ReviewUiPrefs = {
   moves: true,
-  moveDetail: false,
   summary: false,
   keyMoments: true,
   evalGraph: false,

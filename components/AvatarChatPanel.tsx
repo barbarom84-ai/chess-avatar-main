@@ -49,6 +49,8 @@ interface AvatarChatPanelProps {
   coachTone?: CoachToneId;
   orientation?: "white" | "black";
   headerActions?: ReactNode;
+  /** Reset review chat when this identity changes (new PGN), not on every ply. */
+  sessionKey?: string | null;
 }
 
 function pieceLetter(id: PieceEmojiId): "K" | "Q" | "R" | "B" | "N" | "P" {
@@ -157,6 +159,7 @@ export default function AvatarChatPanel({
   coachTone = "pedagogical",
   orientation = "white",
   headerActions,
+  sessionKey = null,
 }: AvatarChatPanelProps) {
   const { t, lang } = useLanguage();
   const { settings } = useChessboardSettings();
@@ -181,7 +184,7 @@ export default function AvatarChatPanel({
   useEffect(() => {
     if (variant !== "review") return;
     setMessages([]);
-  }, [variant, reviewContext?.fenBefore, reviewContext?.lastMoveUci]);
+  }, [variant, sessionKey]);
   const title = t.avatarChat.titleWithName.replace("{name}", stats.username);
   const quotaLabel =
     remaining != null && limit != null

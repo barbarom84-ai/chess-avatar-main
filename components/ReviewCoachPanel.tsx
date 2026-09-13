@@ -50,6 +50,10 @@ export type ReviewCoachPanelProps = {
   coachTone: CoachToneId;
   orientation?: "white" | "black";
   onRequestUpgrade?: () => void;
+  /** When false, do not auto-call the explain API as the ply changes. */
+  autoExplain?: boolean;
+  /** Reset review chat when the reviewed game changes. */
+  sessionKey?: string | null;
   children?: ReactNode;
 };
 
@@ -72,6 +76,8 @@ type ReviewCoachCtx = {
   coachTone: CoachToneId;
   orientation?: "white" | "black";
   onRequestUpgrade?: () => void;
+  autoExplain: boolean;
+  sessionKey?: string | null;
   handleExplanationChange: (text: string | null) => void;
 };
 
@@ -103,6 +109,8 @@ export function ReviewCoachProvider({
   coachTone,
   orientation = "white",
   onRequestUpgrade,
+  autoExplain = true,
+  sessionKey = null,
   children,
 }: ReviewCoachPanelProps) {
   const [coachId, setCoachId] = useState(CHESS_AVATAR_PRO_COACH_ID);
@@ -201,6 +209,8 @@ export function ReviewCoachProvider({
       coachTone,
       orientation,
       onRequestUpgrade,
+      autoExplain,
+      sessionKey,
       handleExplanationChange,
     }),
     [
@@ -217,6 +227,8 @@ export function ReviewCoachProvider({
       coachTone,
       orientation,
       onRequestUpgrade,
+      autoExplain,
+      sessionKey,
       handleExplanationChange,
     ]
   );
@@ -246,6 +258,7 @@ export function ReviewCoachSidebar({
     moveNumber,
     coachTone,
     onRequestUpgrade,
+    autoExplain,
     handleExplanationChange,
   } = useReviewCoach();
 
@@ -316,6 +329,7 @@ export function ReviewCoachSidebar({
         fenBefore={fenBefore}
         moveNumber={moveNumber}
         coachTone={coachTone}
+        autoExplain={autoExplain}
         onRequestUpgrade={onRequestUpgrade}
         onExplanationChange={handleExplanationChange}
       />
@@ -325,7 +339,7 @@ export function ReviewCoachSidebar({
 }
 
 export function ReviewCoachChat({ toolbar }: { toolbar?: ReactNode }) {
-  const { coachId, selected, reviewContext, playerColor, coachTone, orientation } =
+  const { coachId, selected, reviewContext, playerColor, coachTone, orientation, sessionKey } =
     useReviewCoach();
   return (
     <AvatarChatPanel
@@ -340,6 +354,7 @@ export function ReviewCoachChat({ toolbar }: { toolbar?: ReactNode }) {
       coachTone={coachTone}
       orientation={orientation}
       headerActions={toolbar}
+      sessionKey={sessionKey}
     />
   );
 }

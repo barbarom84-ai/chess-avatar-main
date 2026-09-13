@@ -8,7 +8,6 @@ import type { ReviewUiPrefKey, ReviewUiPrefs } from "@/lib/review-ui-prefs";
 
 const TOGGLES: ReviewUiPrefKey[] = [
   "moves",
-  "moveDetail",
   "summary",
   "keyMoments",
   "evalGraph",
@@ -27,7 +26,6 @@ export default function ReviewDisplayToggles({
   const rootRef = useRef<HTMLDivElement>(null);
   const labels: Record<ReviewUiPrefKey, string> = {
     moves: t.review.layout.tabMoves,
-    moveDetail: t.review.layout.tabMove,
     summary: t.review.layout.tabSummary,
     keyMoments: t.review.keyMomentsTitle,
     evalGraph: t.review.layout.tabGraph,

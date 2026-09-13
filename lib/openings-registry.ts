@@ -17,6 +17,7 @@ let testOnlyPartitions = false;
 
 let aggregatedCache: Opening[] | null = null;
 let prefixIndexCache: Map<string, Opening> | null = null;
+let exactIndexCache: Map<string, Opening> | null = null;
 
 async function loadPartitionFiles(): Promise<void> {
   const [popular, e4, lichess] = await Promise.all([
@@ -32,6 +33,7 @@ async function loadPartitionFiles(): Promise<void> {
   partitionsLoaded = true;
   aggregatedCache = null;
   prefixIndexCache = null;
+  exactIndexCache = null;
 }
 
 /**
@@ -85,10 +87,46 @@ function getPrefixIndex(): Map<string, Opening> {
   return prefixIndexCache;
 }
 
+function buildExactIndex(): Map<string, Opening> {
+  const index = new Map<string, Opening>();
+  for (const o of getAggregatedOpenings()) {
+    if (o.uciMoves.length === 0) continue;
+    const key = o.uciMoves.join(",");
+    const prev = index.get(key);
+    if (!prev || (o.popularity ?? 0) > (prev.popularity ?? 0)) {
+      index.set(key, o);
+    }
+  }
+  return index;
+}
+
+function getExactIndex(): Map<string, Opening> {
+  if (!exactIndexCache) {
+    exactIndexCache = buildExactIndex();
+  }
+  return exactIndexCache;
+}
+
+/**
+ * Deepest named opening whose full move list has actually been played.
+ * Unlike prefix matching, this does not name a longer continuation (e.g. Evans)
+ * before that continuation's extra moves appear.
+ */
+export function findCompletedOpening(uciMoves: string[]): Opening | null {
+  if (uciMoves.length === 0) return null;
+  const index = getExactIndex();
+  for (let len = uciMoves.length; len >= 1; len--) {
+    const hit = index.get(uciMoves.slice(0, len).join(","));
+    if (hit) return hit;
+  }
+  return null;
+}
+
 /** Test helper — clears memoized opening pool. */
 export function clearAggregatedOpeningsCache(): void {
   aggregatedCache = null;
   prefixIndexCache = null;
+  exactIndexCache = null;
   partitionOpenings = [];
   partitionsLoaded = false;
   partitionsLoadPromise = null;
@@ -102,6 +140,7 @@ export function setPartitionOpeningsForTests(openings: Opening[]): void {
   testOnlyPartitions = true;
   aggregatedCache = null;
   prefixIndexCache = null;
+  exactIndexCache = null;
 }
 
 function findBestOpeningByPrefixLinear(uciMoves: string[]): PrefixMatchResult {

@@ -4,6 +4,7 @@ import {
   computeOpeningByPly,
   ensureOpeningsPartitionsLoaded,
   findBestOpeningByPrefix,
+  findCompletedOpening,
   isStrictBookPly,
   setPartitionOpeningsForTests,
 } from "./openings-registry";
@@ -22,6 +23,31 @@ const italianLine: Opening = {
   description: "test",
   tags: ["test"],
 };
+
+describe("findCompletedOpening", () => {
+  const evansLine: Opening = {
+    ...italianLine,
+    id: "test-evans",
+    name: "Evans Test",
+    eco: "C51",
+    moves: "1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. b4",
+    uciMoves: [...italianLine.uciMoves, "f8c5", "b2b4"],
+    popularity: 2,
+  };
+
+  beforeEach(() => {
+    clearAggregatedOpeningsCache();
+    setPartitionOpeningsForTests([italianLine, evansLine]);
+  });
+
+  it("names the completed line, not a longer continuation", () => {
+    expect(findCompletedOpening(italianLine.uciMoves)?.id).toBe("test-italian");
+  });
+
+  it("names the longer line once its extra moves are played", () => {
+    expect(findCompletedOpening(evansLine.uciMoves)?.id).toBe("test-evans");
+  });
+});
 
 describe("computeOpeningByPly", () => {
   beforeEach(() => {

@@ -19,6 +19,12 @@ import {
 
 export { DEFAULT_REVIEW_TOP_LINES_DEPTH, DEFAULT_REVIEW_TOP_LINES_MULTIPV };
 
+export type LivePositionEval = {
+  evalWhitePov: number;
+  isMate?: boolean;
+  mateInMovesWhite?: number;
+};
+
 export function snapshotToEngineLines(
   fen: string,
   snapshot: ContinuousAnalysisSnapshot
@@ -69,6 +75,7 @@ export function usePositionTopLines(options: {
   const [lines, setLines] = useState<ReviewEngineLine[]>([]);
   const [resolvedDepth, setResolvedDepth] = useState(0);
   const [gameOver, setGameOver] = useState(false);
+  const [liveEval, setLiveEval] = useState<LivePositionEval | null>(null);
 
   const sequenceRef = useRef(0);
   const fenRef = useRef<string | null>(fen);
@@ -110,6 +117,10 @@ export function usePositionTopLines(options: {
       setPaused(false);
       setIsAnalyzing(false);
       setGameOver(true);
+      setLiveEval({
+        evalWhitePov: terminal.evalWhitePov,
+        isMate: Math.abs(terminal.evalWhitePov) >= 10,
+      });
       return;
     }
 
@@ -133,8 +144,17 @@ export function usePositionTopLines(options: {
             setIsAnalyzing(false);
             return;
           }
-          setLines(snapshotToEngineLines(nextFen, clean));
+          const converted = snapshotToEngineLines(nextFen, clean);
+          setLines(converted);
           setResolvedDepth(clean.depth);
+          const top = converted[0];
+          if (top) {
+            setLiveEval({
+              evalWhitePov: top.evalWhitePov,
+              isMate: top.isMate,
+              mateInMovesWhite: top.mateInMovesWhite,
+            });
+          }
           setIsAnalyzing(false);
         } catch {
           if (seq !== sequenceRef.current) return;
@@ -153,6 +173,7 @@ export function usePositionTopLines(options: {
     isAnalyzing,
     paused,
     lines,
+    liveEval,
     depth: resolvedDepth,
     targetDepth: depth,
     gameOver,

@@ -15,6 +15,7 @@ type ReviewCoachAnalysisProps = {
   fenBefore?: string | null;
   moveNumber?: number;
   coachTone: CoachToneId;
+  autoExplain?: boolean;
   onRequestUpgrade?: () => void;
   onExplanationChange?: (text: string | null) => void;
 };
@@ -24,6 +25,7 @@ export default function ReviewCoachAnalysis({
   fenBefore,
   moveNumber,
   coachTone,
+  autoExplain = true,
   onRequestUpgrade,
   onExplanationChange,
 }: ReviewCoachAnalysisProps) {
@@ -44,6 +46,12 @@ export default function ReviewCoachAnalysis({
   }, [move?.ply, move?.uci]);
 
   useEffect(() => {
+    if (!autoExplain) {
+      coach.reset();
+      onExplanationChange?.(null);
+      lastGoodRef.current = null;
+      return;
+    }
     if (!move || !fenBefore || !isExplainableReviewedMove(move)) {
       coach.reset();
       onExplanationChange?.(null);
@@ -63,7 +71,7 @@ export default function ReviewCoachAnalysis({
     return () => window.clearTimeout(timer);
     // Key on move identity + prompt inputs, not the unstable coach object.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [move?.ply, move?.uci, fenBefore, lang, moveNumber, coachTone]);
+  }, [autoExplain, move?.ply, move?.uci, fenBefore, lang, moveNumber, coachTone]);
 
   useEffect(() => {
     if (coach.status === "ready" && coach.explanation) {
@@ -88,6 +96,10 @@ export default function ReviewCoachAnalysis({
     if (!move || !fenBefore) return;
     void coach.explain({ move, fenBefore, lang, moveNumber, coachTone });
   }, [coach, move, fenBefore, lang, moveNumber, coachTone]);
+
+  if (!autoExplain) {
+    return null;
+  }
 
   if (!canExplain) {
     return (
