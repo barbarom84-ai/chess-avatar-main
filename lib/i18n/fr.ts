@@ -385,7 +385,7 @@ export const fr = {
       ],
       reviewSuggestions: [
         "Pourquoi ce coup ?",
-        "Quelle était la meilleure suite ?",
+        "Quelle est la meilleure suite ?",
         "Où j’ai perdu l’avantage ?",
         "Comment jouer cette position ?",
       ],

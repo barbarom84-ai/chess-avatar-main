@@ -385,7 +385,7 @@ export const en = {
       ],
       reviewSuggestions: [
         "Why this move?",
-        "What was the best continuation?",
+        "What is the best continuation?",
         "Where did I lose the advantage?",
         "How should I play this position?",
       ],

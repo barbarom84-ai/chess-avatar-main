@@ -340,8 +340,7 @@ export function classifyReviewCoachQuestion(
 
 /** True when the chip should use the engine explain endpoint if data is ready. */
 export function isReviewWhyQuestion(message: string, lang: "fr" | "en"): boolean {
-  const intent = classifyReviewCoachQuestion(message, lang);
-  return intent === "why_last" || intent === "best_line";
+  return classifyReviewCoachQuestion(message, lang) === "why_last";
 }
 
 /** Make review chip questions unambiguous for the chat model. */
@@ -353,8 +352,6 @@ export function expandReviewCoachUserMessage(
   const intent = classifyReviewCoachQuestion(message, lang);
   const rawMove = review?.lastMove || review?.lastMoveUci;
   const move = rawMove ? localizeSan(rawMove, lang) : "";
-  const rawBest = review?.bestMove || review?.bestMoveUci;
-  const best = rawBest ? localizeSan(rawBest, lang) : "";
   const mover =
     review?.sideToMove === "black"
       ? lang === "fr"
@@ -391,47 +388,26 @@ Consignes : explique UNIQUEMENT le coup déjà joué ${move} par ${mover} (flèc
 Instructions: explain ONLY the move already played (${move} by ${mover}, yellow arrow). Stay side-neutral. Do not suggest a move to play now for ${now}.`;
   }
 
-  if (intent === "best_line") {
-    if (lang === "fr") {
-      if (best && move) {
-        return `${message.trim()}
-
-Consignes : la meilleure suite est UNIQUEMENT ${best}, un coup de ${mover} À LA PLACE de ${move} dans la position AVANT ce coup. Ce n'est PAS un coup de l'échiquier actuel. N'invente aucun autre SAN.`;
-      }
-      return `${message.trim()}
-
-Consignes : l'alternative moteur n'est pas encore disponible. Dis-le clairement. N'invente aucun coup (pas de Cc6, pas de b8-c6, pas d'idée d'ouverture générique).`;
-    }
-    if (best && move) {
-      return `${message.trim()}
-
-Instructions: the only best continuation is ${best}, a ${mover} move INSTEAD of ${move} from the BEFORE position. It is NOT a move on the current board. Do not invent any other SAN.`;
-    }
-    return `${message.trim()}
-
-Instructions: the engine alternative is not available yet. Say so clearly. Do not invent a move (no Nc6, no b8-c6, no generic developing idea).`;
-  }
-
-  if (intent === "how_to_play") {
+  if (intent === "best_line" || intent === "how_to_play") {
     const engineList = formatReviewEngineLines(review?.engineLinesNow, lang);
     if (lang === "fr") {
       if (engineList) {
         return `${message.trim()}
 
-Consignes : propose UNIQUEMENT parmi les 3 meilleurs coups Stockfish de ${now} : ${engineList}. N'invente aucun autre SAN.`;
+Consignes : la meilleure suite est MAINTENANT, pour ${now} sur l'échiquier affiché. Cite UNIQUEMENT parmi les 3 coups Stockfish : ${engineList}. Ce n'est PAS un coup joué par ${mover}. N'invente aucun autre SAN.`;
       }
       return `${message.trim()}
 
-Consignes : les meilleurs coups moteur ne sont pas encore prêts. Dis-le clairement. N'invente aucun coup.`;
+Consignes : les meilleurs coups moteur de ${now} ne sont pas encore prêts. Dis-le clairement. N'invente aucun coup.`;
     }
     if (engineList) {
       return `${message.trim()}
 
-Instructions: suggest ONLY among Stockfish's top 3 moves for ${now}: ${engineList}. Do not invent any other SAN.`;
+Instructions: the best continuation is NOW, for ${now} on the displayed board. Cite ONLY Stockfish's top 3: ${engineList}. It is NOT a move by ${mover}. Do not invent any other SAN.`;
     }
     return `${message.trim()}
 
-Instructions: the engine's best moves are not ready yet. Say so clearly. Do not invent a move.`;
+Instructions: the engine's best moves for ${now} are not ready yet. Say so clearly. Do not invent a move.`;
   }
 
   return message.trim();

@@ -121,7 +121,7 @@ describe("avatar-chat-prompt", () => {
       },
     });
     expect(prompt).toContain("Coups LÉGAUX MAINTENANT");
-    expect(prompt).toContain("comment jouer MAINTENANT");
+    expect(prompt).toContain("meilleure suite MAINTENANT pour les Blancs");
     expect(prompt).not.toContain("INTENTION : expliquer le DERNIER COUP");
   });
 
@@ -173,7 +173,57 @@ describe("avatar-chat-prompt", () => {
     expect(prompt).toContain("INTERDIT d'inventer un autre SAN");
   });
 
-  it("does not invent a best continuation when the engine alternative is missing", () => {
+  it("grounds the best continuation on Stockfish now instead of a missed Black move", () => {
+    const prompt = buildSystemPrompt({
+      message: "Quelle était la meilleure suite ?",
+      lang: "fr",
+      role: "house",
+      stats: { username: "ChessAvatarPro", style: "Équilibré", winRate: 55 },
+      config: { playStyle: "équilibré", elo: 2400, favoriteOpening: "Italian" },
+      review: {
+        lastMove: "Qxg7",
+        lastMoveUci: "g5g7",
+        sideToMove: "black",
+        turnToMove: "white",
+        bestMove: "f6",
+        legalMovesNow: ["d4", "e4", "g4"],
+        engineLinesNow: [
+          {
+            rank: 1,
+            san: "d4",
+            uci: "d2d4",
+            pvSan: ["d4"],
+            evalWhitePov: 0.48,
+          },
+          {
+            rank: 2,
+            san: "e4",
+            uci: "e3e4",
+            pvSan: ["e4"],
+            evalWhitePov: 0.41,
+          },
+          {
+            rank: 3,
+            san: "g4",
+            uci: "g2g4",
+            pvSan: ["g4"],
+            evalWhitePov: 0.39,
+          },
+        ],
+        playerColor: "white",
+        isPlayerMove: false,
+      },
+    });
+    expect(prompt).toContain("meilleure suite MAINTENANT pour les Blancs");
+    expect(prompt).toContain("d4");
+    expect(prompt).toContain("e4");
+    expect(prompt).toContain("g4");
+    expect(prompt).toContain("INTERDIT de proposer un coup joué par les Noirs");
+    expect(prompt).not.toContain("AUCUNE alternative moteur");
+    expect(prompt).not.toContain("Alternative moteur MANQUÉE");
+  });
+
+  it("does not invent a best continuation when the engine lines are missing", () => {
     const prompt = buildSystemPrompt({
       message: "Quelle était la meilleure suite ?",
       lang: "fr",
@@ -187,9 +237,10 @@ describe("avatar-chat-prompt", () => {
         boardPieces: "Black: Pc6 Nb8",
       },
     });
-    expect(prompt).toContain("AUCUNE alternative moteur");
+    expect(prompt).toContain("les 3 coups moteur ne sont pas prêts");
     expect(prompt).toContain("INTERDIT d'inventer un coup");
     expect(prompt).toContain("Reste NEUTRE");
+    expect(prompt).not.toContain("AUCUNE alternative moteur");
   });
 
   it("uses French piece letters in the review prompt (Te1, not Re1)", () => {

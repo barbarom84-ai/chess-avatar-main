@@ -468,7 +468,9 @@ export default function AvatarChatPanel({
                       .find((x) => x.role === "user")?.content ?? "";
                     const intent = classifyReviewCoachQuestion(prevUser, lang);
                     const forNow =
-                      intent === "how_to_play" || intent === "other";
+                      intent === "how_to_play" ||
+                      intent === "best_line" ||
+                      intent === "other";
                     const chosen = forNow
                       ? reviewContext?.turnToMove ?? reviewContext?.sideToMove
                       : reviewContext?.sideToMove ?? reviewContext?.turnToMove;

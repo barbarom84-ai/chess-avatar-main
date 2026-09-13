@@ -108,6 +108,8 @@ describe("review-coach-context", () => {
     expect(isReviewWhyQuestion("Pourquoi ce coup ?", "fr")).toBe(true);
     expect(isReviewWhyQuestion("Why this move?", "en")).toBe(true);
     expect(isReviewWhyQuestion("Comment jouer cette position ?", "fr")).toBe(false);
+    expect(isReviewWhyQuestion("Quelle était la meilleure suite ?", "fr")).toBe(false);
+    expect(isReviewWhyQuestion("Quelle est la meilleure suite ?", "fr")).toBe(false);
     expect(classifyReviewCoachQuestion("Pourquoi ce coup ?", "fr")).toBe("why_last");
     expect(classifyReviewCoachQuestion("Quelle était la meilleure suite ?", "fr")).toBe(
       "best_line"
@@ -169,6 +171,39 @@ describe("review-coach-context", () => {
     expect(expanded).toContain("N'indique aucun coup à jouer maintenant");
   });
 
+  it("grounds the best continuation on Stockfish now, not the side that just moved", () => {
+    const expanded = expandReviewCoachUserMessage(
+      "Quelle était la meilleure suite ?",
+      {
+        lastMove: "Qxg7",
+        sideToMove: "black",
+        turnToMove: "white",
+        engineLinesNow: [
+          {
+            rank: 1,
+            san: "d4",
+            uci: "d2d4",
+            pvSan: ["d4"],
+            evalWhitePov: 0.48,
+          },
+          {
+            rank: 2,
+            san: "e4",
+            uci: "e3e4",
+            pvSan: ["e4"],
+            evalWhitePov: 0.41,
+          },
+        ],
+      },
+      "fr"
+    );
+    expect(expanded).toContain("les Blancs");
+    expect(expanded).toContain("d4");
+    expect(expanded).toContain("e4");
+    expect(expanded).toContain("PAS un coup joué par les Noirs");
+    expect(expanded).not.toContain("n'est pas encore disponible");
+  });
+
   it("refuses to invent a best continuation before engine data exists", () => {
     const expanded = expandReviewCoachUserMessage(
       "Quelle était la meilleure suite ?",
@@ -179,8 +214,9 @@ describe("review-coach-context", () => {
       },
       "fr"
     );
-    expect(expanded).toContain("n'est pas encore disponible");
-    expect(expanded).toContain("pas de Cc6");
+    expect(expanded).toContain("ne sont pas encore prêts");
+    expect(expanded).toContain("les Blancs");
+    expect(expanded).not.toContain("n'est pas encore disponible");
   });
 
   it("grounds how-to-play on Stockfish top lines instead of inventing SAN", () => {

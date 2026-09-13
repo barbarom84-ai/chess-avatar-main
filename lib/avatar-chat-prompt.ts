@@ -59,23 +59,19 @@ export function reviewBlurb(req: ChatRequest, lang: "fr" | "en"): string {
   const moveLabel = localizeSan(r.lastMove ?? r.lastMoveUci ?? "", lang);
   const bestLabel = localizeSan(r.bestMove ?? r.bestMoveUci ?? "", lang);
   const intent = classifyReviewCoachQuestion(req.message, lang);
-  const suggestNow = intent === "how_to_play" || intent === "other";
-  const beforeSans = (r.legalMovesBefore ?? []).map((san) => localizeSan(san, lang));
+  const suggestNow =
+    intent === "how_to_play" || intent === "best_line" || intent === "other";
   const engineNow = formatEngineLinesBlurb(r.engineLinesNow, lang);
 
   if (lang === "fr") {
     const intentBlock =
       intent === "why_last" && moveLabel
         ? `INTENTION : expliquer le DERNIER COUP DÉJÀ JOUÉ (${moveLabel} par ${mover}, flèche jaune). Neutre : pas de « tu joues les Blancs/Noirs ». INTERDIT de proposer un coup à ${nowToMove}.`
-        : intent === "best_line"
-          ? bestLabel
-            ? `INTENTION : la meilleure suite est UNIQUEMENT ${bestLabel}, un coup de ${mover} À LA PLACE de ${moveLabel || "ce coup"}, depuis le FEN AVANT. INTERDIT d'inventer un autre SAN (pas de Cc6 / b8-c6 s'ils ne sont pas ${bestLabel}). Ce n'est pas un coup de l'échiquier actuel.`
-            : `INTENTION : meilleure suite, mais AUCUNE alternative moteur n'est fournie. Dis que l'analyse n'est pas prête. INTERDIT d'inventer un coup (Cc6, b8-c6, développement générique…).`
-          : intent === "how_to_play"
-            ? engineNow
-              ? `INTENTION : comment jouer MAINTENANT. Cite UNIQUEMENT un ou plusieurs des 3 coups Stockfish : ${engineNow}. INTERDIT d'inventer un autre SAN.`
-              : `INTENTION : comment jouer MAINTENANT, mais les 3 coups moteur ne sont pas prêts. Dis-le. INTERDIT d'inventer un coup.`
-            : intent === "lost_advantage"
+        : intent === "best_line" || intent === "how_to_play"
+          ? engineNow
+            ? `INTENTION : meilleure suite MAINTENANT pour ${nowToMove} (échiquier affiché). Cite UNIQUEMENT : ${engineNow}. INTERDIT de proposer un coup joué par ${mover}. INTERDIT d'inventer un autre SAN.`
+            : `INTENTION : meilleure suite MAINTENANT pour ${nowToMove}, mais les 3 coups moteur ne sont pas prêts. Dis-le. INTERDIT d'inventer un coup.`
+          : intent === "lost_advantage"
               ? `INTENTION : où l'évaluation a glissé. Parle du coup affiché (${moveLabel || "?"}) et de sa classification, pas d'un coup futur, et sans prendre parti pour un camp.`
               : "";
     const facts = [
@@ -102,12 +98,9 @@ export function reviewBlurb(req: ChatRequest, lang: "fr" | "en"): string {
             .map((san) => localizeSan(san, lang))
             .join(", ")}.`
         : "",
-      intent === "best_line" && beforeSans.length
-        ? `Coups LÉGAUX AVANT ${moveLabel || "ce coup"} (seuls ceux-ci pouvaient le remplacer) : ${beforeSans.join(", ")}.`
-        : "",
       r.classification ? `Classification moteur : ${r.classification}.` : "",
       typeof r.cpl === "number" ? `Perte : ${r.cpl} centipions.` : "",
-      bestLabel
+      !suggestNow && bestLabel
         ? `Alternative moteur MANQUÉE (depuis le FEN AVANT, à la place de ${moveLabel || "ce coup"}) : ${bestLabel}.`
         : "",
       typeof r.playerEval === "number" && typeof r.bestEval === "number"
@@ -116,7 +109,7 @@ export function reviewBlurb(req: ChatRequest, lang: "fr" | "en"): string {
       r.opening ? `Ouverture : ${r.opening}.` : "",
       r.fenBefore ? `FEN avant le coup : ${r.fenBefore}` : "",
       r.fen ? `FEN après le coup (échiquier actuel) : ${r.fen}` : "",
-      r.lastExplanation
+      !suggestNow && r.lastExplanation
         ? `Explication déjà donnée pour ce coup (reste cohérent) : ${localizeFrenchCoachText(
             r.lastExplanation,
             [r.lastMove ?? "", r.bestMove ?? ""]
@@ -130,7 +123,7 @@ RÈGLES DE REVIEW (prioritaires) :
 - Ne dis jamais « tu as joué X ».
 - Le trait ACTUEL n'est PAS le camp qui vient de jouer.
 - Ne parle que des pièces du diagramme. N'invente pas de cavalier ou de case occupée (pas de « Cc6 » si un pion est déjà en c6).
-- Un coup proposé MAINTENANT doit être l'un des 3 coups Stockfish s'ils sont fournis, sinon un coup de la liste légale. Une meilleure suite se joue dans le FEN AVANT.
+- Un coup proposé MAINTENANT (y compris « la meilleure suite ») doit être l'un des 3 coups Stockfish de ${nowToMove} s'ils sont fournis, sinon un coup de la liste légale actuelle. Jamais un coup du camp qui vient de jouer.
 - Reste sur CE coup et CETTE position, pas une ouverture générique.
 - ${frenchNotationSystemHint()}
 ${intentBlock ? `${intentBlock}\n` : ""}${facts.join("\n")}`;
@@ -139,15 +132,11 @@ ${intentBlock ? `${intentBlock}\n` : ""}${facts.join("\n")}`;
   const enIntentBlock =
     intent === "why_last" && moveLabel
       ? `INTENT: explain the LAST MOVE ALREADY PLAYED (${moveLabel} by ${mover}, yellow arrow). Stay side-neutral. Do NOT suggest a move for ${nowToMove}.`
-      : intent === "best_line"
-        ? bestLabel
-          ? `INTENT: the only best continuation is ${bestLabel}, a ${mover} move INSTEAD of ${moveLabel || "this move"} from the BEFORE FEN. Do NOT invent another SAN.`
-          : `INTENT: best continuation, but NO engine alternative is provided. Say analysis is not ready. Do NOT invent a move (Nc6, b8-c6, generic development…).`
-        : intent === "how_to_play"
-          ? engineNow
-            ? `INTENT: how to play NOW. Cite ONLY Stockfish's top 3: ${engineNow}. Do NOT invent another SAN.`
-            : `INTENT: how to play NOW, but the engine's top 3 are not ready. Say so. Do NOT invent a move.`
-          : intent === "lost_advantage"
+      : intent === "best_line" || intent === "how_to_play"
+        ? engineNow
+          ? `INTENT: best continuation NOW for ${nowToMove} (displayed board). Cite ONLY: ${engineNow}. Do NOT suggest a move by ${mover}. Do NOT invent another SAN.`
+          : `INTENT: best continuation NOW for ${nowToMove}, but the engine's top 3 are not ready. Say so. Do NOT invent a move.`
+        : intent === "lost_advantage"
             ? `INTENT: where the evaluation slipped. Talk about the displayed move (${moveLabel || "?"}), without taking a side.`
             : "";
 
@@ -173,12 +162,9 @@ ${intentBlock ? `${intentBlock}\n` : ""}${facts.join("\n")}`;
     suggestNow && !engineNow && r.legalMovesNow?.length
       ? `Legal moves NOW (only these may be suggested as a continuation): ${r.legalMovesNow.join(", ")}.`
       : "",
-    intent === "best_line" && beforeSans.length
-      ? `Legal moves BEFORE ${moveLabel || "this move"} (only these could replace it): ${beforeSans.join(", ")}.`
-      : "",
     r.classification ? `Engine label: ${r.classification}.` : "",
     typeof r.cpl === "number" ? `Loss: ${r.cpl} centipawns.` : "",
-    bestLabel
+    !suggestNow && bestLabel
       ? `MISSED engine alternative (from the BEFORE FEN, instead of ${moveLabel || "the played move"}): ${bestLabel}.`
       : "",
     typeof r.playerEval === "number" && typeof r.bestEval === "number"
@@ -187,7 +173,7 @@ ${intentBlock ? `${intentBlock}\n` : ""}${facts.join("\n")}`;
     r.opening ? `Opening: ${r.opening}.` : "",
     r.fenBefore ? `FEN before the move: ${r.fenBefore}` : "",
     r.fen ? `FEN after the move (current board): ${r.fen}` : "",
-    r.lastExplanation
+    !suggestNow && r.lastExplanation
       ? `Explanation already given for this move (stay consistent): ${r.lastExplanation}`
       : "",
   ].filter(Boolean);
@@ -198,7 +184,7 @@ REVIEW RULES (highest priority):
 - Never say "you played X".
 - The side to move NOW is NOT the side that just moved.
 - Only mention pieces on the diagram. Do not invent a knight onto an occupied square (no "Nc6" if a pawn is already on c6).
-- A move to play NOW must be one of Stockfish's top 3 if provided, otherwise a move from the legal list. A better continuation is played from the BEFORE FEN.
+- A move to play NOW (including "best continuation") must be one of Stockfish's top 3 for ${nowToMove} if provided, otherwise a current legal move. Never a move by the side that just played.
 - Stay on THIS move and THIS position, not a generic opening lecture.
 ${enIntentBlock ? `${enIntentBlock}\n` : ""}${facts.join("\n")}`;
 }
