@@ -1900,7 +1900,7 @@ export const fr = {
       rosterTitle: "Roster",
       rosterDeckTitle: "Deck — roster",
       rosterDeckHint:
-        "Défilez horizontalement. Glissez une mini-carte vers un emplacement, ou touchez une carte puis un slot.",
+        "Glissez une mini-carte vers un emplacement, ou touchez une carte puis un slot.",
       rosterHint:
         "Faites glisser une carte vers un emplacement #1–8. Cliquez sur × pour vider un slot.",
       dropHere: "Déposer ici",

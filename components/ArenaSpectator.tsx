@@ -16,6 +16,7 @@ import {
   stmEvalToWhitePov,
   type ArenaOutcome,
 } from "@/lib/arena-spectator-helpers";
+import { ARENA_MOVE_LIMIT_EVAL_DEPTH } from "@/lib/arena-move-limit";
 import {
   dedupeByIdentity,
   filterByPlatform,
@@ -291,6 +292,42 @@ export default function ArenaSpectator({
     [t.arenaPage]
   );
 
+  const finishMoveLimit = useCallback(
+    async (game: Chess, hist: string[]) => {
+      let evalWhitePov: number | null = null;
+      if (isReady) {
+        try {
+          const raw = await getPositionEvaluation(
+            game.fen(),
+            ARENA_MOVE_LIMIT_EVAL_DEPTH
+          );
+          evalWhitePov = stmEvalToWhitePov(game.fen(), raw);
+        } catch {
+          evalWhitePov = null;
+        }
+      }
+      const outcome = classifyArenaOutcome(game, true, lang, evalWhitePov);
+      setStatusNote(outcome.resultMessage);
+      if (
+        saveCloudGames &&
+        userId &&
+        hist.length > 0 &&
+        !arenaSavedRef.current
+      ) {
+        arenaSavedRef.current = true;
+        void trySaveArenaCloud(game, hist, outcome);
+      }
+    },
+    [
+      isReady,
+      getPositionEvaluation,
+      lang,
+      saveCloudGames,
+      userId,
+      trySaveArenaCloud,
+    ]
+  );
+
   const playStep = useCallback(async (): Promise<boolean> => {
     if (!isReady || !whiteConfig || !blackConfig) return true;
     if (whiteKey === blackKey) {
@@ -305,21 +342,8 @@ export default function ArenaSpectator({
       return true;
     }
     if (hist.length >= maxPlies) {
-      setStatusNote(t.arenaPage.gameOver);
       const gLimit = replayUci(hist);
-      if (
-        saveCloudGames &&
-        userId &&
-        hist.length > 0 &&
-        !arenaSavedRef.current
-      ) {
-        arenaSavedRef.current = true;
-        void trySaveArenaCloud(
-          gLimit,
-          [...hist],
-          classifyArenaOutcome(gLimit, true, lang)
-        );
-      }
+      await finishMoveLimit(gLimit, [...hist]);
       return true;
     }
 
@@ -410,15 +434,7 @@ export default function ArenaSpectator({
       return true;
     }
     if (snapshot.length >= maxPlies) {
-      setStatusNote(t.arenaPage.gameOver);
-      if (saveCloudGames && userId && !arenaSavedRef.current) {
-        arenaSavedRef.current = true;
-        void trySaveArenaCloud(
-          next,
-          snapshot,
-          classifyArenaOutcome(next, true, lang)
-        );
-      }
+      await finishMoveLimit(next, snapshot);
       return true;
     }
     return false;
@@ -440,6 +456,7 @@ export default function ArenaSpectator({
     trySaveArenaCloud,
     lang,
     forcedOpeningId,
+    finishMoveLimit,
   ]);
 
   const handleStartAuto = async () => {

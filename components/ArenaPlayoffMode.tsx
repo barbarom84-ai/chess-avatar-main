@@ -26,6 +26,7 @@ import {
   replayUci,
   stmEvalToWhitePov,
 } from "@/lib/arena-chess";
+import { ARENA_MOVE_LIMIT_EVAL_DEPTH } from "@/lib/arena-move-limit";
 import { prepareArenaEngineConfig } from "@/lib/arena-forced-opening";
 import {
   getArenaThinkBudgetMs,
@@ -309,12 +310,19 @@ export default function ArenaPlayoffMode({
         winnerKey: string | null,
         note: string,
         uciHist: string[],
-        maxMovesReached = false
+        maxMovesReached = false,
+        evalWhitePov: number | null = null
       ): Promise<{ winnerKey: string | null; note: string }> => {
         setStatusNote(note);
         if (winnerKey && saveCloudGames && userId && uciHist.length > 0) {
           const game = replayUci(uciHist);
-          const base = classifyArenaOutcome(game, maxMovesReached, lang);
+          const base = classifyArenaOutcome(
+            game,
+            maxMovesReached,
+            lang,
+            undefined,
+            evalWhitePov
+          );
           const outcome = playoffOutcomeForSave(
             winnerKey,
             whiteKey,
@@ -454,9 +462,42 @@ export default function ArenaPlayoffMode({
         }
 
         if (historyRef.current.length >= PLAYOFF_MAX_PLIES) {
-          const winnerKey = playoffDrawWinnerKey(blackKey);
-          const note = t.arenaPlayoff.moveLimitBlackWins;
-          return complete(winnerKey, note, historyRef.current, true);
+          let evalWhitePov: number | null = null;
+          try {
+            const raw = await getPositionEvaluation(
+              next.fen(),
+              ARENA_MOVE_LIMIT_EVAL_DEPTH
+            );
+            evalWhitePov = stmEvalToWhitePov(next.fen(), raw);
+          } catch {
+            evalWhitePov = null;
+          }
+          const outcome = classifyArenaOutcome(
+            next,
+            true,
+            lang,
+            undefined,
+            evalWhitePov
+          );
+          let winnerKey: string;
+          let note: string;
+          if (outcome.winner === "white") {
+            winnerKey = whiteKey;
+            note = outcome.resultMessage;
+          } else if (outcome.winner === "black") {
+            winnerKey = blackKey;
+            note = outcome.resultMessage;
+          } else {
+            winnerKey = playoffDrawWinnerKey(blackKey);
+            note = t.arenaPlayoff.moveLimitBlackWins;
+          }
+          return complete(
+            winnerKey,
+            note,
+            historyRef.current,
+            true,
+            evalWhitePov
+          );
         }
       }
 
@@ -464,6 +505,7 @@ export default function ArenaPlayoffMode({
     },
     [
       getBestMove,
+      getPositionEvaluation,
       lang,
       saveCloudGames,
       userId,
@@ -648,27 +690,26 @@ export default function ArenaPlayoffMode({
         </p>
       ) : null}
 
-      {!showBoard && (
-        <ArenaPlayoffRosterDeck
-          pool={poolOptions}
-          rosterFilter={rosterFilter}
-          onRosterFilterChange={setRosterFilter}
-          tapPickKey={tapPickKey}
-          onTapPickKey={handleTapPickKey}
-          dragOptionKey={dragOptionKey}
-          onDragStartOption={setDragOptionKey}
-          onDragEnd={() => setDragOptionKey(null)}
-          placedKeys={placedKeys}
-        />
-      )}
-
       <div
         className={`arena-playoff-grid grid gap-3 items-start ${
           showBoard
             ? "grid-cols-1 xl:grid-cols-[minmax(0,1.15fr)_minmax(260px,0.85fr)]"
-            : "grid-cols-1"
+            : "grid-cols-1 lg:grid-cols-[minmax(20rem,0.95fr)_minmax(0,1.05fr)]"
         }`}
       >
+        {!showBoard && (
+          <ArenaPlayoffRosterDeck
+            pool={poolOptions}
+            rosterFilter={rosterFilter}
+            onRosterFilterChange={setRosterFilter}
+            tapPickKey={tapPickKey}
+            onTapPickKey={handleTapPickKey}
+            dragOptionKey={dragOptionKey}
+            onDragStartOption={setDragOptionKey}
+            onDragEnd={() => setDragOptionKey(null)}
+            placedKeys={placedKeys}
+          />
+        )}
         {showBoard && (
         <Card
           className="bg-slate-900/70 border-cyan-500/20 xl:order-1"

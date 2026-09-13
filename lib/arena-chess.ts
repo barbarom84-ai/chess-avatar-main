@@ -1,5 +1,6 @@
 import { Chess } from "chess.js";
 import type { EngineConfig } from "@/lib/analysis";
+import { classifyArenaMoveLimit } from "@/lib/arena-move-limit";
 import {
   getArenaMoveParams,
   getArenaPhase,
@@ -96,7 +97,8 @@ export function classifyArenaOutcome(
   game: Chess,
   maxMovesReached: boolean,
   lang: "fr" | "en",
-  timeoutWinner?: "white" | "black"
+  timeoutWinner?: "white" | "black",
+  evalWhitePov?: number | null
 ): ArenaOutcome {
   if (timeoutWinner === "white") {
     return {
@@ -124,15 +126,13 @@ export function classifyArenaOutcome(
   }
 
   if (maxMovesReached && !game.isGameOver()) {
+    const limited = classifyArenaMoveLimit(lang, evalWhitePov);
     return {
-      result: "draw",
-      resultType: "arena_move_limit",
-      resultMessage:
-        lang === "fr"
-          ? "Partie arrêtée : limite de coups."
-          : "Game stopped: move limit.",
-      pgnResult: "1/2-1/2",
-      winner: "draw",
+      result: limited.result,
+      resultType: limited.resultType,
+      resultMessage: limited.resultMessage,
+      pgnResult: limited.pgnResult,
+      winner: limited.winner,
     };
   }
   if (game.isCheckmate()) {

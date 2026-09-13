@@ -25,6 +25,7 @@ import {
   type DbGame,
   isArenaBotVsBotGame,
 } from "@/lib/supabase-storage";
+import { arenaBotVsBotSide } from "@/lib/arena-move-limit";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { useLanguage } from "@/lib/language-context";
 import { usePremium } from "@/hooks/usePremium";
@@ -142,15 +143,10 @@ export default function GamesPage() {
     filter: "win" | "loss" | "draw"
   ): boolean {
     if (isArenaBotVsBotGame(game)) {
-      if (filter === "win") return game.result_type === "arena_white_wins";
-      if (filter === "loss") return game.result_type === "arena_black_wins";
-      if (filter === "draw") {
-        return (
-          game.result_type === "arena_move_limit" ||
-          game.result_type.startsWith("arena_draw")
-        );
-      }
-      return true;
+      const side = arenaBotVsBotSide(game.result_type, game.result);
+      if (filter === "win") return side === "white";
+      if (filter === "loss") return side === "black";
+      return side === "draw";
     }
     return game.result === filter;
   }
@@ -366,27 +362,25 @@ export default function GamesPage() {
   const getGameResultBadge = (game: DbGame) => {
     if (isArenaBotVsBotGame(game)) {
       let outcomeBadge: ReactNode;
-      switch (game.result_type) {
-        case "arena_white_wins":
-          outcomeBadge = (
-            <Badge className="bg-slate-100 text-slate-900">
-              {t.games.arenaOutcomeWhite}
-            </Badge>
-          );
-          break;
-        case "arena_black_wins":
-          outcomeBadge = (
-            <Badge className="bg-slate-800 text-slate-100">
-              {t.games.arenaOutcomeBlack}
-            </Badge>
-          );
-          break;
-        default:
-          outcomeBadge = (
-            <Badge className="bg-amber-700 text-white">
-              {t.games.arenaOutcomeDraw}
-            </Badge>
-          );
+      const side = arenaBotVsBotSide(game.result_type, game.result);
+      if (side === "white") {
+        outcomeBadge = (
+          <Badge className="bg-slate-100 text-slate-900">
+            {t.games.arenaOutcomeWhite}
+          </Badge>
+        );
+      } else if (side === "black") {
+        outcomeBadge = (
+          <Badge className="bg-slate-800 text-slate-100">
+            {t.games.arenaOutcomeBlack}
+          </Badge>
+        );
+      } else {
+        outcomeBadge = (
+          <Badge className="bg-amber-700 text-white">
+            {t.games.arenaOutcomeDraw}
+          </Badge>
+        );
       }
       return (
         <div className="flex flex-wrap items-center gap-1">

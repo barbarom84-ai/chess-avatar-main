@@ -1893,7 +1893,7 @@ export const en = {
       rosterTitle: "Roster",
       rosterDeckTitle: "Deck — roster",
       rosterDeckHint:
-        "Scroll horizontally. Drag a mini card onto a slot, or tap a card then tap a slot.",
+        "Drag a mini card onto a slot, or tap a card then tap a slot.",
       rosterHint:
         "Drag a card onto slots #1–8. Click × to clear a slot.",
       dropHere: "Drop here",

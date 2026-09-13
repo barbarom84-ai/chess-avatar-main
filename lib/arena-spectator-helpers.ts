@@ -1,5 +1,6 @@
 import { Chess } from "chess.js";
 import type { EngineConfig } from "@/lib/analysis";
+import { classifyArenaMoveLimit } from "@/lib/arena-move-limit";
 
 export function replayUci(history: string[]): Chess {
   const g = new Chess();
@@ -45,17 +46,16 @@ export type ArenaOutcome = {
 export function classifyArenaOutcome(
   game: Chess,
   maxMovesReached: boolean,
-  lang: "fr" | "en"
+  lang: "fr" | "en",
+  evalWhitePov?: number | null
 ): ArenaOutcome {
   if (maxMovesReached && !game.isGameOver()) {
+    const limited = classifyArenaMoveLimit(lang, evalWhitePov);
     return {
-      result: "draw",
-      resultType: "arena_move_limit",
-      resultMessage:
-        lang === "fr"
-          ? "Partie arrêtée : limite de coups atteinte."
-          : "Game stopped: move limit reached.",
-      pgnResult: "1/2-1/2",
+      result: limited.result,
+      resultType: limited.resultType,
+      resultMessage: limited.resultMessage,
+      pgnResult: limited.pgnResult,
     };
   }
   if (game.isCheckmate()) {
