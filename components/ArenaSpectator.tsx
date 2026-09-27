@@ -16,7 +16,7 @@ import {
   stmEvalToWhitePov,
   type ArenaOutcome,
 } from "@/lib/arena-spectator-helpers";
-import { ARENA_MOVE_LIMIT_EVAL_DEPTH } from "@/lib/arena-move-limit";
+import { ARENA_MOVE_LIMIT_EVAL_DEPTH, classifyArenaCrushing, whitePovEvalOrNull } from "@/lib/arena-move-limit";
 import {
   dedupeByIdentity,
   filterByPlatform,
@@ -225,7 +225,7 @@ export default function ArenaSpectator({
   }, [stopThinking]);
 
   useEffect(() => {
-    if (!isReady) return;
+    if (!isReady || autoPlay) return;
     const seq = ++evalSeqRef.current;
     let cancelled = false;
     void (async () => {
@@ -240,7 +240,7 @@ export default function ArenaSpectator({
     return () => {
       cancelled = true;
     };
-  }, [fen, isReady, getPositionEvaluation]);
+  }, [fen, isReady, getPositionEvaluation, autoPlay]);
 
   const trySaveArenaCloud = useCallback(
     async (game: Chess, uciHist: string[], outcome: ArenaOutcome) => {
@@ -294,18 +294,13 @@ export default function ArenaSpectator({
 
   const finishMoveLimit = useCallback(
     async (game: Chess, hist: string[]) => {
-      let evalWhitePov: number | null = null;
-      if (isReady) {
-        try {
-          const raw = await getPositionEvaluation(
-            game.fen(),
-            ARENA_MOVE_LIMIT_EVAL_DEPTH
-          );
-          evalWhitePov = stmEvalToWhitePov(game.fen(), raw);
-        } catch {
-          evalWhitePov = null;
-        }
-      }
+      const evalWhitePov = await whitePovEvalOrNull(
+        game.fen(),
+        getPositionEvaluation,
+        stmEvalToWhitePov,
+        ARENA_MOVE_LIMIT_EVAL_DEPTH
+      );
+      setBarEval(evalWhitePov);
       const outcome = classifyArenaOutcome(game, true, lang, evalWhitePov);
       setStatusNote(outcome.resultMessage);
       if (
@@ -319,7 +314,6 @@ export default function ArenaSpectator({
       }
     },
     [
-      isReady,
       getPositionEvaluation,
       lang,
       saveCloudGames,
@@ -433,8 +427,42 @@ export default function ArenaSpectator({
       }
       return true;
     }
+
+    const evalWhitePov = await whitePovEvalOrNull(
+      next.fen(),
+      getPositionEvaluation,
+      stmEvalToWhitePov,
+      ARENA_MOVE_LIMIT_EVAL_DEPTH
+    );
+    setBarEval(evalWhitePov);
+
+    const crush = classifyArenaCrushing(lang, evalWhitePov);
+    if (crush) {
+      setStatusNote(crush.resultMessage);
+      if (
+        saveCloudGames &&
+        userId &&
+        snapshot.length > 0 &&
+        !arenaSavedRef.current
+      ) {
+        arenaSavedRef.current = true;
+        void trySaveArenaCloud(next, snapshot, crush);
+      }
+      return true;
+    }
+
     if (snapshot.length >= maxPlies) {
-      await finishMoveLimit(next, snapshot);
+      const outcome = classifyArenaOutcome(next, true, lang, evalWhitePov);
+      setStatusNote(outcome.resultMessage);
+      if (
+        saveCloudGames &&
+        userId &&
+        snapshot.length > 0 &&
+        !arenaSavedRef.current
+      ) {
+        arenaSavedRef.current = true;
+        void trySaveArenaCloud(next, snapshot, outcome);
+      }
       return true;
     }
     return false;
@@ -457,6 +485,7 @@ export default function ArenaSpectator({
     lang,
     forcedOpeningId,
     finishMoveLimit,
+    getPositionEvaluation,
   ]);
 
   const handleStartAuto = async () => {

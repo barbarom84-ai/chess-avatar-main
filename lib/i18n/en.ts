@@ -867,6 +867,8 @@ export const en = {
         subtitle:
           "Face legendary players and named styles — openings and middlegame bias, not just a strength throttle.",
         legends: "Legends",
+        fiction: "Fiction",
+        science: "Science",
         archetypes: "Styles",
         filterAll: "All",
         tweakTitle: "Style sliders",
@@ -1906,9 +1908,8 @@ export const en = {
       selectMatch: "Select a ready match in the bracket",
       matchLive: "Match live — blitz 3+0",
       matchPaused: "Match stopped",
-      drawBlackWins: "Draw — Black wins (Playoff rule).",
-      moveLimitBlackWins: "Move limit — Black wins (Playoff rule).",
-      drawRuleHint: "If the game is drawn, Black wins the duel.",
+      drawRematch: "Draw — rematch.",
+      crushingHint: "Automatic win if the eval reaches ±10.",
       saveCloudLabel: "Save each bracket game (cloud)",
       saveCloudHint:
         "After each bracket match, save to My games (bot vs bot).",

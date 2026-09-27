@@ -1,7 +1,10 @@
 /** Win on move cap if White's eval exceeds this (strictly more than 2 pawns). */
 export const ARENA_MOVE_LIMIT_WIN_PAWNS = 2;
 
-/** Dedicated Stockfish depth when deciding a move-limit result. */
+/** Stop the game immediately when |eval| reaches this (mate scores are ±10). */
+export const ARENA_CRUSHING_WIN_PAWNS = 10;
+
+/** Dedicated Stockfish depth when deciding a move-limit or crushing result. */
 export const ARENA_MOVE_LIMIT_EVAL_DEPTH = 12;
 
 export type ArenaMoveLimitWinner = "white" | "black" | "draw";
@@ -12,6 +15,15 @@ export function winnerFromWhitePovEval(
   if (evalWhitePov == null || !Number.isFinite(evalWhitePov)) return null;
   if (evalWhitePov > ARENA_MOVE_LIMIT_WIN_PAWNS) return "white";
   if (evalWhitePov < -ARENA_MOVE_LIMIT_WIN_PAWNS) return "black";
+  return null;
+}
+
+export function winnerFromCrushingEval(
+  evalWhitePov: number | null | undefined
+): "white" | "black" | null {
+  if (evalWhitePov == null || !Number.isFinite(evalWhitePov)) return null;
+  if (evalWhitePov >= ARENA_CRUSHING_WIN_PAWNS) return "white";
+  if (evalWhitePov <= -ARENA_CRUSHING_WIN_PAWNS) return "black";
   return null;
 }
 
@@ -47,6 +59,14 @@ export function moveLimitResultMessage(
     : "Game stopped: move limit reached.";
 }
 
+export type ArenaEvalWinOutcome = {
+  winner: "white" | "black";
+  result: "win" | "loss";
+  resultType: "arena_eval_white" | "arena_eval_black";
+  resultMessage: string;
+  pgnResult: "1-0" | "0-1";
+};
+
 export type ArenaMoveLimitOutcome = {
   winner: ArenaMoveLimitWinner;
   result: "win" | "loss" | "draw";
@@ -57,6 +77,65 @@ export type ArenaMoveLimitOutcome = {
   resultMessage: string;
   pgnResult: "1-0" | "0-1" | "1/2-1/2";
 };
+
+export function crushingResultMessage(
+  lang: "fr" | "en",
+  winner: "white" | "black",
+  evalWhitePov?: number | null
+): string {
+  const ev =
+    evalWhitePov != null && Number.isFinite(evalWhitePov)
+      ? formatEvalPawns(evalWhitePov)
+      : null;
+  if (winner === "white") {
+    return lang === "fr"
+      ? `Avantage décisif — victoire des blancs${ev ? ` (éval ${ev})` : ""}.`
+      : `Decisive advantage — White wins${ev ? ` (eval ${ev})` : ""}.`;
+  }
+  return lang === "fr"
+    ? `Avantage décisif — victoire des noirs${ev ? ` (éval ${ev})` : ""}.`
+    : `Decisive advantage — Black wins${ev ? ` (eval ${ev})` : ""}.`;
+}
+
+export function classifyArenaCrushing(
+  lang: "fr" | "en",
+  evalWhitePov?: number | null
+): ArenaEvalWinOutcome | null {
+  const side = winnerFromCrushingEval(evalWhitePov);
+  if (side === "white") {
+    return {
+      winner: "white",
+      result: "win",
+      resultType: "arena_eval_white",
+      resultMessage: crushingResultMessage(lang, "white", evalWhitePov),
+      pgnResult: "1-0",
+    };
+  }
+  if (side === "black") {
+    return {
+      winner: "black",
+      result: "loss",
+      resultType: "arena_eval_black",
+      resultMessage: crushingResultMessage(lang, "black", evalWhitePov),
+      pgnResult: "0-1",
+    };
+  }
+  return null;
+}
+
+export async function whitePovEvalOrNull(
+  fen: string,
+  evaluate: (fen: string, depth: number) => Promise<number>,
+  toWhitePov: (fen: string, stm: number) => number,
+  depth = ARENA_MOVE_LIMIT_EVAL_DEPTH
+): Promise<number | null> {
+  try {
+    const raw = await evaluate(fen, depth);
+    return toWhitePov(fen, raw);
+  } catch {
+    return null;
+  }
+}
 
 export function classifyArenaMoveLimit(
   lang: "fr" | "en",
@@ -96,10 +175,18 @@ export function arenaBotVsBotSide(
   result?: string
 ): ArenaMoveLimitWinner {
   const t = resultType.replace(/^arena_playoff_/, "");
-  if (t === "arena_white_wins" || t === "arena_move_limit_white") {
+  if (
+    t === "arena_white_wins" ||
+    t === "arena_move_limit_white" ||
+    t === "arena_eval_white"
+  ) {
     return "white";
   }
-  if (t === "arena_black_wins" || t === "arena_move_limit_black") {
+  if (
+    t === "arena_black_wins" ||
+    t === "arena_move_limit_black" ||
+    t === "arena_eval_black"
+  ) {
     return "black";
   }
   if (result === "win") return "white";

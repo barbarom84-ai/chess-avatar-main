@@ -871,6 +871,8 @@ export const fr = {
         subtitle:
           "Affrontez des légendes et des styles nommés — ouvertures et biais de milieu de jeu, pas seulement un moteur bridé.",
         legends: "Légendes",
+        fiction: "Fiction",
+        science: "Sciences",
         archetypes: "Styles",
         filterAll: "Tous",
         tweakTitle: "Curseurs de style",
@@ -1913,11 +1915,8 @@ export const fr = {
       selectMatch: "Sélectionnez un match prêt dans le bracket",
       matchLive: "Match en cours — blitz 3+0",
       matchPaused: "Match interrompu",
-      drawBlackWins:
-        "Partie nulle — victoire des noirs (règle Playoff).",
-      moveLimitBlackWins:
-        "Limite de coups — victoire des noirs (règle Playoff).",
-      drawRuleHint: "En cas de nulle, les noirs remportent le duel.",
+      drawRematch: "Nulle — relance du duel.",
+      crushingHint: "Victoire automatique si l’avantage atteint ±10.",
       saveCloudLabel: "Enregistrer chaque duel (cloud)",
       saveCloudHint:
         "À la fin de chaque match du bracket, enregistrement dans Mes parties (bot vs bot).",

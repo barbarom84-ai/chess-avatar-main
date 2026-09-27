@@ -8,12 +8,18 @@ export default function CoachSanText({
   text,
   side = "white",
   coloredMoves,
+  fenBefore,
+  fen,
   className,
 }: {
   text: string;
   side?: "white" | "black";
   /** SANs that must use a specific side's piece (last move, missed alternative). */
   coloredMoves?: Array<{ san?: string | null; side?: "white" | "black" | null }>;
+  /** Position before the explained ply — moves legal here belong to `side`. */
+  fenBefore?: string | null;
+  /** Displayed position — moves legal here belong to the side to move. */
+  fen?: string | null;
   className?: string;
 }) {
   const { lang } = useLanguage();
@@ -31,7 +37,8 @@ export default function CoachSanText({
         lang,
         side === "black" ? "b" : "w",
         settings.pieceSet,
-        playedMoves
+        playedMoves,
+        { fenBefore, fen }
       )}
     </span>
   );

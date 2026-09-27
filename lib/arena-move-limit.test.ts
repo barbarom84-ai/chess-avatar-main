@@ -4,8 +4,10 @@ import { classifyArenaOutcome as classifyChess } from "./arena-chess";
 import { classifyArenaOutcome as classifySpectator } from "./arena-spectator-helpers";
 import {
   arenaBotVsBotSide,
+  classifyArenaCrushing,
   classifyArenaMoveLimit,
   formatEvalPawns,
+  winnerFromCrushingEval,
   winnerFromWhitePovEval,
 } from "./arena-move-limit";
 
@@ -24,10 +26,32 @@ describe("winnerFromWhitePovEval", () => {
   });
 });
 
+describe("winnerFromCrushingEval", () => {
+  it("awards a win at ±10 inclusive", () => {
+    expect(winnerFromCrushingEval(10)).toBe("white");
+    expect(winnerFromCrushingEval(-10)).toBe("black");
+    expect(winnerFromCrushingEval(9.9)).toBeNull();
+    expect(winnerFromCrushingEval(-9.9)).toBeNull();
+  });
+});
+
 describe("formatEvalPawns", () => {
   it("keeps a sign and one decimal under mate scores", () => {
     expect(formatEvalPawns(2.4)).toBe("+2.4");
     expect(formatEvalPawns(-3.1)).toBe("-3.1");
+  });
+});
+
+describe("classifyArenaCrushing", () => {
+  it("awards White at +10", () => {
+    const o = classifyArenaCrushing("fr", 10);
+    expect(o?.resultType).toBe("arena_eval_white");
+    expect(o?.pgnResult).toBe("1-0");
+    expect(o?.resultMessage).toContain("décisif");
+  });
+
+  it("returns null below the threshold", () => {
+    expect(classifyArenaCrushing("en", 2.4)).toBeNull();
   });
 });
 
@@ -60,6 +84,10 @@ describe("classifyArenaMoveLimit", () => {
 describe("classifyArenaOutcome move limit", () => {
   it("uses eval in spectator and playoff classifiers", () => {
     const game = new Chess();
+    const crush = classifySpectator(game, false, "en", 10);
+    expect(crush.resultType).toBe("arena_eval_white");
+    expect(crush.pgnResult).toBe("1-0");
+
     const spec = classifySpectator(game, true, "en", 3.2);
     expect(spec.resultType).toBe("arena_move_limit_white");
     expect(spec.pgnResult).toBe("1-0");
@@ -71,11 +99,13 @@ describe("classifyArenaOutcome move limit", () => {
 });
 
 describe("arenaBotVsBotSide", () => {
-  it("maps move-limit and playoff prefixes", () => {
+  it("maps move-limit, eval wins, and playoff prefixes", () => {
     expect(arenaBotVsBotSide("arena_move_limit_white")).toBe("white");
+    expect(arenaBotVsBotSide("arena_eval_white")).toBe("white");
     expect(arenaBotVsBotSide("arena_playoff_arena_move_limit_black")).toBe(
       "black"
     );
+    expect(arenaBotVsBotSide("arena_playoff_arena_eval_black")).toBe("black");
     expect(arenaBotVsBotSide("arena_move_limit", "draw")).toBe("draw");
     expect(arenaBotVsBotSide("arena_timeout", "win")).toBe("white");
   });

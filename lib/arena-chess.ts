@@ -1,6 +1,6 @@
 import { Chess } from "chess.js";
 import type { EngineConfig } from "@/lib/analysis";
-import { classifyArenaMoveLimit } from "@/lib/arena-move-limit";
+import { classifyArenaCrushing, classifyArenaMoveLimit } from "@/lib/arena-move-limit";
 import {
   getArenaMoveParams,
   getArenaPhase,
@@ -125,15 +125,27 @@ export function classifyArenaOutcome(
     };
   }
 
-  if (maxMovesReached && !game.isGameOver()) {
-    const limited = classifyArenaMoveLimit(lang, evalWhitePov);
-    return {
-      result: limited.result,
-      resultType: limited.resultType,
-      resultMessage: limited.resultMessage,
-      pgnResult: limited.pgnResult,
-      winner: limited.winner,
-    };
+  if (!game.isGameOver()) {
+    const crush = classifyArenaCrushing(lang, evalWhitePov);
+    if (crush) {
+      return {
+        result: crush.result,
+        resultType: crush.resultType,
+        resultMessage: crush.resultMessage,
+        pgnResult: crush.pgnResult,
+        winner: crush.winner,
+      };
+    }
+    if (maxMovesReached) {
+      const limited = classifyArenaMoveLimit(lang, evalWhitePov);
+      return {
+        result: limited.result,
+        resultType: limited.resultType,
+        resultMessage: limited.resultMessage,
+        pgnResult: limited.pgnResult,
+        winner: limited.winner,
+      };
+    }
   }
   if (game.isCheckmate()) {
     const loser = game.turn();

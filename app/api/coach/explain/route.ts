@@ -11,6 +11,7 @@ import {
   localizeFrenchCoachText,
   localizeSan,
 } from "@/lib/localized-san";
+import { pieceInventoryFromFen } from "@/lib/review-coach-context";
 
 export const runtime = "nodejs";
 
@@ -133,12 +134,20 @@ function buildPrompt(req: ExplainRequest): { system: string; user: string } {
   const cpInfo = isFr
     ? `Perte évaluée à ${req.cpl} centipions (${req.classification}).`
     : `Estimated loss: ${req.cpl} centipawns (${req.classification}).`;
+  const pieces = pieceInventoryFromFen(req.fenBefore);
+  const pieceLine = pieces
+    ? isFr
+      ? `Pièces réellement présentes AVANT le coup (seules celles-ci existent ; respecte leur couleur — un cavalier blanc n'est pas noir) : ${pieces}`
+      : `Pieces actually on the board BEFORE the move (only these exist; keep their color — a white knight is not black): ${pieces}`
+    : isFr
+      ? "N'invente aucune pièce absente du FEN, et ne change pas la couleur d'une pièce."
+      : "Do not invent a piece that is not on the FEN, and do not change a piece's color.";
 
   const system = coachSystemPrompt(req.lang, tone);
 
   const user = isFr
-    ? `Position FEN : ${req.fenBefore}\nCoup joué par ${sideLabel} : ${moveLabel}\nMeilleur coup recommandé : ${bestLabel}\n${cpInfo}\n\nExplique en 2-4 phrases pourquoi ${moveLabel} est moins bon que ${bestLabel}, et ce que ${sideLabel} aurait dû considérer.`
-    : `FEN: ${req.fenBefore}\nMove played by ${sideLabel}: ${moveLabel}\nBest move: ${bestLabel}\n${cpInfo}\n\nExplain in 2-4 sentences why ${moveLabel} is worse than ${bestLabel}, and what ${sideLabel} should have considered.`;
+    ? `Position FEN : ${req.fenBefore}\n${pieceLine}\nCoup joué par ${sideLabel} : ${moveLabel}\nMeilleur coup recommandé : ${bestLabel}\n${cpInfo}\n\nExplique en 2-4 phrases pourquoi ${moveLabel} est moins bon que ${bestLabel}, et ce que ${sideLabel} aurait dû considérer. Ne parle que des pièces listées, avec leur vraie couleur.`
+    : `FEN: ${req.fenBefore}\n${pieceLine}\nMove played by ${sideLabel}: ${moveLabel}\nBest move: ${bestLabel}\n${cpInfo}\n\nExplain in 2-4 sentences why ${moveLabel} is worse than ${bestLabel}, and what ${sideLabel} should have considered. Mention only the listed pieces, with their real color.`;
 
   return { system, user };
 }

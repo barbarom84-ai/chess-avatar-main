@@ -4,9 +4,9 @@ import { replayUci } from "@/lib/arena-chess";
 import { buildArenaPgn, countArenaCapturesChecks } from "@/lib/arena-pgn";
 import { saveGameToCloud } from "@/lib/supabase-storage";
 
-/** Résultat PGN/cloud aligné sur le vainqueur du duel Playoff (ex. nulle → noirs). */
+/** Résultat PGN/cloud aligné sur le vainqueur du duel Playoff. */
 export function playoffOutcomeForSave(
-  winnerKey: string,
+  winnerKey: string | null,
   whiteKey: string,
   blackKey: string,
   note: string,

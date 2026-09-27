@@ -1,10 +1,20 @@
 import Image from "next/image";
 import type { ReactNode } from "react";
+import { Chess, type Square } from "chess.js";
 import {
   getPieceImagePath,
   type PieceSet,
 } from "@/contexts/ChessboardSettingsContext";
 import { localizeSan } from "@/lib/localized-san";
+
+export type BoardSanColorContext = {
+  /** Position before the move being explained (side that just played). */
+  fenBefore?: string | null;
+  /** Position on the board now (side to move). */
+  fen?: string | null;
+};
+
+type PieceType = "n" | "b" | "r" | "q" | "k" | "p";
 
 const EN_PIECE = new Set(["N", "B", "R", "Q", "K"]);
 const FR_PIECE = new Set(["C", "F", "T", "D", "R"]);
@@ -100,13 +110,102 @@ export function resolveInlineSanColor(
   defaultColor: "w" | "b",
   groups: Array<{ aliases: Set<string>; color: "w" | "b" }>
 ): "w" | "b" {
+  return matchedGroupColor(body, groups) ?? defaultColor;
+}
+
+function matchedGroupColor(
+  body: string,
+  groups: Array<{ aliases: Set<string>; color: "w" | "b" }>
+): "w" | "b" | undefined {
   const key = stripSanMarks(body);
   for (const group of groups) {
     if (group.aliases.has(key) || group.aliases.has(key.toLowerCase())) {
       return group.color;
     }
   }
+  return undefined;
+}
+
+function chessFromFen(fen?: string | null): Chess | null {
+  const raw = fen?.trim();
+  if (!raw) return null;
+  try {
+    return new Chess(raw);
+  } catch {
+    return null;
+  }
+}
+
+function sanIsLegal(chess: Chess, body: string): boolean {
+  const key = stripSanMarks(body);
+  const lower = key.toLowerCase();
+  for (const san of chess.moves()) {
+    for (const alias of aliasesForPlayedSan(san)) {
+      if (alias === key || alias.toLowerCase() === lower) return true;
+    }
+  }
+  return false;
+}
+
+function destinationSquare(body: string): string | null {
+  const matches = [...stripSanMarks(body).matchAll(/[a-h][1-8]/gi)];
+  if (!matches.length) return null;
+  return matches[matches.length - 1][0].toLowerCase();
+}
+
+function pieceColorOn(
+  chess: Chess | null,
+  square: string,
+  type: PieceType
+): "w" | "b" | undefined {
+  if (!chess) return undefined;
+  const piece = chess.get(square as Square);
+  if (!piece || piece.type !== type) return undefined;
+  return piece.color;
+}
+
+/**
+ * Color a cited SAN from the position, not from a single default side.
+ * A move legal before the ply belongs to the side that played; a move legal
+ * on the displayed board belongs to the side to move. Otherwise a piece
+ * already standing on the cited square keeps that piece's color.
+ */
+export function colorForSanOnBoard(
+  body: string,
+  pieceType: PieceType,
+  ctx: BoardSanColorContext | undefined,
+  defaultColor: "w" | "b"
+): "w" | "b" {
+  if (!ctx) return defaultColor;
+  const before = chessFromFen(ctx.fenBefore);
+  if (before && sanIsLegal(before, body)) return before.turn();
+  const now = chessFromFen(ctx.fen);
+  if (now && sanIsLegal(now, body)) return now.turn();
+  if (pieceType !== "p") {
+    const square = destinationSquare(body);
+    if (square) {
+      const onBefore = pieceColorOn(before, square, pieceType);
+      if (onBefore) return onBefore;
+      const onNow = pieceColorOn(now, square, pieceType);
+      if (onNow) return onNow;
+    }
+  }
   return defaultColor;
+}
+
+function resolvePieceSide(
+  prefix: string,
+  body: string,
+  pieceType: PieceType,
+  defaultColor: "w" | "b",
+  colorGroups: Array<{ aliases: Set<string>; color: "w" | "b" }>,
+  board?: BoardSanColorContext
+): "w" | "b" {
+  return (
+    sideFromMovePrefix(prefix) ??
+    matchedGroupColor(body, colorGroups) ??
+    colorForSanOnBoard(body, pieceType, board, defaultColor)
+  );
 }
 
 function tryParsePieceLedMove(
@@ -193,6 +292,7 @@ function PieceLedInline({
   defaultPieceColor,
   pieceSet,
   colorGroups,
+  board,
 }: {
   prefix: string;
   body: string;
@@ -201,6 +301,7 @@ function PieceLedInline({
   defaultPieceColor: "w" | "b";
   pieceSet: PieceSet;
   colorGroups?: Array<{ aliases: Set<string>; color: "w" | "b" }>;
+  board?: BoardSanColorContext;
 }) {
   const type =
     lang === "fr"
@@ -215,9 +316,14 @@ function PieceLedInline({
     );
   }
 
-  const side =
-    sideFromMovePrefix(prefix) ??
-    resolveInlineSanColor(body, defaultPieceColor, colorGroups ?? []);
+  const side = resolvePieceSide(
+    prefix,
+    body,
+    type,
+    defaultPieceColor,
+    colorGroups ?? [],
+    board
+  );
   const src = getPieceImagePath(pieceSet, side, type.toUpperCase());
   const rest = body.slice(1);
   const px = 14;
@@ -246,6 +352,7 @@ function PawnCaptureInline({
   defaultPieceColor,
   pieceSet,
   colorGroups,
+  board,
 }: {
   prefix: string;
   body: string;
@@ -253,10 +360,16 @@ function PawnCaptureInline({
   defaultPieceColor: "w" | "b";
   pieceSet: PieceSet;
   colorGroups?: Array<{ aliases: Set<string>; color: "w" | "b" }>;
+  board?: BoardSanColorContext;
 }) {
-  const side =
-    sideFromMovePrefix(prefix) ??
-    resolveInlineSanColor(body, defaultPieceColor, colorGroups ?? []);
+  const side = resolvePieceSide(
+    prefix,
+    body,
+    "p",
+    defaultPieceColor,
+    colorGroups ?? [],
+    board
+  );
   const pawnSrc = getPieceImagePath(pieceSet, side, "P");
   const px = 14;
   const eq = body.indexOf("=");
@@ -307,7 +420,8 @@ export function commentTextToNodes(
   lang: "fr" | "en",
   defaultPieceColor: "w" | "b",
   pieceSet: PieceSet,
-  playedMoves?: Array<{ san?: string | null; color?: "w" | "b" }>
+  playedMoves?: Array<{ san?: string | null; color?: "w" | "b" }>,
+  board?: BoardSanColorContext
 ): ReactNode[] {
   const colorGroups = (playedMoves ?? [])
     .filter((m): m is { san: string; color: "w" | "b" } => Boolean(m.san && m.color))
@@ -355,6 +469,7 @@ export function commentTextToNodes(
           defaultPieceColor={defaultPieceColor}
           pieceSet={pieceSet}
           colorGroups={colorGroups}
+          board={board}
         />
       );
       i = d.end;
@@ -369,6 +484,7 @@ export function commentTextToNodes(
           defaultPieceColor={defaultPieceColor}
           pieceSet={pieceSet}
           colorGroups={colorGroups}
+          board={board}
         />
       );
       i = d.end;

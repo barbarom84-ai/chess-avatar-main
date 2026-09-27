@@ -255,6 +255,7 @@ export function ReviewCoachSidebar({
     onPlayerColorChange,
     currentMove,
     fenBefore,
+    reviewContext,
     moveNumber,
     coachTone,
     onRequestUpgrade,
@@ -327,6 +328,7 @@ export function ReviewCoachSidebar({
       <ReviewCoachAnalysis
         move={currentMove}
         fenBefore={fenBefore}
+        fen={reviewContext?.fen}
         moveNumber={moveNumber}
         coachTone={coachTone}
         autoExplain={autoExplain}

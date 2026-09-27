@@ -170,7 +170,7 @@ export function personalityToEngineConfig(
     forcedLineWhite: white,
     forcedLineBlack: black,
     humanBlunderInterval:
-      opponent.kind === "legend"
+      opponent.elo >= 2600
         ? 0
         : humanBlunderIntervalFromRisk(resolved.risk),
     avatarUrl: opponent.portraitUrl,

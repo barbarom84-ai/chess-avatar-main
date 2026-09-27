@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Crown, Flame, Play, RotateCcw, Swords, Landmark } from "lucide-react";
+import { Atom, Crown, Flame, Landmark, Play, RotateCcw, Sparkles, Swords } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -94,6 +94,48 @@ const ACCENT: Record<
     border: "border-lime-500/40",
     bar: "bg-lime-400",
   },
+  stone: {
+    ring: "ring-stone-400/60",
+    bg: "bg-stone-500/15",
+    text: "text-stone-300",
+    border: "border-stone-500/40",
+    bar: "bg-stone-400",
+  },
+  red: {
+    ring: "ring-red-400/60",
+    bg: "bg-red-500/15",
+    text: "text-red-300",
+    border: "border-red-500/40",
+    bar: "bg-red-400",
+  },
+  indigo: {
+    ring: "ring-indigo-400/60",
+    bg: "bg-indigo-500/15",
+    text: "text-indigo-300",
+    border: "border-indigo-500/40",
+    bar: "bg-indigo-400",
+  },
+  yellow: {
+    ring: "ring-yellow-400/60",
+    bg: "bg-yellow-500/15",
+    text: "text-yellow-300",
+    border: "border-yellow-500/40",
+    bar: "bg-yellow-400",
+  },
+  teal: {
+    ring: "ring-teal-400/60",
+    bg: "bg-teal-500/15",
+    text: "text-teal-300",
+    border: "border-teal-500/40",
+    bar: "bg-teal-400",
+  },
+  slate: {
+    ring: "ring-slate-300/60",
+    bg: "bg-slate-500/15",
+    text: "text-slate-200",
+    border: "border-slate-400/40",
+    bar: "bg-slate-300",
+  },
 };
 
 function openingLabel(id: string, lang: string): string {
@@ -151,9 +193,7 @@ export default function PersonalityOpponentPicker({
   );
 
   const selected =
-    opponents.find((p) => p.id === selectedId) ??
-    listPersonalityOpponents().find((p) => p.id === selectedId) ??
-    opponents[0];
+    opponents.find((p) => p.id === selectedId) ?? opponents[0];
 
   const resolved = selected
     ? resolvePersonalityStyle(selected, overrides)
@@ -176,11 +216,13 @@ export default function PersonalityOpponentPicker({
       <div className="flex flex-wrap items-center gap-2">
         {(
           [
-            ["all", copy.filterAll],
-            ["legend", copy.legends],
-            ["archetype", copy.archetypes],
+            ["all", copy.filterAll, Swords],
+            ["legend", copy.legends, Crown],
+            ["fiction", copy.fiction, Sparkles],
+            ["science", copy.science, Atom],
+            ["archetype", copy.archetypes, Landmark],
           ] as const
-        ).map(([key, label]) => (
+        ).map(([key, label, Icon]) => (
           <Button
             key={key}
             type="button"
@@ -193,13 +235,7 @@ export default function PersonalityOpponentPicker({
             }
             onClick={() => setKindFilter(key)}
           >
-            {key === "legend" ? (
-              <Crown className="h-3.5 w-3.5" />
-            ) : key === "archetype" ? (
-              <Landmark className="h-3.5 w-3.5" />
-            ) : (
-              <Swords className="h-3.5 w-3.5" />
-            )}
+            <Icon className="h-3.5 w-3.5" />
             {label}
           </Button>
         ))}

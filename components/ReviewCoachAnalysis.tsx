@@ -13,6 +13,8 @@ import CoachSanText from "@/components/CoachSanText";
 type ReviewCoachAnalysisProps = {
   move?: ReviewedMove | null;
   fenBefore?: string | null;
+  /** Position after the move (displayed board). */
+  fen?: string | null;
   moveNumber?: number;
   coachTone: CoachToneId;
   autoExplain?: boolean;
@@ -23,6 +25,7 @@ type ReviewCoachAnalysisProps = {
 export default function ReviewCoachAnalysis({
   move,
   fenBefore,
+  fen,
   moveNumber,
   coachTone,
   autoExplain = true,
@@ -135,8 +138,17 @@ export default function ReviewCoachAnalysis({
           </span>
         ) : null}
       </div>
-      <p className="text-xs text-slate-100 leading-relaxed whitespace-pre-wrap line-clamp-3">
-        <CoachSanText text={explanation} side={move?.sideToMove} />
+      <p className="text-xs text-slate-100 leading-relaxed whitespace-pre-wrap max-h-48 overflow-y-auto">
+        <CoachSanText
+          text={explanation}
+          side={move?.sideToMove}
+          fenBefore={fenBefore}
+          fen={fen}
+          coloredMoves={[
+            { san: move?.san, side: move?.sideToMove },
+            { san: move?.bestSan || move?.bestMove, side: move?.sideToMove },
+          ]}
+        />
       </p>
       <div className="flex items-center justify-between pt-1 border-t border-purple-500/20 gap-2">
         <span className="text-[10px] text-slate-500 italic">

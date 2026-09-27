@@ -16,7 +16,7 @@ import {
   useChessboardSettings,
   type PieceSet,
 } from "@/contexts/ChessboardSettingsContext";
-import { isReviewWhyQuestion, reviewContextCanExplain, classifyReviewCoachQuestion, type ReviewChatContext } from "@/lib/review-coach-context";
+import { isReviewWhyQuestion, reviewContextCanExplain, type ReviewChatContext } from "@/lib/review-coach-context";
 import { coachBoardSight } from "@/lib/coach-board-sight";
 import type { CoachToneId } from "@/lib/coach-tone";
 import {
@@ -36,6 +36,29 @@ import { ChessAvatarSticker } from "@/components/chat/chess-avatar-stickers";
 interface ChatMessage {
   role: "user" | "assistant";
   content: string;
+  /** Piece colors frozen when the coach replied, so later plies cannot recolor it. */
+  pieces?: {
+    side: "white" | "black";
+    fenBefore?: string;
+    fen?: string;
+    coloredMoves: Array<{ san?: string | null; side?: "white" | "black" | null }>;
+  };
+}
+
+function pieceSnapshot(
+  review: ReviewChatContext | undefined
+): ChatMessage["pieces"] | undefined {
+  if (!review?.fen && !review?.fenBefore && !review?.sideToMove) return undefined;
+  const side = review.sideToMove ?? "white";
+  return {
+    side,
+    fenBefore: review.fenBefore,
+    fen: review.fen,
+    coloredMoves: [
+      { san: review.lastMove, side: review.sideToMove },
+      { san: review.bestMove, side: review.sideToMove },
+    ],
+  };
 }
 
 interface AvatarChatPanelProps {
@@ -155,7 +178,6 @@ export default function AvatarChatPanel({
   variant = "card",
   houseCoach = false,
   reviewContext,
-  playerColor = null,
   coachTone = "pedagogical",
   orientation = "white",
   headerActions,
@@ -278,7 +300,11 @@ export default function AvatarChatPanel({
         ) {
           setMessages((prev) => [
             ...prev,
-            { role: "assistant", content: reviewContext.lastExplanation! },
+            {
+              role: "assistant",
+              content: reviewContext.lastExplanation!,
+              pieces: pieceSnapshot(reviewContext),
+            },
           ]);
           scrollToEnd();
           return;
@@ -325,7 +351,11 @@ export default function AvatarChatPanel({
           if (typeof data.limit === "number") setLimit(data.limit);
           setMessages((prev) => [
             ...prev,
-            { role: "assistant", content: data.explanation as string },
+            {
+              role: "assistant",
+              content: data.explanation as string,
+              pieces: pieceSnapshot(reviewContext),
+            },
           ]);
           scrollToEnd();
           return;
@@ -367,7 +397,14 @@ export default function AvatarChatPanel({
         if (typeof data.remaining === "number") setRemaining(data.remaining);
         if (typeof data.limit === "number") setLimit(data.limit);
 
-        setMessages((prev) => [...prev, { role: "assistant", content: data.reply }]);
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: data.reply,
+            pieces: pieceSnapshot(reviewContext),
+          },
+        ]);
         scrollToEnd();
       } finally {
         setLoading(false);
@@ -462,30 +499,10 @@ export default function AvatarChatPanel({
               {variant === "review" && m.role === "assistant" ? (
                 <CoachSanText
                   text={m.content}
-                  side={(() => {
-                    const prevUser = [...messages.slice(0, i)]
-                      .reverse()
-                      .find((x) => x.role === "user")?.content ?? "";
-                    const intent = classifyReviewCoachQuestion(prevUser, lang);
-                    const forNow =
-                      intent === "how_to_play" ||
-                      intent === "best_line" ||
-                      intent === "other";
-                    const chosen = forNow
-                      ? reviewContext?.turnToMove ?? reviewContext?.sideToMove
-                      : reviewContext?.sideToMove ?? reviewContext?.turnToMove;
-                    return chosen;
-                  })()}
-                  coloredMoves={[
-                    {
-                      san: reviewContext?.lastMove,
-                      side: reviewContext?.sideToMove,
-                    },
-                    {
-                      san: reviewContext?.bestMove,
-                      side: reviewContext?.sideToMove,
-                    },
-                  ]}
+                  side={m.pieces?.side ?? "white"}
+                  fenBefore={m.pieces?.fenBefore}
+                  fen={m.pieces?.fen}
+                  coloredMoves={m.pieces?.coloredMoves}
                 />
               ) : (
                 <ChatRichText text={m.content} pieceSet={pieceSet} markTitle={markTitle} />

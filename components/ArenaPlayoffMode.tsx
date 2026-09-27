@@ -26,7 +26,7 @@ import {
   replayUci,
   stmEvalToWhitePov,
 } from "@/lib/arena-chess";
-import { ARENA_MOVE_LIMIT_EVAL_DEPTH } from "@/lib/arena-move-limit";
+import { ARENA_MOVE_LIMIT_EVAL_DEPTH, classifyArenaCrushing, whitePovEvalOrNull } from "@/lib/arena-move-limit";
 import { prepareArenaEngineConfig } from "@/lib/arena-forced-opening";
 import {
   getArenaThinkBudgetMs,
@@ -75,12 +75,8 @@ import {
 
 const PLAYOFF_DEPTH_CAP = 14;
 const PLAYOFF_MAX_PLIES = 200;
+const PLAYOFF_DRAW_REMATCH_LIMIT = 3;
 const ARENA_PLAYOFF_SAVE_CLOUD = "chess-arena.playoff.saveCloud";
-
-/** En Playoff Arène uniquement : toute nulle est remportée par les noirs. */
-function playoffDrawWinnerKey(blackKey: string): string {
-  return blackKey;
-}
 
 export default function ArenaPlayoffMode({
   forcedOpeningId = null,
@@ -226,7 +222,7 @@ export default function ArenaPlayoffMode({
   }, [stopThinking]);
 
   useEffect(() => {
-    if (!isReady || !clock || !matchRunning) return;
+    if (!isReady || matchRunning) return;
     const seq = ++evalSeqRef.current;
     let cancelled = false;
     void (async () => {
@@ -311,10 +307,11 @@ export default function ArenaPlayoffMode({
         note: string,
         uciHist: string[],
         maxMovesReached = false,
-        evalWhitePov: number | null = null
+        evalWhitePov: number | null = null,
+        shouldSave = winnerKey != null
       ): Promise<{ winnerKey: string | null; note: string }> => {
         setStatusNote(note);
-        if (winnerKey && saveCloudGames && userId && uciHist.length > 0) {
+        if (shouldSave && saveCloudGames && userId && uciHist.length > 0) {
           const game = replayUci(uciHist);
           const base = classifyArenaOutcome(
             game,
@@ -455,23 +452,42 @@ export default function ArenaPlayoffMode({
             winnerKey = blackKey;
             note = outcome.resultMessage;
           } else {
-            winnerKey = playoffDrawWinnerKey(blackKey);
-            note = t.arenaPlayoff.drawBlackWins;
+            winnerKey = null;
+            note = outcome.resultMessage;
           }
-          return complete(winnerKey, note, historyRef.current);
+          return complete(
+            winnerKey,
+            note,
+            historyRef.current,
+            false,
+            null,
+            true
+          );
+        }
+
+        const evalWhitePov = await whitePovEvalOrNull(
+          next.fen(),
+          getPositionEvaluation,
+          stmEvalToWhitePov,
+          ARENA_MOVE_LIMIT_EVAL_DEPTH
+        );
+        setBarEval(evalWhitePov);
+
+        const crush = classifyArenaCrushing(lang, evalWhitePov);
+        if (crush) {
+          const winnerKey =
+            crush.winner === "white" ? whiteKey : blackKey;
+          return complete(
+            winnerKey,
+            crush.resultMessage,
+            historyRef.current,
+            false,
+            evalWhitePov,
+            true
+          );
         }
 
         if (historyRef.current.length >= PLAYOFF_MAX_PLIES) {
-          let evalWhitePov: number | null = null;
-          try {
-            const raw = await getPositionEvaluation(
-              next.fen(),
-              ARENA_MOVE_LIMIT_EVAL_DEPTH
-            );
-            evalWhitePov = stmEvalToWhitePov(next.fen(), raw);
-          } catch {
-            evalWhitePov = null;
-          }
           const outcome = classifyArenaOutcome(
             next,
             true,
@@ -479,24 +495,16 @@ export default function ArenaPlayoffMode({
             undefined,
             evalWhitePov
           );
-          let winnerKey: string;
-          let note: string;
-          if (outcome.winner === "white") {
-            winnerKey = whiteKey;
-            note = outcome.resultMessage;
-          } else if (outcome.winner === "black") {
-            winnerKey = blackKey;
-            note = outcome.resultMessage;
-          } else {
-            winnerKey = playoffDrawWinnerKey(blackKey);
-            note = t.arenaPlayoff.moveLimitBlackWins;
-          }
+          let winnerKey: string | null = null;
+          if (outcome.winner === "white") winnerKey = whiteKey;
+          else if (outcome.winner === "black") winnerKey = blackKey;
           return complete(
             winnerKey,
-            note,
+            outcome.resultMessage,
             historyRef.current,
             true,
-            evalWhitePov
+            evalWhitePov,
+            true
           );
         }
       }
@@ -569,11 +577,18 @@ export default function ArenaPlayoffMode({
 
         runningRef.current = true;
         setMatchRunning(true);
-        const { winnerKey, note } = await runSingleMatch(
-          next.id,
-          whiteOpt,
-          blackOpt
-        );
+        let winnerKey: string | null = null;
+        let note = "";
+        for (let attempt = 0; attempt < PLAYOFF_DRAW_REMATCH_LIMIT; attempt++) {
+          const result = await runSingleMatch(next.id, whiteOpt, blackOpt);
+          winnerKey = result.winnerKey;
+          note = result.note;
+          if (winnerKey || !runningRef.current) break;
+          if (attempt < PLAYOFF_DRAW_REMATCH_LIMIT - 1) {
+            setStatusNote(t.arenaPlayoff.drawRematch);
+            await new Promise((r) => setTimeout(r, 600));
+          }
+        }
         runningRef.current = false;
         setMatchRunning(false);
         if (!winnerKey) break;
@@ -619,7 +634,7 @@ export default function ArenaPlayoffMode({
         <Swords className="h-4 w-4 text-amber-400 shrink-0" />
         <span className="text-xs text-slate-400 hidden sm:inline">
           {timeControlLabel}
-          <span className="text-slate-500"> · {t.arenaPlayoff.drawRuleHint}</span>
+          <span className="text-slate-500"> · {t.arenaPlayoff.crushingHint}</span>
         </span>
         <div className="flex gap-1">
           <Button
