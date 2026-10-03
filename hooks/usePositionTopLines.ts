@@ -79,7 +79,10 @@ export function usePositionTopLines(options: {
 
   const sequenceRef = useRef(0);
   const fenRef = useRef<string | null>(fen);
-  fenRef.current = fen;
+
+  useEffect(() => {
+    fenRef.current = fen;
+  }, [fen]);
 
   useEffect(() => {
     stockfishClient.acquire();
