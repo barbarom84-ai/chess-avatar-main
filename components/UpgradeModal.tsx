@@ -94,14 +94,16 @@ export default function UpgradeModal({ open, onOpenChange, userId, email, reason
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg bg-slate-900 border-amber-500/30">
-        <DialogHeader>
+      <DialogContent
+        overlayClassName="z-[110]"
+        className="z-[110] max-w-lg bg-slate-900 border-amber-500/30 flex flex-col max-h-[calc(100dvh-1rem)] overflow-hidden [@media(max-height:640px)]:p-4 [@media(max-height:640px)]:gap-2">
+        <DialogHeader className="shrink-0">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-amber-500/20 rounded-lg">
               <Crown className="h-6 w-6 text-amber-400" />
             </div>
             <div>
-              <DialogTitle className="text-2xl font-bold text-amber-100">
+              <DialogTitle className="text-2xl font-bold text-amber-100 [@media(max-height:640px)]:text-xl">
                 ChessAvatar Premium
               </DialogTitle>
               <DialogDescription className="text-amber-400/70">
@@ -111,9 +113,9 @@ export default function UpgradeModal({ open, onOpenChange, userId, email, reason
           </div>
         </DialogHeader>
 
-        <div className="space-y-6 mt-4">
+        <div className="flex flex-col min-h-0 gap-6 mt-4 [@media(max-height:640px)]:gap-3 [@media(max-height:640px)]:mt-1">
           {/* Benefits */}
-          <div className="space-y-3 max-h-[min(30rem,62vh)] overflow-y-auto pr-1">
+          <div className="min-h-[4.5rem] max-h-[min(30rem,62vh)] space-y-3 overflow-y-auto overscroll-contain pr-1">
             <div
               id="upgrade-benefit-theme"
               className={`flex items-center gap-3 p-3 rounded-lg border ${
@@ -194,18 +196,18 @@ export default function UpgradeModal({ open, onOpenChange, userId, email, reason
           </div>
 
           {/* Price + Currency */}
-          <div className="text-center p-4 bg-gradient-to-r from-amber-500/10 via-amber-400/5 to-amber-500/10 rounded-lg border border-amber-500/20">
-            <div className="flex items-center justify-center gap-1 mb-2">
+          <div className="shrink-0 text-center p-4 bg-gradient-to-r from-amber-500/10 via-amber-400/5 to-amber-500/10 rounded-lg border border-amber-500/20 [@media(max-height:640px)]:p-2.5">
+            <div className="flex items-center justify-center gap-1 mb-2 [@media(max-height:640px)]:mb-1">
               <Sparkles className="h-4 w-4 text-amber-400" />
               <span className="text-xs text-amber-400 uppercase tracking-wider font-semibold">{t.upgrade.oneTimePayment}</span>
               <Sparkles className="h-4 w-4 text-amber-400" />
             </div>
-            <p className="text-3xl font-bold text-amber-100">
+            <p className="text-3xl font-bold text-amber-100 [@media(max-height:640px)]:text-2xl">
               10 {currencySymbol[selectedCurrency]}
             </p>
             <p className="text-xs text-slate-400 mt-1">{t.upgrade.lifetimeAccess}</p>
 
-            <div className="flex justify-center gap-2 mt-3">
+            <div className="flex justify-center gap-2 mt-3 [@media(max-height:640px)]:mt-2">
               {(['eur', 'chf', 'usd'] as const).map((cur) => (
                 <button
                   key={cur}
@@ -223,13 +225,13 @@ export default function UpgradeModal({ open, onOpenChange, userId, email, reason
           </div>
 
           {/* Payment methods info */}
-          <div className="flex items-center justify-center gap-3 text-xs text-slate-500">
+          <div className="shrink-0 flex items-center justify-center gap-3 text-xs text-slate-500">
             <CreditCard className="h-4 w-4" />
             <span>Visa, Mastercard</span>
           </div>
 
           {error && (
-            <Alert variant="destructive" className="bg-red-900/20 border-red-700/50 text-red-200">
+            <Alert variant="destructive" className="shrink-0 bg-red-900/20 border-red-700/50 text-red-200">
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
@@ -238,7 +240,7 @@ export default function UpgradeModal({ open, onOpenChange, userId, email, reason
           <Button
             onClick={handleCheckout}
             disabled={loading || !userId}
-            className="w-full h-12 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-slate-900 font-bold text-lg shadow-lg"
+            className="shrink-0 w-full h-12 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-slate-900 font-bold text-lg shadow-lg"
           >
             {loading ? (
               <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> {t.upgrade.redirecting}</>
