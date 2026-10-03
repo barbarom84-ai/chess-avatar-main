@@ -10,8 +10,13 @@
  * - parity/api-fixtures/responses.json  sample API success responses (types: lib/api-contract.ts)
  * - parity/manifest.json                sha256 of every file + where Android installs it
  *
- * ChessAvatarAndroid consumes the contract with `scripts/sync-parity.ps1` and replays
+ * Sync to ChessAvatarAndroid is manual: once parity/ is committed on main, the Android
+ * developer runs `.\scripts\sync-parity.ps1` (or `-Ref <commit>`) there. Android replays
  * the vectors in JUnit, so any behavioural drift between the two apps fails a test.
+ *
+ * Android depends on the manifest fields (path, android, sha256, contractVersion,
+ * divergences), the file names under parity/vectors/ and parity/api-fixtures/, and the
+ * keys of parity/constants.json: changing any of them must be coordinated with Android.
  */
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
