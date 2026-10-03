@@ -37,7 +37,6 @@ import PositionTopLines from "./PositionTopLines";
 import { usePositionTopLines } from "@/hooks/usePositionTopLines";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { Badge } from "./ui/badge";
 import { Progress } from "./ui/progress";
 import { ScrollArea } from "./ui/scroll-area";
 import { Input } from "./ui/input";
@@ -1738,24 +1737,4 @@ function KeyMomentsCard({
 
 function clamp(v: number, lo: number, hi: number): number {
   return Math.max(lo, Math.min(hi, v));
-}
-
-function formatEval(pawns: number): string {
-  const v = clamp(pawns, -99, 99);
-  return `${v >= 0 ? "+" : ""}${v.toFixed(2)}`;
-}
-
-/**
- * Render the localized "Mate in N (side)" badge text.
- * `mateInMovesWhitePov` is signed: > 0 => white mates, < 0 => black mates.
- */
-function formatMateBadge(
-  template: string,
-  mateInMovesWhitePov: number,
-  whiteLabel: string,
-  blackLabel: string
-): string {
-  const n = Math.abs(mateInMovesWhitePov);
-  const side = mateInMovesWhitePov > 0 ? whiteLabel : blackLabel;
-  return template.replace("{n}", String(n)).replace("{side}", side);
 }

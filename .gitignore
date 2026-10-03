@@ -24,6 +24,11 @@
 .engine-build/
 public/__pycache__/
 
+# Native Fritz engine copied for local AvatarEngine tests (npm run sync:chessavatar-native)
+public/ChessAvatar.exe
+public/nn-default.nnue
+public/engine-native-manifest.json
+
 # Local ChessBase / bulk PGN exports (often 500MB–2GB+; keep outside git)
 data/database2025/*.pgn
 data/database2025/*.pgi

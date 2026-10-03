@@ -13,6 +13,11 @@ data/database2025/*.pgn
 data/database2025/*.pgi
 data/database2025/parts
 
+# Native Fritz engine for local AvatarEngine tests (npm run sync:chessavatar-native) — not shipped
+public/ChessAvatar.exe
+public/nn-default.nnue
+public/engine-native-manifest.json
+
 *.tsbuildinfo
 .env
 .env.*

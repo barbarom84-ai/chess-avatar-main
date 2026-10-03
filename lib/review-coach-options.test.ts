@@ -26,7 +26,7 @@ describe("dedupeReviewCoachAvatars", () => {
   });
 
   it("skips ChessAvatarPro and the opponent already listed", () => {
-    const opponent = { name: "Bot_Blitz", platform: "lichess" as const };
+    const opponent = { name: "Bot_Blitz", platform: "lichess" } as EngineConfig;
     const rows = [
       avatar("pro", CHESS_AVATAR_PRO_CONFIG.name),
       avatar("opp", "Bot_Blitz"),
