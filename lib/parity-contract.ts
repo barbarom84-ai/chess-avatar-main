@@ -1,6 +1,8 @@
 /**
  * Typed view of `parity/constants.json`, the single source of truth for values
- * shared with the Android app (ChessAvatarAndroid generates Kotlin from the same file).
+ * shared with the Android app. ChessAvatarAndroid ships this file as is (it reads
+ * `ascension.skillTree` at runtime) and mirrors the other values in hand-written Kotlin
+ * checked against it by ConstantsParityTest, so changing a value needs an Android update.
  */
 import raw from "@/parity/constants.json";
 
