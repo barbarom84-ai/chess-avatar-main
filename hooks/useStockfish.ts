@@ -517,9 +517,9 @@ export function useStockfish() {
   );
 
   const getBestMoveAndEval = useCallback(
-    (fen: string, depth = 18) => {
+    (fen: string, depth = 18, opts?: { multipv?: number }) => {
       if (!isReady) return Promise.reject(new Error("Stockfish not ready"));
-      return stockfishGetBestMoveAndEval(fen, depth);
+      return stockfishGetBestMoveAndEval(fen, depth, "high", opts);
     },
     [isReady]
   );

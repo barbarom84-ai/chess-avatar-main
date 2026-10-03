@@ -147,7 +147,8 @@ export function isExplainableReviewedMove(
   return (
     move.classification !== "best" &&
     move.classification !== "excellent" &&
-    move.classification !== "brilliant"
+    move.classification !== "brilliant" &&
+    move.classification !== "great"
   );
 }
 
@@ -440,5 +441,7 @@ export function reviewContextCanExplain(
   if (review.sideToMove !== "white" && review.sideToMove !== "black") return false;
   if (typeof review.cpl !== "number") return false;
   const cls = review.classification;
-  return cls !== "best" && cls !== "excellent" && cls !== "brilliant";
+  return (
+    cls !== "best" && cls !== "excellent" && cls !== "brilliant" && cls !== "great"
+  );
 }

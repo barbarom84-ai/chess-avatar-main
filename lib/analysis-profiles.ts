@@ -1,11 +1,12 @@
 /**
- * User-selectable strictness for move classification (CPL bands + miss threshold).
+ * User-selectable strictness for move classification (expected-points loss bands).
  * Single source of truth shared by analysis-engine and game-review.
  */
 
 export type AnalysisStrictnessId = "relaxed" | "standard" | "strict";
 
-export interface CplBands {
+/** Upper limits of expected points lost (0..1) per classification. */
+export interface WinLossBands {
   excellent: number;
   good: number;
   inaccuracy: number;
@@ -14,45 +15,41 @@ export interface CplBands {
 
 export interface AnalysisProfile {
   id: AnalysisStrictnessId;
-  /** Minimum eval swing (pawns) to label "miss" when not already a blunder by CPL. */
-  missSwingPawns: number;
-  bands: CplBands;
+  winLossBands: WinLossBands;
+}
+
+/** Android / chess.com reference thresholds. */
+const STANDARD_BANDS: WinLossBands = {
+  excellent: 0.02,
+  good: 0.05,
+  inaccuracy: 0.1,
+  mistake: 0.2,
+};
+
+function scaleBands(factor: number): WinLossBands {
+  return {
+    excellent: STANDARD_BANDS.excellent * factor,
+    good: STANDARD_BANDS.good * factor,
+    inaccuracy: STANDARD_BANDS.inaccuracy * factor,
+    mistake: STANDARD_BANDS.mistake * factor,
+  };
 }
 
 /** Wider bands — friendlier labels for casual players. */
 const RELAXED: AnalysisProfile = {
   id: "relaxed",
-  missSwingPawns: 5.5,
-  bands: {
-    excellent: 35,
-    good: 80,
-    inaccuracy: 160,
-    mistake: 450,
-  },
+  winLossBands: scaleBands(1.5),
 };
 
-/** Matches the original shipped tuning. */
 const STANDARD: AnalysisProfile = {
   id: "standard",
-  missSwingPawns: 4.0,
-  bands: {
-    excellent: 20,
-    good: 50,
-    inaccuracy: 100,
-    mistake: 300,
-  },
+  winLossBands: STANDARD_BANDS,
 };
 
 /** Tighter bands — closer to engine truth for strong players. */
 const STRICT: AnalysisProfile = {
   id: "strict",
-  missSwingPawns: 3.0,
-  bands: {
-    excellent: 12,
-    good: 35,
-    inaccuracy: 70,
-    mistake: 200,
-  },
+  winLossBands: scaleBands(0.7),
 };
 
 export const ANALYSIS_PROFILES: Record<AnalysisStrictnessId, AnalysisProfile> = {

@@ -1609,6 +1609,7 @@ function SideStat({
   const { t } = useLanguage();
   const items: Array<{ key: keyof typeof counts; label: string }> = [
     { key: "brilliant", label: t.review.classBrilliant },
+    { key: "great", label: t.review.classGreat },
     { key: "best", label: t.review.classBest },
     { key: "excellent", label: t.review.classExcellent },
     { key: "good", label: t.review.classGood },
@@ -1632,7 +1633,7 @@ function SideStat({
           </span>
         </div>
       </div>
-      <div className="grid grid-cols-4 sm:grid-cols-8 gap-0.5">
+      <div className="grid grid-cols-5 sm:grid-cols-9 gap-0.5">
         {items.map((it) => {
           const c = CLASSIFICATION_COLORS[it.key];
           const n = counts[it.key] ?? 0;
