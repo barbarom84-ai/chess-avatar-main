@@ -45,12 +45,14 @@ import { buildVerboseHistoryFromSan } from "@/lib/move-history-verbose";
 import { Input } from "@/components/ui/input";
 import SanNotation from "./SanNotation";
 import EvaluationBar from "./EvaluationBar";
+import { toWhitePovEval, type WhitePovEval } from "@/lib/engine-eval";
 import { Switch } from "@/components/ui/switch";
 import {
   computePlayOpeningHints,
   PLAY_EVAL_BAR_STORAGE_KEY,
   PLAY_THEORY_ARROWS_STORAGE_KEY,
 } from "@/lib/play-opening-hints";
+import { estimatedGameElos, winnerFromPlayerResult } from "@/lib/game-result-elo";
 
 const REVIEW_EMOJI_CHOICES = ["💡", "🔥", "❓", "!!", "!?", "⭐", "👍", "📌"];
 
@@ -59,25 +61,6 @@ const POST_GAME_REVIEW_DEPTH = 14;
 
 /** Live evaluation bar depth during play (single Stockfish worker). */
 const LIVE_EVAL_DEPTH = 12;
-
-/**
- * Heuristic display ELO: performance rating plus accuracy vs baseline (~70 from analysis curve).
- * Not a Glicko/Lichess official rating.
- */
-function hybridEstimatedElo(
-  perfElo: number,
-  accuracyPercent: number | null,
-  baseline = 70,
-  k = 3,
-  clampAmt = 80
-): number {
-  if (accuracyPercent == null || !Number.isFinite(accuracyPercent)) return perfElo;
-  const delta = Math.min(
-    clampAmt,
-    Math.max(-clampAmt, k * (accuracyPercent - baseline))
-  );
-  return Math.round(perfElo + delta);
-}
 
 interface PlayableChessboardProps {
   config: EngineConfig;
@@ -191,7 +174,7 @@ export default function PlayableChessboard({
   /** Incremented on reset so in-flight post-game analysis does not apply stale state. */
   const postGameStatsCancelRef = useRef(0);
 
-  const [liveEval, setLiveEval] = useState<number | null>(null);
+  const [liveEval, setLiveEval] = useState<WhitePovEval | null>(null);
   const [showEvalBar, setShowEvalBar] = useState(false);
   const [showTheoryHints, setShowTheoryHints] = useState(false);
   const liveEvalRequestRef = useRef(0);
@@ -201,7 +184,7 @@ export default function PlayableChessboard({
     isThinking,
     getBestMove,
     getBestMoveAndEval,
-    getPositionEvaluation,
+    getPositionEvaluationDetails,
     resetForcedLine,
     remainingForcedMoves,
     stopThinking,
@@ -258,16 +241,16 @@ export default function PlayableChessboard({
       setLiveEval(null);
       return;
     }
-    if (isArchiveMode || reviewMode || gameOver || !isReady || isThinking) {
+    if (isArchiveMode || reviewMode || gameOver || !isReady) {
       return;
     }
     const fen = game.fen();
     const id = ++liveEvalRequestRef.current;
     let cancelled = false;
-    getPositionEvaluation(fen, LIVE_EVAL_DEPTH)
-      .then((v) => {
+    getPositionEvaluationDetails(fen, LIVE_EVAL_DEPTH)
+      .then((score) => {
         if (cancelled || id !== liveEvalRequestRef.current) return;
-        setLiveEval(v);
+        setLiveEval(toWhitePovEval(fen, score));
       })
       .catch(() => {
         if (cancelled || id !== liveEvalRequestRef.current) return;
@@ -282,9 +265,8 @@ export default function PlayableChessboard({
     reviewMode,
     gameOver,
     isReady,
-    isThinking,
     game,
-    getPositionEvaluation,
+    getPositionEvaluationDetails,
     moveHistory.length,
   ]);
 
@@ -758,12 +740,6 @@ export default function PlayableChessboard({
     const seconds = duration % 60;
     const durationStr = `${minutes}m ${seconds}s`;
 
-    const botElo = config.elo ?? 1400;
-    const playerScore = finalResultType === 'win' ? 1 : finalResultType === 'draw' ? 0.5 : 0;
-    const playerPerfElo = Math.round(botElo + 400 * (playerScore - 0.5));
-    const eloWhite = playerColor === 'white' ? playerPerfElo : botElo;
-    const eloBlack = playerColor === 'black' ? playerPerfElo : botElo;
-
     setGameStats({
       totalMoves: currentMoveHistory.length,
       captures,
@@ -774,8 +750,8 @@ export default function PlayableChessboard({
       averageEval: null,
       precisionWhite: null,
       precisionBlack: null,
-      eloWhite,
-      eloBlack,
+      eloWhite: null,
+      eloBlack: null,
     });
 
     const statsRunToken = postGameStatsCancelRef.current;
@@ -807,18 +783,18 @@ export default function PlayableChessboard({
 
         const precW = Math.round(review.white.accuracy * 10) / 10;
         const precB = Math.round(review.black.accuracy * 10) / 10;
-        const humanAccuracy =
-          playerColor === 'white' ? review.white.accuracy : review.black.accuracy;
-        const eloHumanHybrid = hybridEstimatedElo(playerPerfElo, humanAccuracy);
+        const { eloWhite, eloBlack } = estimatedGameElos({
+          accuracyWhite: review.white.accuracy,
+          accuracyBlack: review.black.accuracy,
+          winner: winnerFromPlayerResult(playerColor, finalResultType),
+        });
 
         setGameStats((prev) => ({
           ...prev,
           precisionWhite: precW,
           precisionBlack: precB,
-          eloWhite:
-            playerColor === 'white' ? eloHumanHybrid : botElo,
-          eloBlack:
-            playerColor === 'black' ? eloHumanHybrid : botElo,
+          eloWhite,
+          eloBlack,
         }));
       } catch (err) {
         if (err instanceof ReviewCancelledError) return;
@@ -1539,7 +1515,11 @@ export default function PlayableChessboard({
         {/* COLONNE CENTRALE : Échiquier (7/12) */}
         <div className="order-1 lg:order-2 lg:col-span-7 space-y-3">
           {showEvalBar && !isArchiveMode && !reviewMode && (
-            <EvaluationBar evaluation={liveEval} />
+            <EvaluationBar
+              evaluation={liveEval?.evalWhitePov ?? null}
+              isMate={liveEval?.isMate}
+              mateInMoves={liveEval?.mateInMovesWhite}
+            />
           )}
           {reviewMode && (
             <div

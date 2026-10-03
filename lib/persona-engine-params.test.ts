@@ -142,16 +142,28 @@ describe("persona engine params (aligned with Android)", () => {
     assert.equal(opts.multiPv, 3);
   });
 
-  it("keeps MultiPV for personality opponents at GM difficulty", () => {
+  it("uses a single PV for GM legends vs a human", () => {
     const cfg = fixture({
       difficulty: 5,
+      elo: 2750,
       aggressiveness: 90,
       personalityId: "tal",
       playStyle: "tactique",
     });
     assert.equal(multiPvCountForDifficulty(5), 1);
+    assert.equal(multiPvCountForPlay(cfg), 1);
+    assert.equal(engineOptionsForConfig(cfg).multiPv, 1);
+  });
+
+  it("keeps MultiPV for named archetypes below master Elo", () => {
+    const cfg = fixture({
+      difficulty: 3,
+      elo: 1950,
+      aggressiveness: 90,
+      personalityId: "romantic",
+      playStyle: "agressif",
+    });
     assert.equal(multiPvCountForPlay(cfg), 3);
-    assert.equal(engineOptionsForConfig(cfg).multiPv, 3);
   });
 
   it("biases tactical personas off PV1 more than positional ones", () => {

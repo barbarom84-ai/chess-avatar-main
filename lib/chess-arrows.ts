@@ -52,3 +52,32 @@ export function getLichessArrowColorFromModifiers(modifiers: {
   return LICHESS_ARROW_COLORS.defaultGreen;
 }
 
+/**
+ * Pull arrow endpoints inward so the shaft and head sit on piece centers
+ * instead of overshooting the destination square.
+ */
+export function shortenArrowEndpoints(
+  from: { x: number; y: number },
+  to: { x: number; y: number },
+  startPad = 1.6,
+  endPad = 3.2
+): { x1: number; y1: number; x2: number; y2: number } {
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const len = Math.hypot(dx, dy);
+  if (len < 0.001) {
+    return { x1: from.x, y1: from.y, x2: to.x, y2: to.y };
+  }
+  const maxPad = Math.max(0, (len - 0.8) / 2);
+  const start = Math.min(startPad, maxPad);
+  const end = Math.min(endPad, maxPad);
+  const ux = dx / len;
+  const uy = dy / len;
+  return {
+    x1: from.x + ux * start,
+    y1: from.y + uy * start,
+    x2: to.x - ux * end,
+    y2: to.y - uy * end,
+  };
+}
+

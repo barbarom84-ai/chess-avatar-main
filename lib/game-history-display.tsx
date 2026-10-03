@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
 import type { DbGame } from "@/lib/supabase-storage";
 import { isArenaBotVsBotGame, isPgnArchiveGame } from "@/lib/supabase-storage";
+import { arenaBotVsBotSide } from "@/lib/arena-move-limit";
 
 type GamesCopy = {
   arenaOutcomeWhite: string;
@@ -50,21 +51,19 @@ export function formatGameHistoryDuration(seconds?: number): string {
 export function renderGameResultBadge(game: DbGame, t: GamesCopy): ReactNode {
   if (isArenaBotVsBotGame(game)) {
     let outcomeBadge: ReactNode;
-    switch (game.result_type) {
-      case "arena_white_wins":
-        outcomeBadge = (
-          <Badge className="bg-slate-100 text-slate-900">{t.arenaOutcomeWhite}</Badge>
-        );
-        break;
-      case "arena_black_wins":
-        outcomeBadge = (
-          <Badge className="bg-slate-800 text-slate-100">{t.arenaOutcomeBlack}</Badge>
-        );
-        break;
-      default:
-        outcomeBadge = (
-          <Badge className="bg-amber-700 text-white">{t.arenaOutcomeDraw}</Badge>
-        );
+    const side = arenaBotVsBotSide(game.result_type, game.result);
+    if (side === "white") {
+      outcomeBadge = (
+        <Badge className="bg-slate-100 text-slate-900">{t.arenaOutcomeWhite}</Badge>
+      );
+    } else if (side === "black") {
+      outcomeBadge = (
+        <Badge className="bg-slate-800 text-slate-100">{t.arenaOutcomeBlack}</Badge>
+      );
+    } else {
+      outcomeBadge = (
+        <Badge className="bg-amber-700 text-white">{t.arenaOutcomeDraw}</Badge>
+      );
     }
     return (
       <div className="flex flex-wrap items-center gap-1">

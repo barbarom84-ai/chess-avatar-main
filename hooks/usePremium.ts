@@ -78,7 +78,7 @@ export function usePremium(): PremiumState {
 export const FREE_PROFILE_LIMIT = 3;
 
 // Free piece set IDs
-export const FREE_PIECE_SETS = ['neon-cyan', 'classic', 'cburnett', 'merida', 'alpha', 'pirouetti'];
+export const FREE_PIECE_SETS = ['neon-cyan', 'neon-aurora', 'classic', 'cburnett', 'merida', 'alpha', 'pirouetti'];
 
 // Free board theme IDs
 export const FREE_BOARD_THEMES = ['blue-ocean'];

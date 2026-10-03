@@ -4,6 +4,7 @@ import { createServiceSupabase } from "@/lib/supabase-service";
 import type { PvpGameRow } from "@/lib/pvp-chess";
 import { pvpRateLimitOrResponse } from "@/lib/pvp-api-rate-limit";
 
+import type { PvpResignResponse } from "@/lib/api-contract";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
 
@@ -55,5 +56,5 @@ export async function POST(
 
   if (upErr) return jsonError(upErr.message ?? "Update failed", 500);
 
-  return NextResponse.json({ ok: true, result, resultReason: "resignation", serverNow: Date.now() });
+  return NextResponse.json({ ok: true, result, resultReason: "resignation", serverNow: Date.now() } satisfies PvpResignResponse);
 }

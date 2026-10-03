@@ -206,6 +206,16 @@ export const PIECE_SETS: PieceSet[] = [
     premium: false,
   },
   {
+    id: 'neon-aurora',
+    name: 'Néon Aurora',
+    nameEn: 'Neon Aurora',
+    path: '/pieces/neon-aurora',
+    ext: 'svg',
+    description: 'Néon cyan et magenta, silhouettes géométriques',
+    descriptionEn: 'Cyan and magenta neon, geometric silhouettes',
+    premium: false,
+  },
+  {
     id: 'classic',
     name: 'Classique',
     nameEn: 'Classic',

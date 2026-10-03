@@ -70,8 +70,9 @@ describe("analyzeParsedGameForReview book skip", () => {
     });
 
     for (const ply of bookPlies) {
-      expect(engine).not.toHaveBeenCalledWith(parsed.fenBefore[ply], expect.anything());
-      expect(engine).not.toHaveBeenCalledWith(parsed.fenAfter[ply], expect.anything());
+      const calledFens = engine.mock.calls.map((call) => call[0]);
+      expect(calledFens).not.toContain(parsed.fenBefore[ply]);
+      expect(calledFens).not.toContain(parsed.fenAfter[ply]);
     }
   });
 

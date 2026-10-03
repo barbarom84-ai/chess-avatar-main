@@ -9,6 +9,7 @@ import { fetchAccountSummariesByUserIds } from "@/lib/account-server";
 import { pvpActiveGameIsMyTurn } from "@/lib/pvp-active-games";
 import { findExistingOpenPvpLobby } from "@/lib/pvp-new-game-dedup";
 
+import type { PvpCreateGameResponse, PvpGamesListResponse } from "@/lib/api-contract";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
 
@@ -281,7 +282,7 @@ export async function GET(request: NextRequest) {
     };
   });
 
-  return NextResponse.json({ games, activeGames, pendingRematches, pendingInvites });
+  return NextResponse.json({ games, activeGames, pendingRematches, pendingInvites } satisfies PvpGamesListResponse);
 }
 
 /** Create a new PvP lobby: creator plays White until an opponent joins as Black. */
@@ -313,7 +314,7 @@ export async function POST(request: NextRequest) {
   if (!invitedUserId) {
     const existingLobby = await findExistingOpenPvpLobby(sb, user.id, presetId);
     if (existingLobby) {
-      return NextResponse.json({ game: existingLobby, reused: true });
+      return NextResponse.json({ game: existingLobby, reused: true } satisfies PvpCreateGameResponse);
     }
   }
 
@@ -339,5 +340,5 @@ export async function POST(request: NextRequest) {
     return jsonError(error?.message ?? "Failed to create game", 500);
   }
 
-  return NextResponse.json({ game: data });
+  return NextResponse.json({ game: data } satisfies PvpCreateGameResponse);
 }

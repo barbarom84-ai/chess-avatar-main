@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import Image from "next/image";
 import { Send, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ import {
   type PieceSet,
 } from "@/contexts/ChessboardSettingsContext";
 import { isReviewWhyQuestion, reviewContextCanExplain, type ReviewChatContext } from "@/lib/review-coach-context";
+import { coachBoardSight } from "@/lib/coach-board-sight";
 import type { CoachToneId } from "@/lib/coach-tone";
 import {
   PIECE_EMOJI_IDS,
@@ -29,11 +30,35 @@ import {
   type StickerEmojiId,
 } from "@/lib/chat-emojis";
 import CoachSanText from "@/components/CoachSanText";
+import ReviewCoachSightBoard from "@/components/ReviewCoachSightBoard";
 import { ChessAvatarSticker } from "@/components/chat/chess-avatar-stickers";
 
 interface ChatMessage {
   role: "user" | "assistant";
   content: string;
+  /** Piece colors frozen when the coach replied, so later plies cannot recolor it. */
+  pieces?: {
+    side: "white" | "black";
+    fenBefore?: string;
+    fen?: string;
+    coloredMoves: Array<{ san?: string | null; side?: "white" | "black" | null }>;
+  };
+}
+
+function pieceSnapshot(
+  review: ReviewChatContext | undefined
+): ChatMessage["pieces"] | undefined {
+  if (!review?.fen && !review?.fenBefore && !review?.sideToMove) return undefined;
+  const side = review.sideToMove ?? "white";
+  return {
+    side,
+    fenBefore: review.fenBefore,
+    fen: review.fen,
+    coloredMoves: [
+      { san: review.lastMove, side: review.sideToMove },
+      { san: review.bestMove, side: review.sideToMove },
+    ],
+  };
 }
 
 interface AvatarChatPanelProps {
@@ -45,6 +70,10 @@ interface AvatarChatPanelProps {
   reviewContext?: ReviewChatContext;
   playerColor?: "white" | "black" | null;
   coachTone?: CoachToneId;
+  orientation?: "white" | "black";
+  headerActions?: ReactNode;
+  /** Reset review chat when this identity changes (new PGN), not on every ply. */
+  sessionKey?: string | null;
 }
 
 function pieceLetter(id: PieceEmojiId): "K" | "Q" | "R" | "B" | "N" | "P" {
@@ -149,8 +178,10 @@ export default function AvatarChatPanel({
   variant = "card",
   houseCoach = false,
   reviewContext,
-  playerColor = null,
   coachTone = "pedagogical",
+  orientation = "white",
+  headerActions,
+  sessionKey = null,
 }: AvatarChatPanelProps) {
   const { t, lang } = useLanguage();
   const { settings } = useChessboardSettings();
@@ -167,11 +198,7 @@ export default function AvatarChatPanel({
   const photo = avatarUrl || config.avatarUrl || stats.avatarUrl;
   const welcome =
     variant === "review"
-      ? playerColor === "black"
-        ? t.avatarChat.welcomeReviewBlack
-        : playerColor === "white"
-          ? t.avatarChat.welcomeReviewWhite
-          : t.avatarChat.welcomeReviewUnknown
+      ? t.avatarChat.welcomeReview
       : houseCoach
         ? t.avatarChat.welcomeHouse
         : t.avatarChat.welcome.replace("{name}", stats.username);
@@ -179,7 +206,7 @@ export default function AvatarChatPanel({
   useEffect(() => {
     if (variant !== "review") return;
     setMessages([]);
-  }, [variant, reviewContext?.fenBefore, reviewContext?.lastMoveUci]);
+  }, [variant, sessionKey]);
   const title = t.avatarChat.titleWithName.replace("{name}", stats.username);
   const quotaLabel =
     remaining != null && limit != null
@@ -273,7 +300,11 @@ export default function AvatarChatPanel({
         ) {
           setMessages((prev) => [
             ...prev,
-            { role: "assistant", content: reviewContext.lastExplanation! },
+            {
+              role: "assistant",
+              content: reviewContext.lastExplanation!,
+              pieces: pieceSnapshot(reviewContext),
+            },
           ]);
           scrollToEnd();
           return;
@@ -320,7 +351,11 @@ export default function AvatarChatPanel({
           if (typeof data.limit === "number") setLimit(data.limit);
           setMessages((prev) => [
             ...prev,
-            { role: "assistant", content: data.explanation as string },
+            {
+              role: "assistant",
+              content: data.explanation as string,
+              pieces: pieceSnapshot(reviewContext),
+            },
           ]);
           scrollToEnd();
           return;
@@ -362,7 +397,14 @@ export default function AvatarChatPanel({
         if (typeof data.remaining === "number") setRemaining(data.remaining);
         if (typeof data.limit === "number") setLimit(data.limit);
 
-        setMessages((prev) => [...prev, { role: "assistant", content: data.reply }]);
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: data.reply,
+            pieces: pieceSnapshot(reviewContext),
+          },
+        ]);
         scrollToEnd();
       } finally {
         setLoading(false);
@@ -376,23 +418,62 @@ export default function AvatarChatPanel({
     inputRef.current?.focus();
   };
 
+  const turnBadge =
+    variant === "review" && reviewContext?.turnToMove
+      ? reviewContext.turnToMove === "black"
+        ? t.review.coach.turnToMoveBlack
+        : t.review.coach.turnToMoveWhite
+      : null;
+
+  const lastAssistantText =
+    [...messages].reverse().find((m) => m.role === "assistant")?.content ??
+    reviewContext?.lastExplanation ??
+    "";
+
+  const sight =
+    variant === "review"
+      ? coachBoardSight({
+          fen: reviewContext?.fen,
+          lastMoveUci: reviewContext?.lastMoveUci,
+          lastMoveSan: reviewContext?.lastMove,
+          bestMoveSan: reviewContext?.bestMove,
+          text: lastAssistantText,
+        })
+      : null;
+
   const identity = (
     <div className="flex items-center gap-3 min-w-0">
-      <CoachFace src={photo} name={stats.username} size={variant === "page" ? 48 : 40} />
+      <CoachFace src={photo} name={stats.username} size={variant === "page" ? 48 : 36} />
       <div className="min-w-0">
-        <div className="font-semibold text-cyan-100 truncate">{title}</div>
-        <p className="text-xs text-slate-500 truncate">{quotaLabel}</p>
+        <div className={cn("font-semibold text-cyan-100", variant !== "review" && "truncate")}>
+          {title}
+        </div>
+        <p className="text-xs text-slate-500 truncate">
+          {turnBadge ? (
+            <span className="text-cyan-300/90">{turnBadge}</span>
+          ) : (
+            quotaLabel
+          )}
+          {turnBadge && remaining != null && limit != null ? (
+            <span className="text-slate-600"> · {quotaLabel}</span>
+          ) : null}
+        </p>
       </div>
     </div>
   );
 
   const thread = (
     <>
+      <div className={cn("relative flex-1 min-h-0", variant === "review" && "min-h-[10rem]")}>
       <div
         ref={scrollRef}
         className={cn(
           "overflow-y-auto rounded-xl bg-slate-950/80 border border-cyan-500/20 p-3 space-y-3 text-sm",
-          variant === "page" ? "flex-1 min-h-[46vh]" : variant === "review" ? "h-[4.5rem] lg:h-[5.25rem]" : "h-52"
+          variant === "page"
+            ? "flex-1 min-h-[46vh]"
+            : variant === "review"
+              ? "h-full pr-[9.5rem]"
+              : "h-52"
         )}
       >
         <div className="flex items-start gap-2 py-1">
@@ -418,7 +499,10 @@ export default function AvatarChatPanel({
               {variant === "review" && m.role === "assistant" ? (
                 <CoachSanText
                   text={m.content}
-                  side={reviewContext?.sideToMove}
+                  side={m.pieces?.side ?? "white"}
+                  fenBefore={m.pieces?.fenBefore}
+                  fen={m.pieces?.fen}
+                  coloredMoves={m.pieces?.coloredMoves}
                 />
               ) : (
                 <ChatRichText text={m.content} pieceSet={pieceSet} markTitle={markTitle} />
@@ -433,8 +517,14 @@ export default function AvatarChatPanel({
           </div>
         )}
       </div>
+      {sight ? (
+        <div className="absolute top-2 right-2 z-10 pointer-events-none">
+          <ReviewCoachSightBoard sight={sight} orientation={orientation} />
+        </div>
+      ) : null}
+      </div>
 
-      <div>
+      <div className={variant === "review" ? "shrink-0" : undefined}>
         {variant !== "review" && (
         <p className="text-[11px] uppercase tracking-wide text-slate-500 mb-1">
           {t.avatarChat.suggestionsLabel}
@@ -458,7 +548,7 @@ export default function AvatarChatPanel({
         </div>
       </div>
 
-      <div className="relative flex gap-2 items-end">
+      <div className="relative flex gap-2 items-end shrink-0">
         <Button
           type="button"
           variant="outline"
@@ -565,7 +655,15 @@ export default function AvatarChatPanel({
   }
 
   if (variant === "review") {
-    return <div className="space-y-1.5">{thread}</div>;
+    return (
+      <div className="flex flex-col gap-1.5 flex-1 min-h-0 h-full">
+        <div className="shrink-0 flex flex-wrap items-center gap-2">
+          {identity}
+          {headerActions}
+        </div>
+        <div className="flex flex-col gap-1.5 flex-1 min-h-0">{thread}</div>
+      </div>
+    );
   }
 
   return (

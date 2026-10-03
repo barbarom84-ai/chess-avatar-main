@@ -23,7 +23,72 @@ import {
 describe("personality opponents seed", () => {
   it("includes at least 6 legends and 3 named styles", () => {
     expect(listPersonalityOpponents("legend").length).toBeGreaterThanOrEqual(6);
+    expect(listPersonalityOpponents("fiction").length).toBeGreaterThanOrEqual(4);
+    expect(listPersonalityOpponents("science").length).toBeGreaterThanOrEqual(4);
     expect(listPersonalityOpponents("archetype").length).toBeGreaterThanOrEqual(3);
+  });
+
+  it("keeps added legends on distinct eras and styles", () => {
+    const addedIds = [
+      "philidor",
+      "steinitz",
+      "nimzowitsch",
+      "alekhine",
+      "larsen",
+      "kasparov",
+      "carlsen",
+    ];
+    const added = addedIds.map((id) => getPersonalityOpponent(id)!);
+    expect(added.every(Boolean)).toBe(true);
+    const prior = listPersonalityOpponents("legend").filter(
+      (p) => !addedIds.includes(p.id)
+    );
+    const priorEras = new Set(prior.map((p) => p.era.en));
+    const priorStyles = new Set(prior.map((p) => p.archetype.en));
+    expect(new Set(added.map((p) => p.era.en)).size).toBe(added.length);
+    expect(new Set(added.map((p) => p.archetype.en)).size).toBe(added.length);
+    for (const p of added) {
+      expect(priorEras.has(p.era.en), p.id).toBe(false);
+      expect(priorStyles.has(p.archetype.en), p.id).toBe(false);
+    }
+    const firstMoves = added.map(
+      (p) => personalityToEngineConfig(p).openings[
+        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+      ]
+    );
+    expect(new Set(firstMoves).size).toBeGreaterThanOrEqual(4);
+  });
+
+  it("gives every legend a cartoon portrait path", () => {
+    for (const p of [
+      ...listPersonalityOpponents("legend"),
+      ...listPersonalityOpponents("fiction"),
+      ...listPersonalityOpponents("science"),
+    ]) {
+      expect(p.portraitUrl, p.id).toMatch(/^\/personalities\/[a-z-]+\.webp$/);
+      expect(p.difficulty).toBe(5);
+      expect(p.elo).toBeGreaterThanOrEqual(2600);
+    }
+  });
+
+  it("keeps fictional and scientific legends on distinct styles", () => {
+    for (const kind of ["fiction", "science"] as const) {
+      const group = listPersonalityOpponents(kind);
+      expect(new Set(group.map((p) => p.archetype.en)).size).toBe(group.length);
+      expect(new Set(group.map((p) => p.era.en)).size).toBe(group.length);
+    }
+    const hal = personalityToEngineConfig(getPersonalityOpponent("hal")!);
+    const queen = personalityToEngineConfig(getPersonalityOpponent("red-queen")!);
+    const einstein = personalityToEngineConfig(getPersonalityOpponent("einstein")!);
+    expect(hal.elo).toBeGreaterThan(einstein.elo);
+    expect(hal.humanBlunderInterval).toBe(0);
+    expect(queen.playStyle).toBe("tactique");
+    expect(einstein.playStyle).toBe("équilibré");
+    const startFen =
+      "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+    expect(hal.openings[startFen]).toBe("c2c4");
+    expect(einstein.openings[startFen]).toBe("g1f3");
+    expect(queen.openings[startFen]).toBe("e2e4");
   });
 
   it("uses opening ids that exist in the core library", () => {
@@ -75,10 +140,8 @@ describe("personality → EngineConfig mapping", () => {
     });
     expect(cfg.aggressiveness).toBe(90);
     expect(cfg.playStyle).toBe("tactique");
-    expect(cfg.humanBlunderInterval).toBe(humanBlunderIntervalFromRisk(95));
-    expect(cfg.humanBlunderInterval).toBeLessThan(
-      humanBlunderIntervalFromRisk(karpov.style.risk)
-    );
+    expect(cfg.humanBlunderInterval).toBe(0);
+    expect(cfg.avatarUrl).toBe("/personalities/karpov.webp");
   });
 
   it("maps very low risk to disabled human blunders", () => {
@@ -93,11 +156,15 @@ describe("personality → EngineConfig mapping", () => {
     expect(playStyleFromPositional(50, "solide")).toBe("solide");
   });
 
-  it("keeps MultiPV for aggressive GM personalities", () => {
+  it("plays GM legends on a single PV (opening book keeps their style)", () => {
     const tal = personalityToEngineConfig(getPersonalityOpponent("tal")!);
     const capa = personalityToEngineConfig(getPersonalityOpponent("capablanca")!);
-    expect(multiPvCountForPlay(tal)).toBeGreaterThanOrEqual(3);
-    expect(multiPvCountForPlay(capa)).toBeGreaterThanOrEqual(2);
+    const romantic = personalityToEngineConfig(getPersonalityOpponent("romantic")!);
+    expect(multiPvCountForPlay(tal)).toBe(1);
+    expect(multiPvCountForPlay(capa)).toBe(1);
+    expect(tal.humanBlunderInterval).toBe(0);
+    expect(capa.humanBlunderInterval).toBe(0);
+    expect(multiPvCountForPlay(romantic)).toBeGreaterThanOrEqual(2);
     expect(personaLineBias(tal)).toBeGreaterThan(personaLineBias(capa));
   });
 

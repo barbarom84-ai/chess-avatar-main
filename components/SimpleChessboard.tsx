@@ -2,12 +2,13 @@
 
 import { Chess, type Square, type Piece } from "chess.js";
 import Image from "next/image";
-import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { useEffect, useId, useMemo, useRef, useState, useCallback } from "react";
 import { useChessboardSettings, getPieceImagePath } from "@/contexts/ChessboardSettingsContext";
 import {
   LICHESS_ARROW_COLORS,
   getLichessArrowColorFromModifiers,
   applyArrowOpacityPercent,
+  shortenArrowEndpoints,
 } from "@/lib/chess-arrows";
 
 const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
@@ -37,6 +38,10 @@ interface SimpleChessboardProps {
   className?: string;
   /** Override default max-width; omit to use className-based sizing or the default cap. */
   boardMaxWidth?: string;
+  /** Override the global coordinates setting (e.g. hide files/ranks on a mini board). */
+  showCoordinates?: boolean;
+  /** Tighter padding so a small board does not eat piece space. */
+  compact?: boolean;
 }
 
 export default function SimpleChessboard({
@@ -49,6 +54,8 @@ export default function SimpleChessboard({
   squareEffects,
   className,
   boardMaxWidth,
+  showCoordinates: showCoordinatesProp,
+  compact = false,
 }: SimpleChessboardProps) {
   const { settings } = useChessboardSettings();
   const {
@@ -60,6 +67,8 @@ export default function SimpleChessboard({
     lastMoveArrowOpacityPercent,
     animationSpeed,
   } = settings;
+  const coordsVisible = showCoordinatesProp ?? showCoordinates;
+  const arrowMarkerPrefix = useId().replace(/:/g, "");
   
   const { game, board, checkedKingColor, checkedKingSquare } = useMemo(() => {
     const g = new Chess(position === "start" ? undefined : position);
@@ -437,7 +446,9 @@ export default function SimpleChessboard({
       tabIndex={onDrop ? 0 : undefined}
       role={onDrop ? "application" : undefined}
       aria-label={onDrop ? "Chessboard, use arrow keys to move focus and Enter to select" : "Chessboard"}
-      className={`w-full max-w-full aspect-square h-auto shrink-0 self-center bg-slate-800 p-1.5 sm:p-2 rounded-lg shadow-2xl relative mx-auto min-h-0 outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/70 ${
+      className={`w-full max-w-full aspect-square h-auto shrink-0 self-center bg-slate-800 ${
+        compact ? "p-0.5" : "p-1.5 sm:p-2"
+      } rounded-lg shadow-2xl relative mx-auto min-h-0 outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/70 ${
         onDrop && isBoardDragging ? "touch-none" : onDrop ? "touch-manipulation" : ""
       } ${isBoardDragging ? "cursor-grabbing select-none" : ""} ${className ?? ""}`}
       style={
@@ -448,7 +459,8 @@ export default function SimpleChessboard({
             : { maxWidth: "min(96vw, 84vh, 820px)" }
       }
     >
-      <div className="grid grid-cols-8 grid-rows-8 gap-0 w-full aspect-square min-h-0" role="grid">
+      <div className="relative w-full aspect-square min-h-0">
+      <div className="grid grid-cols-8 grid-rows-8 gap-0 w-full h-full min-h-0" role="grid">
         {displayRanks.map((rank, rankIdx) =>
           displayFiles.map((file, fileIdx) => {
             const square = `${file}${rank}`;
@@ -619,7 +631,7 @@ export default function SimpleChessboard({
                   ))}
                 
                 {/* Coordonnées */}
-                {showCoordinates && fileIdx === 0 && (
+                {coordsVisible && fileIdx === 0 && (
                   <span
                     className="absolute top-0.5 left-1 text-[10px] font-semibold opacity-80"
                     style={{
@@ -629,7 +641,7 @@ export default function SimpleChessboard({
                     {rank}
                   </span>
                 )}
-                {showCoordinates && rankIdx === displayRanks.length - 1 && (
+                {coordsVisible && rankIdx === displayRanks.length - 1 && (
                   <span
                     className="absolute bottom-0.5 right-1 text-[10px] font-semibold opacity-80"
                     style={{
@@ -643,6 +655,65 @@ export default function SimpleChessboard({
             );
           })
         )}
+      </div>
+
+      {/* Overlay SVG: same box as the 8×8 grid so arrows land on piece centers. */}
+      {renderedArrows.length > 0 && (
+        <svg
+          className="absolute inset-0 pointer-events-none z-30 overflow-visible"
+          viewBox="0 0 100 100"
+          preserveAspectRatio="none"
+        >
+          <defs>
+            {renderedArrows.map((arrow, idx) => {
+              const color = arrow.color || LICHESS_ARROW_COLORS.defaultGreen;
+              return (
+                <marker
+                  key={`marker-${idx}`}
+                  id={`arrowhead-${arrowMarkerPrefix}-${idx}`}
+                  markerWidth="3.4"
+                  markerHeight="3.4"
+                  refX="2.2"
+                  refY="1.7"
+                  orient="auto"
+                  markerUnits="strokeWidth"
+                >
+                  <polygon points="0 0, 3.4 1.7, 0 3.4" fill={color} />
+                </marker>
+              );
+            })}
+          </defs>
+          {renderedArrows.map((arrow, idx) => {
+            const from = squareToCoords(arrow.from);
+            const to = squareToCoords(arrow.to);
+            const line = shortenArrowEndpoints(from, to);
+            const color = arrow.color || LICHESS_ARROW_COLORS.defaultGreen;
+
+            return (
+              <g key={idx}>
+                <circle
+                  cx={from.x}
+                  cy={from.y}
+                  r="2.2"
+                  fill="none"
+                  stroke={color}
+                  strokeWidth="0.55"
+                />
+                <line
+                  x1={line.x1}
+                  y1={line.y1}
+                  x2={line.x2}
+                  y2={line.y2}
+                  stroke={color}
+                  strokeWidth="1.05"
+                  markerEnd={`url(#arrowhead-${arrowMarkerPrefix}-${idx})`}
+                  strokeLinecap="round"
+                />
+              </g>
+            );
+          })}
+        </svg>
+      )}
       </div>
 
       {dragPiece && dragClientPos && dragGhostSize && (
@@ -669,64 +740,6 @@ export default function SimpleChessboard({
             />
           </div>
         </div>
-      )}
-      
-      {/* Overlay SVG pour les flèches */}
-      {renderedArrows.length > 0 && (
-        <svg 
-          className="absolute inset-0 pointer-events-none" 
-          viewBox="0 0 100 100"
-          style={{ width: '100%', height: '100%' }}
-        >
-          <defs>
-            {renderedArrows.map((arrow, idx) => {
-              const color = arrow.color || LICHESS_ARROW_COLORS.defaultGreen;
-              return (
-                <marker
-                  key={`marker-${idx}`}
-                  id={`arrowhead-${idx}`}
-                  markerWidth="3.4"
-                  markerHeight="3.4"
-                  refX="2.9"
-                  refY="1.7"
-                  orient="auto"
-                  markerUnits="strokeWidth"
-                >
-                  <polygon points="0 0, 3.4 1.7, 0 3.4" fill={color} />
-                </marker>
-              );
-            })}
-          </defs>
-          {renderedArrows.map((arrow, idx) => {
-            const from = squareToCoords(arrow.from);
-            const to = squareToCoords(arrow.to);
-            const color = arrow.color || LICHESS_ARROW_COLORS.defaultGreen;
-            
-            return (
-              <g key={idx}>
-                {/* Cercle de départ façon Lichess */}
-                <circle
-                  cx={`${from.x}%`}
-                  cy={`${from.y}%`}
-                  r="2.8"
-                  fill="none"
-                  stroke={color}
-                  strokeWidth="0.6"
-                />
-                <line
-                  x1={`${from.x}%`}
-                  y1={`${from.y}%`}
-                  x2={`${to.x}%`}
-                  y2={`${to.y}%`}
-                  stroke={color}
-                  strokeWidth="1.05"
-                  markerEnd={`url(#arrowhead-${idx})`}
-                  strokeLinecap="round"
-                />
-              </g>
-            );
-          })}
-        </svg>
       )}
     </div>
   );

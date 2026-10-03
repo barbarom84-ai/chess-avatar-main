@@ -16,6 +16,7 @@ import {
   stmEvalToWhitePov,
   type ArenaOutcome,
 } from "@/lib/arena-spectator-helpers";
+import { ARENA_MOVE_LIMIT_EVAL_DEPTH, classifyArenaCrushing, whitePovEvalOrNull } from "@/lib/arena-move-limit";
 import {
   dedupeByIdentity,
   filterByPlatform,
@@ -224,7 +225,7 @@ export default function ArenaSpectator({
   }, [stopThinking]);
 
   useEffect(() => {
-    if (!isReady) return;
+    if (!isReady || autoPlay) return;
     const seq = ++evalSeqRef.current;
     let cancelled = false;
     void (async () => {
@@ -239,7 +240,7 @@ export default function ArenaSpectator({
     return () => {
       cancelled = true;
     };
-  }, [fen, isReady, getPositionEvaluation]);
+  }, [fen, isReady, getPositionEvaluation, autoPlay]);
 
   const trySaveArenaCloud = useCallback(
     async (game: Chess, uciHist: string[], outcome: ArenaOutcome) => {
@@ -291,6 +292,36 @@ export default function ArenaSpectator({
     [t.arenaPage]
   );
 
+  const finishMoveLimit = useCallback(
+    async (game: Chess, hist: string[]) => {
+      const evalWhitePov = await whitePovEvalOrNull(
+        game.fen(),
+        getPositionEvaluation,
+        stmEvalToWhitePov,
+        ARENA_MOVE_LIMIT_EVAL_DEPTH
+      );
+      setBarEval(evalWhitePov);
+      const outcome = classifyArenaOutcome(game, true, lang, evalWhitePov);
+      setStatusNote(outcome.resultMessage);
+      if (
+        saveCloudGames &&
+        userId &&
+        hist.length > 0 &&
+        !arenaSavedRef.current
+      ) {
+        arenaSavedRef.current = true;
+        void trySaveArenaCloud(game, hist, outcome);
+      }
+    },
+    [
+      getPositionEvaluation,
+      lang,
+      saveCloudGames,
+      userId,
+      trySaveArenaCloud,
+    ]
+  );
+
   const playStep = useCallback(async (): Promise<boolean> => {
     if (!isReady || !whiteConfig || !blackConfig) return true;
     if (whiteKey === blackKey) {
@@ -305,21 +336,8 @@ export default function ArenaSpectator({
       return true;
     }
     if (hist.length >= maxPlies) {
-      setStatusNote(t.arenaPage.gameOver);
       const gLimit = replayUci(hist);
-      if (
-        saveCloudGames &&
-        userId &&
-        hist.length > 0 &&
-        !arenaSavedRef.current
-      ) {
-        arenaSavedRef.current = true;
-        void trySaveArenaCloud(
-          gLimit,
-          [...hist],
-          classifyArenaOutcome(gLimit, true, lang)
-        );
-      }
+      await finishMoveLimit(gLimit, [...hist]);
       return true;
     }
 
@@ -409,15 +427,41 @@ export default function ArenaSpectator({
       }
       return true;
     }
-    if (snapshot.length >= maxPlies) {
-      setStatusNote(t.arenaPage.gameOver);
-      if (saveCloudGames && userId && !arenaSavedRef.current) {
+
+    const evalWhitePov = await whitePovEvalOrNull(
+      next.fen(),
+      getPositionEvaluation,
+      stmEvalToWhitePov,
+      ARENA_MOVE_LIMIT_EVAL_DEPTH
+    );
+    setBarEval(evalWhitePov);
+
+    const crush = classifyArenaCrushing(lang, evalWhitePov);
+    if (crush) {
+      setStatusNote(crush.resultMessage);
+      if (
+        saveCloudGames &&
+        userId &&
+        snapshot.length > 0 &&
+        !arenaSavedRef.current
+      ) {
         arenaSavedRef.current = true;
-        void trySaveArenaCloud(
-          next,
-          snapshot,
-          classifyArenaOutcome(next, true, lang)
-        );
+        void trySaveArenaCloud(next, snapshot, crush);
+      }
+      return true;
+    }
+
+    if (snapshot.length >= maxPlies) {
+      const outcome = classifyArenaOutcome(next, true, lang, evalWhitePov);
+      setStatusNote(outcome.resultMessage);
+      if (
+        saveCloudGames &&
+        userId &&
+        snapshot.length > 0 &&
+        !arenaSavedRef.current
+      ) {
+        arenaSavedRef.current = true;
+        void trySaveArenaCloud(next, snapshot, outcome);
       }
       return true;
     }
@@ -440,6 +484,8 @@ export default function ArenaSpectator({
     trySaveArenaCloud,
     lang,
     forcedOpeningId,
+    finishMoveLimit,
+    getPositionEvaluation,
   ]);
 
   const handleStartAuto = async () => {

@@ -1,0 +1,1907 @@
+{
+  "contractVersion": 1,
+  "note": "Success responses per route, keyed by \"METHOD path\" as in the Android Retrofit interfaces.",
+  "routes": {
+    "GET api/pvp/matchmaking": {
+      "idle": {
+        "inQueue": false
+      },
+      "matched": {
+        "inQueue": false,
+        "matched": true,
+        "gameId": "33333333-3333-4333-8333-333333333333",
+        "role": "black",
+        "game": {
+          "id": "33333333-3333-4333-8333-333333333333",
+          "created_at": "2026-10-03T12:00:00.000Z",
+          "updated_at": "2026-10-03T12:00:00.000Z",
+          "created_by": "11111111-1111-4111-8111-111111111111",
+          "white_user_id": "11111111-1111-4111-8111-111111111111",
+          "black_user_id": "22222222-2222-4222-8222-222222222222",
+          "status": "playing",
+          "result": null,
+          "result_reason": null,
+          "draw_offered_by": null,
+          "takeback_offered_by": null,
+          "clock_mode": "timed",
+          "clock_initial_sec": 300,
+          "clock_increment_sec": 3,
+          "time_preset": "blitz-5-3",
+          "white_remaining_ms": 298000,
+          "black_remaining_ms": 300000,
+          "clock_turn_started_at": "2026-10-03T12:00:00.000Z",
+          "white_display_name": "Alice",
+          "black_display_name": "Bob",
+          "white_draw_offers_count": 0,
+          "black_draw_offers_count": 1,
+          "invited_user_id": null,
+          "rematch_source_game_id": null
+        },
+        "serverNow": 1791028800000
+      },
+      "queued": {
+        "inQueue": true,
+        "timePreset": "blitz-5-3",
+        "queueSize": 2
+      }
+    },
+    "POST api/pvp/matchmaking": {
+      "matched": {
+        "matched": true,
+        "gameId": "33333333-3333-4333-8333-333333333333",
+        "role": "black",
+        "game": {
+          "id": "33333333-3333-4333-8333-333333333333",
+          "created_at": "2026-10-03T12:00:00.000Z",
+          "updated_at": "2026-10-03T12:00:00.000Z",
+          "created_by": "11111111-1111-4111-8111-111111111111",
+          "white_user_id": "11111111-1111-4111-8111-111111111111",
+          "black_user_id": "22222222-2222-4222-8222-222222222222",
+          "status": "playing",
+          "result": null,
+          "result_reason": null,
+          "draw_offered_by": null,
+          "takeback_offered_by": null,
+          "clock_mode": "timed",
+          "clock_initial_sec": 300,
+          "clock_increment_sec": 3,
+          "time_preset": "blitz-5-3",
+          "white_remaining_ms": 298000,
+          "black_remaining_ms": 300000,
+          "clock_turn_started_at": "2026-10-03T12:00:00.000Z",
+          "white_display_name": "Alice",
+          "black_display_name": "Bob",
+          "white_draw_offers_count": 0,
+          "black_draw_offers_count": 1,
+          "invited_user_id": null,
+          "rematch_source_game_id": null
+        },
+        "serverNow": 1791028800000
+      },
+      "reused": {
+        "matched": true,
+        "gameId": "33333333-3333-4333-8333-333333333333",
+        "role": "black",
+        "game": {
+          "id": "33333333-3333-4333-8333-333333333333",
+          "created_at": "2026-10-03T12:00:00.000Z",
+          "updated_at": "2026-10-03T12:00:00.000Z",
+          "created_by": "11111111-1111-4111-8111-111111111111",
+          "white_user_id": "11111111-1111-4111-8111-111111111111",
+          "black_user_id": "22222222-2222-4222-8222-222222222222",
+          "status": "playing",
+          "result": null,
+          "result_reason": null,
+          "draw_offered_by": null,
+          "takeback_offered_by": null,
+          "clock_mode": "timed",
+          "clock_initial_sec": 300,
+          "clock_increment_sec": 3,
+          "time_preset": "blitz-5-3",
+          "white_remaining_ms": 298000,
+          "black_remaining_ms": 300000,
+          "clock_turn_started_at": "2026-10-03T12:00:00.000Z",
+          "white_display_name": "Alice",
+          "black_display_name": "Bob",
+          "white_draw_offers_count": 0,
+          "black_draw_offers_count": 1,
+          "invited_user_id": null,
+          "rematch_source_game_id": null
+        },
+        "serverNow": 1791028800000,
+        "reused": true
+      },
+      "queued": {
+        "matched": false,
+        "inQueue": true,
+        "timePreset": "rapid-10-0",
+        "queueSize": 1
+      }
+    },
+    "DELETE api/pvp/matchmaking": {
+      "ok": {
+        "ok": true
+      }
+    },
+    "GET api/pvp/games": {
+      "empty": {
+        "games": [],
+        "activeGames": [],
+        "pendingRematches": [],
+        "pendingInvites": []
+      },
+      "full": {
+        "games": [
+          {
+            "id": "33333333-3333-4333-8333-333333333333",
+            "created_at": "2026-10-03T12:00:00.000Z",
+            "isHost": true,
+            "host_user_id": "11111111-1111-4111-8111-111111111111",
+            "host_display_name": "Alice",
+            "host_avatar_url": null,
+            "time_preset": "blitz-5-3",
+            "clock_mode": "timed",
+            "clock_initial_sec": 300,
+            "clock_increment_sec": 3
+          }
+        ],
+        "activeGames": [
+          {
+            "id": "33333333-3333-4333-8333-333333333333",
+            "created_at": "2026-10-03T12:00:00.000Z",
+            "updated_at": "2026-10-03T12:00:00.000Z",
+            "role": "white",
+            "opponent_user_id": "22222222-2222-4222-8222-222222222222",
+            "opponent_display_name": null,
+            "opponent_avatar_url": "https://example.com/b.png",
+            "time_preset": "blitz-5-3",
+            "clock_mode": "timed",
+            "clock_initial_sec": 300,
+            "clock_increment_sec": 3,
+            "move_count": 12,
+            "is_my_turn": true
+          }
+        ],
+        "pendingRematches": [
+          {
+            "id": "33333333-3333-4333-8333-333333333333",
+            "created_at": "2026-10-03T12:00:00.000Z",
+            "direction": "incoming",
+            "opponent_user_id": "22222222-2222-4222-8222-222222222222",
+            "opponent_display_name": "Bob",
+            "opponent_avatar_url": null,
+            "time_preset": "blitz-5-3",
+            "clock_mode": "timed",
+            "clock_initial_sec": 300,
+            "clock_increment_sec": 3,
+            "can_cancel": false
+          }
+        ],
+        "pendingInvites": [
+          {
+            "id": "33333333-3333-4333-8333-333333333333",
+            "created_at": "2026-10-03T12:00:00.000Z",
+            "host_user_id": "11111111-1111-4111-8111-111111111111",
+            "host_display_name": null,
+            "host_avatar_url": null,
+            "time_preset": "blitz-5-3",
+            "clock_mode": "timed",
+            "clock_initial_sec": 300,
+            "clock_increment_sec": 3
+          }
+        ]
+      }
+    },
+    "POST api/pvp/games": {
+      "created": {
+        "game": {
+          "id": "33333333-3333-4333-8333-333333333333",
+          "status": "waiting",
+          "white_user_id": "11111111-1111-4111-8111-111111111111",
+          "black_user_id": null,
+          "created_at": "2026-10-03T12:00:00.000Z",
+          "time_preset": "blitz-5-3",
+          "clock_mode": "timed",
+          "clock_initial_sec": 300,
+          "clock_increment_sec": 3,
+          "white_display_name": "Alice",
+          "black_display_name": null
+        }
+      },
+      "reused": {
+        "game": {
+          "id": "33333333-3333-4333-8333-333333333333",
+          "created_at": "2026-10-03T12:00:00.000Z",
+          "updated_at": "2026-10-03T12:00:00.000Z",
+          "created_by": "11111111-1111-4111-8111-111111111111",
+          "white_user_id": "11111111-1111-4111-8111-111111111111",
+          "black_user_id": null,
+          "status": "waiting",
+          "result": null,
+          "result_reason": null,
+          "draw_offered_by": null,
+          "takeback_offered_by": null,
+          "clock_mode": "timed",
+          "clock_initial_sec": 300,
+          "clock_increment_sec": 3,
+          "time_preset": "blitz-5-3",
+          "white_remaining_ms": null,
+          "black_remaining_ms": null,
+          "clock_turn_started_at": null,
+          "white_display_name": "Alice",
+          "black_display_name": null,
+          "white_draw_offers_count": 0,
+          "black_draw_offers_count": 0,
+          "invited_user_id": null,
+          "rematch_source_game_id": null
+        },
+        "reused": true
+      },
+      "reusedMinimal": {
+        "game": {
+          "id": "33333333-3333-4333-8333-333333333333",
+          "created_at": "2026-10-03T12:00:00.000Z",
+          "updated_at": "2026-10-03T12:00:00.000Z",
+          "created_by": "11111111-1111-4111-8111-111111111111",
+          "white_user_id": "11111111-1111-4111-8111-111111111111",
+          "black_user_id": null,
+          "status": "waiting",
+          "result": null,
+          "result_reason": null,
+          "draw_offered_by": null
+        },
+        "reused": true
+      }
+    },
+    "GET api/pvp/games/{gameId}": {
+      "player": {
+        "game": {
+          "id": "33333333-3333-4333-8333-333333333333",
+          "created_at": "2026-10-03T12:00:00.000Z",
+          "updated_at": "2026-10-03T12:00:00.000Z",
+          "created_by": "11111111-1111-4111-8111-111111111111",
+          "white_user_id": "11111111-1111-4111-8111-111111111111",
+          "black_user_id": "22222222-2222-4222-8222-222222222222",
+          "status": "playing",
+          "result": null,
+          "result_reason": null,
+          "draw_offered_by": null,
+          "takeback_offered_by": null,
+          "clock_mode": "timed",
+          "clock_initial_sec": 300,
+          "clock_increment_sec": 3,
+          "time_preset": "blitz-5-3",
+          "white_remaining_ms": 298000,
+          "black_remaining_ms": 300000,
+          "clock_turn_started_at": "2026-10-03T12:00:00.000Z",
+          "white_display_name": "Alice",
+          "black_display_name": "Bob",
+          "white_draw_offers_count": 0,
+          "black_draw_offers_count": 1,
+          "invited_user_id": null,
+          "rematch_source_game_id": null
+        },
+        "moves": [
+          {
+            "id": 1,
+            "game_id": "33333333-3333-4333-8333-333333333333",
+            "ply": 1,
+            "uci": "e2e4",
+            "played_by": "11111111-1111-4111-8111-111111111111",
+            "created_at": "2026-10-03T12:00:00.000Z",
+            "time_spent_ms": 2000
+          },
+          {
+            "id": 2,
+            "game_id": "33333333-3333-4333-8333-333333333333",
+            "ply": 2,
+            "uci": "e7e5",
+            "played_by": "22222222-2222-4222-8222-222222222222",
+            "created_at": "2026-10-03T12:00:00.000Z",
+            "time_spent_ms": null
+          },
+          {
+            "id": 3,
+            "game_id": "33333333-3333-4333-8333-333333333333",
+            "ply": 3,
+            "uci": "g1f3",
+            "played_by": "11111111-1111-4111-8111-111111111111",
+            "created_at": "2026-10-03T12:00:00.000Z"
+          }
+        ],
+        "role": "white",
+        "canJoin": false,
+        "canAcceptRematch": false,
+        "canCancelLobby": false,
+        "isSpectator": false,
+        "serverNow": 1791028800000
+      },
+      "spectatorLobby": {
+        "game": {
+          "id": "33333333-3333-4333-8333-333333333333",
+          "created_at": "2026-10-03T12:00:00.000Z",
+          "updated_at": "2026-10-03T12:00:00.000Z",
+          "created_by": "11111111-1111-4111-8111-111111111111",
+          "white_user_id": "11111111-1111-4111-8111-111111111111",
+          "black_user_id": null,
+          "status": "waiting",
+          "result": null,
+          "result_reason": null,
+          "draw_offered_by": null
+        },
+        "moves": [],
+        "role": null,
+        "canJoin": true,
+        "canAcceptRematch": false,
+        "canCancelLobby": false,
+        "isSpectator": true,
+        "serverNow": 1791028800000
+      },
+      "finished": {
+        "game": {
+          "id": "33333333-3333-4333-8333-333333333333",
+          "created_at": "2026-10-03T12:00:00.000Z",
+          "updated_at": "2026-10-03T12:00:00.000Z",
+          "created_by": "11111111-1111-4111-8111-111111111111",
+          "white_user_id": "11111111-1111-4111-8111-111111111111",
+          "black_user_id": "22222222-2222-4222-8222-222222222222",
+          "status": "finished",
+          "result": "1-0",
+          "result_reason": "checkmate",
+          "draw_offered_by": null,
+          "takeback_offered_by": null,
+          "clock_mode": "timed",
+          "clock_initial_sec": 300,
+          "clock_increment_sec": 3,
+          "time_preset": "blitz-5-3",
+          "white_remaining_ms": 298000,
+          "black_remaining_ms": 300000,
+          "clock_turn_started_at": null,
+          "white_display_name": "Alice",
+          "black_display_name": "Bob",
+          "white_draw_offers_count": 0,
+          "black_draw_offers_count": 1,
+          "invited_user_id": null,
+          "rematch_source_game_id": null
+        },
+        "moves": [
+          {
+            "id": 1,
+            "game_id": "33333333-3333-4333-8333-333333333333",
+            "ply": 1,
+            "uci": "e2e4",
+            "played_by": "11111111-1111-4111-8111-111111111111",
+            "created_at": "2026-10-03T12:00:00.000Z",
+            "time_spent_ms": 2000
+          },
+          {
+            "id": 2,
+            "game_id": "33333333-3333-4333-8333-333333333333",
+            "ply": 2,
+            "uci": "e7e5",
+            "played_by": "22222222-2222-4222-8222-222222222222",
+            "created_at": "2026-10-03T12:00:00.000Z",
+            "time_spent_ms": null
+          },
+          {
+            "id": 3,
+            "game_id": "33333333-3333-4333-8333-333333333333",
+            "ply": 3,
+            "uci": "g1f3",
+            "played_by": "11111111-1111-4111-8111-111111111111",
+            "created_at": "2026-10-03T12:00:00.000Z"
+          }
+        ],
+        "role": "white",
+        "canJoin": false,
+        "canAcceptRematch": false,
+        "canCancelLobby": false,
+        "isSpectator": false,
+        "serverNow": 1791028800000
+      },
+      "correspondence": {
+        "game": {
+          "id": "33333333-3333-4333-8333-333333333333",
+          "created_at": "2026-10-03T12:00:00.000Z",
+          "updated_at": "2026-10-03T12:00:00.000Z",
+          "created_by": "11111111-1111-4111-8111-111111111111",
+          "white_user_id": "11111111-1111-4111-8111-111111111111",
+          "black_user_id": "22222222-2222-4222-8222-222222222222",
+          "status": "playing",
+          "result": null,
+          "result_reason": null,
+          "draw_offered_by": null,
+          "takeback_offered_by": null,
+          "clock_mode": "correspondence",
+          "clock_initial_sec": 259200,
+          "clock_increment_sec": 0,
+          "time_preset": "corr-3d",
+          "white_remaining_ms": null,
+          "black_remaining_ms": null,
+          "clock_turn_started_at": "2026-10-03T12:00:00.000Z",
+          "white_display_name": "Alice",
+          "black_display_name": "Bob",
+          "white_draw_offers_count": 0,
+          "black_draw_offers_count": 1,
+          "invited_user_id": null,
+          "rematch_source_game_id": null
+        },
+        "moves": [
+          {
+            "id": 1,
+            "game_id": "33333333-3333-4333-8333-333333333333",
+            "ply": 1,
+            "uci": "e2e4",
+            "played_by": "11111111-1111-4111-8111-111111111111",
+            "created_at": "2026-10-03T12:00:00.000Z",
+            "time_spent_ms": 2000
+          },
+          {
+            "id": 2,
+            "game_id": "33333333-3333-4333-8333-333333333333",
+            "ply": 2,
+            "uci": "e7e5",
+            "played_by": "22222222-2222-4222-8222-222222222222",
+            "created_at": "2026-10-03T12:00:00.000Z",
+            "time_spent_ms": null
+          },
+          {
+            "id": 3,
+            "game_id": "33333333-3333-4333-8333-333333333333",
+            "ply": 3,
+            "uci": "g1f3",
+            "played_by": "11111111-1111-4111-8111-111111111111",
+            "created_at": "2026-10-03T12:00:00.000Z"
+          }
+        ],
+        "role": "black",
+        "canJoin": false,
+        "canAcceptRematch": true,
+        "canCancelLobby": false,
+        "isSpectator": false,
+        "serverNow": 1791028800000
+      }
+    },
+    "DELETE api/pvp/games/{gameId}": {
+      "ok": {
+        "ok": true
+      }
+    },
+    "POST api/pvp/games/{gameId}/join": {
+      "joined": {
+        "game": {
+          "id": "33333333-3333-4333-8333-333333333333",
+          "created_at": "2026-10-03T12:00:00.000Z",
+          "updated_at": "2026-10-03T12:00:00.000Z",
+          "created_by": "11111111-1111-4111-8111-111111111111",
+          "white_user_id": "11111111-1111-4111-8111-111111111111",
+          "black_user_id": "22222222-2222-4222-8222-222222222222",
+          "status": "playing",
+          "result": null,
+          "result_reason": null,
+          "draw_offered_by": null,
+          "takeback_offered_by": null,
+          "clock_mode": "timed",
+          "clock_initial_sec": 300,
+          "clock_increment_sec": 3,
+          "time_preset": "blitz-5-3",
+          "white_remaining_ms": 298000,
+          "black_remaining_ms": 300000,
+          "clock_turn_started_at": "2026-10-03T12:00:00.000Z",
+          "white_display_name": "Alice",
+          "black_display_name": "Bob",
+          "white_draw_offers_count": 0,
+          "black_draw_offers_count": 1,
+          "invited_user_id": null,
+          "rematch_source_game_id": null
+        },
+        "role": "black",
+        "serverNow": 1791028800000
+      }
+    },
+    "POST api/pvp/games/{gameId}/move": {
+      "ongoing": {
+        "ok": true,
+        "ply": 4,
+        "uci": "b8c6",
+        "move": {
+          "id": 4,
+          "game_id": "33333333-3333-4333-8333-333333333333",
+          "ply": 4,
+          "uci": "b8c6",
+          "played_by": "22222222-2222-4222-8222-222222222222",
+          "created_at": "2026-10-03T12:00:00.000Z",
+          "time_spent_ms": 1500
+        },
+        "game": {
+          "updated_at": "2026-10-03T12:00:00.000Z",
+          "white_remaining_ms": 298000,
+          "black_remaining_ms": 301500,
+          "clock_turn_started_at": "2026-10-03T12:00:00.000Z",
+          "draw_offered_by": null
+        },
+        "gameOver": false,
+        "result": null,
+        "resultReason": null,
+        "serverNow": 1791028800000
+      },
+      "checkmate": {
+        "ok": true,
+        "ply": 7,
+        "uci": "h5f7",
+        "move": {
+          "id": 7,
+          "game_id": "33333333-3333-4333-8333-333333333333",
+          "ply": 7,
+          "uci": "h5f7",
+          "played_by": "11111111-1111-4111-8111-111111111111",
+          "created_at": "2026-10-03T12:00:00.000Z"
+        },
+        "game": {
+          "status": "finished",
+          "result": "1-0",
+          "result_reason": "checkmate",
+          "updated_at": "2026-10-03T12:00:00.000Z"
+        },
+        "gameOver": true,
+        "result": "1-0",
+        "resultReason": "checkmate",
+        "serverNow": 1791028800000
+      }
+    },
+    "POST api/pvp/games/{gameId}/resign": {
+      "resigned": {
+        "ok": true,
+        "result": "0-1",
+        "resultReason": "resignation",
+        "serverNow": 1791028800000
+      }
+    },
+    "POST api/pvp/games/{gameId}/draw": {
+      "offered": {
+        "ok": true,
+        "drawOfferedBy": "11111111-1111-4111-8111-111111111111",
+        "serverNow": 1791028800000,
+        "drawOffersCount": 1
+      },
+      "declined": {
+        "ok": true,
+        "drawOfferedBy": null,
+        "serverNow": 1791028800000
+      },
+      "accepted": {
+        "ok": true,
+        "result": "1/2-1/2",
+        "resultReason": "draw_agreed",
+        "serverNow": 1791028800000
+      }
+    },
+    "POST api/pvp/games/{gameId}/takeback": {
+      "offered": {
+        "ok": true,
+        "takebackOfferedBy": "22222222-2222-4222-8222-222222222222",
+        "serverNow": 1791028800000
+      },
+      "declined": {
+        "ok": true,
+        "takebackOfferedBy": null,
+        "serverNow": 1791028800000
+      },
+      "accepted": {
+        "ok": true,
+        "removedPly": 3,
+        "game": {
+          "status": "playing",
+          "result": null,
+          "result_reason": null,
+          "takeback_offered_by": null,
+          "draw_offered_by": null,
+          "clock_turn_started_at": "2026-10-03T12:00:00.000Z"
+        },
+        "serverNow": 1791028800000
+      }
+    },
+    "POST api/pvp/games/{gameId}/rematch": {
+      "invite": {
+        "gameId": "33333333-3333-4333-8333-333333333333",
+        "game": {
+          "id": "33333333-3333-4333-8333-333333333333",
+          "created_at": "2026-10-03T12:00:00.000Z",
+          "updated_at": "2026-10-03T12:00:00.000Z",
+          "created_by": "11111111-1111-4111-8111-111111111111",
+          "white_user_id": "11111111-1111-4111-8111-111111111111",
+          "black_user_id": null,
+          "status": "waiting",
+          "result": null,
+          "result_reason": null,
+          "draw_offered_by": null,
+          "rematch_source_game_id": "33333333-3333-4333-8333-333333333333",
+          "invited_user_id": "22222222-2222-4222-8222-222222222222"
+        },
+        "inviteUrl": "https://chessavatar.net/pvp/33333333-3333-4333-8333-333333333333",
+        "role": "black",
+        "serverNow": 1791028800000
+      },
+      "started": {
+        "gameId": "33333333-3333-4333-8333-333333333333",
+        "game": {
+          "id": "33333333-3333-4333-8333-333333333333",
+          "created_at": "2026-10-03T12:00:00.000Z",
+          "updated_at": "2026-10-03T12:00:00.000Z",
+          "created_by": "11111111-1111-4111-8111-111111111111",
+          "white_user_id": "11111111-1111-4111-8111-111111111111",
+          "black_user_id": "22222222-2222-4222-8222-222222222222",
+          "status": "playing",
+          "result": null,
+          "result_reason": null,
+          "draw_offered_by": null,
+          "takeback_offered_by": null,
+          "clock_mode": "timed",
+          "clock_initial_sec": 300,
+          "clock_increment_sec": 3,
+          "time_preset": "blitz-5-3",
+          "white_remaining_ms": 298000,
+          "black_remaining_ms": 300000,
+          "clock_turn_started_at": "2026-10-03T12:00:00.000Z",
+          "white_display_name": "Alice",
+          "black_display_name": "Bob",
+          "white_draw_offers_count": 0,
+          "black_draw_offers_count": 1,
+          "invited_user_id": null,
+          "rematch_source_game_id": null
+        },
+        "inviteUrl": null,
+        "role": "white",
+        "serverNow": 1791028800000,
+        "started": true
+      }
+    },
+    "GET api/pvp/games/{gameId}/chat": {
+      "messages": {
+        "messages": [
+          {
+            "id": 10,
+            "game_id": "33333333-3333-4333-8333-333333333333",
+            "user_id": "11111111-1111-4111-8111-111111111111",
+            "body": "Bonne partie !",
+            "created_at": "2026-10-03T12:00:00.000Z",
+            "display_name": "Alice",
+            "avatar_url": null
+          },
+          {
+            "id": 11,
+            "game_id": "33333333-3333-4333-8333-333333333333",
+            "user_id": "22222222-2222-4222-8222-222222222222",
+            "body": "gl hf",
+            "created_at": "2026-10-03T12:00:00.000Z"
+          }
+        ]
+      },
+      "empty": {
+        "messages": []
+      }
+    },
+    "POST api/pvp/games/{gameId}/chat": {
+      "posted": {
+        "ok": true,
+        "message": {
+          "id": 10,
+          "game_id": "33333333-3333-4333-8333-333333333333",
+          "user_id": "11111111-1111-4111-8111-111111111111",
+          "body": "Bonne partie !",
+          "created_at": "2026-10-03T12:00:00.000Z",
+          "display_name": "Alice",
+          "avatar_url": null
+        }
+      }
+    },
+    "GET api/account/friends": {
+      "friends": {
+        "friends": [
+          {
+            "friendUserId": "22222222-2222-4222-8222-222222222222",
+            "label": "Bob",
+            "addedAt": "2026-10-03T12:00:00.000Z",
+            "displayName": "Bob",
+            "avatarUrl": null
+          },
+          {
+            "friendUserId": "11111111-1111-4111-8111-111111111111",
+            "label": "",
+            "addedAt": "2026-10-03T12:00:00.000Z",
+            "displayName": "Alice",
+            "avatarUrl": "https://example.com/a.png"
+          }
+        ]
+      }
+    },
+    "DELETE api/account/friends": {
+      "empty": {
+        "friends": []
+      }
+    },
+    "POST api/coach/chat": {
+      "free": {
+        "reply": "Développez vos pièces avant d'attaquer.",
+        "remaining": 4,
+        "limit": 10
+      },
+      "premium": {
+        "reply": "Play for the d5 break.",
+        "remaining": null,
+        "limit": null
+      }
+    },
+    "GET api/lichess": {
+      "games": {
+        "games": [
+          {
+            "id": "q7ZvsdUF",
+            "rated": true,
+            "variant": "standard",
+            "speed": "blitz",
+            "perf": "blitz",
+            "createdAt": 1791028800000,
+            "lastMoveAt": 1791029100000,
+            "status": "mate",
+            "players": {
+              "white": {
+                "user": {
+                  "name": "Alice",
+                  "id": "alice"
+                },
+                "rating": 1850,
+                "ratingDiff": 6
+              },
+              "black": {
+                "user": {
+                  "name": "Bob",
+                  "id": "bob"
+                },
+                "rating": 1790,
+                "ratingDiff": -6
+              }
+            },
+            "winner": "white",
+            "opening": {
+              "eco": "C50",
+              "name": "Italian Game",
+              "ply": 5
+            },
+            "moves": "e4 e5 Nf3 Nc6 Bc4 Bc5",
+            "pgn": "[Event \"Rated blitz game\"]\n[White \"Alice\"]\n[Black \"Bob\"]\n[Result \"1-0\"]\n\n1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 1-0\n",
+            "clock": {
+              "initial": 300,
+              "increment": 3,
+              "totalTime": 420
+            }
+          }
+        ],
+        "avatarUrl": null,
+        "platformRating": 1850
+      },
+      "empty": {
+        "games": [],
+        "avatarUrl": null,
+        "platformRating": null
+      }
+    },
+    "GET api/chesscom": {
+      "games": {
+        "games": [
+          {
+            "url": "https://www.chess.com/game/live/1234567890",
+            "pgn": "[Event \"Live Chess\"]\n[White \"bob\"]\n[Black \"alice\"]\n[Result \"0-1\"]\n[ECOUrl \"https://www.chess.com/openings/Sicilian-Defense\"]\n\n1. e4 c5 0-1\n",
+            "time_control": "180+2",
+            "end_time": 1791028800,
+            "rated": true,
+            "time_class": "blitz",
+            "rules": "chess",
+            "white": {
+              "rating": 1510,
+              "result": "resigned",
+              "username": "bob"
+            },
+            "black": {
+              "rating": 1534,
+              "result": "win",
+              "username": "alice"
+            }
+          }
+        ],
+        "avatarUrl": "https://images.chesscomfiles.com/a.png",
+        "platformRating": 1534
+      }
+    },
+    "GET api/puzzles/daily": {
+      "puzzle": {
+        "puzzleId": "K69di",
+        "gameId": "abcd1234",
+        "fen": "r1b1kbnr/pppp1Npp/8/6q1/2BnP3/8/PPPP1PPP/RNBQK2R b KQkq - 0 5",
+        "solutionUci": [
+          "g5g2",
+          "h1f1",
+          "g2e4",
+          "c4e2",
+          "d4f3"
+        ],
+        "themes": [
+          "mateIn3",
+          "kingsideAttack"
+        ],
+        "rating": 1720,
+        "plays": 41234,
+        "rawPgn": "e4 e5 Nf3 Nc6 Bc4 Nd4 Nxe5 Qg5 Nxf7",
+        "players": [
+          {
+            "color": "white",
+            "name": "Alice",
+            "rating": 1850
+          },
+          {
+            "color": "black",
+            "name": "Bob"
+          }
+        ]
+      }
+    },
+    "GET api/puzzles/random": {
+      "puzzle": {
+        "puzzleId": "K69di",
+        "gameId": "abcd1234",
+        "fen": "r1b1kbnr/pppp1Npp/8/6q1/2BnP3/8/PPPP1PPP/RNBQK2R b KQkq - 0 5",
+        "solutionUci": [
+          "g5g2",
+          "h1f1",
+          "g2e4",
+          "c4e2",
+          "d4f3"
+        ],
+        "themes": [
+          "mateIn3",
+          "kingsideAttack"
+        ],
+        "rating": 1720,
+        "plays": 41234,
+        "rawPgn": "e4 e5 Nf3 Nc6 Bc4 Nd4 Nxe5 Qg5 Nxf7",
+        "players": [
+          {
+            "color": "white",
+            "name": "Alice",
+            "rating": 1850
+          },
+          {
+            "color": "black",
+            "name": "Bob"
+          }
+        ]
+      }
+    },
+    "GET api/openings/catalog": {
+      "catalog": {
+        "catalog": [
+          {
+            "id": "italian-game",
+            "name": {
+              "fr": "Partie Italienne",
+              "en": "Italian Game"
+            },
+            "eco": "C50",
+            "color": "white",
+            "difficulty": "beginner",
+            "character": "classical",
+            "tags": [
+              "e4",
+              "classique",
+              "développement",
+              "attaque"
+            ],
+            "guided": true,
+            "hook": {
+              "fr": "Développement logique et combat central — idéal pour comprendre les fondamentaux.",
+              "en": "Sound development and central tension — ideal for learning fundamentals."
+            },
+            "overview": {
+              "fr": "Après 1.e4 e5 2.Cf3 Cc6, le fou en c4 vise f7 et appuie le centre. Les blancs cherchent souvent d3 puis le roc court, parfois c3 et d4 pour ouvrir le centre. Les noirs réagissent par …F6, …d5 tactique, ou défense à deux fianchetti.",
+              "en": "After 1.e4 e5 2.Nf3 Nc6, Bc4 eyes f7 and supports the center. White often plays d3 and short castle, sometimes c3 and d4 to open the center. Black answers with …Bc5, …Nf6, a timely …d5, or double fianchetto systems."
+            },
+            "mainIdeas": [
+              {
+                "fr": "Contrôler le centre et développer sans perdre de temps.",
+                "en": "Control the center and develop without wasting time."
+              },
+              {
+                "fr": "La case f7 (et f2 côté noir) reste une cible tactique classique.",
+                "en": "The f7 square (and f2 for Black) remains a classic tactical target."
+              },
+              {
+                "fr": "Selon la variante, viser d2–d4 ou au contraire garder la tension avec d3.",
+                "en": "Depending on the line, aim for d2–d4 or keep tension with d3."
+              }
+            ],
+            "modelLine": [
+              {
+                "uci": "e2e4",
+                "comment": {
+                  "fr": "Ouverture du centre.",
+                  "en": "Open the center."
+                }
+              },
+              {
+                "uci": "e7e5",
+                "comment": {
+                  "fr": "Réponse symétrique classique.",
+                  "en": "Classical symmetrical reply."
+                }
+              },
+              {
+                "uci": "g1f3",
+                "comment": {
+                  "fr": "Développement du cavalier vers le centre.",
+                  "en": "Develop the knight toward the center."
+                }
+              },
+              {
+                "uci": "b8c6",
+                "comment": {
+                  "fr": "Défend e5 et développe.",
+                  "en": "Defends e5 and develops."
+                }
+              },
+              {
+                "uci": "f1c4",
+                "comment": {
+                  "fr": "Fou actif, pression latente sur f7.",
+                  "en": "Active bishop, latent pressure on f7."
+                }
+              },
+              {
+                "uci": "f8c5",
+                "comment": {
+                  "fr": "Contre-attaque naturelle sur f2.",
+                  "en": "Natural counterplay against f2."
+                }
+              },
+              {
+                "uci": "c2c3",
+                "comment": {
+                  "fr": "Prépare d4 avec solidité.",
+                  "en": "Prepares d4 on solid footing."
+                }
+              },
+              {
+                "uci": "g8f6",
+                "comment": {
+                  "fr": "Développement et attaque sur e4.",
+                  "en": "Development and pressure on e4."
+                }
+              }
+            ],
+            "historicalGames": [
+              {
+                "id": "opera-1858",
+                "openingId": "italian-game",
+                "white": "Paul Morphy",
+                "black": "Duke Karl / Count Isouard",
+                "result": "1-0",
+                "date": "1858",
+                "event": {
+                  "fr": "Partie d’opéra (Paris)",
+                  "en": "Opera Game (Paris)"
+                },
+                "anecdote": {
+                  "fr": "On raconte que la consultation noire jouait depuis une loge du théâtre pendant une représentation — d’où le nom. Morphy illustre développement rapide et combinaison finale spectaculaire.",
+                  "en": "Legend says Black’s team played from a theatre box during a performance — hence the name. Morphy shows rapid development and a spectacular mating combination."
+                },
+                "movesSan": "",
+                "movesUci": [
+                  "e2e4",
+                  "e7e5",
+                  "g1f3",
+                  "d7d6",
+                  "d2d4",
+                  "c8g4",
+                  "d4e5",
+                  "g4f3",
+                  "d1f3",
+                  "d6e5",
+                  "f1c4",
+                  "g8f6",
+                  "f3b3",
+                  "d8e7",
+                  "b1c3",
+                  "c7c6",
+                  "c1g5",
+                  "b7b5",
+                  "c3b5",
+                  "c6b5",
+                  "c4b5",
+                  "b8d7",
+                  "e1c1",
+                  "a8d8",
+                  "d1d7",
+                  "d8d7",
+                  "h1d1",
+                  "e7e6",
+                  "b5d7",
+                  "f6d7",
+                  "b3b8",
+                  "d7b8",
+                  "d1d8"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "spanish-opening",
+            "name": {
+              "fr": "Ruy Lopez (Espagnole)",
+              "en": "Ruy Lopez (Spanish)"
+            },
+            "eco": "C60",
+            "color": "white",
+            "difficulty": "intermediate",
+            "character": "classical",
+            "tags": [
+              "e4",
+              "classique",
+              "positionnel",
+              "théorie"
+            ],
+            "guided": true,
+            "hook": {
+              "fr": "La ligne la plus étudiée au monde — structure riche et plans de longue haleine.",
+              "en": "The most analyzed opening in the world — rich structure and long-term plans."
+            },
+            "overview": {
+              "fr": "Le Fb5 épinglette le cavalier c6 et demande aux noirs de montrer leur plan : …a6, défense steinitz, berlinese, ou structures fermées. Les blancs visent souvent le jeu positionnel ou l’attaque des rocs opposés.",
+              "en": "The Ruy Lopez Bb5 pins the Nc6 and asks Black to show their plan: …a6, Steinitz, Berlin, or closed setups. White often aims for positional play or opposite-side castling attacks."
+            },
+            "mainIdeas": [
+              {
+                "fr": "Maintenir la tension centrale plutôt que tout échanger trop tôt.",
+                "en": "Maintain central tension rather than exchanging everything early."
+              },
+              {
+                "fr": "Les noirs peuvent accepter une structure avec pion double pour l’activité.",
+                "en": "Black may accept doubled pawns for piece activity."
+              }
+            ],
+            "modelLine": [
+              {
+                "uci": "e2e4",
+                "comment": {
+                  "fr": "Contrôle central.",
+                  "en": "Central control."
+                }
+              },
+              {
+                "uci": "e7e5",
+                "comment": {
+                  "fr": "Réponse classique.",
+                  "en": "Classical reply."
+                }
+              },
+              {
+                "uci": "g1f3",
+                "comment": {
+                  "fr": "Développement.",
+                  "en": "Development."
+                }
+              },
+              {
+                "uci": "b8c6",
+                "comment": {
+                  "fr": "Défense du pion e5.",
+                  "en": "Defends the e5 pawn."
+                }
+              },
+              {
+                "uci": "f1b5",
+                "comment": {
+                  "fr": "Ruy Lopez : pression sur la structure noire.",
+                  "en": "Ruy Lopez: pressure on Black’s structure."
+                }
+              },
+              {
+                "uci": "a7a6",
+                "comment": {
+                  "fr": "Morphy : force le fou à décider.",
+                  "en": "Morphy: forces the bishop to decide."
+                }
+              },
+              {
+                "uci": "b5a4",
+                "comment": {
+                  "fr": "Maintien de l’épinglette latérale.",
+                  "en": "Keeps the lateral pin idea."
+                }
+              }
+            ],
+            "historicalGames": [
+              {
+                "id": "bird-anderssen-1851-london",
+                "openingId": "spanish-opening",
+                "white": "Bird, Henry Edward",
+                "black": "Anderssen, Adolf",
+                "result": "1-0",
+                "date": "1851.??.??",
+                "event": {
+                  "fr": "Tournoi international de Londres (London2)",
+                  "en": "London international tournament (London2)"
+                },
+                "anecdote": {
+                  "fr": "Lors du premier grand tournoi international à Londres en 1851, Bird bat Anderssen dans une Espagnole fougueuse (ECO C65) : roques opposés et finale où les blancs convertissent l’avantage.",
+                  "en": "At the first major international tournament in London, 1851, Bird defeated Anderssen in a sharp Spanish (ECO C65): opposite-side castling and a finish where White converts the edge."
+                },
+                "movesSan": "",
+                "movesUci": [
+                  "e2e4",
+                  "e7e5",
+                  "g1f3",
+                  "b8c6",
+                  "f1b5",
+                  "g8f6",
+                  "d2d4",
+                  "c6d4",
+                  "f3d4",
+                  "e5d4",
+                  "e4e5",
+                  "f6e4",
+                  "e1g1",
+                  "d8h4",
+                  "g2g3",
+                  "h4h3",
+                  "b5e2",
+                  "d7d5",
+                  "e5d6",
+                  "f8d6",
+                  "d1d4",
+                  "c8f5",
+                  "b1c3",
+                  "e8c8",
+                  "d4a7",
+                  "e4c3",
+                  "b2c3",
+                  "c7c6",
+                  "c1e3",
+                  "f5e4",
+                  "a7a8",
+                  "c8d7",
+                  "a8b7",
+                  "d7e8",
+                  "f2f3",
+                  "d6g3",
+                  "f1f2",
+                  "g3f2",
+                  "e3f2",
+                  "e4d5",
+                  "c3c4",
+                  "d5e6",
+                  "b7c6",
+                  "e8e7",
+                  "f2c5",
+                  "e7f6",
+                  "c6c7",
+                  "f6g6",
+                  "g1h1",
+                  "h7h6",
+                  "a1g1",
+                  "g6h7",
+                  "g1g3",
+                  "h3h5",
+                  "e2d3",
+                  "e6f5",
+                  "c7e5",
+                  "g7g6",
+                  "e5f6",
+                  "h8g8",
+                  "f6f7",
+                  "g8g7",
+                  "f7f6",
+                  "d8d7",
+                  "c5d4",
+                  "d7e7",
+                  "c4c5",
+                  "f5d3",
+                  "c2d3",
+                  "g6g5",
+                  "c5c6",
+                  "e7e1",
+                  "d4g1",
+                  "g7f7",
+                  "f6d8",
+                  "f7f3",
+                  "c6c7",
+                  "f3g3",
+                  "d8d7",
+                  "h7g6",
+                  "d7d6",
+                  "g6f7",
+                  "d6g3",
+                  "e1e8",
+                  "g3f2",
+                  "f7g8",
+                  "f2f5"
+                ]
+              },
+              {
+                "id": "steinitz-zukertort-1886-wch-r14",
+                "openingId": "spanish-opening",
+                "white": "Steinitz, William",
+                "black": "Zukertort, Johannes Hermann",
+                "result": "1/2-1/2",
+                "date": "1886.03.12",
+                "event": {
+                  "fr": "Championnat du monde 1886 (États-Unis), 14ᵉ partie — nulle",
+                  "en": "1886 World Championship (USA), game 14 — draw"
+                },
+                "anecdote": {
+                  "fr": "Partie réelle de la première finale du championnat du monde : ouverture espagnole, variante berlinoise (C67), comme dans le fichier PGN du dépôt.",
+                  "en": "From the first official world championship match: Spanish Opening, Berlin Defense (C67), matching the bundled PGN in the repo."
+                },
+                "movesSan": "",
+                "movesUci": [
+                  "e2e4",
+                  "e7e5",
+                  "g1f3",
+                  "b8c6",
+                  "f1b5",
+                  "g8f6",
+                  "e1g1",
+                  "f6e4",
+                  "f1e1",
+                  "e4d6",
+                  "f3e5",
+                  "f8e7",
+                  "b5d3",
+                  "e8g8",
+                  "b1c3",
+                  "c6e5",
+                  "e1e5",
+                  "c7c6",
+                  "b2b3",
+                  "d6e8",
+                  "c1b2",
+                  "d7d5",
+                  "d1f3",
+                  "e7f6",
+                  "e5e2",
+                  "e8c7",
+                  "b2a3",
+                  "f8e8",
+                  "a1e1",
+                  "c7e6",
+                  "c3a4",
+                  "c8d7",
+                  "a4c5",
+                  "e6c5",
+                  "e2e8",
+                  "d7e8",
+                  "a3c5",
+                  "b7b6",
+                  "c5a3",
+                  "e8d7",
+                  "f3g3",
+                  "c6c5",
+                  "c2c3",
+                  "d7e6",
+                  "a3b2",
+                  "d8d7",
+                  "d3c2",
+                  "a8e8",
+                  "h2h3",
+                  "b6b5",
+                  "d2d4",
+                  "c5d4",
+                  "c3d4",
+                  "e8c8",
+                  "c2d3",
+                  "e6f5",
+                  "d3f5",
+                  "d7f5",
+                  "g3g4",
+                  "f5g4",
+                  "h3g4",
+                  "h7h6",
+                  "e1e2",
+                  "b5b4",
+                  "g2g3",
+                  "a7a5",
+                  "g1f1",
+                  "a5a4",
+                  "b3a4",
+                  "c8a8",
+                  "e2e1",
+                  "a8a4",
+                  "e1a1",
+                  "g8f8",
+                  "f1e2",
+                  "f8e7",
+                  "e2d3",
+                  "a4a6",
+                  "a2a3",
+                  "b4a3",
+                  "a1a3",
+                  "a6a3",
+                  "b2a3",
+                  "e7d7",
+                  "a3f8",
+                  "d7e8",
+                  "f8d6",
+                  "g7g6",
+                  "d6e5",
+                  "f6d8",
+                  "e5g7",
+                  "h6h5",
+                  "g4h5",
+                  "g6h5",
+                  "g7e5",
+                  "e8d7"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "kings-gambit",
+            "name": {
+              "fr": "Gambit du Roi",
+              "en": "King's Gambit"
+            },
+            "eco": "C30",
+            "color": "white",
+            "difficulty": "advanced",
+            "character": "gambit",
+            "tags": [
+              "e4",
+              "gambit",
+              "agressif",
+              "sacrifice",
+              "attaque"
+            ],
+            "guided": false,
+            "hook": {
+              "fr": "Gambit agressif sacrifiant un pion pour l'initiative et l'attaque",
+              "en": "Aggressive gambit sacrificing a pawn for initiative and attack"
+            },
+            "overview": {
+              "fr": "Gambit agressif sacrifiant un pion pour l'initiative et l'attaque",
+              "en": "Aggressive gambit sacrificing a pawn for initiative and attack"
+            },
+            "mainIdeas": [],
+            "modelLine": [
+              {
+                "uci": "e2e4",
+                "comment": {
+                  "fr": "",
+                  "en": ""
+                }
+              },
+              {
+                "uci": "e7e5",
+                "comment": {
+                  "fr": "",
+                  "en": ""
+                }
+              },
+              {
+                "uci": "f2f4",
+                "comment": {
+                  "fr": "",
+                  "en": ""
+                }
+              }
+            ],
+            "historicalGames": []
+          }
+        ],
+        "generatedAt": "2026-10-03T12:00:00.000Z"
+      }
+    },
+    "GET api/arena/champions": {
+      "champions": {
+        "success": true,
+        "count": 2,
+        "options": [
+          {
+            "key": "lichess:morphy",
+            "label": "Paul Morphy",
+            "config": {
+              "name": "Paul Morphy",
+              "personalityId": "morphy",
+              "elo": 2700,
+              "difficulty": 5,
+              "aggressiveness": 88,
+              "threads": 2,
+              "depth": 16,
+              "timeControl": 900,
+              "favoriteOpening": "Evans Gambit",
+              "playStyle": "tactique",
+              "openings": {
+                "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1": "e2e4",
+                "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2": "g1f3",
+                "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3": "f1c4",
+                "r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4": "b2b4",
+                "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1": "e7e5",
+                "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2": "b8c6",
+                "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3": "f8c5"
+              },
+              "openingRepertoire": {
+                "whiteOpenings": [
+                  {
+                    "id": "evans-gambit",
+                    "weight": 45
+                  },
+                  {
+                    "id": "italian-game",
+                    "weight": 35
+                  },
+                  {
+                    "id": "kings-gambit",
+                    "weight": 20
+                  }
+                ],
+                "blackOpenings": [
+                  {
+                    "id": "italian-game",
+                    "weight": 55
+                  },
+                  {
+                    "id": "evans-gambit",
+                    "weight": 45
+                  }
+                ]
+              },
+              "forcedLineSource": "openings",
+              "forcedLineWhite": [
+                "e2e4",
+                "g1f3",
+                "f1c4",
+                "b2b4"
+              ],
+              "forcedLineBlack": [
+                "e7e5",
+                "b8c6"
+              ],
+              "humanBlunderInterval": 0,
+              "avatarUrl": "https://example.com/c.png",
+              "creatorName": "Chess Avatar",
+              "platform": "lichess",
+              "featuredSeed": true,
+              "forcedLine": [
+                "e2e4",
+                "e7e5"
+              ]
+            },
+            "stats": {
+              "username": "Paul Morphy",
+              "avatarUrl": "https://example.com/c.png",
+              "platform": "lichess",
+              "gameCount": 120,
+              "winRate": 54,
+              "drawRate": 18,
+              "lossRate": 28,
+              "style": "Agressif",
+              "topOpenings": [
+                {
+                  "name": "Sicilian Defense",
+                  "count": 31
+                }
+              ],
+              "avgMoves": 41
+            },
+            "savedAt": 1791028800000,
+            "platform": "lichess",
+            "leaderboardRating": 3150
+          },
+          {
+            "key": "chesscom:lasker",
+            "label": "Emanuel Lasker",
+            "config": {
+              "name": "Emanuel Lasker",
+              "personalityId": "lasker",
+              "elo": 2720,
+              "difficulty": 5,
+              "aggressiveness": 55,
+              "threads": 2,
+              "depth": 16,
+              "timeControl": 900,
+              "favoriteOpening": "Ruy Lopez (Spanish)",
+              "playStyle": "positionnel",
+              "openings": {
+                "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1": "e2e4",
+                "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2": "g1f3",
+                "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3": "f1b5",
+                "rnbqkbnr/ppp1pppp/8/3p4/3P4/8/PPP1PPPP/RNBQKBNR w KQkq - 0 2": "c2c4",
+                "rnbqkb1r/ppp1pppp/5n2/3p4/3P4/5N2/PPP1PPPP/RNBQKB1R w KQkq - 2 3": "c1f4",
+                "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1": "e7e6",
+                "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2": "b8c6"
+              },
+              "openingRepertoire": {
+                "whiteOpenings": [
+                  {
+                    "id": "spanish-opening",
+                    "weight": 55
+                  },
+                  {
+                    "id": "queens-gambit",
+                    "weight": 30
+                  },
+                  {
+                    "id": "london-system",
+                    "weight": 15
+                  }
+                ],
+                "blackOpenings": [
+                  {
+                    "id": "french-defense",
+                    "weight": 45
+                  },
+                  {
+                    "id": "sicilian-defense",
+                    "weight": 30
+                  },
+                  {
+                    "id": "italian-game",
+                    "weight": 25
+                  }
+                ]
+              },
+              "forcedLineSource": "openings",
+              "forcedLineWhite": [
+                "e2e4",
+                "g1f3",
+                "f1b5"
+              ],
+              "forcedLineBlack": [
+                "e7e6"
+              ],
+              "humanBlunderInterval": 0,
+              "avatarUrl": "/personalities/lasker.webp",
+              "creatorName": "Chess Avatar",
+              "platform": "chesscom"
+            },
+            "stats": {
+              "username": "Emanuel Lasker",
+              "platform": "chesscom",
+              "gameCount": 120,
+              "winRate": 54,
+              "drawRate": 18,
+              "lossRate": 28,
+              "style": "Agressif",
+              "topOpenings": [
+                {
+                  "name": "Sicilian Defense",
+                  "count": 31
+                }
+              ],
+              "avgMoves": 41
+            },
+            "savedAt": 1791028800000,
+            "platform": "chesscom"
+          }
+        ],
+        "canPersist": true,
+        "hasSeedOwner": false
+      }
+    },
+    "POST api/stripe/checkout": {
+      "url": {
+        "url": "https://checkout.stripe.com/c/pay/cs_test_123"
+      }
+    },
+    "POST api/ascension/init": {
+      "card": {
+        "card": {
+          "user_id": "11111111-1111-4111-8111-111111111111",
+          "display_name": "Alice",
+          "avatar_url": "https://example.com/a.png",
+          "class_key": "tactique",
+          "element": "fire",
+          "elo": 1240,
+          "xp": 860,
+          "tier": "silver",
+          "customization": {
+            "frame": "gold",
+            "achievements": {
+              "elo_cap_3000": "2026-10-03T12:00:00.000Z"
+            }
+          },
+          "created_at": "2026-10-03T12:00:00.000Z",
+          "updated_at": "2026-10-03T12:00:00.000Z"
+        }
+      },
+      "fresh": {
+        "card": {
+          "user_id": "22222222-2222-4222-8222-222222222222",
+          "display_name": "Champion",
+          "avatar_url": null,
+          "class_key": "tactique",
+          "element": "neutral",
+          "elo": 0,
+          "xp": 0,
+          "tier": "stone",
+          "customization": {},
+          "created_at": "",
+          "updated_at": ""
+        }
+      }
+    },
+    "GET api/ascension/card": {
+      "card": {
+        "card": {
+          "user_id": "11111111-1111-4111-8111-111111111111",
+          "display_name": "Alice",
+          "avatar_url": "https://example.com/a.png",
+          "class_key": "tactique",
+          "element": "fire",
+          "elo": 1240,
+          "xp": 860,
+          "tier": "silver",
+          "customization": {
+            "frame": "gold",
+            "achievements": {
+              "elo_cap_3000": "2026-10-03T12:00:00.000Z"
+            }
+          },
+          "created_at": "2026-10-03T12:00:00.000Z",
+          "updated_at": "2026-10-03T12:00:00.000Z"
+        },
+        "unlockedSkills": [
+          "pawn_greedy",
+          "rook_tunnel"
+        ],
+        "completedPuzzleIds": [
+          "p-1"
+        ]
+      }
+    },
+    "PATCH api/ascension/card": {
+      "card": {
+        "card": {
+          "user_id": "11111111-1111-4111-8111-111111111111",
+          "display_name": "Alice",
+          "avatar_url": "https://example.com/a.png",
+          "class_key": "tactique",
+          "element": "fire",
+          "elo": 1240,
+          "xp": 860,
+          "tier": "silver",
+          "customization": {
+            "frame": "gold",
+            "achievements": {
+              "elo_cap_3000": "2026-10-03T12:00:00.000Z"
+            }
+          },
+          "created_at": "2026-10-03T12:00:00.000Z",
+          "updated_at": "2026-10-03T12:00:00.000Z"
+        }
+      }
+    },
+    "GET api/ascension/puzzles": {
+      "puzzles": {
+        "puzzles": [
+          {
+            "id": "p-1",
+            "slug": "fork-1",
+            "kind": "standard",
+            "min_elo": 800,
+            "max_elo": 1400,
+            "xp_reward": 20,
+            "elo_reward": 12,
+            "fen": "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3",
+            "solution_ucis": [
+              "f1b5"
+            ],
+            "fantasy_rules": {},
+            "prompt": {
+              "fr": "Trouvez le meilleur coup",
+              "en": "Find the best move"
+            },
+            "hints": [
+              {
+                "fr": "Clouage",
+                "en": "Pin"
+              }
+            ],
+            "insight": {
+              "fr": "Le fou cloue le cavalier.",
+              "en": "The bishop pins the knight."
+            },
+            "sort_order": 1,
+            "track": "main",
+            "is_published": true,
+            "updated_at": "2026-10-03T12:00:00.000Z",
+            "completed": true,
+            "attempts": 2,
+            "locked": false,
+            "premiumLocked": false
+          },
+          {
+            "id": "p-2",
+            "slug": "fantasy-tunnel",
+            "kind": "fantasy",
+            "min_elo": 0,
+            "max_elo": 3000,
+            "xp_reward": 10,
+            "elo_reward": 10,
+            "fen": "6k1/8/4p3/8/R7/8/8/6K1 w - - 0 1",
+            "solution_ucis": [
+              "a4e4"
+            ],
+            "fantasy_rules": {
+              "enabledAbilities": [
+                "rook_tunnel"
+              ],
+              "objective": "reach_square",
+              "objectiveSquare": "e6",
+              "specialSquares": [
+                {
+                  "square": "e4",
+                  "type": "tunnel",
+                  "linkTo": "e6"
+                }
+              ]
+            },
+            "prompt": {
+              "fr": "",
+              "en": ""
+            },
+            "hints": [],
+            "insight": {
+              "fr": "",
+              "en": ""
+            },
+            "sort_order": 2,
+            "track": "fantasy",
+            "is_published": true,
+            "completed": false,
+            "attempts": 0,
+            "locked": true,
+            "premiumLocked": true
+          }
+        ],
+        "tracks": [
+          {
+            "slug": "main",
+            "label": {
+              "fr": "Campagne",
+              "en": "Campaign"
+            },
+            "sort_order": 0,
+            "layout": "main",
+            "unlock_rule": {
+              "type": "always"
+            },
+            "is_system": true
+          },
+          {
+            "slug": "fantasy",
+            "label": {
+              "fr": "Fantasy",
+              "en": "Fantasy"
+            },
+            "sort_order": 1,
+            "layout": "sequential",
+            "unlock_rule": {
+              "type": "main_complete_or_elo",
+              "min_elo": 1500
+            },
+            "is_system": true
+          },
+          {
+            "slug": "endgames",
+            "label": {
+              "fr": "",
+              "en": ""
+            },
+            "sort_order": 2,
+            "layout": "sequential",
+            "unlock_rule": {
+              "type": "prerequisite_track",
+              "track": "main",
+              "require_complete": true
+            },
+            "is_system": false
+          }
+        ],
+        "playerElo": 1240,
+        "isPremium": false,
+        "trackUnlock": {
+          "main": true,
+          "fantasy": false,
+          "endgames": false
+        },
+        "mainCampaignComplete": false,
+        "fantasyTrackUnlocked": false,
+        "premiumPuzzlesPerTrack": 20,
+        "freePuzzlesPerTrack": 3
+      }
+    },
+    "POST api/ascension/puzzles/complete": {
+      "failed": {
+        "solved": false
+      },
+      "solved": {
+        "solved": true,
+        "rewards": {
+          "xpGain": 20,
+          "eloGain": 12,
+          "newElo": 1252,
+          "newXp": 880,
+          "newTier": "stone"
+        },
+        "card": {
+          "user_id": "11111111-1111-4111-8111-111111111111",
+          "display_name": "Alice",
+          "avatar_url": "https://example.com/a.png",
+          "class_key": "tactique",
+          "element": "fire",
+          "elo": 1240,
+          "xp": 860,
+          "tier": "silver",
+          "customization": {
+            "frame": "gold",
+            "achievements": {
+              "elo_cap_3000": "2026-10-03T12:00:00.000Z"
+            }
+          },
+          "created_at": "2026-10-03T12:00:00.000Z",
+          "updated_at": "2026-10-03T12:00:00.000Z"
+        }
+      },
+      "eloCap": {
+        "solved": true,
+        "rewards": {
+          "xpGain": 40,
+          "eloGain": 5,
+          "newElo": 3000,
+          "newXp": 9040,
+          "newTier": "legendary"
+        },
+        "achievement": "elo_cap_3000",
+        "card": {
+          "user_id": "11111111-1111-4111-8111-111111111111",
+          "display_name": "Alice",
+          "avatar_url": "https://example.com/a.png",
+          "class_key": "tactique",
+          "element": "fire",
+          "elo": 3000,
+          "xp": 860,
+          "tier": "silver",
+          "customization": {
+            "frame": "gold",
+            "achievements": {
+              "elo_cap_3000": "2026-10-03T12:00:00.000Z"
+            }
+          },
+          "created_at": "2026-10-03T12:00:00.000Z",
+          "updated_at": "2026-10-03T12:00:00.000Z"
+        }
+      }
+    },
+    "POST api/ascension/skills/unlock": {
+      "unlocked": {
+        "card": {
+          "user_id": "11111111-1111-4111-8111-111111111111",
+          "display_name": "Alice",
+          "avatar_url": "https://example.com/a.png",
+          "class_key": "tactique",
+          "element": "fire",
+          "elo": 1240,
+          "xp": 860,
+          "tier": "silver",
+          "customization": {
+            "frame": "gold",
+            "achievements": {
+              "elo_cap_3000": "2026-10-03T12:00:00.000Z"
+            }
+          },
+          "created_at": "2026-10-03T12:00:00.000Z",
+          "updated_at": "2026-10-03T12:00:00.000Z"
+        },
+        "unlockedSkillId": "rook_tunnel"
+      }
+    }
+  }
+}

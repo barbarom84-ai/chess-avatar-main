@@ -25,6 +25,14 @@ jobs:
             exit 1
           )
       - run: npm test
+      - name: Verify web ↔ Android parity contract
+        run: |
+          npm run parity:export
+          if [ -n "$(git status --porcelain -- parity/)" ]; then
+            git status --short -- parity/
+            echo "::error::Parity contract out of date. Run: npm run parity:export and commit parity/"
+            exit 1
+          fi
       - name: Verify ChessAvatar WASM bundle
         run: |
           npm run verify:chessavatar

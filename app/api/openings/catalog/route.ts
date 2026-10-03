@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { buildOpeningCatalog } from "@/lib/openings-catalog-export";
 import { rateLimit } from "@/lib/rate-limit";
 
+import type { OpeningCatalogResponse } from "@/lib/api-contract";
 export const runtime = "nodejs";
 
 /**
@@ -19,7 +20,7 @@ export async function GET(request: NextRequest) {
 
   const catalog = buildOpeningCatalog();
   return NextResponse.json(
-    { catalog, generatedAt: new Date().toISOString() },
+    { catalog, generatedAt: new Date().toISOString() } satisfies OpeningCatalogResponse,
     {
       headers: {
         "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400",

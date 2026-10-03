@@ -364,12 +364,10 @@ export const fr = {
         "Salut ! Je suis le clone de {name}. Pose-moi une question sur mon style, mes ouvertures ou une position.",
       welcomeHouse:
         "Salut ! Je suis ChessAvatarPro, ton coach. Choisis un coup dans la review et demande-moi pourquoi, ou change de coach ci-dessus.",
-      welcomeReviewWhite:
-        "Tu joues les Blancs. Je t’explique cette position de ton côté — pose-moi une question sur le coup affiché.",
-      welcomeReviewBlack:
-        "Tu joues les Noirs. Je t’explique cette position de ton côté — pose-moi une question sur le coup affiché.",
-      welcomeReviewUnknown:
-        "Indique ta couleur (Blancs/Noirs ci-dessus), puis pose-moi une question sur le coup affiché.",
+      welcomeReview: "Analysons ensemble",
+      welcomeReviewWhite: "Analysons ensemble",
+      welcomeReviewBlack: "Analysons ensemble",
+      welcomeReviewUnknown: "Analysons ensemble",
       placeholder: "Parle à ton avatar…",
       send: "Envoyer",
       thinking: "Réflexion…",
@@ -387,7 +385,7 @@ export const fr = {
       ],
       reviewSuggestions: [
         "Pourquoi ce coup ?",
-        "Quelle était la meilleure suite ?",
+        "Quelle est la meilleure suite ?",
         "Où j’ai perdu l’avantage ?",
         "Comment jouer cette position ?",
       ],
@@ -873,6 +871,8 @@ export const fr = {
         subtitle:
           "Affrontez des légendes et des styles nommés — ouvertures et biais de milieu de jeu, pas seulement un moteur bridé.",
         legends: "Légendes",
+        fiction: "Fiction",
+        science: "Sciences",
         archetypes: "Styles",
         filterAll: "Tous",
         tweakTitle: "Curseurs de style",
@@ -1244,6 +1244,7 @@ export const fr = {
       captures: "Captures",
       checks: "Échecs",
       precisionAndElo: "Précision & ELO estimés",
+      eloFromThisGame: "Estimé d’après la précision de cette partie — pas votre classement.",
       precision: "Précision",
       whiteSide: "Blancs",
       blackSide: "Noirs",
@@ -1412,6 +1413,8 @@ export const fr = {
       blackSlight: "Léger avantage noirs",
       blackClear: "Avantage noirs",
       blackWinning: "Les noirs sont gagnants",
+      whiteMate: "Mat des Blancs en {n}",
+      blackMate: "Mat des Noirs en {n}",
       black: "Noir",
       white: "Blanc"
     },
@@ -1650,9 +1653,16 @@ export const fr = {
         inactiveHint: "Activez l'analyse en continu pour voir l'évaluation et les lignes en temps réel.",
         engineName: "Stockfish",
       },
+      topLines: {
+        title: "Meilleurs coups",
+        depth: "Prof. {n}",
+        computing: "Calcul des lignes…",
+        paused: "Pause pendant l'analyse complète",
+      },
       layout: {
         settingsToggle: "Paramètres",
         settingsCollapse: "Masquer paramètres",
+        panelsLabel: "Affichage",
         tabMoves: "Coups",
         tabEngine: "Moteur",
         tabDetails: "Détails",
@@ -1711,12 +1721,13 @@ export const fr = {
       playAuto: "Lecture",
       classBest: "Meilleur",
       classBrilliant: "Brillant",
+      classGreat: "Grand coup",
       classExcellent: "Excellent",
       classGood: "Bon",
       classInaccuracy: "Imprécision",
       classMistake: "Erreur",
       classBlunder: "Gaffe",
-      classMiss: "Gain manqué",
+      classMiss: "Occasion manquée",
       premiumBanner: "Premium : analyse profondeur 18, partie complète, flèches sur tous les coups sous-optimaux.",
       freeLimits: "Version gratuite : profondeur {depth}, {plies} demi-coups max.",
       upgradeForFull: "Passer Premium pour l'analyse complète",
@@ -1796,6 +1807,12 @@ export const fr = {
         playingAsBlack: "Tu joues les Noirs",
         playingAsUnknown: "Quelle couleur joues-tu ?",
         pickAMove: "Navigue jusqu’à un coup pour voir l’analyse du coach.",
+        turnToMoveWhite: "Trait aux Blancs",
+        turnToMoveBlack: "Trait aux Noirs",
+        sightTitle: "Vue du coach",
+        sightHint: "Position envoyée au coach.",
+        sightCited: "Il cite : {moves}",
+        sightIllegal: "Pas légal ici : {moves}",
       },
       paradox: {
         title: "Paradoxe clone",
@@ -1886,7 +1903,7 @@ export const fr = {
       rosterTitle: "Roster",
       rosterDeckTitle: "Deck — roster",
       rosterDeckHint:
-        "Défilez horizontalement. Glissez une mini-carte vers un emplacement, ou touchez une carte puis un slot.",
+        "Glissez une mini-carte vers un emplacement, ou touchez une carte puis un slot.",
       rosterHint:
         "Faites glisser une carte vers un emplacement #1–8. Cliquez sur × pour vider un slot.",
       dropHere: "Déposer ici",
@@ -1899,11 +1916,8 @@ export const fr = {
       selectMatch: "Sélectionnez un match prêt dans le bracket",
       matchLive: "Match en cours — blitz 3+0",
       matchPaused: "Match interrompu",
-      drawBlackWins:
-        "Partie nulle — victoire des noirs (règle Playoff).",
-      moveLimitBlackWins:
-        "Limite de coups — victoire des noirs (règle Playoff).",
-      drawRuleHint: "En cas de nulle, les noirs remportent le duel.",
+      drawRematch: "Nulle — relance du duel.",
+      crushingHint: "Victoire automatique si l’avantage atteint ±10.",
       saveCloudLabel: "Enregistrer chaque duel (cloud)",
       saveCloudHint:
         "À la fin de chaque match du bracket, enregistrement dans Mes parties (bot vs bot).",

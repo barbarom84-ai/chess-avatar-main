@@ -1,0 +1,95 @@
+{
+  "contractVersion": 1,
+  "clampProfileElo": [
+    {
+      "input": -5.5,
+      "expected": 400
+    },
+    {
+      "input": 0,
+      "expected": 400
+    },
+    {
+      "input": 120.4,
+      "expected": 400
+    },
+    {
+      "input": 399.9,
+      "expected": 400
+    },
+    {
+      "input": 400,
+      "expected": 400
+    },
+    {
+      "input": 400.6,
+      "expected": 400
+    },
+    {
+      "input": 1234.7,
+      "expected": 1234
+    },
+    {
+      "input": 1999.5,
+      "expected": 1999
+    },
+    {
+      "input": 3499.99,
+      "expected": 3499
+    },
+    {
+      "input": 3500,
+      "expected": 3500
+    },
+    {
+      "input": 3500.4,
+      "expected": 3500
+    },
+    {
+      "input": 9999,
+      "expected": 3500
+    }
+  ],
+  "uciEloFromProfileElo": [
+    {
+      "input": 0,
+      "expected": 1320
+    },
+    {
+      "input": 1000,
+      "expected": 1320
+    },
+    {
+      "input": 1319,
+      "expected": 1320
+    },
+    {
+      "input": 1320,
+      "expected": 1320
+    },
+    {
+      "input": 1321,
+      "expected": 1321
+    },
+    {
+      "input": 2500,
+      "expected": 2500
+    },
+    {
+      "input": 3189,
+      "expected": 3189
+    },
+    {
+      "input": 3190,
+      "expected": 3190
+    },
+    {
+      "input": 3191,
+      "expected": 3190
+    },
+    {
+      "input": 3500,
+      "expected": 3190
+    }
+  ]
+}

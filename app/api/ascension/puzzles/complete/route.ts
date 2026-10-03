@@ -27,6 +27,7 @@ import {
 } from "@/lib/ascension/puzzle-sequence";
 import { getSideToMoveFromFen } from "@/lib/ascension/fen-utils";
 
+import type { AscensionCompleteResponse } from "@/lib/api-contract";
 export const runtime = "nodejs";
 
 function validateFantasyPlayerSolution(
@@ -210,7 +211,7 @@ export async function POST(request: NextRequest) {
         attempts: 1,
       });
     }
-    return NextResponse.json({ solved: false });
+    return NextResponse.json({ solved: false } satisfies AscensionCompleteResponse);
   }
 
   const { count: existingCount } = await auth.ctx.admin
@@ -281,5 +282,5 @@ export async function POST(request: NextRequest) {
     rewards,
     achievement,
     card: cardUpdate.data ? mapDbChampionCard(cardUpdate.data as Record<string, unknown>) : null,
-  });
+  } satisfies AscensionCompleteResponse);
 }

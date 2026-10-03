@@ -364,12 +364,10 @@ export const en = {
         "Hey! I’m the clone of {name}. Ask me about my style, openings, or a position.",
       welcomeHouse:
         "Hi — I’m ChessAvatarPro, your coach. Pick a move in the review and ask me why, or switch coach above.",
-      welcomeReviewWhite:
-        "You’re playing White. I’ll explain this position from your side — ask me about the current move.",
-      welcomeReviewBlack:
-        "You’re playing Black. I’ll explain this position from your side — ask me about the current move.",
-      welcomeReviewUnknown:
-        "Tell me which color you’re playing (White/Black above), then ask about the current move.",
+      welcomeReview: "Let's analyze together",
+      welcomeReviewWhite: "Let's analyze together",
+      welcomeReviewBlack: "Let's analyze together",
+      welcomeReviewUnknown: "Let's analyze together",
       placeholder: "Talk to your avatar…",
       send: "Send",
       thinking: "Thinking…",
@@ -387,7 +385,7 @@ export const en = {
       ],
       reviewSuggestions: [
         "Why this move?",
-        "What was the best continuation?",
+        "What is the best continuation?",
         "Where did I lose the advantage?",
         "How should I play this position?",
       ],
@@ -869,6 +867,8 @@ export const en = {
         subtitle:
           "Face legendary players and named styles — openings and middlegame bias, not just a strength throttle.",
         legends: "Legends",
+        fiction: "Fiction",
+        science: "Science",
         archetypes: "Styles",
         filterAll: "All",
         tweakTitle: "Style sliders",
@@ -1240,6 +1240,7 @@ export const en = {
       captures: "Captures",
       checks: "Checks",
       precisionAndElo: "Precision & estimated ELO",
+      eloFromThisGame: "Estimated from this game’s accuracy — not your rating.",
       precision: "Precision",
       whiteSide: "White",
       blackSide: "Black",
@@ -1406,6 +1407,8 @@ export const en = {
       blackSlight: "Slight advantage for Black",
       blackClear: "Clear advantage for Black",
       blackWinning: "Black is winning",
+      whiteMate: "White mates in {n}",
+      blackMate: "Black mates in {n}",
       black: "Black",
       white: "White"
     },
@@ -1644,9 +1647,16 @@ export const en = {
         inactiveHint: "Enable continuous analysis to see live evaluation and principal variations.",
         engineName: "Stockfish",
       },
+      topLines: {
+        title: "Best moves",
+        depth: "Depth {n}",
+        computing: "Computing lines…",
+        paused: "Paused during full analysis",
+      },
       layout: {
         settingsToggle: "Settings",
         settingsCollapse: "Hide settings",
+        panelsLabel: "Display",
         tabMoves: "Moves",
         tabEngine: "Engine",
         tabDetails: "Details",
@@ -1705,12 +1715,13 @@ export const en = {
       playAuto: "Play",
       classBest: "Best",
       classBrilliant: "Brilliant",
+      classGreat: "Great move",
       classExcellent: "Excellent",
       classGood: "Good",
       classInaccuracy: "Inaccuracy",
       classMistake: "Mistake",
       classBlunder: "Blunder",
-      classMiss: "Missed win",
+      classMiss: "Miss",
       premiumBanner: "Premium: depth-18 analysis, full game, best-move arrow on every sub-optimal move.",
       freeLimits: "Free: depth {depth}, up to {plies} plies.",
       upgradeForFull: "Upgrade to Premium for full game analysis",
@@ -1790,6 +1801,12 @@ export const en = {
         playingAsBlack: "You’re playing Black",
         playingAsUnknown: "Which color are you playing?",
         pickAMove: "Go to a move to see the coach analysis.",
+        turnToMoveWhite: "White to move",
+        turnToMoveBlack: "Black to move",
+        sightTitle: "Coach's board",
+        sightHint: "Position sent to the coach.",
+        sightCited: "Cites: {moves}",
+        sightIllegal: "Not legal here: {moves}",
       },
       paradox: {
         title: "Clone paradox",
@@ -1879,7 +1896,7 @@ export const en = {
       rosterTitle: "Roster",
       rosterDeckTitle: "Deck — roster",
       rosterDeckHint:
-        "Scroll horizontally. Drag a mini card onto a slot, or tap a card then tap a slot.",
+        "Drag a mini card onto a slot, or tap a card then tap a slot.",
       rosterHint:
         "Drag a card onto slots #1–8. Click × to clear a slot.",
       dropHere: "Drop here",
@@ -1892,9 +1909,8 @@ export const en = {
       selectMatch: "Select a ready match in the bracket",
       matchLive: "Match live — blitz 3+0",
       matchPaused: "Match stopped",
-      drawBlackWins: "Draw — Black wins (Playoff rule).",
-      moveLimitBlackWins: "Move limit — Black wins (Playoff rule).",
-      drawRuleHint: "If the game is drawn, Black wins the duel.",
+      drawRematch: "Draw — rematch.",
+      crushingHint: "Automatic win if the eval reaches ±10.",
       saveCloudLabel: "Save each bracket game (cloud)",
       saveCloudHint:
         "After each bracket match, save to My games (bot vs bot).",

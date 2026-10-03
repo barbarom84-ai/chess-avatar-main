@@ -13,8 +13,11 @@ import CoachSanText from "@/components/CoachSanText";
 type ReviewCoachAnalysisProps = {
   move?: ReviewedMove | null;
   fenBefore?: string | null;
+  /** Position after the move (displayed board). */
+  fen?: string | null;
   moveNumber?: number;
   coachTone: CoachToneId;
+  autoExplain?: boolean;
   onRequestUpgrade?: () => void;
   onExplanationChange?: (text: string | null) => void;
 };
@@ -22,8 +25,10 @@ type ReviewCoachAnalysisProps = {
 export default function ReviewCoachAnalysis({
   move,
   fenBefore,
+  fen,
   moveNumber,
   coachTone,
+  autoExplain = true,
   onRequestUpgrade,
   onExplanationChange,
 }: ReviewCoachAnalysisProps) {
@@ -44,6 +49,12 @@ export default function ReviewCoachAnalysis({
   }, [move?.ply, move?.uci]);
 
   useEffect(() => {
+    if (!autoExplain) {
+      coach.reset();
+      onExplanationChange?.(null);
+      lastGoodRef.current = null;
+      return;
+    }
     if (!move || !fenBefore || !isExplainableReviewedMove(move)) {
       coach.reset();
       onExplanationChange?.(null);
@@ -63,7 +74,7 @@ export default function ReviewCoachAnalysis({
     return () => window.clearTimeout(timer);
     // Key on move identity + prompt inputs, not the unstable coach object.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [move?.ply, move?.uci, fenBefore, lang, moveNumber, coachTone]);
+  }, [autoExplain, move?.ply, move?.uci, fenBefore, lang, moveNumber, coachTone]);
 
   useEffect(() => {
     if (coach.status === "ready" && coach.explanation) {
@@ -88,6 +99,10 @@ export default function ReviewCoachAnalysis({
     if (!move || !fenBefore) return;
     void coach.explain({ move, fenBefore, lang, moveNumber, coachTone });
   }, [coach, move, fenBefore, lang, moveNumber, coachTone]);
+
+  if (!autoExplain) {
+    return null;
+  }
 
   if (!canExplain) {
     return (
@@ -123,8 +138,17 @@ export default function ReviewCoachAnalysis({
           </span>
         ) : null}
       </div>
-      <p className="text-xs text-slate-100 leading-relaxed whitespace-pre-wrap line-clamp-5">
-        <CoachSanText text={explanation} side={move?.sideToMove} />
+      <p className="text-xs text-slate-100 leading-relaxed whitespace-pre-wrap max-h-48 overflow-y-auto">
+        <CoachSanText
+          text={explanation}
+          side={move?.sideToMove}
+          fenBefore={fenBefore}
+          fen={fen}
+          coloredMoves={[
+            { san: move?.san, side: move?.sideToMove },
+            { san: move?.bestSan || move?.bestMove, side: move?.sideToMove },
+          ]}
+        />
       </p>
       <div className="flex items-center justify-between pt-1 border-t border-purple-500/20 gap-2">
         <span className="text-[10px] text-slate-500 italic">

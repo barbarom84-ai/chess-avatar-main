@@ -187,7 +187,15 @@ function PlayContent() {
                   {t.play.personalities.changeOpponent}
                 </span>
               </Button>
-              <Bot className="h-4 w-4 text-cyan-400 shrink-0" />
+              {config.avatarUrl ? (
+                <img
+                  src={config.avatarUrl}
+                  alt=""
+                  className="h-7 w-7 rounded-full object-cover border border-cyan-500/40 shrink-0"
+                />
+              ) : (
+                <Bot className="h-4 w-4 text-cyan-400 shrink-0" />
+              )}
               <span className="text-sm font-semibold text-cyan-100 truncate">{config.name}</span>
               {config.personalityId ? (
                 <Badge variant="outline" className="text-[10px] h-4 px-1.5 border-amber-400/50 text-amber-200 hidden sm:inline-flex shrink-0">

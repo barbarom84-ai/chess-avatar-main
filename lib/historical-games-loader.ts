@@ -37,7 +37,7 @@ function mirror(s: string): LocalizedString {
   return { fr: s, en: s };
 }
 
-function metaToGame(meta: HistoricalGameMeta, fallbackId: string): HistoricalGame | null {
+export function metaToGame(meta: HistoricalGameMeta, fallbackId: string): HistoricalGame | null {
   const parsed = parsePgnBlock(meta.pgn);
   if (!parsed) return null;
   const headers = parsed.headers;

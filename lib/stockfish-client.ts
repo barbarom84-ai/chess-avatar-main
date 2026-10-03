@@ -5,6 +5,9 @@
  * High-priority tasks (review, bot moves) run before low-priority UI eval.
  */
 
+import { Chess } from "chess.js";
+import { parseEngineScoreLine } from "@/lib/engine-eval";
+
 const DEBUG =
   typeof window !== "undefined" &&
   (window as unknown as { __CHESS_DEBUG?: boolean }).__CHESS_DEBUG;
@@ -22,6 +25,58 @@ export type StockfishSearchCtx<T> = {
   stop: () => void;
   onLine: (handler: (line: string) => T | undefined) => void;
 };
+
+export type ParsedStockfishPvInfo = {
+  depth: number;
+  multipv: number;
+  evalPawns: number;
+  isMate: boolean;
+  mateInMoves: number | null;
+  pvUci: string[];
+};
+
+/** Parse a Stockfish `info … pv …` line. `multipv` defaults to 1 when omitted. */
+export function parseStockfishPvInfoLine(
+  line: string
+): ParsedStockfishPvInfo | null {
+  if (!line.startsWith("info ") || !line.includes(" pv ")) return null;
+
+  const depthMatch = line.match(/\bdepth\s+(\d+)/);
+  if (!depthMatch) return null;
+
+  const multipvMatch = line.match(/\bmultipv\s+(\d+)/);
+
+  let evalPawns = 0;
+  let isMate = false;
+  let mateInMoves: number | null = null;
+
+  const cpMatch = line.match(/\bscore\s+cp\s+(-?\d+)/);
+  if (cpMatch) {
+    evalPawns = parseInt(cpMatch[1], 10) / 100;
+  } else {
+    const mateMatch = line.match(/\bscore\s+mate\s+(-?\d+)/);
+    if (mateMatch) {
+      const mateIn = parseInt(mateMatch[1], 10);
+      evalPawns = mateIn > 0 ? 10 : -10;
+      isMate = true;
+      mateInMoves = mateIn;
+    }
+  }
+
+  const pvIndex = line.indexOf(" pv ");
+  const pvPart = line.slice(pvIndex + 4).trim();
+  const pvUci = pvPart.split(/\s+/).filter((m) => /^[a-h][1-8][a-h][1-8]/.test(m));
+  if (pvUci.length === 0) return null;
+
+  return {
+    depth: parseInt(depthMatch[1], 10),
+    multipv: multipvMatch ? parseInt(multipvMatch[1], 10) : 1,
+    evalPawns,
+    isMate,
+    mateInMoves,
+    pvUci,
+  };
+}
 
 export type ContinuousPvLine = {
   multipv: number;
@@ -156,49 +211,8 @@ class StockfishClient {
     return this.ready && !this.running && this.taskQueue.length === 0;
   }
 
-  private parseInfoLine(line: string): {
-    depth: number;
-    multipv: number;
-    evalPawns: number;
-    isMate: boolean;
-    mateInMoves: number | null;
-    pvUci: string[];
-  } | null {
-    if (!line.startsWith("info ") || !line.includes(" pv ")) return null;
-
-    const depthMatch = line.match(/\bdepth\s+(\d+)/);
-    const multipvMatch = line.match(/\bmultipv\s+(\d+)/);
-    if (!depthMatch || !multipvMatch) return null;
-
-    let evalPawns = 0;
-    let isMate = false;
-    let mateInMoves: number | null = null;
-
-    const cpMatch = line.match(/\bscore\s+cp\s+(-?\d+)/);
-    if (cpMatch) {
-      evalPawns = parseInt(cpMatch[1], 10) / 100;
-    } else {
-      const mateMatch = line.match(/\bscore\s+mate\s+(-?\d+)/);
-      if (mateMatch) {
-        const mateIn = parseInt(mateMatch[1], 10);
-        evalPawns = mateIn > 0 ? 10 : -10;
-        isMate = true;
-        mateInMoves = mateIn;
-      }
-    }
-
-    const pvIndex = line.indexOf(" pv ");
-    const pvPart = line.slice(pvIndex + 4).trim();
-    const pvUci = pvPart.split(/\s+/).filter((m) => /^[a-h][1-8][a-h][1-8]/.test(m));
-
-    return {
-      depth: parseInt(depthMatch[1], 10),
-      multipv: parseInt(multipvMatch[1], 10),
-      evalPawns,
-      isMate,
-      mateInMoves,
-      pvUci,
-    };
+  private parseInfoLine(line: string) {
+    return parseStockfishPvInfoLine(line);
   }
 
   private buildContinuousSnapshot(
@@ -361,6 +375,7 @@ class StockfishClient {
     const item = this.taskQueue.splice(pick, 1)[0]!;
     this.running = true;
     void item.task().finally(() => {
+      this.sendCommand("setoption name MultiPV value 1");
       this.running = false;
       this.drainQueue();
     });
@@ -369,12 +384,79 @@ class StockfishClient {
 
 export const stockfishClient = new StockfishClient();
 
-export type BestMoveAndEvalResult = {
+export type EngineLineScore = {
   move: string;
   evalPawns: number;
   isMate?: boolean;
   mateInMoves?: number;
 };
+
+export type BestMoveAndEvalResult = {
+  move: string;
+  evalPawns: number;
+  isMate?: boolean;
+  mateInMoves?: number;
+  /** Engine's second line (MultiPV ≥ 2 only; absent with a single legal move). */
+  second?: EngineLineScore;
+};
+
+/**
+ * Accumulates Stockfish output for a best-move search. Scores are tracked per
+ * `multipv` index so the second line never overwrites the first one.
+ * Returns the result on the `bestmove` line, `undefined` before.
+ */
+export function createBestMoveAndEvalCollector(): (
+  line: string
+) => BestMoveAndEvalResult | undefined {
+  const scores = new Map<number, Omit<EngineLineScore, "move"> & { move?: string }>();
+  return (line) => {
+    if (line.startsWith("info ") && line.includes(" score ")) {
+      const parsed = parseStockfishPvInfoLine(line);
+      if (parsed) {
+        scores.set(parsed.multipv, {
+          move: parsed.pvUci[0],
+          evalPawns: parsed.evalPawns,
+          isMate: parsed.isMate || undefined,
+          mateInMoves: parsed.mateInMoves ?? undefined,
+        });
+      } else {
+        const cp = line.match(/\bscore\s+cp\s+(-?\d+)/);
+        const mate = line.match(/\bscore\s+mate\s+(-?\d+)/);
+        const mp = line.match(/\bmultipv\s+(\d+)/);
+        const idx = mp ? parseInt(mp[1], 10) : 1;
+        if (cp) {
+          scores.set(idx, { evalPawns: parseInt(cp[1], 10) / 100 });
+        } else if (mate) {
+          const mateIn = parseInt(mate[1], 10);
+          scores.set(idx, {
+            evalPawns: mateIn > 0 ? 10 : -10,
+            isMate: true,
+            mateInMoves: mateIn,
+          });
+        }
+      }
+    }
+    if (!line.startsWith("bestmove")) return undefined;
+    const move = line.split(/\s+/)[1] ?? "";
+    const first = scores.get(1);
+    const second = scores.get(2);
+    return {
+      move,
+      evalPawns: first?.evalPawns ?? 0,
+      isMate: first?.isMate,
+      mateInMoves: first?.mateInMoves,
+      second:
+        second?.move && second.move !== move
+          ? {
+              move: second.move,
+              evalPawns: second.evalPawns,
+              isMate: second.isMate,
+              mateInMoves: second.mateInMoves,
+            }
+          : undefined,
+    };
+  };
+}
 
 export async function stockfishGetBestMoveForFen(
   fen: string,
@@ -398,43 +480,14 @@ export async function stockfishGetBestMoveForFen(
 export async function stockfishGetBestMoveAndEval(
   fen: string,
   depth: number,
-  priority: StockfishPriority = "high"
+  priority: StockfishPriority = "high",
+  opts?: { multipv?: number }
 ): Promise<BestMoveAndEvalResult> {
+  const multipv = Math.max(1, opts?.multipv ?? 1);
   return stockfishClient.enqueue((ctx) => {
-    let lastEvalPawns: number | null = null;
-    let isMate = false;
-    let lastMateInMoves: number | null = null;
+    ctx.onLine(createBestMoveAndEvalCollector());
 
-    ctx.onLine((line) => {
-      if (line.includes("score cp")) {
-        const match = line.match(/score cp (-?\d+)/);
-        if (match) {
-          lastEvalPawns = parseInt(match[1], 10) / 100;
-          isMate = false;
-          lastMateInMoves = null;
-        }
-      }
-      if (line.includes("score mate")) {
-        const match = line.match(/score mate (-?\d+)/);
-        if (match) {
-          const mateIn = parseInt(match[1], 10);
-          lastEvalPawns = mateIn > 0 ? 10 : -10;
-          isMate = true;
-          lastMateInMoves = mateIn;
-        }
-      }
-      if (line.startsWith("bestmove")) {
-        const parts = line.split(/\s+/);
-        return {
-          move: parts[1] ?? "",
-          evalPawns: lastEvalPawns ?? 0,
-          isMate: isMate || undefined,
-          mateInMoves: lastMateInMoves ?? undefined,
-        };
-      }
-      return undefined;
-    });
-
+    ctx.send(`setoption name MultiPV value ${multipv}`);
     ctx.send(`position fen ${fen}`);
     ctx.send(`go depth ${depth}`);
     setTimeout(() => ctx.stop(), 30_000);
@@ -445,21 +498,25 @@ export async function stockfishGetPositionEvaluation(
   fen: string,
   depth: number
 ): Promise<number> {
+  const details = await stockfishGetPositionEvaluationDetails(fen, depth);
+  return details.evalPawnsStm;
+}
+
+/** Side-to-move score plus mate metadata (convert with `toWhitePovEval`). */
+export async function stockfishGetPositionEvaluationDetails(
+  fen: string,
+  depth: number
+): Promise<import("@/lib/engine-eval").EngineStmScore> {
   return stockfishClient.enqueue((ctx) => {
-    let lastEval: number | null = null;
+    let last: import("@/lib/engine-eval").EngineStmScore = {
+      evalPawnsStm: 0,
+      isMate: false,
+    };
     ctx.onLine((line) => {
-      const cpMatch = line.match(/\bscore\s+cp\s+(-?\d+)/);
-      if (cpMatch) {
-        lastEval = parseInt(cpMatch[1], 10) / 100;
-      } else {
-        const mateMatch = line.match(/\bscore\s+mate\s+(-?\d+)/);
-        if (mateMatch) {
-          const mateIn = parseInt(mateMatch[1], 10);
-          lastEval = mateIn > 0 ? 10 : -10;
-        }
-      }
+      const parsed = parseEngineScoreLine(line);
+      if (parsed) last = parsed;
       if (line.startsWith("bestmove")) {
-        return lastEval ?? 0;
+        return last;
       }
       return undefined;
     });
@@ -467,4 +524,117 @@ export async function stockfishGetPositionEvaluation(
     ctx.send(`go depth ${depth}`);
     setTimeout(() => ctx.stop(), 30_000);
   }, "low");
+}
+
+export const DEFAULT_REVIEW_TOP_LINES_DEPTH = 10;
+export const DEFAULT_REVIEW_TOP_LINES_MULTIPV = 3;
+
+function legalUcisFromFen(fen: string): string[] {
+  try {
+    return new Chess(fen).moves({ verbose: true }).map(
+      (move) => `${move.from}${move.to}${move.promotion ?? ""}`
+    );
+  } catch {
+    return [];
+  }
+}
+
+/** Finite search of the best N moves at a fixed depth (side-to-move eval). */
+export async function stockfishGetTopLines(
+  fen: string,
+  opts?: {
+    depth?: number;
+    multipv?: number;
+    priority?: StockfishPriority;
+  }
+): Promise<ContinuousAnalysisSnapshot> {
+  const depth = opts?.depth ?? DEFAULT_REVIEW_TOP_LINES_DEPTH;
+  const multipv = opts?.multipv ?? DEFAULT_REVIEW_TOP_LINES_MULTIPV;
+  const priority = opts?.priority ?? "low";
+  const legal = legalUcisFromFen(fen);
+  const wanted = Math.min(multipv, Math.max(legal.length, 0));
+
+  if (wanted === 0) {
+    return { evalPawns: 0, depth: 0, lines: [] };
+  }
+
+  return stockfishClient.enqueue((ctx) => {
+    const lines: ContinuousPvLine[] = [];
+    const excluded = new Set<string>();
+    let pvUci: string[] = [];
+    let evalPawns = 0;
+    let isMate = false;
+    let mateInMoves: number | undefined;
+    let depthSeen = 0;
+
+    const startSearch = (): boolean => {
+      const remaining = legal.filter((uci) => !excluded.has(uci));
+      if (remaining.length === 0) return false;
+      pvUci = [];
+      evalPawns = 0;
+      isMate = false;
+      mateInMoves = undefined;
+      ctx.send(`position fen ${fen}`);
+      if (excluded.size === 0) {
+        ctx.send(`go depth ${depth}`);
+      } else {
+        ctx.send(`go depth ${depth} searchmoves ${remaining.join(" ")}`);
+      }
+      return true;
+    };
+
+    const timer = setTimeout(() => ctx.stop(), 30_000);
+    const finish = (snapshot: ContinuousAnalysisSnapshot) => {
+      clearTimeout(timer);
+      return snapshot;
+    };
+
+    ctx.onLine((line) => {
+      const parsed = parseStockfishPvInfoLine(line);
+      if (parsed) {
+        pvUci = parsed.pvUci;
+        evalPawns = parsed.evalPawns;
+        isMate = parsed.isMate;
+        mateInMoves = parsed.mateInMoves ?? undefined;
+        depthSeen = parsed.depth;
+      }
+      if (!line.startsWith("bestmove")) return undefined;
+
+      const move = line.split(/\s+/)[1] ?? "";
+      if (!move || move === "(none)") {
+        return finish({
+          evalPawns: lines[0]?.evalPawns ?? 0,
+          depth: depthSeen || depth,
+          lines,
+        });
+      }
+
+      const linePv = pvUci[0] === move ? pvUci : [move, ...pvUci.filter((u) => u !== move)];
+      lines.push({
+        multipv: lines.length + 1,
+        evalPawns,
+        isMate: isMate || undefined,
+        mateInMoves,
+        pvUci: linePv.length > 0 ? linePv : [move],
+        depth: depthSeen || depth,
+      });
+      excluded.add(move);
+
+      if (lines.length >= wanted || !startSearch()) {
+        lines.sort((a, b) => b.evalPawns - a.evalPawns);
+        lines.forEach((line, index) => {
+          line.multipv = index + 1;
+        });
+        return finish({
+          evalPawns: lines[0]?.evalPawns ?? 0,
+          depth: lines[0]?.depth ?? depth,
+          lines,
+        });
+      }
+      return undefined;
+    });
+
+    ctx.send("setoption name MultiPV value 1");
+    startSearch();
+  }, priority);
 }

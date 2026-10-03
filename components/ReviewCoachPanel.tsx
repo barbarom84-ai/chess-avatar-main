@@ -25,6 +25,7 @@ import {
 import { dedupeReviewCoachAvatars } from "@/lib/review-coach-options";
 import {
   buildReviewChatContext,
+  type ReviewEngineLine,
   type ReviewPlayerColor,
 } from "@/lib/review-coach-context";
 import type { CoachToneId } from "@/lib/coach-tone";
@@ -36,6 +37,10 @@ export type ReviewCoachPanelProps = {
   currentMove?: ReviewedMove | null;
   fen?: string | null;
   fenBefore?: string | null;
+  lastMoveSan?: string | null;
+  lastMoveUci?: string | null;
+  lastMoveSide?: ReviewPlayerColor | null;
+  engineLinesNow?: ReviewEngineLine[] | null;
   moveNumber?: number;
   openingName?: string | null;
   whiteName?: string | null;
@@ -43,7 +48,12 @@ export type ReviewCoachPanelProps = {
   playerColor?: ReviewPlayerColor | null;
   onPlayerColorChange?: (color: ReviewPlayerColor) => void;
   coachTone: CoachToneId;
+  orientation?: "white" | "black";
   onRequestUpgrade?: () => void;
+  /** When false, do not auto-call the explain API as the ply changes. */
+  autoExplain?: boolean;
+  /** Reset review chat when the reviewed game changes. */
+  sessionKey?: string | null;
   children?: ReactNode;
 };
 
@@ -64,7 +74,10 @@ type ReviewCoachCtx = {
   fenBefore?: string | null;
   moveNumber?: number;
   coachTone: CoachToneId;
+  orientation?: "white" | "black";
   onRequestUpgrade?: () => void;
+  autoExplain: boolean;
+  sessionKey?: string | null;
   handleExplanationChange: (text: string | null) => void;
 };
 
@@ -83,6 +96,10 @@ export function ReviewCoachProvider({
   currentMove,
   fen,
   fenBefore,
+  lastMoveSan,
+  lastMoveUci,
+  lastMoveSide,
+  engineLinesNow,
   moveNumber,
   openingName,
   whiteName,
@@ -90,7 +107,10 @@ export function ReviewCoachProvider({
   playerColor = null,
   onPlayerColorChange,
   coachTone,
+  orientation = "white",
   onRequestUpgrade,
+  autoExplain = true,
+  sessionKey = null,
   children,
 }: ReviewCoachPanelProps) {
   const [coachId, setCoachId] = useState(CHESS_AVATAR_PRO_COACH_ID);
@@ -141,23 +161,31 @@ export function ReviewCoachProvider({
         fen,
         fenBefore,
         move: currentMove,
+        lastMoveSan,
+        lastMoveUci,
+        lastMoveSide,
         playerColor,
         openingName,
         whiteName,
         blackName,
         moveNumber,
         lastExplanation,
+        engineLinesNow,
       }),
     [
       fen,
       fenBefore,
       currentMove,
+      lastMoveSan,
+      lastMoveUci,
+      lastMoveSide,
       playerColor,
       openingName,
       whiteName,
       blackName,
       moveNumber,
       lastExplanation,
+      engineLinesNow,
     ]
   );
 
@@ -179,7 +207,10 @@ export function ReviewCoachProvider({
       fenBefore,
       moveNumber,
       coachTone,
+      orientation,
       onRequestUpgrade,
+      autoExplain,
+      sessionKey,
       handleExplanationChange,
     }),
     [
@@ -194,7 +225,10 @@ export function ReviewCoachProvider({
       fenBefore,
       moveNumber,
       coachTone,
+      orientation,
       onRequestUpgrade,
+      autoExplain,
+      sessionKey,
       handleExplanationChange,
     ]
   );
@@ -206,7 +240,11 @@ export function ReviewCoachProvider({
   );
 }
 
-export function ReviewCoachSidebar() {
+export function ReviewCoachSidebar({
+  showAnalysis = true,
+}: {
+  showAnalysis?: boolean;
+}) {
   const { t } = useLanguage();
   const {
     opponentConfig,
@@ -217,20 +255,20 @@ export function ReviewCoachSidebar() {
     onPlayerColorChange,
     currentMove,
     fenBefore,
+    reviewContext,
     moveNumber,
     coachTone,
     onRequestUpgrade,
+    autoExplain,
     handleExplanationChange,
   } = useReviewCoach();
 
   return (
-    <div className="space-y-2">
-      <div>
-        <Label className="text-[11px] uppercase tracking-wide text-slate-500">
-          {t.review.coach.pickerLabel}
-        </Label>
+    <div className="space-y-1.5">
+      <div className="flex items-center gap-2">
+        <Label className="sr-only">{t.review.coach.pickerLabel}</Label>
         <select
-          className="mt-1 w-full rounded-md border border-cyan-500/30 bg-slate-950 px-2 py-1.5 text-xs text-slate-200"
+          className="flex-1 min-w-0 rounded-md border border-cyan-500/30 bg-slate-950 px-2 py-1 text-xs text-slate-200"
           value={
             coachId === "opponent" && !opponentConfig
               ? CHESS_AVATAR_PRO_COACH_ID
@@ -258,16 +296,6 @@ export function ReviewCoachSidebar() {
             </option>
           ))}
         </select>
-      </div>
-
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-[11px] text-slate-400 leading-snug">
-          {playerColor === "white"
-            ? t.review.coach.playingAsWhite
-            : playerColor === "black"
-              ? t.review.coach.playingAsBlack
-              : t.review.coach.playingAsUnknown}
-        </p>
         <div className="flex rounded-md border border-slate-700 overflow-hidden shrink-0">
           <button
             type="button"
@@ -296,20 +324,24 @@ export function ReviewCoachSidebar() {
         </div>
       </div>
 
+      <div className={showAnalysis ? undefined : "hidden"}>
       <ReviewCoachAnalysis
         move={currentMove}
         fenBefore={fenBefore}
+        fen={reviewContext?.fen}
         moveNumber={moveNumber}
         coachTone={coachTone}
+        autoExplain={autoExplain}
         onRequestUpgrade={onRequestUpgrade}
         onExplanationChange={handleExplanationChange}
       />
+      </div>
     </div>
   );
 }
 
-export function ReviewCoachChat() {
-  const { coachId, selected, reviewContext, playerColor, coachTone } =
+export function ReviewCoachChat({ toolbar }: { toolbar?: ReactNode }) {
+  const { coachId, selected, reviewContext, playerColor, coachTone, orientation, sessionKey } =
     useReviewCoach();
   return (
     <AvatarChatPanel
@@ -322,6 +354,9 @@ export function ReviewCoachChat() {
       reviewContext={reviewContext}
       playerColor={playerColor}
       coachTone={coachTone}
+      orientation={orientation}
+      headerActions={toolbar}
+      sessionKey={sessionKey}
     />
   );
 }

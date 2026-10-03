@@ -1,15 +1,20 @@
 /**
- * Analysis Engine: Move Classification and Accuracy Score (CAPS-style).
+ * Analysis Engine: Move Classification and Accuracy Score.
  * Stateless module: takes per-move eval data and returns accuracy + classifications.
  * Does not call Stockfish; callers supply MoveEvalInput[].
+ *
+ * Classification follows an Expected Points model: each move is judged by how
+ * much winning probability it gives away, with special rules for brilliant
+ * (sound piece sacrifice), great (only good move) and miss (failing to punish
+ * the opponent's mistake). Accuracy stays CPL-based.
  */
 
 import {
   type AnalysisProfile,
   getAnalysisProfile,
   type AnalysisStrictnessId,
-  ANALYSIS_PROFILES,
 } from "./analysis-profiles";
+import { PARITY } from "./parity-contract";
 
 export type { AnalysisStrictnessId, AnalysisProfile } from "./analysis-profiles";
 
@@ -26,19 +31,30 @@ export interface MoveEvalInput {
   sideToMove: "white" | "black";
   /** Eval of the position before the move (for context weighting). Optional. */
   evalBeforePawns?: number;
-  /** Best move was a mate. Optional; used for "Miss" detection. */
-  isMateBest?: boolean;
-  /** Player move was a mate. Optional. */
-  isMatePlayer?: boolean;
-  /**
-   * Sound sacrifice (piece offered and capturable) — used to promote
-   * best/excellent into "brilliant".
-   */
-  isSacrifice?: boolean;
+  /** Expected points (0..1, mover's POV) after the engine's best move. Derived from bestEvalPawns when omitted. */
+  bestWin?: number;
+  /** Expected points (0..1, mover's POV) after the move played. Derived from playerEvalPawns when omitted. */
+  playerWin?: number;
+  /** Expected points of the engine's top line in the position before the move. */
+  topLineWin?: number;
+  /** Expected points of the engine's second line (undefined with a single legal move). */
+  secondLineWin?: number;
+  /** Expected points of the best alternative to the move played. */
+  alternativeWin?: number;
+  playedIsBest?: boolean;
+  /** Expected points the opponent gave away with the previous move. */
+  opponentPrevLoss?: number;
+  /** Material (pawn units) offered by the move. */
+  sacrificedMaterial?: number;
+  /** Recapture on the square of the previous capture, or capture winning material outright. */
+  isObviousCapture?: boolean;
+  /** Classification already computed for this move (counted as-is). */
+  classification?: MoveClassification;
 }
 
 export type MoveClassification =
   | "brilliant"
+  | "great"
   | "best"
   | "excellent"
   | "good"
@@ -51,6 +67,7 @@ export interface GameAccuracyResult {
   accuracy: number;
   classifications: {
     brilliant: number;
+    great: number;
     best: number;
     excellent: number;
     good: number;
@@ -65,19 +82,23 @@ export interface GameAccuracyResult {
 // Constants (tuning)
 // ---------------------------------------------------------------------------
 
+const R = PARITY.review;
+
 /** Context weight: 1 + k / (1 + |evalBefore|). k chosen so equal positions scale CPL up. */
-const CONTEXT_WEIGHT_K = 1.2;
+const CONTEXT_WEIGHT_K = R.accuracy.contextWeightK;
 
 /** For averaging, cap single-move CPL so one blunder doesn't dominate. */
-const AVG_CPL_CAP = 500;
+const AVG_CPL_CAP = R.accuracy.cplCap;
 
 /** Human curve: target typical raw accuracy (e.g. 50) -> displayed 70%. */
-const TYPICAL_RAW_ACCURACY = 50;
-const TARGET_DISPLAYED_ACCURACY = 70;
+const TYPICAL_RAW_ACCURACY = R.accuracy.typicalRaw;
+const TARGET_DISPLAYED_ACCURACY = R.accuracy.targetDisplayed;
+const RAW_ACCURACY_DECAY = R.accuracy.rawDecay;
 
 /** Quality weights per classification (for potential weighted average; we use exp formula). */
 const QUALITY_WEIGHTS: Record<MoveClassification, number> = {
   brilliant: 100,
+  great: 100,
   best: 100,
   excellent: 85,
   good: 70,
@@ -87,10 +108,64 @@ const QUALITY_WEIGHTS: Record<MoveClassification, number> = {
   miss: 0,
 };
 
-// Backward-compatible exports (match `standard` profile)
-const STANDARD = ANALYSIS_PROFILES.standard;
-const CPL_BANDS = STANDARD.bands;
-const MISS_SWING_PAWNS = STANDARD.missSwingPawns;
+/** Logistic slope (per centipawn) mapping engine evaluation to expected points. */
+const WIN_SLOPE = R.winSlope;
+
+/** Expected points lost at or below which a move counts as best. */
+const BEST_MAX = R.bestMax;
+
+/** Brilliant: minimal material offered, safe afterwards, not already completely winning. */
+const BRILLIANT_MIN_SACRIFICE = R.brilliant.minSacrifice;
+const BRILLIANT_MIN_WIN_AFTER = R.brilliant.minWinAfter;
+const BRILLIANT_MAX_WIN_WITHOUT = R.brilliant.maxWinWithout;
+
+/** Great: alternatives lose at least this much, and the position is not lost after the move. */
+const GREAT_MIN_GAP = R.great.minGap;
+const GREAT_MIN_WIN_AFTER = R.great.minWinAfter;
+
+/** Miss: opponent erred, a winning position was available, and the move let it go. */
+const MISS_MIN_OPPONENT_LOSS = R.miss.minOpponentLoss;
+const MISS_MIN_BEST_WIN = R.miss.minBestWin;
+const MISS_MAX_WIN_AFTER = R.miss.maxWinAfter;
+const MISS_BLUNDER_FLOOR = R.miss.blunderFloor;
+
+// ---------------------------------------------------------------------------
+// Expected points
+// ---------------------------------------------------------------------------
+
+/**
+ * Expected points (0..1) for `forWhite`'s side given a white-POV evaluation.
+ * A signed mate distance (white POV) takes precedence over the pawn score.
+ */
+export function winProbability(
+  evalPawnsWhite: number,
+  mateInMovesWhite: number | undefined,
+  forWhite: boolean
+): number {
+  let whiteWin: number;
+  if (mateInMovesWhite !== undefined && mateInMovesWhite !== 0) {
+    whiteWin = mateInMovesWhite > 0 ? 1 : 0;
+  } else if (Number.isFinite(evalPawnsWhite)) {
+    whiteWin = 1 / (1 + Math.exp(-WIN_SLOPE * evalPawnsWhite * 100));
+  } else {
+    whiteWin = 0.5;
+  }
+  return forWhite ? whiteWin : 1 - whiteWin;
+}
+
+function resolvedWins(input: MoveEvalInput): { bestWin: number; playerWin: number } {
+  const forWhite = input.sideToMove === "white";
+  return {
+    bestWin: input.bestWin ?? winProbability(input.bestEvalPawns, undefined, forWhite),
+    playerWin: input.playerWin ?? winProbability(input.playerEvalPawns, undefined, forWhite),
+  };
+}
+
+/** Expected points given away by the move (always >= 0). */
+export function expectedPointsLoss(input: MoveEvalInput): number {
+  const { bestWin, playerWin } = resolvedWins(input);
+  return Math.max(0, bestWin - playerWin);
+}
 
 // ---------------------------------------------------------------------------
 // CPL and context weight
@@ -116,53 +191,81 @@ function getContextWeight(evalBeforePawns: number | undefined): number {
   return 1 + CONTEXT_WEIGHT_K / (1 + absEval);
 }
 
-function evalSwingPawns(input: MoveEvalInput): number {
-  return Math.abs(input.playerEvalPawns - input.bestEvalPawns);
-}
+// ---------------------------------------------------------------------------
+// Classification
+// ---------------------------------------------------------------------------
 
-/**
- * Pure CPL-based step (best → blunder), ignoring miss/mate overrides.
- */
-function classifyFromScaledCpl(
-  scaledCpl: number,
-  bands: AnalysisProfile["bands"]
+function baseClassification(
+  loss: number,
+  playedIsBest: boolean,
+  bands: AnalysisProfile["winLossBands"]
 ): MoveClassification {
-  if (scaledCpl <= 0) return "best";
-  if (scaledCpl <= bands.excellent) return "excellent";
-  if (scaledCpl <= bands.good) return "good";
-  if (scaledCpl <= bands.inaccuracy) return "inaccuracy";
-  if (scaledCpl <= bands.mistake) return "mistake";
+  if (playedIsBest || loss <= BEST_MAX) return "best";
+  if (loss <= bands.excellent) return "excellent";
+  if (loss <= bands.good) return "good";
+  if (loss <= bands.inaccuracy) return "inaccuracy";
+  if (loss <= bands.mistake) return "mistake";
   return "blunder";
 }
 
+function isBrilliant(
+  input: MoveEvalInput,
+  base: MoveClassification,
+  bestWin: number,
+  playerWin: number
+): boolean {
+  if (base !== "best" && base !== "excellent") return false;
+  if ((input.sacrificedMaterial ?? 0) < BRILLIANT_MIN_SACRIFICE) return false;
+  if (playerWin < BRILLIANT_MIN_WIN_AFTER) return false;
+  const without = input.alternativeWin ?? bestWin;
+  return without < BRILLIANT_MAX_WIN_WITHOUT;
+}
+
+function isGreat(
+  input: MoveEvalInput,
+  base: MoveClassification,
+  playerWin: number
+): boolean {
+  if (base !== "best" || input.isObviousCapture) return false;
+  const top = input.topLineWin;
+  const second = input.secondLineWin;
+  if (top === undefined || second === undefined) return false;
+  if (playerWin < GREAT_MIN_WIN_AFTER) return false;
+  return top - second >= GREAT_MIN_GAP;
+}
+
+function isMiss(
+  input: MoveEvalInput,
+  loss: number,
+  bestWin: number,
+  playerWin: number,
+  bands: AnalysisProfile["winLossBands"]
+): boolean {
+  if (loss <= bands.good) return false;
+  if ((input.opponentPrevLoss ?? 0) < MISS_MIN_OPPONENT_LOSS) return false;
+  if (bestWin < MISS_MIN_BEST_WIN) return false;
+  if (playerWin >= MISS_MAX_WIN_AFTER) return false;
+  return playerWin >= MISS_BLUNDER_FLOOR;
+}
+
 /**
- * 1) Missed forced mate → miss (missed win / missed tactic).
- * 2) Otherwise if CPL alone says blunder → blunder (huge material loss stays "blunder", not only "miss").
- * 3) Else large eval swing → miss (tactical opportunity).
- * 4) Else a sound sacrifice that is still best/excellent → brilliant.
- * 5) Else CPL bucket.
+ * 1) Base class from expected points lost (profile bands).
+ * 2) Sound sacrifice that is best/excellent → brilliant.
+ * 3) Only good move (second line far behind) → great.
+ * 4) Failed to punish the opponent's mistake, winning chances let go → miss
+ *    (below the blunder floor, the base class — blunder — is kept).
  */
 export function classifyMove(
-  scaledCpl: number,
   input: MoveEvalInput,
   profile: AnalysisProfile
 ): MoveClassification {
-  const bands = profile.bands;
-  const base = classifyFromScaledCpl(scaledCpl, bands);
-  const swing = evalSwingPawns(input);
-
-  if (input.isMateBest && !input.isMatePlayer) {
-    return "miss";
-  }
-  if (base === "blunder") {
-    return "blunder";
-  }
-  if (swing > profile.missSwingPawns) {
-    return "miss";
-  }
-  if (input.isSacrifice && (base === "best" || base === "excellent")) {
-    return "brilliant";
-  }
+  const bands = profile.winLossBands;
+  const { bestWin, playerWin } = resolvedWins(input);
+  const loss = Math.max(0, bestWin - playerWin);
+  const base = baseClassification(loss, input.playedIsBest === true, bands);
+  if (isBrilliant(input, base, bestWin, playerWin)) return "brilliant";
+  if (isGreat(input, base, playerWin)) return "great";
+  if (isMiss(input, loss, bestWin, playerWin, bands)) return "miss";
   return base;
 }
 
@@ -171,7 +274,7 @@ export function classifyMove(
 // ---------------------------------------------------------------------------
 
 function rawAccuracy(avgScaledCpl: number): number {
-  return 100 * Math.exp(-0.005 * avgScaledCpl);
+  return 100 * Math.exp(-RAW_ACCURACY_DECAY * avgScaledCpl);
 }
 
 function humanCurve(raw: number): number {
@@ -190,6 +293,7 @@ function humanCurve(raw: number): number {
 
 const EMPTY_CLASSIFICATIONS: GameAccuracyResult["classifications"] = {
   brilliant: 0,
+  great: 0,
   best: 0,
   excellent: 0,
   good: 0,
@@ -231,7 +335,7 @@ export function computeGameAccuracy(
     const scaledCpl = Math.min(AVG_CPL_CAP, cpl * weight);
     sumScaledCpl += scaledCpl;
 
-    const classification = classifyMove(scaledCpl, input, profile);
+    const classification = input.classification ?? classifyMove(input, profile);
     classifications[classification]++;
   }
 
@@ -245,4 +349,4 @@ export function computeGameAccuracy(
   };
 }
 
-export { QUALITY_WEIGHTS, CPL_BANDS, MISS_SWING_PAWNS };
+export { QUALITY_WEIGHTS };

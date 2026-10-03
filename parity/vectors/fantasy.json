@@ -1,0 +1,728 @@
+{
+  "contractVersion": 1,
+  "note": "Positions compare the first two FEN fields (placement + side to move).",
+  "cases": [
+    {
+      "name": "standard mate",
+      "fen": "r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 4 4",
+      "rules": {
+        "enabledAbilities": []
+      },
+      "legalFrom": "h5",
+      "expected": {
+        "legal": [
+          "h5d1|false|",
+          "h5e2|false|",
+          "h5e5|false|",
+          "h5f3|false|",
+          "h5f5|false|",
+          "h5f7|false|",
+          "h5g4|false|",
+          "h5g5|false|",
+          "h5g6|false|",
+          "h5h3|false|",
+          "h5h4|false|",
+          "h5h6|false|",
+          "h5h7|false|"
+        ],
+        "steps": [
+          {
+            "uci": "h5f7",
+            "ok": true,
+            "position": "r1bqkb1r/pppp1Qpp/2n2n2/4p3/2B1P3/8/PPPP1PPP/RNB1K1NR b",
+            "greedyChain": false,
+            "queenSplitChain": false,
+            "triggeredSquares": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "bishop orthogonal",
+      "fen": "8/8/8/8/4B3/8/8/2K2k2 w - - 0 1",
+      "rules": {
+        "enabledAbilities": [
+          "bishop_orthogonal"
+        ],
+        "objective": "reach_square",
+        "objectiveSquare": "e8"
+      },
+      "legalFrom": "e4",
+      "expected": {
+        "legal": [
+          "e4a4|true|bishop_orthogonal",
+          "e4a8|false|",
+          "e4b1|false|",
+          "e4b4|true|bishop_orthogonal",
+          "e4b7|false|",
+          "e4c2|false|",
+          "e4c4|true|bishop_orthogonal",
+          "e4c6|false|",
+          "e4d3|false|",
+          "e4d4|true|bishop_orthogonal",
+          "e4d5|false|",
+          "e4e1|true|bishop_orthogonal",
+          "e4e2|true|bishop_orthogonal",
+          "e4e3|true|bishop_orthogonal",
+          "e4e5|true|bishop_orthogonal",
+          "e4e6|true|bishop_orthogonal",
+          "e4e7|true|bishop_orthogonal",
+          "e4e8|true|bishop_orthogonal",
+          "e4f3|false|",
+          "e4f4|true|bishop_orthogonal",
+          "e4f5|false|",
+          "e4g2|false|",
+          "e4g4|true|bishop_orthogonal",
+          "e4g6|false|",
+          "e4h1|false|",
+          "e4h4|true|bishop_orthogonal",
+          "e4h7|false|"
+        ],
+        "steps": [
+          {
+            "uci": "e4e8",
+            "ok": true,
+            "position": "4B3/8/8/8/8/8/8/2K2k2 b",
+            "greedyChain": false,
+            "queenSplitChain": false,
+            "triggeredSquares": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "crazy horse",
+      "fen": "8/8/8/8/4N3/8/8/2K2k2 w - - 0 1",
+      "rules": {
+        "enabledAbilities": [
+          "knight_phantom"
+        ],
+        "objective": "reach_square",
+        "objectiveSquare": "e6"
+      },
+      "legalFrom": "e4",
+      "expected": {
+        "legal": [
+          "e4a8|true|knight_phantom",
+          "e4b1|true|knight_phantom",
+          "e4b7|true|knight_phantom",
+          "e4c2|true|knight_phantom",
+          "e4c3|false|",
+          "e4c4|true|knight_phantom",
+          "e4c5|false|",
+          "e4c6|true|knight_phantom",
+          "e4d2|false|",
+          "e4d3|true|knight_phantom",
+          "e4d5|true|knight_phantom",
+          "e4d6|false|",
+          "e4e2|true|knight_phantom",
+          "e4e6|true|knight_phantom",
+          "e4f2|false|",
+          "e4f3|true|knight_phantom",
+          "e4f5|true|knight_phantom",
+          "e4f6|false|",
+          "e4g2|true|knight_phantom",
+          "e4g3|false|",
+          "e4g4|true|knight_phantom",
+          "e4g5|false|",
+          "e4g6|true|knight_phantom",
+          "e4h1|true|knight_phantom",
+          "e4h7|true|knight_phantom"
+        ],
+        "steps": [
+          {
+            "uci": "e4e6",
+            "ok": true,
+            "position": "8/8/4N3/8/8/8/8/2K2k2 b",
+            "greedyChain": false,
+            "queenSplitChain": false,
+            "triggeredSquares": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "greedy pawn chain",
+      "fen": "8/8/3p4/2p5/1P6/8/8/2K2k2 w - - 0 1",
+      "rules": {
+        "enabledAbilities": [
+          "pawn_greedy"
+        ],
+        "objective": "reach_square",
+        "objectiveSquare": "d6"
+      },
+      "legalFrom": "b4",
+      "expected": {
+        "legal": [
+          "b4b5|false|",
+          "b4c5|false|"
+        ],
+        "steps": [
+          {
+            "uci": "b4c5",
+            "ok": true,
+            "position": "8/8/3p4/2P5/8/8/8/2K2k2 w",
+            "greedyChain": true,
+            "queenSplitChain": false,
+            "triggeredSquares": []
+          },
+          {
+            "uci": "c5d6",
+            "ok": true,
+            "position": "8/8/3P4/8/8/8/8/2K2k2 b",
+            "greedyChain": false,
+            "queenSplitChain": false,
+            "triggeredSquares": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "greedy pawn promotion",
+      "fen": "8/ppp5/3p4/3rp3/4kp2/2Pp2P1/PP1K3P/8 w - - 0 45",
+      "rules": {
+        "enabledAbilities": [
+          "pawn_greedy"
+        ],
+        "objective": "reach_square",
+        "objectiveSquare": "c8"
+      },
+      "legalFrom": "g3",
+      "expected": {
+        "legal": [
+          "g3f4|false|",
+          "g3g4|false|"
+        ],
+        "steps": [
+          {
+            "uci": "g3f4",
+            "ok": true,
+            "position": "8/ppp5/3p4/3rp3/4kP2/2Pp4/PP1K3P/8 w",
+            "greedyChain": true,
+            "queenSplitChain": false,
+            "triggeredSquares": []
+          },
+          {
+            "uci": "f4e5",
+            "ok": true,
+            "position": "8/ppp5/3p4/3rP3/4k3/2Pp4/PP1K3P/8 w",
+            "greedyChain": true,
+            "queenSplitChain": false,
+            "triggeredSquares": []
+          },
+          {
+            "uci": "e5d6",
+            "ok": true,
+            "position": "8/ppp5/3P4/3r4/4k3/2Pp4/PP1K3P/8 w",
+            "greedyChain": true,
+            "queenSplitChain": false,
+            "triggeredSquares": []
+          },
+          {
+            "uci": "d6c7",
+            "ok": true,
+            "position": "8/ppP5/8/3r4/4k3/2Pp4/PP1K3P/8 w",
+            "greedyChain": true,
+            "queenSplitChain": false,
+            "triggeredSquares": []
+          },
+          {
+            "uci": "c7c8q",
+            "ok": true,
+            "position": "2Q5/pp6/8/3r4/4k3/2Pp4/PP1K3P/8 b",
+            "greedyChain": false,
+            "queenSplitChain": false,
+            "triggeredSquares": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "rook tunnel",
+      "fen": "2k4r/ppp2Q2/1bp2Np1/4P2p/6b1/2P3P1/PP3PK1/R1Br4 b - - 3 22",
+      "rules": {
+        "enabledAbilities": [
+          "rook_tunnel"
+        ],
+        "objective": "checkmate"
+      },
+      "legalFrom": "h8",
+      "expected": {
+        "legal": [
+          "h8a8|true|rook_tunnel",
+          "h8b8|true|rook_tunnel",
+          "h8d8|false|",
+          "h8e8|false|",
+          "h8f8|false|",
+          "h8g8|false|",
+          "h8h1|true|rook_tunnel",
+          "h8h2|true|rook_tunnel",
+          "h8h3|true|rook_tunnel",
+          "h8h4|true|rook_tunnel",
+          "h8h6|false|",
+          "h8h7|false|"
+        ],
+        "steps": [
+          {
+            "uci": "h8h1",
+            "ok": true,
+            "position": "2k5/ppp2Q2/1bp2Np1/4P2p/6b1/2P3P1/PP3PK1/R1Br3r w",
+            "greedyChain": false,
+            "queenSplitChain": false,
+            "triggeredSquares": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "rook tunnel replay",
+      "fen": "8/8/8/8/4R3/3P4/8/2K2k2 w - - 0 1",
+      "rules": {
+        "enabledAbilities": [
+          "rook_tunnel"
+        ],
+        "objective": "reach_square",
+        "objectiveSquare": "e8"
+      },
+      "legalFrom": "e4",
+      "expected": {
+        "legal": [
+          "e4a4|false|",
+          "e4b4|false|",
+          "e4c4|false|",
+          "e4d4|false|",
+          "e4e1|false|",
+          "e4e2|false|",
+          "e4e3|false|",
+          "e4e5|false|",
+          "e4e6|false|",
+          "e4e7|false|",
+          "e4e8|false|",
+          "e4f4|false|",
+          "e4g4|false|",
+          "e4h4|false|"
+        ],
+        "steps": [
+          {
+            "uci": "e4e8",
+            "ok": true,
+            "position": "4R3/8/8/8/8/3P4/8/2K2k2 b",
+            "greedyChain": false,
+            "queenSplitChain": false,
+            "triggeredSquares": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "pawn charge",
+      "fen": "8/8/8/8/8/4p3/4P3/2K2k2 w - - 0 1",
+      "rules": {
+        "enabledAbilities": [
+          "pawn_charge"
+        ]
+      },
+      "legalFrom": "e2",
+      "expected": {
+        "legal": [
+          "e2e4|true|pawn_charge"
+        ],
+        "steps": []
+      }
+    },
+    {
+      "name": "explosive square",
+      "fen": "6k1/8/8/3p4/R7/4K3/8/8 w - - 0 1",
+      "rules": {
+        "enabledAbilities": [],
+        "objective": "checkmate",
+        "specialSquares": [
+          {
+            "square": "e4",
+            "type": "explosive"
+          }
+        ]
+      },
+      "legalFrom": "a4",
+      "expected": {
+        "legal": [
+          "a4a1|false|",
+          "a4a2|false|",
+          "a4a3|false|",
+          "a4a5|false|",
+          "a4a6|false|",
+          "a4a7|false|",
+          "a4a8|false|",
+          "a4b4|false|",
+          "a4c4|false|",
+          "a4d4|false|",
+          "a4e4|false|",
+          "a4f4|false|",
+          "a4g4|false|",
+          "a4h4|false|"
+        ],
+        "steps": [
+          {
+            "uci": "a4e4",
+            "ok": true,
+            "position": "6k1/8/8/8/8/4K3/8/8 b",
+            "greedyChain": false,
+            "queenSplitChain": false,
+            "triggeredSquares": [
+              "e4"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "trap square",
+      "fen": "6k1/8/8/3p1p2/R7/8/8/6K1 w - - 0 1",
+      "rules": {
+        "enabledAbilities": [],
+        "objective": "checkmate",
+        "specialSquares": [
+          {
+            "square": "e4",
+            "type": "trap"
+          }
+        ]
+      },
+      "legalFrom": null,
+      "expected": {
+        "legal": null,
+        "steps": [
+          {
+            "uci": "a4e4",
+            "ok": true,
+            "position": "6k1/8/8/3p1p2/8/8/8/6K1 b",
+            "greedyChain": false,
+            "queenSplitChain": false,
+            "triggeredSquares": [
+              "e4"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "tunnel capture",
+      "fen": "6k1/8/4p3/8/R7/8/8/6K1 w - - 0 1",
+      "rules": {
+        "enabledAbilities": [],
+        "objective": "reach_square",
+        "objectiveSquare": "e6",
+        "specialSquares": [
+          {
+            "square": "e4",
+            "type": "tunnel",
+            "linkTo": "e6"
+          }
+        ]
+      },
+      "legalFrom": null,
+      "expected": {
+        "legal": null,
+        "steps": [
+          {
+            "uci": "a4e4",
+            "ok": true,
+            "position": "6k1/8/4R3/8/8/8/8/6K1 b",
+            "greedyChain": false,
+            "queenSplitChain": false,
+            "triggeredSquares": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "tunnel into explosive",
+      "fen": "6k1/8/3p4/8/R7/4K3/8/8 w - - 0 1",
+      "rules": {
+        "enabledAbilities": [],
+        "objective": "checkmate",
+        "specialSquares": [
+          {
+            "square": "e4",
+            "type": "tunnel",
+            "linkTo": "e6"
+          },
+          {
+            "square": "e6",
+            "type": "explosive"
+          }
+        ]
+      },
+      "legalFrom": null,
+      "expected": {
+        "legal": null,
+        "steps": [
+          {
+            "uci": "a4e4",
+            "ok": true,
+            "position": "6k1/8/8/8/8/4K3/8/8 b",
+            "greedyChain": false,
+            "queenSplitChain": false,
+            "triggeredSquares": [
+              "e6"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "tunnel blocked by ally",
+      "fen": "6k1/8/4P3/8/R7/8/8/6K1 w - - 0 1",
+      "rules": {
+        "enabledAbilities": [],
+        "objective": "checkmate",
+        "specialSquares": [
+          {
+            "square": "e4",
+            "type": "tunnel",
+            "linkTo": "e6"
+          }
+        ]
+      },
+      "legalFrom": "a4",
+      "expected": {
+        "legal": [
+          "a4a1|false|",
+          "a4a2|false|",
+          "a4a3|false|",
+          "a4a5|false|",
+          "a4a6|false|",
+          "a4a7|false|",
+          "a4a8|false|",
+          "a4b4|false|",
+          "a4c4|false|",
+          "a4d4|false|",
+          "a4f4|false|",
+          "a4g4|false|",
+          "a4h4|false|"
+        ],
+        "steps": [
+          {
+            "uci": "a4e4",
+            "ok": false,
+            "position": "6k1/8/4P3/8/R7/8/8/6K1 w",
+            "greedyChain": false,
+            "queenSplitChain": false,
+            "triggeredSquares": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "queen split chain",
+      "fen": "8/8/8/8/4Q3/8/8/2K2k2 w - - 0 1",
+      "rules": {
+        "enabledAbilities": [
+          "queen_split"
+        ],
+        "objective": "reach_square",
+        "objectiveSquare": "e8",
+        "fantasySide": "w"
+      },
+      "legalFrom": null,
+      "expected": {
+        "legal": null,
+        "steps": [
+          {
+            "uci": "e4e6",
+            "ok": true,
+            "position": "8/8/4Q3/8/8/8/8/2K2k2 w",
+            "greedyChain": false,
+            "queenSplitChain": true,
+            "triggeredSquares": []
+          },
+          {
+            "uci": "e6e8",
+            "ok": true,
+            "position": "4Q3/8/8/8/8/8/8/2K2k2 b",
+            "greedyChain": false,
+            "queenSplitChain": false,
+            "triggeredSquares": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "queen split ends on check",
+      "fen": "8/6k1/8/8/4Q3/8/8/2K5 w - - 0 1",
+      "rules": {
+        "enabledAbilities": [
+          "queen_split"
+        ],
+        "fantasySide": "w"
+      },
+      "legalFrom": null,
+      "expected": {
+        "legal": null,
+        "steps": [
+          {
+            "uci": "e4e7",
+            "ok": true,
+            "position": "8/4Q1k1/8/8/8/8/8/2K5 b",
+            "greedyChain": false,
+            "queenSplitChain": false,
+            "triggeredSquares": []
+          },
+          {
+            "uci": "g7g6",
+            "ok": true,
+            "position": "8/4Q3/6k1/8/8/8/8/2K5 w",
+            "greedyChain": false,
+            "queenSplitChain": false,
+            "triggeredSquares": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "queen split second move after check rejected",
+      "fen": "8/6k1/8/8/4Q3/8/8/2K5 w - - 0 1",
+      "rules": {
+        "enabledAbilities": [
+          "queen_split"
+        ],
+        "fantasySide": "w"
+      },
+      "legalFrom": null,
+      "expected": {
+        "legal": null,
+        "steps": [
+          {
+            "uci": "e4e7",
+            "ok": true,
+            "position": "8/4Q1k1/8/8/8/8/8/2K5 b",
+            "greedyChain": false,
+            "queenSplitChain": false,
+            "triggeredSquares": []
+          },
+          {
+            "uci": "e7e8",
+            "ok": false,
+            "position": "8/4Q1k1/8/8/8/8/8/2K5 b",
+            "greedyChain": false,
+            "queenSplitChain": false,
+            "triggeredSquares": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "opponent queen no split",
+      "fen": "6k1/8/8/3q4/8/8/8/3QK3 b - - 0 1",
+      "rules": {
+        "enabledAbilities": [
+          "queen_split"
+        ],
+        "fantasySide": "w"
+      },
+      "legalFrom": null,
+      "expected": {
+        "legal": null,
+        "steps": [
+          {
+            "uci": "d5d1",
+            "ok": true,
+            "position": "6k1/8/8/8/8/8/8/3qK3 w",
+            "greedyChain": false,
+            "queenSplitChain": false,
+            "triggeredSquares": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "opponent rook no tunnel",
+      "fen": "2k4r/ppp2Q2/1bp2Np1/4P2p/6b1/2P3P1/PP3PK1/R1Br4 b - - 3 22",
+      "rules": {
+        "enabledAbilities": [
+          "rook_tunnel"
+        ],
+        "fantasySide": "w"
+      },
+      "legalFrom": null,
+      "expected": {
+        "legal": null,
+        "steps": [
+          {
+            "uci": "h8h1",
+            "ok": false,
+            "position": "2k4r/ppp2Q2/1bp2Np1/4P2p/6b1/2P3P1/PP3PK1/R1Br4 b",
+            "greedyChain": false,
+            "queenSplitChain": false,
+            "triggeredSquares": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "king anchor",
+      "fen": "6k1/8/8/8/8/4K3/8/8 w - - 0 1",
+      "rules": {
+        "enabledAbilities": [
+          "king_anchor"
+        ],
+        "objective": "checkmate",
+        "specialSquares": [
+          {
+            "square": "e4",
+            "type": "trap"
+          }
+        ]
+      },
+      "legalFrom": null,
+      "expected": {
+        "legal": null,
+        "steps": [
+          {
+            "uci": "e3e4",
+            "ok": true,
+            "position": "6k1/8/8/8/4K3/8/8/8 b",
+            "greedyChain": false,
+            "queenSplitChain": false,
+            "triggeredSquares": [
+              "e4"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "blast dodge",
+      "fen": "6k1/8/8/3p4/R7/8/8/6K1 w - - 0 1",
+      "rules": {
+        "enabledAbilities": [],
+        "passiveSkills": [
+          "blast_dodge"
+        ],
+        "objective": "checkmate",
+        "specialSquares": [
+          {
+            "square": "e4",
+            "type": "explosive"
+          }
+        ]
+      },
+      "legalFrom": null,
+      "expected": {
+        "legal": null,
+        "steps": [
+          {
+            "uci": "a4e4",
+            "ok": true,
+            "position": "6k1/8/8/8/4R3/8/8/6K1 b",
+            "greedyChain": false,
+            "queenSplitChain": false,
+            "triggeredSquares": [
+              "e4"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

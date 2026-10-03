@@ -6,6 +6,7 @@ import {
   requireAscensionAuth,
 } from "@/lib/ascension/server-auth";
 
+import type { AscensionUnlockSkillResponse } from "@/lib/api-contract";
 export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
@@ -78,7 +79,7 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({
     card: cardUpdate.data ? mapDbChampionCard(cardUpdate.data as Record<string, unknown>) : null,
     unlockedSkillId: body.skillId,
-  });
+  } satisfies AscensionUnlockSkillResponse);
 }
 
 export async function GET(request: NextRequest) {

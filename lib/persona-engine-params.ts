@@ -1,11 +1,8 @@
 import type { EngineConfig } from "@/lib/analysis";
 import { DEFAULT_HUMAN_BLUNDER_INTERVAL } from "@/lib/bot-move-count";
+import { MAX_PROFILE_ELO, MIN_PROFILE_ELO, UCI_ELO_MAX, UCI_ELO_MIN } from "@/lib/elo-bounds";
 
-/** Aligné sur Android `EloBounds.kt`. */
-export const UCI_ELO_MIN = 1320;
-export const UCI_ELO_MAX = 3190;
-export const MAX_PROFILE_ELO = 3500;
-export const MIN_PROFILE_ELO = 400;
+export { MAX_PROFILE_ELO, MIN_PROFILE_ELO, UCI_ELO_MAX, UCI_ELO_MIN };
 
 /** Kotlin `Double.toInt()` (truncates toward zero) + clamp 400–3500. */
 export function clampProfileElo(elo: number): number {
@@ -93,12 +90,17 @@ export function multiPvCountForArena(config: EngineConfig): number {
   return Math.max(base, 2);
 }
 
+/** Seeded GM legends (≈2600+) should play near advertised Elo vs a human. */
+export function isMasterLegendConfig(config: EngineConfig): boolean {
+  return Boolean(config.personalityId) && config.elo >= 2600;
+}
+
 /**
- * Vs-human play: personality opponents keep MultiPV so aggressiveness / playStyle
- * can diverge lines the same way arena bots do. Regular avatars stay on the
- * difficulty curve.
+ * Vs-human play: GM legends stay on PV1 (style comes from the opening book).
+ * Named archetypes still use MultiPV. Regular avatars stay on the difficulty curve.
  */
 export function multiPvCountForPlay(config: EngineConfig): number {
+  if (isMasterLegendConfig(config)) return 1;
   if (config.personalityId) return multiPvCountForArena(config);
   return multiPvCountForDifficulty(config.difficulty);
 }

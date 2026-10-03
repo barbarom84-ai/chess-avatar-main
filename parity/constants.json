@@ -1,0 +1,354 @@
+{
+  "$comment": "Source unique des constantes partagées web / Android. Modifier ici puis lancer `npm run parity:export`.",
+  "contractVersion": 1,
+  "elo": {
+    "maxProfile": 3500,
+    "minProfile": 400,
+    "uciMin": 1320,
+    "uciMax": 3190
+  },
+  "gameElo": {
+    "min": 400,
+    "max": 3000,
+    "resultNudge": 50,
+    "accuracyAnchors": [
+      [40, 400],
+      [50, 700],
+      [60, 1000],
+      [70, 1350],
+      [75, 1550],
+      [80, 1750],
+      [85, 2000],
+      [90, 2250],
+      [93, 2450],
+      [96, 2650],
+      [98, 2800],
+      [100, 3000]
+    ]
+  },
+  "review": {
+    "winSlope": 0.00368208,
+    "bestMax": 0.001,
+    "standardBands": {
+      "excellent": 0.02,
+      "good": 0.05,
+      "inaccuracy": 0.1,
+      "mistake": 0.2
+    },
+    "bandScale": {
+      "relaxed": 1.5,
+      "standard": 1,
+      "strict": 0.7
+    },
+    "brilliant": {
+      "minSacrifice": 2,
+      "minWinAfter": 0.45,
+      "maxWinWithout": 0.9
+    },
+    "great": {
+      "minGap": 0.2,
+      "minWinAfter": 0.35
+    },
+    "miss": {
+      "minOpponentLoss": 0.1,
+      "minBestWin": 0.7,
+      "maxWinAfter": 0.65,
+      "blunderFloor": 0.2
+    },
+    "accuracy": {
+      "contextWeightK": 1.2,
+      "cplCap": 500,
+      "rawDecay": 0.005,
+      "typicalRaw": 50,
+      "targetDisplayed": 70
+    }
+  },
+  "coach": {
+    "freeDailyQuota": 20,
+    "errorCodes": ["NOT_AUTHENTICATED", "QUOTA_EXCEEDED", "RATE_LIMITED", "OPENAI_KEY_MISSING", "INVALID_BODY", "SUPABASE_NOT_CONFIGURED", "OPENAI_ERROR"]
+  },
+  "pvp": {
+    "timePresets": [
+      { "id": "correspondence_1d", "mode": "correspondence", "category": "correspondence", "initialSec": 0, "incrementSec": 0, "daysPerMove": 1 },
+      { "id": "correspondence_3d", "mode": "correspondence", "category": "correspondence", "initialSec": 0, "incrementSec": 0, "daysPerMove": 3 },
+      { "id": "correspondence_7d", "mode": "correspondence", "category": "correspondence", "initialSec": 0, "incrementSec": 0, "daysPerMove": 7 },
+      { "id": "bullet_1_0", "mode": "timed", "category": "bullet", "initialSec": 60, "incrementSec": 0 },
+      { "id": "bullet_2_1", "mode": "timed", "category": "bullet", "initialSec": 120, "incrementSec": 1 },
+      { "id": "blitz_3_0", "mode": "timed", "category": "blitz", "initialSec": 180, "incrementSec": 0 },
+      { "id": "blitz_3_2", "mode": "timed", "category": "blitz", "initialSec": 180, "incrementSec": 2 },
+      { "id": "blitz_5_0", "mode": "timed", "category": "blitz", "initialSec": 300, "incrementSec": 0 },
+      { "id": "blitz_5_3", "mode": "timed", "category": "blitz", "initialSec": 300, "incrementSec": 3 },
+      { "id": "blitz_10_0", "mode": "timed", "category": "blitz", "initialSec": 600, "incrementSec": 0 },
+      { "id": "rapid_15_10", "mode": "timed", "category": "rapid", "initialSec": 900, "incrementSec": 10 },
+      { "id": "classical_30_0", "mode": "timed", "category": "classical", "initialSec": 1800, "incrementSec": 0 }
+    ],
+    "errorMessages": {
+      "Unauthorized": "unauthorized",
+      "Forbidden": "forbidden",
+      "Not your turn": "notYourTurn",
+      "Game is not active": "gameNotActive",
+      "Game not started": "gameNotStarted",
+      "Game not found": "gameNotFound",
+      "Move in progress": "moveInProgress",
+      "Move already submitted": "moveAlreadySubmitted",
+      "Time expired": "timeExpired",
+      "Time forfeiture": "timeExpired",
+      "Illegal move": "illegalMove",
+      "Invalid UCI": "illegalMove",
+      "Too many requests": "rateLimited",
+      "Too fast": "rateLimited",
+      "Game over (time)": "gameOver",
+      "Takeback not allowed in this position": "takebackNotAllowed",
+      "No moves to take back": "noMovesToTakeback",
+      "Network request failed": "networkError",
+      "Server misconfigured": "serverError",
+      "Cannot join this game": "cannotJoin",
+      "Only open waiting lobbies can be cancelled": "lobbyCancelFailed",
+      "Invalid action": "invalidAction",
+      "No offer to cancel": "noOfferToCancel",
+      "No opponent offer to decline": "noOfferToDecline",
+      "No draw offer to accept": "noDrawToAccept",
+      "Draw offer limit reached": "drawOfferLimitReached",
+      "No takeback offer to accept": "noTakebackToAccept",
+      "Game is not finished": "gameNotFinished",
+      "Invalid or unsupported time control for matchmaking": "matchmakingUnsupported",
+      "Unsupported time control": "matchmakingUnsupported",
+      "Supabase client unavailable": "networkError",
+      "Rematch failed": "rematchFailed",
+      "No game": "gameNotFound",
+      "Update failed": "updateFailed",
+      "Insert failed": "updateFailed",
+      "Join failed": "joinFailed",
+      "Failed to create game": "createFailed",
+      "Delete failed": "updateFailed",
+      "Chat closed for this game": "chatClosed",
+      "Invalid message": "chatInvalid"
+    }
+  },
+  "ascension": {
+    "errorCodes": ["UNKNOWN_SKILL", "ALREADY_UNLOCKED", "INSUFFICIENT_XP", "MISSING_PREREQUISITE"],
+    "skillTree": [
+      {
+        "id": "root",
+        "name": { "fr": "Origine", "en": "Origin" },
+        "description": { "fr": "Point de départ de votre ascension.", "en": "Starting point of your ascension." },
+        "cost": 0,
+        "prerequisites": [],
+        "effectKind": "passive",
+        "branch": "utility",
+        "position": { "x": 0, "y": 0 }
+      },
+      {
+        "id": "extra_hint",
+        "name": { "fr": "Indice supplémentaire", "en": "Extra hint" },
+        "description": { "fr": "Débloque un indice de plus par puzzle.", "en": "Unlock one extra hint per puzzle." },
+        "cost": 50,
+        "prerequisites": ["root"],
+        "effectKind": "passive",
+        "branch": "utility",
+        "position": { "x": -1, "y": 1 }
+      },
+      {
+        "id": "undo_move",
+        "name": { "fr": "Annuler un coup", "en": "Undo move" },
+        "description": { "fr": "Permet d'annuler un coup par puzzle.", "en": "Allows one undo per puzzle." },
+        "cost": 80,
+        "prerequisites": ["extra_hint"],
+        "effectKind": "passive",
+        "branch": "utility",
+        "position": { "x": -1, "y": 2 }
+      },
+      {
+        "id": "knight_phantom",
+        "name": { "fr": "Cavalier fou (Crazy Horse)", "en": "Crazy Horse knight" },
+        "description": {
+          "fr": "En puzzles fantasy : le cavalier glisse en diagonale comme un fou (sur sa couleur) et peut sauter de 2 cases sur les côtés (gauche, droite, haut, bas).",
+          "en": "In fantasy puzzles: the knight slides diagonally like a bishop (on its square color) and may leap 2 squares orthogonally (left, right, up, down)."
+        },
+        "cost": 60,
+        "prerequisites": ["root"],
+        "effectKind": "fantasy_ability",
+        "abilityId": "knight_phantom",
+        "branch": "fantasy",
+        "position": { "x": 1, "y": 1 }
+      },
+      {
+        "id": "bishop_orthogonal",
+        "name": { "fr": "Fou orthogonal", "en": "Orthogonal bishop" },
+        "description": {
+          "fr": "Le fou peut glisser orthogonalement une fois par puzzle.",
+          "en": "The bishop can slide orthogonally once per puzzle."
+        },
+        "cost": 90,
+        "prerequisites": ["knight_phantom"],
+        "effectKind": "fantasy_ability",
+        "abilityId": "bishop_orthogonal",
+        "branch": "fantasy",
+        "position": { "x": 1, "y": 2 }
+      },
+      {
+        "id": "rook_tunnel",
+        "name": { "fr": "Tour tunnel", "en": "Tunnel rook" },
+        "description": {
+          "fr": "La tour traverse une pièce alliée.",
+          "en": "The rook passes through a friendly piece."
+        },
+        "cost": 120,
+        "prerequisites": ["bishop_orthogonal"],
+        "effectKind": "fantasy_ability",
+        "abilityId": "rook_tunnel",
+        "branch": "fantasy",
+        "position": { "x": 1, "y": 3 }
+      },
+      {
+        "id": "pawn_charge",
+        "name": { "fr": "Charge du pion", "en": "Pawn charge" },
+        "description": {
+          "fr": "Le pion peut avancer de deux cases même bloqué.",
+          "en": "The pawn can advance two squares even when blocked."
+        },
+        "cost": 100,
+        "prerequisites": ["knight_phantom"],
+        "effectKind": "fantasy_ability",
+        "abilityId": "pawn_charge",
+        "branch": "fantasy",
+        "position": { "x": 2, "y": 2 }
+      },
+      {
+        "id": "pawn_greedy",
+        "name": { "fr": "Pion glouton", "en": "Greedy pawn" },
+        "description": {
+          "fr": "En puzzles fantasy : après une capture, le pion continue à manger tant qu'il le peut, sans passer son tour.",
+          "en": "In fantasy puzzles: after capturing, the pawn keeps taking as long as it can without yielding the turn."
+        },
+        "cost": 110,
+        "prerequisites": ["pawn_charge"],
+        "effectKind": "fantasy_ability",
+        "abilityId": "pawn_greedy",
+        "branch": "fantasy",
+        "position": { "x": 2, "y": 3 }
+      },
+      {
+        "id": "queen_split",
+        "name": { "fr": "Reine scindée", "en": "Split queen" },
+        "description": {
+          "fr": "En puzzles fantasy (1×/puzzle) : après un coup de dame, vous gardez la main pour rejouer la même dame, sauf si ce coup met le roi adverse en échec — l'adversaire doit alors répondre.",
+          "en": "In fantasy puzzles (once per puzzle): after a queen move, keep the turn to move that same queen again, unless the move puts the opponent king in check — then they must respond."
+        },
+        "cost": 140,
+        "prerequisites": ["rook_tunnel"],
+        "effectKind": "fantasy_ability",
+        "abilityId": "queen_split",
+        "branch": "fantasy",
+        "position": { "x": 1, "y": 4 }
+      },
+      {
+        "id": "king_anchor",
+        "name": { "fr": "Ancre du roi", "en": "King anchor" },
+        "description": {
+          "fr": "En puzzles fantasy : le roi survit aux pièges sur la case d'arrivée (piège consommé).",
+          "en": "In fantasy puzzles: the king survives trap squares on the landing square (trap consumed)."
+        },
+        "cost": 130,
+        "prerequisites": ["pawn_greedy"],
+        "effectKind": "fantasy_ability",
+        "abilityId": "king_anchor",
+        "branch": "terrain",
+        "position": { "x": 3, "y": 3 }
+      },
+      {
+        "id": "blast_dodge",
+        "name": { "fr": "Esquive d'explosion", "en": "Blast dodge" },
+        "description": {
+          "fr": "Passif : en puzzles fantasy, une pièce non-roi qui atterrit sur une case explosive survit (voisins toujours affectés).",
+          "en": "Passive: in fantasy puzzles, a non-king landing on an explosive square survives (adjacent pieces still affected)."
+        },
+        "cost": 100,
+        "prerequisites": ["king_anchor"],
+        "effectKind": "passive",
+        "branch": "terrain",
+        "position": { "x": 3, "y": 4 }
+      },
+      {
+        "id": "tunnel_sense",
+        "name": { "fr": "Sens du tunnel", "en": "Tunnel sense" },
+        "description": {
+          "fr": "Passif : surlignage renforcé des sorties de tunnel (flèches et repères visuels).",
+          "en": "Passive: enhanced tunnel exit highlighting (arrows and visual markers)."
+        },
+        "cost": 80,
+        "prerequisites": ["king_anchor"],
+        "effectKind": "passive",
+        "branch": "terrain",
+        "position": { "x": 4, "y": 4 }
+      },
+      {
+        "id": "power_sight",
+        "name": { "fr": "Vision des pouvoirs", "en": "Power sight" },
+        "description": {
+          "fr": "Sur le parcours : les quêtes bonus verrouillées indiquent quel pouvoir manque dans l'arbre.",
+          "en": "On the path: locked bonus quests show which power is missing in the skill tree."
+        },
+        "cost": 70,
+        "prerequisites": ["extra_hint"],
+        "effectKind": "passive",
+        "branch": "utility",
+        "position": { "x": -2, "y": 1 }
+      },
+      {
+        "id": "skip_path_anim",
+        "name": { "fr": "Chemin express", "en": "Express path" },
+        "description": {
+          "fr": "Préférence locale : désactive l'animation du jeton sur le parcours (transitions plus rapides).",
+          "en": "Local preference: disables the token animation on the path (faster transitions)."
+        },
+        "cost": 60,
+        "prerequisites": ["root"],
+        "effectKind": "passive",
+        "branch": "utility",
+        "position": { "x": -2, "y": 2 }
+      },
+      {
+        "id": "fantasy_codex",
+        "name": { "fr": "Codex fantasy", "en": "Fantasy codex" },
+        "description": {
+          "fr": "Affiche le panneau de règles détaillé dans les puzzles fantasy.",
+          "en": "Shows the detailed rules panel in fantasy puzzles."
+        },
+        "cost": 50,
+        "prerequisites": ["root"],
+        "effectKind": "passive",
+        "branch": "utility",
+        "position": { "x": -2, "y": 3 }
+      },
+      {
+        "id": "card_aura",
+        "name": { "fr": "Aura de carte", "en": "Card aura" },
+        "description": { "fr": "Renforce l'effet visuel de votre carte.", "en": "Enhances your card visual aura." },
+        "cost": 150,
+        "prerequisites": ["undo_move", "rook_tunnel"],
+        "effectKind": "cosmetic",
+        "branch": "prestige",
+        "position": { "x": 0, "y": 4 }
+      }
+    ]
+  },
+  "divergences": [
+    {
+      "id": "puzzles-direct-lichess",
+      "description": "Android appelle lichess.org directement pour les puzzles (le web /api/puzzles/random met en cache un puzzle par difficulté pendant 5 minutes)."
+    },
+    {
+      "id": "admin-pages-web-only",
+      "description": "Les pages d'administration (learn, puzzles, ascension, ops, site) n'existent que sur le web."
+    },
+    {
+      "id": "i18n-separate",
+      "description": "Les chaînes d'interface FR/EN sont maintenues séparément (lib/i18n côté web, ui/i18n côté Android)."
+    },
+    {
+      "id": "pvp-finished-games-direct-supabase",
+      "description": "Android lit les parties PvP terminées directement dans la table pvp_games (pas de route HTTP dédiée côté web)."
+    }
+  ]
+}

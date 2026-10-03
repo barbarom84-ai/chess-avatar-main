@@ -2,6 +2,7 @@ import { Chess, type Square } from "chess.js";
 import {
   classifyMove,
   computeGameAccuracy,
+  winProbability,
   type MoveClassification,
   type MoveEvalInput,
   type GameAccuracyResult,
@@ -50,6 +51,8 @@ export interface ReviewedMove {
   playerEval: number;
   /** Centipawn loss attributed to the move (always >= 0). */
   cpl: number;
+  /** Expected points (0..1) given away by the move. */
+  winLoss?: number;
   classification: MoveClassification;
   isMateBest?: boolean;
   isMatePlayer?: boolean;
@@ -167,6 +170,7 @@ export function nextMainlineUciIfAlignedWithGame(
 /**
  * Aggregate a per-side accuracy + classification breakdown from the reviewed moves.
  * Reuses `computeGameAccuracy` from analysis-engine.ts and adds an averageCpl.
+ * Counts use each move's own classification so they always match the badges.
  * keyMoments contains the indexes of blunders and missed tactics (in playing order).
  */
 export function aggregateReview(
@@ -187,9 +191,7 @@ export function aggregateReview(
       playerEvalPawns: m.playerEval,
       sideToMove: m.sideToMove,
       evalBeforePawns: m.evalBefore,
-      isMateBest: m.isMateBest,
-      isMatePlayer: m.isMatePlayer,
-      isSacrifice: m.classification === "brilliant",
+      classification: m.classification,
     };
     if (m.sideToMove === "white") {
       whiteInputs.push(input);
@@ -229,13 +231,24 @@ export function aggregateReview(
 /** Same return shape as `useStockfish` → `getBestMoveAndEval`. */
 export type GetBestMoveAndEvalFn = (
   fen: string,
-  depth?: number
+  depth?: number,
+  opts?: { multipv?: number }
 ) => Promise<{
   move: string;
   evalPawns: number;
   isMate?: boolean;
   mateInMoves?: number;
+  /** Engine's second line, side-to-move POV (MultiPV ≥ 2). */
+  second?: {
+    move: string;
+    evalPawns: number;
+    isMate?: boolean;
+    mateInMoves?: number;
+  };
 }>;
+
+/** MultiPV used by the review: line 2 is needed to detect "great" (only good) moves. */
+const REVIEW_MULTIPV = 2;
 
 export class ReviewCancelledError extends Error {
   constructor() {
@@ -316,8 +329,8 @@ function throwIfCancelled(
 
 type BestMoveEvalResult = Awaited<ReturnType<GetBestMoveAndEvalFn>>;
 
-function fenCacheKey(fen: string, searchDepth: number): string {
-  return `${fen}|${searchDepth}`;
+function fenCacheKey(fen: string, searchDepth: number, multipv: number): string {
+  return `${fen}|${searchDepth}|${multipv}`;
 }
 
 /** Wrap engine calls with per-session FEN cache (reuses fenAfter from prior plies). */
@@ -325,12 +338,12 @@ export function createCachedGetBestMoveAndEval(
   getBestMoveAndEval: GetBestMoveAndEvalFn
 ): GetBestMoveAndEvalFn {
   const fenCache = new Map<string, BestMoveEvalResult>();
-  return (fen: string, searchDepth?: number) => {
+  return (fen: string, searchDepth?: number, opts?: { multipv?: number }) => {
     const d = searchDepth ?? 18;
-    const key = fenCacheKey(fen, d);
+    const key = fenCacheKey(fen, d, opts?.multipv ?? 1);
     const hit = fenCache.get(key);
     if (hit) return Promise.resolve(hit);
-    return getBestMoveAndEval(fen, d).then((result) => {
+    return getBestMoveAndEval(fen, d, opts).then((result) => {
       fenCache.set(key, result);
       return result;
     });
@@ -408,6 +421,7 @@ export async function analyzeParsedGameForReview(
   const openingByPly = computeOpeningByPly(parsed.uci.slice(0, totalPlies));
   let lastEvalSwing = 0;
   let evalWhiteCarry = 0;
+  let opponentPrevLoss = 0;
 
   for (let ply = 0; ply < totalPlies; ply++) {
     throwIfCancelled(signal, isCancelled);
@@ -427,11 +441,12 @@ export async function analyzeParsedGameForReview(
       collected.push(reviewed);
       onPartialMove?.(reviewed, ply);
       onProgress?.(ply + 1, totalPlies);
+      opponentPrevLoss = 0;
       continue;
     }
 
     const plyDepth = adaptiveDepthForPly(ply, totalPlies, depth, lastEvalSwing);
-    const best = await cachedGet(fenBefore, plyDepth);
+    const best = await cachedGet(fenBefore, plyDepth, { multipv: REVIEW_MULTIPV });
     throwIfCancelled(signal, isCancelled);
 
     let playerEvalPawns = best.evalPawns;
@@ -440,7 +455,7 @@ export async function analyzeParsedGameForReview(
       best.mateInMoves !== undefined
         ? mateToWhitePov(best.mateInMoves, sideToMove)
         : undefined;
-    const playerIsBest = best.move && best.move === uci;
+    const playerIsBest = Boolean(best.move) && sameMove(best.move, uci);
     if (!playerIsBest) {
       const terminal = classifyTerminalPosition(fenAfter);
       if (terminal === "checkmate") {
@@ -456,7 +471,9 @@ export async function analyzeParsedGameForReview(
           adaptiveDepthForPly(ply + 1, totalPlies, depth, lastEvalSwing),
           plyDepth
         );
-        const afterPlayer = await cachedGet(fenAfter, afterDepth);
+        const afterPlayer = await cachedGet(fenAfter, afterDepth, {
+          multipv: REVIEW_MULTIPV,
+        });
         throwIfCancelled(signal, isCancelled);
         playerEvalPawns = normalizeToWhitePov(
           afterPlayer.evalPawns,
@@ -482,6 +499,15 @@ export async function analyzeParsedGameForReview(
         ? mateToWhitePov(best.mateInMoves, sideToMove)
         : undefined;
 
+    const second = best.second;
+    const secondEvalWhite = second
+      ? normalizeToWhitePov(second.evalPawns, sideToMove)
+      : undefined;
+    const secondMateInMovesWhite =
+      second?.mateInMoves !== undefined
+        ? mateToWhitePov(second.mateInMoves, sideToMove)
+        : undefined;
+
     const reviewed = buildReviewedMove(
       {
         ply,
@@ -500,6 +526,10 @@ export async function analyzeParsedGameForReview(
           ? bestMateInMovesWhite
           : playerMateInMovesWhite,
         fenBefore,
+        secondEval: secondEvalWhite,
+        secondMateInMoves: secondMateInMovesWhite,
+        opponentPrevLoss,
+        previousUci: ply > 0 ? parsed.uci[ply - 1] : undefined,
       },
       analysisStrictness
     );
@@ -507,6 +537,7 @@ export async function analyzeParsedGameForReview(
     const evalSwing = Math.abs(reviewed.evalBefore - reviewed.playerEval);
     lastEvalSwing = evalSwing;
     evalWhiteCarry = reviewed.playerEval;
+    opponentPrevLoss = reviewed.winLoss ?? 0;
 
     collected.push(reviewed);
     onPartialMove?.(reviewed, ply);
@@ -548,9 +579,6 @@ export function buildParsedGameFromSanHistory(
 // Per-move classification helper
 // ---------------------------------------------------------------------------
 
-const CONTEXT_WEIGHT_K = 1.2;
-const SCALED_CPL_CAP = 500;
-
 const PIECE_VALUES: Record<string, number> = {
   p: 1,
   n: 3,
@@ -560,31 +588,135 @@ const PIECE_VALUES: Record<string, number> = {
   k: 0,
 };
 
+const SEE_MAX_DEPTH = 12;
+const NEAR_BEST_MAX_LOSS = 0.02;
+
+function pieceValue(type: string | undefined): number {
+  return type ? (PIECE_VALUES[type] ?? 0) : 0;
+}
+
+function attackerValue(type: string): number {
+  return type === "k" ? 100 : pieceValue(type);
+}
+
+function sameMove(a: string, b: string): boolean {
+  return a.toLowerCase().slice(0, 5) === b.toLowerCase().slice(0, 5);
+}
+
+function moveFromUci(uci: string): { from: Square; to: Square; promotion?: string } {
+  const promotion = uci.length > 4 ? uci.slice(4, 5).toLowerCase() : undefined;
+  return {
+    from: uci.slice(0, 2).toLowerCase() as Square,
+    to: uci.slice(2, 4).toLowerCase() as Square,
+    ...(promotion ? { promotion } : {}),
+  };
+}
+
+/** Static exchange gain for the side to move capturing on `square` (0 if it should not capture). */
+function seeGain(board: Chess, square: Square, depth = 0): number {
+  if (depth > SEE_MAX_DEPTH) return 0;
+  const target = board.get(square);
+  if (!target) return 0;
+  let capture: { from: Square; to: Square; promotion?: string } | null = null;
+  let captureValue = Infinity;
+  for (const m of board.moves({ verbose: true })) {
+    if (m.to !== square) continue;
+    const v = attackerValue(m.piece);
+    if (v < captureValue) {
+      captureValue = v;
+      capture = { from: m.from, to: m.to, ...(m.promotion ? { promotion: m.promotion } : {}) };
+    }
+  }
+  if (!capture) return 0;
+  board.move(capture);
+  const gain = pieceValue(target.type) - seeGain(board, square, depth + 1);
+  board.undo();
+  return Math.max(0, gain);
+}
+
+/** Opponent's best static-exchange gain on each of `side`'s non-pawn pieces (side to move = opponent). */
+function hangingPieces(board: Chess, side: "w" | "b", exclude: Square): Map<Square, number> {
+  const out = new Map<Square, number>();
+  for (const row of board.board()) {
+    for (const cell of row) {
+      if (!cell || cell.color !== side || cell.square === exclude) continue;
+      if (cell.type === "p" || cell.type === "k") continue;
+      const gain = seeGain(board, cell.square);
+      if (gain > 0) out.set(cell.square, gain);
+    }
+  }
+  return out;
+}
+
+/** Same position with the other side to move (en passant cleared). */
+function nullMoveFen(fen: string): string {
+  const parts = fen.split(" ");
+  if (parts.length >= 4) {
+    parts[1] = parts[1] === "w" ? "b" : "w";
+    parts[3] = "-";
+  }
+  return parts.join(" ");
+}
+
 /**
- * True when the mover offers material (moved piece worth more than what it
- * captured) and the opponent can recapture it on the arrival square.
+ * Net material (pawn units) the mover offers with `uci`: the moved piece left
+ * en prise on its arrival square, or another piece newly left hanging, both
+ * measured by static exchange. 0 when nothing is given away.
  */
-export function isOfferedSacrifice(fenBefore: string, uci: string): boolean {
+export function sacrificedMaterial(fenBefore: string, uci: string): number {
+  if (!uci || uci.length < 4) return 0;
+  try {
+    const board = new Chess(fenBefore);
+    const mover = board.turn();
+    const { from, to, promotion } = moveFromUci(uci);
+    if (!board.get(from)) return 0;
+    const wasInCheck = board.inCheck();
+    const hangingBefore = wasInCheck
+      ? new Map<Square, number>()
+      : hangingPieces(new Chess(nullMoveFen(fenBefore)), mover, from);
+
+    const moved = board.move({ from, to, ...(promotion ? { promotion } : {}) });
+    if (!moved) return 0;
+    if (board.moves().length === 0) return 0;
+
+    const capturedValue = pieceValue(moved.captured);
+    const promotionBonus = moved.promotion ? pieceValue(moved.promotion) - 1 : 0;
+    const onArrival = seeGain(board, to) - capturedValue - promotionBonus;
+
+    let newlyHanging = 0;
+    if (!wasInCheck) {
+      for (const [sq, gain] of hangingPieces(board, mover, to)) {
+        newlyHanging = Math.max(newlyHanging, gain - (hangingBefore.get(sq) ?? 0));
+      }
+    }
+    return Math.max(onArrival, newlyHanging, 0);
+  } catch {
+    return 0;
+  }
+}
+
+/** True when `uci` recaptures on `previousUci`'s square, or wins material outright by static exchange. */
+export function isObviousCapture(
+  fenBefore: string,
+  uci: string,
+  previousUci?: string
+): boolean {
   if (!uci || uci.length < 4) return false;
   try {
     const board = new Chess(fenBefore);
-    const from = uci.slice(0, 2) as Square;
-    const to = uci.slice(2, 4) as Square;
-    const promotion = uci.length > 4 ? uci.slice(4, 5) : undefined;
-    const piece = board.get(from);
-    if (!piece) return false;
-    const moved = board.move({
-      from,
-      to,
-      ...(promotion ? { promotion } : {}),
-    });
+    const { from, to, promotion } = moveFromUci(uci);
+    const target = board.get(to);
+    if (!target) return false;
+    if (
+      previousUci &&
+      previousUci.length >= 4 &&
+      previousUci.slice(2, 4).toLowerCase() === to
+    ) {
+      return true;
+    }
+    const moved = board.move({ from, to, ...(promotion ? { promotion } : {}) });
     if (!moved) return false;
-    const movedVal = PIECE_VALUES[piece.type] ?? 0;
-    const capturedVal = moved.captured ? (PIECE_VALUES[moved.captured] ?? 0) : 0;
-    if (movedVal <= capturedVal) return false;
-    return board
-      .moves({ verbose: true })
-      .some((m) => m.to === to && Boolean(m.captured));
+    return pieceValue(target.type) - seeGain(board, to) >= 2;
   } catch {
     return false;
   }
@@ -610,6 +742,14 @@ export function buildReviewedMove(
     bestMateInMoves?: number;
     playerMateInMoves?: number;
     fenBefore?: string;
+    /** Eval (white POV, pawns) of the engine's second line in the position before the move. */
+    secondEval?: number;
+    /** Signed mate distance (white POV) of the second line. */
+    secondMateInMoves?: number;
+    /** Expected points the opponent gave away with the previous move. */
+    opponentPrevLoss?: number;
+    /** Previous ply's UCI (recapture detection). */
+    previousUci?: string;
   },
   strictness: AnalysisStrictnessId = DEFAULT_ANALYSIS_STRICTNESS
 ): ReviewedMove {
@@ -621,24 +761,37 @@ export function buildReviewedMove(
       : args.playerEval - args.bestEval;
   const cpl = Math.max(0, Math.round(cplPawns * 100));
 
-  const contextWeight =
-    1 + CONTEXT_WEIGHT_K / (1 + Math.abs(args.evalBefore));
-  const scaledCpl = Math.min(SCALED_CPL_CAP, cpl * contextWeight);
-
-  const isSacrifice = Boolean(
-    args.fenBefore && isOfferedSacrifice(args.fenBefore, args.uci)
-  );
+  const forWhite = args.sideToMove === "white";
+  const bestWin = winProbability(args.bestEval, args.bestMateInMoves, forWhite);
+  const playerWin = winProbability(args.playerEval, args.playerMateInMoves, forWhite);
+  const secondLineWin =
+    args.secondEval !== undefined
+      ? winProbability(args.secondEval, args.secondMateInMoves, forWhite)
+      : undefined;
+  const playedIsBest = Boolean(args.bestMove) && sameMove(args.bestMove, args.uci);
+  const winLoss = Math.max(0, bestWin - playerWin);
+  const nearBest = playedIsBest || winLoss <= NEAR_BEST_MAX_LOSS;
 
   const moveInput: MoveEvalInput = {
     bestEvalPawns: args.bestEval,
     playerEvalPawns: args.playerEval,
     sideToMove: args.sideToMove,
     evalBeforePawns: args.evalBefore,
-    isMateBest: args.isMateBest,
-    isMatePlayer: args.isMatePlayer,
-    isSacrifice,
+    bestWin,
+    playerWin,
+    topLineWin: bestWin,
+    secondLineWin,
+    alternativeWin: playedIsBest ? secondLineWin : bestWin,
+    playedIsBest,
+    opponentPrevLoss: args.opponentPrevLoss ?? 0,
+    sacrificedMaterial:
+      nearBest && args.fenBefore ? sacrificedMaterial(args.fenBefore, args.uci) : 0,
+    isObviousCapture:
+      playedIsBest && args.fenBefore
+        ? isObviousCapture(args.fenBefore, args.uci, args.previousUci)
+        : false,
   };
-  const classification = classifyMove(scaledCpl, moveInput, profile);
+  const classification = classifyMove(moveInput, profile);
 
   return {
     ply: args.ply,
@@ -651,6 +804,7 @@ export function buildReviewedMove(
     bestEval: args.bestEval,
     playerEval: args.playerEval,
     cpl,
+    winLoss: Math.round(winLoss * 10000) / 10000,
     classification,
     isMateBest: args.isMateBest,
     isMatePlayer: args.isMatePlayer,
@@ -693,6 +847,12 @@ export const CLASSIFICATION_COLORS: Record<
     border: "border-teal-400/50",
     emoji: "!!",
   },
+  great: {
+    bg: "bg-blue-500/15",
+    text: "text-blue-300",
+    border: "border-blue-400/50",
+    emoji: "!",
+  },
   best: {
     bg: "bg-emerald-500/15",
     text: "text-emerald-300",
@@ -730,10 +890,10 @@ export const CLASSIFICATION_COLORS: Record<
     emoji: "??",
   },
   miss: {
-    bg: "bg-sky-500/15",
-    text: "text-sky-300",
-    border: "border-sky-500/40",
-    emoji: "X",
+    bg: "bg-fuchsia-500/15",
+    text: "text-fuchsia-300",
+    border: "border-fuchsia-500/40",
+    emoji: "✗",
   },
 };
 
@@ -764,13 +924,19 @@ export function hashPgn(pgn: string): string {
   return (hash >>> 0).toString(16).padStart(8, "0");
 }
 
+/** Bump whenever classification rules change so cached reviews are recomputed. */
+export const REVIEW_CLASSIFIER_VERSION = 2;
+
 /**
- * Cache key for persisted reviews: same game + strictness + depth can hit cloud cache.
+ * Cache key for persisted reviews: same game + strictness + depth + classifier
+ * version can hit cloud cache.
  */
 export function hashReviewCacheKey(
   pgn: string,
   strictness: AnalysisStrictnessId,
   depth: number
 ): string {
-  return hashPgn(`${pgn}\nstrict=${strictness}\ndepth=${depth}`);
+  return hashPgn(
+    `${pgn}\nstrict=${strictness}\ndepth=${depth}\nclassifier=v${REVIEW_CLASSIFIER_VERSION}`
+  );
 }

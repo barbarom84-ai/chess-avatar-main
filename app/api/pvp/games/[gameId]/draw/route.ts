@@ -5,6 +5,7 @@ import type { PvpGameRow } from "@/lib/pvp-chess";
 import { pvpRateLimitOrResponse } from "@/lib/pvp-api-rate-limit";
 import { MAX_PVP_DRAW_OFFERS_PER_PLAYER } from "@/lib/pvp-draw-limits";
 
+import type { PvpDrawResponse } from "@/lib/api-contract";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
 
@@ -75,14 +76,14 @@ export async function POST(
       drawOfferedBy: user.id,
       serverNow: Date.now(),
       drawOffersCount: isRenewal ? current : current + 1,
-    });
+    } satisfies PvpDrawResponse);
   }
 
   if (action === "cancel") {
     if (row.draw_offered_by !== user.id) return jsonError("No offer to cancel", 400);
     const { error } = await sb.from("pvp_games").update({ draw_offered_by: null }).eq("id", gameId);
     if (error) return jsonError(error.message ?? "Update failed", 500);
-    return NextResponse.json({ ok: true, drawOfferedBy: null, serverNow: Date.now() });
+    return NextResponse.json({ ok: true, drawOfferedBy: null, serverNow: Date.now() } satisfies PvpDrawResponse);
   }
 
   if (action === "decline") {
@@ -91,7 +92,7 @@ export async function POST(
     }
     const { error } = await sb.from("pvp_games").update({ draw_offered_by: null }).eq("id", gameId);
     if (error) return jsonError(error.message ?? "Update failed", 500);
-    return NextResponse.json({ ok: true, drawOfferedBy: null, serverNow: Date.now() });
+    return NextResponse.json({ ok: true, drawOfferedBy: null, serverNow: Date.now() } satisfies PvpDrawResponse);
   }
 
   // accept
@@ -110,5 +111,5 @@ export async function POST(
     .eq("status", "playing");
 
   if (error) return jsonError(error.message ?? "Update failed", 500);
-  return NextResponse.json({ ok: true, result: "1/2-1/2", resultReason: "draw_agreed", serverNow: Date.now() });
+  return NextResponse.json({ ok: true, result: "1/2-1/2", resultReason: "draw_agreed", serverNow: Date.now() } satisfies PvpDrawResponse);
 }

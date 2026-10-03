@@ -92,13 +92,13 @@ export default function ArenaPlayoffRosterDeck({
         />
       </div>
 
-      <div className="arena-roster-deck px-2 pb-3 pt-2">
+      <div className="arena-roster-deck grid grid-cols-[repeat(auto-fill,minmax(5.5rem,1fr))] gap-2 content-start justify-items-center px-2 pb-3 pt-2 max-h-[min(52vh,28rem)] overflow-y-auto">
         {rosterVisible.length === 0 ? (
-          <p className="text-xs text-slate-500 px-2 py-4 text-center w-full">
+          <p className="text-xs text-slate-500 px-2 py-4 text-center col-span-full">
             {t.arenaPage.pickNoMatches}
           </p>
         ) : (
-          rosterVisible.map((opt, index) => {
+          rosterVisible.map((opt) => {
             const picked = tapPickKey === opt.key;
             const placed = placedKeys.has(opt.key);
             const dragging = dragOptionKey === opt.key;
@@ -123,10 +123,10 @@ export default function ArenaPlayoffRosterDeck({
                     if (!placed) onTapPickKey(opt.key);
                   }
                 }}
-                className={`arena-roster-deck-card relative ${
-                  index % 2 === 1 ? "arena-roster-deck-card--alt" : ""
-                } ${placed ? "cursor-default" : "cursor-grab active:cursor-grabbing"}`}
-                style={{ zIndex: picked ? 20 : index + 1 }}
+                className={`arena-roster-deck-card relative w-[88px] ${
+                  placed ? "cursor-default" : "cursor-grab active:cursor-grabbing"
+                }`}
+                style={{ zIndex: picked ? 20 : 1 }}
               >
                 <AvatarTradingCard
                   model={model}

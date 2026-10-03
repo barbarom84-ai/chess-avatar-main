@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import {
   ChevronLeft,
   ChevronRight,
@@ -9,19 +8,15 @@ import {
   RotateCw,
   Square,
   Crown,
-  AlertTriangle,
   Download,
   Pause,
   Play,
-  Sparkles,
   Loader2,
-  BarChart3,
   BookOpen,
   ShieldAlert,
   Skull,
   Lock,
   LogOut,
-  Bot,
   Check,
   Save,
 } from "lucide-react";
@@ -38,13 +33,15 @@ import {
 
 import SimpleChessboard from "./SimpleChessboard";
 import EvaluationBar from "./EvaluationBar";
+import PositionTopLines from "./PositionTopLines";
+import { usePositionTopLines } from "@/hooks/usePositionTopLines";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { Label } from "./ui/label";
 import { Badge } from "./ui/badge";
 import { Progress } from "./ui/progress";
 import { ScrollArea } from "./ui/scroll-area";
 import { Input } from "./ui/input";
+import { cn } from "@/lib/utils";
 import { useGameReview, type ReviewStatus } from "@/hooks/useGameReview";
 import {
   CLASSIFICATION_COLORS,
@@ -56,6 +53,7 @@ import {
   type ParsedGameForReview,
   type ReviewedMove,
 } from "@/lib/game-review";
+import { reviewMainBoardArrows } from "@/lib/review-board-arrows";
 import {
   type AnalysisStrictnessId,
   DEFAULT_ANALYSIS_STRICTNESS,
@@ -64,18 +62,14 @@ import { type CoachToneId } from "@/lib/coach-tone";
 import { loadCachedReview, saveReview } from "@/lib/game-review-storage";
 import { useLanguage } from "@/lib/language-context";
 import { getOpeningName, type Opening } from "@/lib/openings-library";
-import { findBestOpeningByPrefix } from "@/lib/openings-registry";
 import {
-  describeTheoryHitsForUi,
-  getOpeningTheorySans,
-  type TheoryTranspositionHit,
-} from "@/lib/opening-theory";
+  findBestOpeningByPrefix,
+  findCompletedOpening,
+} from "@/lib/openings-registry";
 import { buildVerboseHistoryFromSan } from "@/lib/move-history-verbose";
-import { uciToVerboseMoveFromFen } from "@/lib/learn-chess-utils";
 import SanNotation from "@/components/SanNotation";
 import { useChessboardSettings } from "@/contexts/ChessboardSettingsContext";
 import type { EngineConfig } from "@/lib/analysis";
-import { getRecentConfigs } from "@/lib/storage";
 import { toast } from "sonner";
 import { saveGameToCloud } from "@/lib/supabase-storage";
 import {
@@ -94,7 +88,16 @@ import {
   ReviewCoachSidebar,
   ReviewCoachChat,
 } from "@/components/ReviewCoachPanel";
+import ReviewDisplayToggles from "@/components/ReviewDisplayToggles";
+import ReviewAnalysisControls from "@/components/ReviewAnalysisControls";
 import { inferReviewPlayerColor, type ReviewPlayerColor } from "@/lib/review-coach-context";
+import {
+  DEFAULT_REVIEW_UI_PREFS,
+  readReviewUiPrefs,
+  writeReviewUiPrefs,
+  type ReviewUiPrefKey,
+  type ReviewUiPrefs,
+} from "@/lib/review-ui-prefs";
 
 const FREE_ENGINE_DEPTH = 12;
 const PREMIUM_DEPTH_OPTIONS = [14, 18, 22] as const;
@@ -142,11 +145,6 @@ interface GameReviewerProps {
   cacheUserId?: string | null;
   /** Triggered when the Coach UI asks the user to upgrade (e.g. quota reached). */
   onRequestUpgrade?: () => void;
-  /**
-   * Profil moteur pour le paradoxe clone. Si absent, le dernier profil « récent »
-   * du stockage local est utilisé.
-   */
-  paradoxAvatarConfig?: EngineConfig;
   /** Opponent bot from Play — offered as an optional review coach. */
   opponentCoachConfig?: EngineConfig | null;
   /** Affiche un indicateur "déjà sauvegardée" à côté du téléchargement annoté. */
@@ -174,7 +172,6 @@ export default function GameReviewer({
   showAllBestArrows,
   cacheUserId,
   onRequestUpgrade,
-  paradoxAvatarConfig,
   opponentCoachConfig = null,
   showSavedInGamesList = false,
   authUserId = null,
@@ -188,34 +185,23 @@ export default function GameReviewer({
     useState<AnalysisStrictnessId>(readStoredStrictness);
   const [premiumDepth, setPremiumDepth] = useState(readStoredPremiumDepth);
   const [coachTone, setCoachTone] = useState<CoachToneId>(readStoredCoachTone);
+  const [uiPrefs, setUiPrefs] = useState<ReviewUiPrefs>(DEFAULT_REVIEW_UI_PREFS);
   const [savePlayerName, setSavePlayerName] = useState("");
   const [saveBusy, setSaveBusy] = useState(false);
 
-  const engineDepth = isPremium ? premiumDepth : FREE_ENGINE_DEPTH;
-
-  const [storedPersona, setStoredPersona] = useState<EngineConfig | null>(null);
-  useEffect(() => {
-    const sync = () => {
-      try {
-        setStoredPersona(getRecentConfigs()[0]?.config ?? null);
-      } catch {
-        setStoredPersona(null);
-      }
-    };
-    sync();
-    window.addEventListener("focus", sync);
-    return () => window.removeEventListener("focus", sync);
+  const toggleUiPref = useCallback((key: ReviewUiPrefKey) => {
+    setUiPrefs((prev) => {
+      const next = { ...prev, [key]: !prev[key] };
+      writeReviewUiPrefs(next);
+      return next;
+    });
   }, []);
 
   useEffect(() => {
-    try {
-      setStoredPersona(getRecentConfigs()[0]?.config ?? null);
-    } catch {
-      setStoredPersona(null);
-    }
-  }, [pgn]);
+    setUiPrefs(readReviewUiPrefs());
+  }, []);
 
-  const effectivePersona = paradoxAvatarConfig ?? storedPersona;
+  const engineDepth = isPremium ? premiumDepth : FREE_ENGINE_DEPTH;
 
   const inferredPlayerColor = useMemo(
     () =>
@@ -578,33 +564,28 @@ export default function GameReviewer({
     return result;
   }, [parsed]);
 
-  /** Ligne théorique + transpositions pour le coup courant (revue). */
-  const openingTheorySnapshot = useMemo(() => {
-    if (!parsed || currentIndex === 0) return null;
-    const slice = parsed.uci.slice(0, currentIndex);
-    const { opening, matchedPlies } = findBestOpeningByPrefix(slice);
-    if (!opening) return null;
-    const sans = getOpeningTheorySans(opening);
-    if (sans.length === 0) return null;
-    const fen = parsed.fenAfter[currentIndex - 1];
-    const aligned = matchedPlies === slice.length;
-    const transpositionHints = describeTheoryHitsForUi(fen, lang, {
-      skipOpeningId: aligned ? opening.id : undefined,
-      skipTheoryStep: aligned ? matchedPlies : undefined,
-    });
-    return {
-      opening,
-      matchedPlies,
-      sans,
-      aligned,
-      transpositionHints,
-    };
-  }, [parsed, currentIndex, lang]);
+  const displayedOpening = useMemo(() => {
+    if (!parsed || currentIndex <= 0) return null;
+    return findCompletedOpening(parsed.uci.slice(0, currentIndex));
+  }, [parsed, currentIndex]);
 
   const verboseMainline = useMemo(
     () => (parsed ? buildVerboseHistoryFromSan(parsed.san) : null),
     [parsed]
   );
+
+  const displayedFen = useMemo(() => {
+    if (!parsed) return null;
+    if (currentIndex === 0) return parsed.fenBefore[0] ?? null;
+    return (
+      parsed.fenAfter[Math.min(currentIndex, parsed.fenAfter.length) - 1] ?? null
+    );
+  }, [parsed, currentIndex]);
+
+  const topLines = usePositionTopLines({
+    fen: displayedFen,
+    blocked: effectiveStatus === "running" || effectiveStatus === "engine-loading",
+  });
 
   // Per-ply tactical flags computed entirely from the FEN snapshots that
   // chess.js already produced. No engine round-trips, runs once when the
@@ -740,36 +721,47 @@ export default function GameReviewer({
   // The move that just played to reach currentFen (when currentIndex > 0).
   const currentMove: ReviewedMove | undefined =
     currentIndex > 0 ? effectiveMoves[currentIndex - 1] : undefined;
-  const currentOpening =
-    currentIndex > 0 ? openingByPly[currentIndex - 1] : null;
   const lastMoveSquares =
     currentIndex > 0 ? uciToSquares(parsed.uci[currentIndex - 1]) : null;
 
-  // Engine "best move" arrow: shown on the position BEFORE the move that was
-  // just played, if the played move was sub-optimal.
-  const arrows: Array<{ from: string; to: string; color?: string }> = [];
-  if (currentMove && currentMove.bestMove && currentMove.uci !== currentMove.bestMove) {
-    const isCritical =
-      currentMove.classification === "blunder" ||
-      currentMove.classification === "miss";
-    if (showAllBestArrows || isCritical) {
-      const sq = uciToSquares(currentMove.bestMove);
-      if (sq) {
-        arrows.push({
-          from: sq.from,
-          to: sq.to,
-          color: isCritical
-            ? "rgba(239, 68, 68, 0.85)"
-            : "rgba(34, 197, 94, 0.85)",
-        });
-      }
-    }
-  }
+  const isCriticalBest =
+    currentMove?.classification === "blunder" ||
+    currentMove?.classification === "miss";
+  const showBestArrow = Boolean(
+    currentMove &&
+      currentMove.bestMove &&
+      currentMove.uci !== currentMove.bestMove &&
+      (showAllBestArrows || isCriticalBest)
+  );
+  const arrows = reviewMainBoardArrows({
+    fen: currentFen,
+    lastMoveUci: currentIndex > 0 ? parsed.uci[currentIndex - 1] : null,
+    previousMoveUci: currentIndex > 1 ? parsed.uci[currentIndex - 2] : null,
+    bestMoveUci: showBestArrow ? currentMove?.bestMove : null,
+    showBest: showBestArrow,
+    bestIsCritical: isCriticalBest,
+  });
 
-  const evalForBar =
-    currentIndex === 0
-      ? 0
-      : effectiveMoves[currentIndex - 1]?.playerEval ?? null;
+  const plyEval =
+    currentIndex > 0
+      ? (effectiveMoves[currentIndex - 1]?.playerEval ?? null)
+      : null;
+  const plyMate =
+    currentIndex > 0
+      ? effectiveMoves[currentIndex - 1]?.playerMateInMoves
+      : undefined;
+  const liveEval = topLines.liveEval;
+  const preferPlyEval = topLines.paused && plyEval != null;
+  const evalForBar = preferPlyEval
+    ? plyEval
+    : (liveEval?.evalWhitePov ?? plyEval);
+  const evalMateInMoves = preferPlyEval
+    ? plyMate
+    : (liveEval?.mateInMovesWhite ?? plyMate);
+  const evalIsMate = preferPlyEval
+    ? typeof evalMateInMoves === "number" && evalMateInMoves !== 0
+    : Boolean(liveEval?.isMate) ||
+      (typeof evalMateInMoves === "number" && evalMateInMoves !== 0);
 
   const goToKeyMoment = (direction: 1 | -1) => {
     if (!effectiveResult) return;
@@ -782,9 +774,6 @@ export default function GameReviewer({
     if (target !== undefined) setCurrentIndex(target + 1);
   };
 
-  const strictnessSelectClass =
-    "mt-0.5 w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500/40";
-
   return (
     <ReviewCoachProvider
       opponentConfig={opponentCoachConfig}
@@ -793,11 +782,17 @@ export default function GameReviewer({
       fenBefore={
         currentIndex > 0 ? parsed.fenBefore[currentIndex - 1] : undefined
       }
+      lastMoveSan={currentIndex > 0 ? parsed.san[currentIndex - 1] : undefined}
+      lastMoveUci={currentIndex > 0 ? parsed.uci[currentIndex - 1] : undefined}
+      lastMoveSide={
+        currentIndex > 0 ? parsed.sideToMove[currentIndex - 1] : undefined
+      }
+      engineLinesNow={topLines.lines.length > 0 ? topLines.lines : undefined}
       moveNumber={
         currentIndex > 0 ? Math.floor((currentIndex - 1) / 2) + 1 : undefined
       }
       openingName={
-        currentOpening ? getOpeningName(currentOpening, lang) : undefined
+        displayedOpening ? getOpeningName(displayedOpening, lang) : undefined
       }
       whiteName={parsed.headers.White}
       blackName={parsed.headers.Black}
@@ -807,108 +802,42 @@ export default function GameReviewer({
         setOrientation(color);
       }}
       coachTone={coachTone}
+      orientation={orientation}
       onRequestUpgrade={onRequestUpgrade}
+      autoExplain={
+        effectiveStatus !== "running" && effectiveStatus !== "engine-loading"
+      }
+      sessionKey={pgnHash}
     >
     <div className="min-h-0 flex flex-col gap-1.5 lg:h-full lg:overflow-hidden">
-      <div className="shrink-0 flex flex-wrap items-end gap-2">
-        <div className="grid grid-cols-3 gap-1.5 flex-1 min-w-[16rem]">
-          <div>
-            <Label className="text-[10px] uppercase tracking-wide text-slate-500">
-              {t.review.analysisSettings.strictnessLabel}
-            </Label>
-            <select
-              className={strictnessSelectClass}
-              value={analysisStrictness}
-              onChange={(e) =>
-                handleStrictnessChange(e.target.value as AnalysisStrictnessId)
-              }
-              aria-label={t.review.analysisSettings.strictnessLabel}
-              title={
-                analysisStrictness === "relaxed"
-                  ? t.review.analysisSettings.strictnessHintRelaxed
-                  : analysisStrictness === "standard"
-                    ? t.review.analysisSettings.strictnessHintStandard
-                    : t.review.analysisSettings.strictnessHintStrict
-              }
-            >
-              <option value="relaxed">{t.review.analysisSettings.strictnessRelaxed}</option>
-              <option value="standard">{t.review.analysisSettings.strictnessStandard}</option>
-              <option value="strict">{t.review.analysisSettings.strictnessStrict}</option>
-            </select>
-          </div>
-          <div>
-            <Label className="text-[10px] uppercase tracking-wide text-slate-500">
-              {t.review.analysisSettings.depthLabel}
-            </Label>
-            {isPremium ? (
-              <select
-                className={strictnessSelectClass}
-                value={premiumDepth}
-                onChange={(e) =>
-                  handlePremiumDepthChange(Number(e.target.value))
-                }
-                aria-label={t.review.analysisSettings.depthLabel}
-                title={t.review.analysisSettings.depthHintPremium}
-              >
-                {PREMIUM_DEPTH_OPTIONS.map((d) => (
-                  <option key={d} value={d}>
-                    {t.review.analysisSettings.depthOption.replace("{n}", String(d))}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <p className="mt-1 text-[11px] text-slate-400 truncate">
-                {t.review.analysisSettings.depthLocked.replace(
-                  "{n}",
-                  String(FREE_ENGINE_DEPTH)
-                )}
-              </p>
-            )}
-          </div>
-          <div>
-            <Label className="text-[10px] uppercase tracking-wide text-slate-500">
-              {t.review.analysisSettings.coachToneLabel}
-            </Label>
-            <select
-              className={strictnessSelectClass}
-              value={coachTone}
-              onChange={(e) =>
-                handleCoachToneChange(e.target.value as CoachToneId)
-              }
-              aria-label={t.review.analysisSettings.coachToneLabel}
-            >
-              <option value="pedagogical">{t.review.analysisSettings.coachTonePedagogical}</option>
-              <option value="concise">{t.review.analysisSettings.coachToneConcise}</option>
-              <option value="witty">{t.review.analysisSettings.coachToneWitty}</option>
-            </select>
-          </div>
-        </div>
-        <div className="flex-1 min-w-[11rem]">
-          <ProgressHeader
-            effectiveStatus={effectiveStatus}
-            reviewStatus={review.status}
-            cacheChecked={cacheChecked}
-            hasCachedResult={!!cachedResult}
-            engineReady={review.engineReady}
-            progress={effectiveProgress}
-            total={effectiveTotal}
-            onCancel={review.cancel}
-            onStartAnalysis={() => review.start()}
-            onRelaunch={handleRelaunchAnalysis}
-            onDownloadAnnotated={handleDownloadAnnotated}
-            showSavedInGamesList={showSavedInGamesList}
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-[minmax(13rem,1fr)_minmax(22rem,2.4fr)_minmax(16rem,1.15fr)] gap-2 lg:flex-1 lg:min-h-0 lg:overflow-hidden">
+      <div className={cn(
+        "grid grid-cols-1 gap-2 lg:flex-1 lg:min-h-0 lg:overflow-hidden",
+        uiPrefs.moves
+          ? "lg:grid-cols-[minmax(12rem,0.85fr)_minmax(20rem,1.65fr)_minmax(22rem,1.5fr)]"
+          : "lg:grid-cols-[minmax(22rem,1.7fr)_minmax(24rem,1.5fr)]"
+      )}>
       {/* LEFT — Move list */}
-      <div className="order-2 lg:order-1 lg:min-h-0 lg:h-full">
+      {uiPrefs.moves ? (
+      <div className="order-3 lg:order-1 lg:min-h-0 lg:h-full">
         <Card className="bg-slate-900/60 border-cyan-500/20 h-full flex flex-col min-h-0 overflow-hidden">
           <CardHeader className="pb-1 py-2 shrink-0">
-            <CardTitle className="text-xs uppercase tracking-wider text-slate-400 font-bold">
-              {t.review.movesTitle}
-            </CardTitle>
+            <div className="flex items-baseline justify-between gap-2 min-w-0">
+              <CardTitle className="text-xs uppercase tracking-wider text-slate-400 font-bold shrink-0">
+                {t.review.movesTitle}
+              </CardTitle>
+              {displayedOpening ? (
+                <span
+                  className="truncate text-[11px] font-medium text-cyan-300/90"
+                  title={`${getOpeningName(displayedOpening, lang)} (${displayedOpening.eco})`}
+                >
+                  {getOpeningName(displayedOpening, lang)}
+                  <span className="text-slate-500 font-normal">
+                    {" "}
+                    {displayedOpening.eco}
+                  </span>
+                </span>
+              ) : null}
+            </div>
           </CardHeader>
           <CardContent className="p-2 pt-0 flex-1 min-h-0 overflow-hidden">
             <ScrollArea className="h-[40vh] lg:h-full pr-2">
@@ -926,10 +855,30 @@ export default function GameReviewer({
           </CardContent>
         </Card>
       </div>
+      ) : null}
 
-      {/* CENTER — Board + chat + move detail */}
+      {/* CENTER — Board + move detail */}
       <div className="order-1 lg:order-2 flex flex-col gap-1.5 lg:min-h-0 lg:h-full lg:overflow-hidden">
-        <EvaluationBar evaluation={evalForBar} compact />
+        <EvaluationBar
+          evaluation={evalForBar}
+          compact
+          isMate={evalIsMate}
+          mateInMoves={
+            evalIsMate && typeof evalMateInMoves === "number"
+              ? evalMateInMoves
+              : undefined
+          }
+        />
+        <PositionTopLines
+          fen={displayedFen}
+          engineReady={topLines.engineReady}
+          isAnalyzing={topLines.isAnalyzing}
+          paused={topLines.paused}
+          gameOver={topLines.gameOver}
+          lines={topLines.lines}
+          depth={topLines.depth}
+          targetDepth={topLines.targetDepth}
+        />
 
         <div className="flex-1 min-h-[min(70vw,48vh)] lg:min-h-0 w-full [container-type:size] flex items-center justify-center">
           <SimpleChessboard
@@ -1013,124 +962,136 @@ export default function GameReviewer({
             )}
           </Button>
         </div>
-
-        <div className="shrink-0">
-        <ReviewCoachChat />
-        </div>
-
-        <div className="lg:max-h-[9.5rem] lg:min-h-0 lg:overflow-y-auto shrink-0">
-          <CurrentMoveDetail
-            move={currentMove}
-            explorerFen={currentFen}
-            fenBefore={
-              currentIndex > 0 ? parsed.fenBefore[currentIndex - 1] : undefined
-            }
-            opening={
-              currentIndex > 0 ? openingByPly[currentIndex - 1] ?? null : null
-            }
-            previousOpening={
-              currentIndex > 1 ? openingByPly[currentIndex - 2] ?? null : null
-            }
-            flags={
-              currentIndex > 0
-                ? moveFlagsByPly[currentIndex - 1] ?? null
-                : null
-            }
-            isExitingTheory={
-              currentIndex > 0 && exitTheoryPly === currentIndex - 1
-            }
-            theorySnapshot={openingTheorySnapshot}
-            personaConfig={effectivePersona}
-            getPersonaStyleMove={review.getPersonaStyleMove}
-            reviewBlocked={effectiveStatus === "running"}
-          />
-        </div>
       </div>
 
-      {/* RIGHT — Summary + analysis */}
-      <div className="order-3 space-y-2 lg:min-h-0 lg:h-full lg:overflow-y-auto">
-        {effectiveStatus === "done" && (
-          <Card className="bg-slate-950/70 border-slate-700/80">
-            <CardContent className="pt-2 pb-2 space-y-1.5">
-              <div className="flex items-center gap-2">
-                <Save className="h-3.5 w-3.5 text-cyan-400 shrink-0" />
-                <p className="text-[11px] font-semibold text-slate-200 truncate">
-                  {t.review.saveToCloudTitle}
-                </p>
-              </div>
-              {!authUserId ? (
-                <p className="text-[11px] text-amber-200/90">
-                  {t.review.saveToCloudNeedLogin}
-                </p>
-              ) : (
-                <div className="flex gap-1.5 items-end">
-                  <div className="flex-1 min-w-0">
-                    {savePlayerOptions.length > 0 ? (
-                      <select
-                        id="review-save-player-select"
-                        value={savePlayerName}
-                        onChange={(e) => setSavePlayerName(e.target.value)}
+      {/* RIGHT — compact digest + chat as the main panel */}
+      <div className="order-2 lg:order-3 flex flex-col gap-1.5 lg:min-h-0 lg:h-full lg:overflow-hidden">
+        {(effectiveStatus === "done" || uiPrefs.summary || uiPrefs.keyMoments) ? (
+        <div className="shrink-0 space-y-1">
+          {effectiveStatus === "done" && (
+            <Card className="bg-slate-950/70 border-slate-700/80">
+              <CardContent className="py-1.5 px-2">
+                <div className="flex gap-1.5 items-center">
+                  <Save className="h-3.5 w-3.5 text-cyan-400 shrink-0" />
+                  {!authUserId ? (
+                    <p className="text-[11px] text-amber-200/90 truncate">
+                      {t.review.saveToCloudNeedLogin}
+                    </p>
+                  ) : (
+                    <>
+                      <div className="flex-1 min-w-0">
+                        {savePlayerOptions.length > 0 ? (
+                          <select
+                            id="review-save-player-select"
+                            value={savePlayerName}
+                            onChange={(e) => setSavePlayerName(e.target.value)}
+                            disabled={saveBusy}
+                            className="flex h-7 w-full rounded-md border border-slate-700 bg-slate-950 px-2 text-xs text-slate-200"
+                          >
+                            <option value="">
+                              {t.review.saveToCloudSelectPlaceholder}
+                            </option>
+                            {savePlayerOptions.map((n) => (
+                              <option key={n} value={n}>
+                                {n}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <Input
+                            id="review-save-player-select"
+                            value={savePlayerName}
+                            onChange={(e) => setSavePlayerName(e.target.value)}
+                            placeholder={t.review.saveToCloudPlaceholder}
+                            className="h-7 bg-slate-900 border-slate-700 text-slate-100 text-xs"
+                            autoComplete="off"
+                          />
+                        )}
+                      </div>
+                      <Button
+                        type="button"
+                        size="sm"
                         disabled={saveBusy}
-                        className="flex h-8 w-full rounded-md border border-slate-700 bg-slate-950 px-2 text-xs text-slate-200"
+                        onClick={() => void handleSaveGameToCloud()}
+                        className="h-7 bg-cyan-700 hover:bg-cyan-600 text-white shrink-0 px-2"
                       >
-                        <option value="">
-                          {t.review.saveToCloudSelectPlaceholder}
-                        </option>
-                        {savePlayerOptions.map((n) => (
-                          <option key={n} value={n}>
-                            {n}
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      <Input
-                        id="review-save-player-select"
-                        value={savePlayerName}
-                        onChange={(e) => setSavePlayerName(e.target.value)}
-                        placeholder={t.review.saveToCloudPlaceholder}
-                        className="h-8 bg-slate-900 border-slate-700 text-slate-100 text-xs"
-                        autoComplete="off"
-                      />
-                    )}
-                  </div>
-                  <Button
-                    type="button"
-                    size="sm"
-                    disabled={saveBusy}
-                    onClick={() => void handleSaveGameToCloud()}
-                    className="h-8 bg-cyan-700 hover:bg-cyan-600 text-white shrink-0 px-2"
-                  >
-                    {saveBusy ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                      <Save className="h-3.5 w-3.5" />
-                    )}
-                  </Button>
+                        {saveBusy ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Save className="h-3.5 w-3.5" />
+                        )}
+                      </Button>
+                    </>
+                  )}
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
-        <SummaryCard
-          parsed={parsed}
-          review={effectiveResult}
-          status={effectiveStatus}
-        />
-        <KeyMomentsCard
-          count={effectiveResult?.keyMoments.length ?? 0}
-          onPrev={() => goToKeyMoment(-1)}
-          onNext={() => goToKeyMoment(1)}
-          disabled={!effectiveResult || effectiveResult.keyMoments.length === 0}
-        />
-        <ReviewCoachSidebar />
-        {evalSeries.length > 1 && (
-          <Card className="bg-slate-900/60 border-cyan-500/20">
-            <CardHeader className="py-2 pb-1">
-              <CardTitle className="text-xs uppercase tracking-wider text-slate-400 font-bold">
+              </CardContent>
+            </Card>
+          )}
+          {uiPrefs.summary ? (
+          <SummaryCard
+            parsed={parsed}
+            review={effectiveResult}
+            status={effectiveStatus}
+            compact
+          />
+          ) : null}
+          {uiPrefs.keyMoments ? (
+          <KeyMomentsCard
+            count={effectiveResult?.keyMoments.length ?? 0}
+            onPrev={() => goToKeyMoment(-1)}
+            onNext={() => goToKeyMoment(1)}
+            disabled={!effectiveResult || effectiveResult.keyMoments.length === 0}
+            compact
+          />
+          ) : null}
+        </div>
+        ) : null}
+        <div className="shrink-0">
+          <ReviewCoachSidebar showAnalysis={uiPrefs.coachAnalysis} />
+        </div>
+        <div className="flex-1 min-h-[16rem] lg:min-h-0 flex flex-col">
+          <ReviewCoachChat
+            toolbar={
+              <div className="flex flex-wrap items-center justify-end gap-1">
+                <ReviewAnalysisControls
+                  analysisStrictness={analysisStrictness}
+                  onStrictnessChange={handleStrictnessChange}
+                  isPremium={isPremium}
+                  premiumDepth={premiumDepth}
+                  onPremiumDepthChange={handlePremiumDepthChange}
+                  freeDepth={FREE_ENGINE_DEPTH}
+                  premiumDepthOptions={PREMIUM_DEPTH_OPTIONS}
+                  coachTone={coachTone}
+                  onCoachToneChange={handleCoachToneChange}
+                />
+                <ReviewDisplayToggles prefs={uiPrefs} onToggle={toggleUiPref} />
+                <ProgressHeader
+                  compact
+                  effectiveStatus={effectiveStatus}
+                  reviewStatus={review.status}
+                  cacheChecked={cacheChecked}
+                  hasCachedResult={!!cachedResult}
+                  engineReady={review.engineReady}
+                  progress={effectiveProgress}
+                  total={effectiveTotal}
+                  onCancel={review.cancel}
+                  onStartAnalysis={() => review.start()}
+                  onRelaunch={handleRelaunchAnalysis}
+                  onDownloadAnnotated={handleDownloadAnnotated}
+                  showSavedInGamesList={showSavedInGamesList}
+                />
+              </div>
+            }
+          />
+        </div>
+        {uiPrefs.evalGraph && evalSeries.length > 1 && (
+          <Card className="bg-slate-900/60 border-cyan-500/20 shrink-0">
+            <CardHeader className="py-1 pb-0">
+              <CardTitle className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">
                 {t.review.evalGraph}
               </CardTitle>
             </CardHeader>
-            <CardContent className="h-20 pb-2">
+            <CardContent className="h-14 pb-1.5 pt-0">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={evalSeries}>
                   <XAxis dataKey="ply" hide />
@@ -1170,6 +1131,7 @@ export default function GameReviewer({
 // ---------------------------------------------------------------------------
 
 function ProgressHeader({
+  compact = false,
   effectiveStatus,
   reviewStatus,
   cacheChecked,
@@ -1183,6 +1145,7 @@ function ProgressHeader({
   onDownloadAnnotated,
   showSavedInGamesList,
 }: {
+  compact?: boolean;
   effectiveStatus: ReviewStatus;
   reviewStatus: ReviewStatus;
   cacheChecked: boolean;
@@ -1205,11 +1168,17 @@ function ProgressHeader({
 
   if (effectiveStatus === "done") {
     return (
-      <div className="flex flex-wrap items-center justify-between gap-2 w-full">
-        <div className="text-xs text-emerald-300 flex items-center gap-2 shrink-0">
-          <Crown className="h-3 w-3" /> {t.review.done}
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
+      <div className={cn("flex items-center gap-1 shrink-0", !compact && "flex-wrap justify-between gap-2 w-full")}>
+        {!compact ? (
+          <div className="text-xs text-emerald-300 flex items-center gap-2 shrink-0">
+            <Crown className="h-3 w-3" /> {t.review.done}
+          </div>
+        ) : (
+          <span className="text-[11px] text-emerald-300 flex items-center gap-1 shrink-0">
+            <Crown className="h-3 w-3" />
+          </span>
+        )}
+        <div className="flex items-center gap-1 shrink-0">
           <Button
             type="button"
             size="sm"
@@ -1218,8 +1187,8 @@ function ProgressHeader({
             onClick={onDownloadAnnotated}
             title={t.review.downloadAnnotated}
           >
-            <Download className="h-3 w-3 mr-1" />
-            {t.review.downloadAnnotated}
+            <Download className="h-3 w-3" />
+            {compact ? null : <span className="ml-1">{t.review.downloadAnnotated}</span>}
           </Button>
           {showSavedInGamesList && (
             <Button
@@ -1230,8 +1199,8 @@ function ProgressHeader({
               title={t.review.savedInGamesList}
               disabled
             >
-              <Check className="h-3 w-3 mr-1" />
-              {t.review.savedInGamesList}
+              <Check className="h-3 w-3" />
+              {compact ? null : <span className="ml-1">{t.review.savedInGamesList}</span>}
             </Button>
           )}
           <Button
@@ -1240,9 +1209,10 @@ function ProgressHeader({
             variant="ghost"
             className="h-7 px-2 text-cyan-300 hover:text-cyan-100 hover:bg-cyan-500/10"
             onClick={onRelaunch}
+            title={t.review.relaunch}
           >
-            <RotateCcw className="h-3 w-3 mr-1" />
-            {t.review.relaunch}
+            <RotateCcw className="h-3 w-3" />
+            {compact ? null : <span className="ml-1">{t.review.relaunch}</span>}
           </Button>
         </div>
       </div>
@@ -1251,9 +1221,9 @@ function ProgressHeader({
 
   if (!cacheChecked) {
     return (
-      <div className="flex items-center gap-3 text-xs text-slate-400">
+      <div className="flex items-center gap-2 text-xs text-slate-400">
         <Loader2 className="h-3 w-3 animate-spin text-cyan-400" />
-        {t.review.engineLoading}
+        {compact ? null : t.review.engineLoading}
       </div>
     );
   }
@@ -1261,25 +1231,42 @@ function ProgressHeader({
   if (!hasCachedResult) {
     if (reviewStatus === "running") {
       return (
-        <div className="space-y-1">
-          <div className="flex items-center justify-between text-xs text-slate-300">
-            <span>
-              {t.review.analyzing.replace("{n}", String(progress)).replace(
-                "{total}",
-                String(total)
-              )}
+        <div className={cn("flex items-center gap-2", compact ? "min-w-[9rem]" : "w-full flex-col space-y-1")}>
+          {!compact ? (
+            <div className="flex items-center justify-between text-xs text-slate-300 w-full">
+              <span>
+                {t.review.analyzing.replace("{n}", String(progress)).replace(
+                  "{total}",
+                  String(total)
+                )}
+              </span>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-6 px-2 text-red-300 hover:text-red-100 hover:bg-red-500/10"
+                onClick={onCancel}
+              >
+                <Square className="h-3 w-3 mr-1" />
+                {t.review.stop}
+              </Button>
+            </div>
+          ) : (
+            <span className="text-[11px] text-slate-400 font-mono tabular-nums">
+              {pct}%
             </span>
+          )}
+          <Progress value={pct} className={cn("h-1.5", compact ? "w-16" : "w-full")} />
+          {compact ? (
             <Button
               size="sm"
               variant="ghost"
-              className="h-6 px-2 text-red-300 hover:text-red-100 hover:bg-red-500/10"
+              className="h-7 w-7 p-0 text-red-300 hover:text-red-100 hover:bg-red-500/10"
               onClick={onCancel}
+              title={t.review.stop}
             >
-              <Square className="h-3 w-3 mr-1" />
-              {t.review.stop}
+              <Square className="h-3 w-3" />
             </Button>
-          </div>
-          <Progress value={pct} className="h-1.5" />
+          ) : null}
         </div>
       );
     }
@@ -1291,39 +1278,37 @@ function ProgressHeader({
     if (reviewStatus === "idle" || reviewStatus === "engine-loading") {
       if (!engineReady) {
         return (
-          <div className="flex items-center gap-3 text-xs text-slate-400">
+          <div className="flex items-center gap-2 text-xs text-slate-400">
             <div className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse" />
-            {t.review.engineLoading}
+            {compact ? null : t.review.engineLoading}
           </div>
         );
       }
       if (reviewStatus === "idle") {
         return (
-          <div className="flex items-center justify-end">
-            <Button
-              size="sm"
-              className="h-8 bg-cyan-600 hover:bg-cyan-500 text-white"
-              onClick={onStartAnalysis}
-            >
-              <Play className="h-3.5 w-3.5 mr-1.5" />
-              {t.review.startAnalysis}
-            </Button>
-          </div>
+          <Button
+            size="sm"
+            className="h-7 bg-cyan-600 hover:bg-cyan-500 text-white px-2"
+            onClick={onStartAnalysis}
+          >
+            <Play className="h-3.5 w-3.5 mr-1" />
+            {t.review.startAnalysis}
+          </Button>
         );
       }
       return (
-        <div className="flex items-center gap-3 text-xs text-slate-400">
+        <div className="flex items-center gap-2 text-xs text-slate-400">
           <Loader2 className="h-3 w-3 animate-spin text-cyan-400" />
-          {t.review.engineLoading}
+          {compact ? null : t.review.engineLoading}
         </div>
       );
     }
   }
 
   return (
-    <div className="flex items-center gap-3 text-xs text-slate-400">
+    <div className="flex items-center gap-2 text-xs text-slate-400">
       <Loader2 className="h-3 w-3 animate-spin text-cyan-400" />
-      {t.review.engineLoading}
+      {compact ? null : t.review.engineLoading}
     </div>
   );
 }
@@ -1518,623 +1503,55 @@ function MoveCell({
   );
 }
 
-interface MastersExplorerBody {
-  white?: number;
-  draws?: number;
-  black?: number;
-  moves?: Array<{
-    san?: string;
-    uci?: string;
-    white?: number;
-    draws?: number;
-    black?: number;
-  }>;
-}
-
-function OpeningExplorerPanel({ fen }: { fen: string }) {
-  const { t } = useLanguage();
-  const { settings } = useChessboardSettings();
-  const sideToMove = useMemo(() => {
-    try {
-      return fen.split(" ")[1] === "b" ? "b" : "w";
-    } catch {
-      return "w";
-    }
-  }, [fen]);
-  const [expanded, setExpanded] = useState(false);
-  const [pool, setPool] = useState<"masters" | "lichess">("lichess");
-  const [body, setBody] = useState<MastersExplorerBody | null>(null);
-  const [fromCache, setFromCache] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(false);
-
-  useEffect(() => {
-    if (!expanded || !fen) return;
-    let cancelled = false;
-    setLoading(true);
-    setError(false);
-    void (async () => {
-      try {
-        const res = await fetch(
-          `/api/openings/explorer?fen=${encodeURIComponent(fen)}&pool=${pool}`
-        );
-        const json = (await res.json().catch(() => null)) as {
-          data?: MastersExplorerBody;
-          cached?: boolean;
-        } | null;
-        if (cancelled) return;
-        if (!res.ok || !json?.data) {
-          setError(true);
-          setBody(null);
-          return;
-        }
-        setBody(json.data);
-        setFromCache(Boolean(json.cached));
-      } catch {
-        if (!cancelled) setError(true);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [expanded, fen, pool]);
-
-  return (
-    <div className="rounded border border-sky-500/25 bg-sky-950/30 px-2 py-2 text-[11px]">
-      <button
-        type="button"
-        onClick={() => setExpanded((e) => !e)}
-        className="flex items-center gap-2 w-full text-left font-semibold text-sky-200 hover:text-sky-100"
-      >
-        <BarChart3 className="h-3.5 w-3.5 shrink-0" />
-        {t.review.opening.explorerTitle}
-      </button>
-      {expanded && (
-        <div className="mt-2 space-y-1">
-          <div className="flex flex-wrap items-center gap-1">
-            <button
-              type="button"
-              onClick={() => setPool("masters")}
-              className={`rounded px-2 py-0.5 text-[10px] border transition-colors ${
-                pool === "masters"
-                  ? "border-sky-400 bg-sky-900/80 text-sky-100"
-                  : "border-sky-800/60 text-slate-400 hover:border-sky-600"
-              }`}
-            >
-              {t.review.opening.explorerPoolMasters}
-            </button>
-            <button
-              type="button"
-              onClick={() => setPool("lichess")}
-              className={`rounded px-2 py-0.5 text-[10px] border transition-colors ${
-                pool === "lichess"
-                  ? "border-sky-400 bg-sky-900/80 text-sky-100"
-                  : "border-sky-800/60 text-slate-400 hover:border-sky-600"
-              }`}
-            >
-              {t.review.opening.explorerPoolLichess}
-            </button>
-          </div>
-          <p className="text-[10px] text-slate-500 leading-snug">{t.review.opening.explorerPoolHint}</p>
-        </div>
-      )}
-      {expanded && loading && (
-        <div className="flex items-center gap-2 mt-2 text-sky-300">
-          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          {t.review.opening.explorerLoading}
-        </div>
-      )}
-      {expanded && error && (
-        <p className="mt-2 text-red-300">{t.review.opening.explorerError}</p>
-      )}
-      {expanded && body?.moves && body.moves.length > 0 && (
-        <ul className="mt-2 space-y-1 max-h-56 overflow-y-auto">
-          {body.moves.map((m, i) => (
-            <li
-              key={`${m.uci ?? m.san}-${i}`}
-              className="flex justify-between gap-2 font-mono text-[10px] text-slate-200 items-center"
-            >
-              <span className="inline-flex items-center min-w-0">
-                <SanNotation
-                  verboseMove={
-                    m.uci ? uciToVerboseMoveFromFen(fen, m.uci) : null
-                  }
-                  fallbackSan={m.san ?? m.uci ?? ""}
-                  movingColor={sideToMove}
-                  pieceSet={settings.pieceSet}
-                  size="sm"
-                />
-              </span>
-              <span className="text-slate-500 shrink-0">
-                W{m.white ?? 0} · D{m.draws ?? 0} · B{m.black ?? 0}
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
-      {expanded && fromCache && !loading && (
-        <p className="text-[10px] text-slate-500 mt-1">{t.review.opening.explorerCached}</p>
-      )}
-    </div>
-  );
-}
-
-function CurrentMoveDetail({
-  move,
-  explorerFen,
-  fenBefore,
-  opening,
-  previousOpening,
-  flags,
-  isExitingTheory,
-  theorySnapshot,
-  personaConfig,
-  getPersonaStyleMove,
-  reviewBlocked,
-}: {
-  move?: ReviewedMove;
-  /** Position affichée (explorer Lichess : stats depuis cette position). */
-  explorerFen: string;
-  fenBefore?: string;
-  opening?: Opening | null;
-  previousOpening?: Opening | null;
-  flags?: MoveFlags | null;
-  isExitingTheory?: boolean;
-  theorySnapshot:
-    | {
-        opening: Opening;
-        matchedPlies: number;
-        sans: string[];
-        aligned: boolean;
-        transpositionHints: TheoryTranspositionHit[];
-      }
-    | null;
-  personaConfig: EngineConfig | null;
-  getPersonaStyleMove: (
-    fen: string,
-    config: EngineConfig,
-    opts?: { depth?: number; movetime?: number }
-  ) => Promise<string>;
-  reviewBlocked: boolean;
-}) {
-  const { t, lang } = useLanguage();
-  const { settings: boardSettings } = useChessboardSettings();
-
-  const MAX_TRANSPOSITIONS_VISIBLE = 6;
-  const [showAllTranspositions, setShowAllTranspositions] = useState(false);
-
-  const theoryVerbose = useMemo(() => {
-    if (!theorySnapshot?.sans?.length) return null;
-    return buildVerboseHistoryFromSan(theorySnapshot.sans);
-  }, [theorySnapshot]);
-
-  useEffect(() => {
-    setShowAllTranspositions(false);
-  }, [theorySnapshot]);
-
-  if (!move) {
-    return (
-      <Card className="bg-slate-900/60 border-cyan-500/20">
-        <CardContent className="py-3 text-xs text-slate-400">
-          {t.review.startPosition}
-        </CardContent>
-      </Card>
-    );
-  }
-  const colors = CLASSIFICATION_COLORS[move.classification];
-  const labels: Record<string, string> = {
-    brilliant: t.review.classBrilliant,
-    best: t.review.classBest,
-    excellent: t.review.classExcellent,
-    good: t.review.classGood,
-    inaccuracy: t.review.classInaccuracy,
-    mistake: t.review.classMistake,
-    blunder: t.review.classBlunder,
-    miss: t.review.classMiss,
-  };
-  const isSubOptimal = move.uci !== move.bestMove;
-  const showCoach =
-    isSubOptimal &&
-    !!move.bestMove &&
-    !!fenBefore &&
-    move.classification !== "best" &&
-    move.classification !== "excellent" &&
-    move.classification !== "brilliant";
-
-  return (
-    <Card className={`${colors.bg} ${colors.border} border`}>
-      <CardContent className="py-2 space-y-2">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Badge className={`${colors.bg} ${colors.text} ${colors.border} border font-bold`}>
-              {colors.emoji} {labels[move.classification]}
-            </Badge>
-            <span className="text-sm font-mono text-slate-100 inline-flex items-center gap-1">
-              <SanNotation
-                verboseMove={
-                  fenBefore && move.uci
-                    ? uciToVerboseMoveFromFen(fenBefore, move.uci)
-                    : null
-                }
-                fallbackSan={move.san}
-                movingColor={move.sideToMove === "white" ? "w" : "b"}
-                pieceSet={boardSettings.pieceSet}
-                size="md"
-              />
-            </span>
-          </div>
-          <div className="text-right text-xs text-slate-400 space-y-0.5">
-            <div>
-              {t.review.cpl}:{" "}
-              <strong className="text-slate-200">{move.cpl}</strong>
-            </div>
-            {isSubOptimal && (
-              <div className="text-[10px]">
-                {t.review.evalSwing}:{" "}
-                <span className="font-mono text-slate-300">
-                  {Math.abs(move.bestEval - move.playerEval).toFixed(2)}
-                </span>{" "}
-                {t.review.evalSwingUnit}
-              </div>
-            )}
-          </div>
-        </div>
-        {opening ? (
-          <div className="flex items-center gap-1.5 text-[11px] text-amber-200/90 bg-amber-500/10 border border-amber-500/30 rounded px-2 py-1">
-            <BookOpen className="h-3 w-3 shrink-0" />
-            <span className="font-semibold uppercase tracking-wider text-amber-300/90">
-              {t.review.opening.theory}
-            </span>
-            <span className="text-amber-100">
-              {getOpeningName(opening, lang)}
-            </span>
-            <span className="font-mono text-amber-300/70">({opening.eco})</span>
-          </div>
-        ) : isExitingTheory && previousOpening ? (
-          <div className="flex items-center gap-1.5 text-[11px] text-orange-100 bg-orange-500/15 border border-orange-500/40 rounded px-2 py-1">
-            <LogOut className="h-3.5 w-3.5 shrink-0 text-orange-300" />
-            <span className="uppercase tracking-wider font-bold text-orange-200">
-              {t.review.opening.exitTheoryNow}
-            </span>
-            <span className="text-orange-200/70">·</span>
-            <span className="text-orange-100">
-              {getOpeningName(previousOpening, lang)}
-            </span>
-            <span className="font-mono text-orange-300/80">
-              ({previousOpening.eco})
-            </span>
-          </div>
-        ) : null}
-        {theorySnapshot && (
-          <div className="rounded border border-amber-500/25 bg-amber-950/40 px-2 py-2 space-y-1.5 text-[11px]">
-            <div className="font-semibold text-amber-200/95 flex items-center gap-1.5">
-              <BookOpen className="h-3.5 w-3.5 shrink-0" />
-              {t.review.opening.theoryMainLine}
-            </div>
-            <p className="text-amber-100/90">
-              {getOpeningName(theorySnapshot.opening, lang)}
-              <span className="font-mono text-amber-300/60 ml-1">
-                ({theorySnapshot.opening.eco})
-              </span>
-            </p>
-            {!theorySnapshot.aligned && (
-              <p className="text-orange-300/95">{t.review.opening.divergedFromBook}</p>
-            )}
-            <p className="text-slate-300 leading-relaxed break-words font-mono text-[10px] inline-flex flex-wrap items-center gap-x-1 gap-y-0.5">
-              {theorySnapshot.sans.map((san, i) => (
-                <span
-                  key={`${san}-${i}`}
-                  className={
-                    i < theorySnapshot.matchedPlies
-                      ? "text-amber-100 font-semibold inline-flex items-center"
-                      : "text-slate-500 inline-flex items-center"
-                  }
-                >
-                  <SanNotation
-                    verboseMove={theoryVerbose?.[i] ?? null}
-                    fallbackSan={san}
-                    movingColor={i % 2 === 0 ? "w" : "b"}
-                    pieceSet={boardSettings.pieceSet}
-                    size="sm"
-                  />
-                </span>
-              ))}
-            </p>
-            {theorySnapshot.transpositionHints.length > 0 && (
-              <div className="border-t border-amber-500/20 pt-1.5 space-y-1.5">
-                <div className="text-slate-500 text-[10px]">
-                  {t.review.opening.transpositions}
-                </div>
-                <div className="inline-flex flex-wrap items-center gap-1">
-                  {(showAllTranspositions
-                    ? theorySnapshot.transpositionHints
-                    : theorySnapshot.transpositionHints.slice(
-                        0,
-                        MAX_TRANSPOSITIONS_VISIBLE
-                      )
-                  ).map((hit) => (
-                    <Badge
-                      key={`${hit.openingId}-${hit.theoryStep}`}
-                      variant="outline"
-                      className="border-slate-700/60 bg-slate-800/60 font-normal text-[10px] px-1.5 py-0 text-slate-300 max-w-[min(100%,14rem)]"
-                    >
-                      <span className="truncate">{hit.name}</span>
-                      <span className="font-mono text-amber-300/70 shrink-0 ml-1">
-                        · {lang === "en" ? "move" : "coup"} {hit.theoryStep}
-                      </span>
-                    </Badge>
-                  ))}
-                  {theorySnapshot.transpositionHints.length >
-                    MAX_TRANSPOSITIONS_VISIBLE && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 px-2 text-[10px] text-slate-400 hover:text-slate-200"
-                      onClick={() =>
-                        setShowAllTranspositions((v) => !v)
-                      }
-                    >
-                      {showAllTranspositions
-                        ? t.review.opening.showLessTranspositions
-                        : t.review.opening.showMoreTranspositions.replace(
-                            "{n}",
-                            String(
-                              theorySnapshot.transpositionHints.length -
-                                MAX_TRANSPOSITIONS_VISIBLE
-                            )
-                          )}
-                    </Button>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-        <OpeningExplorerPanel fen={explorerFen} />
-        {(flags?.isCheckmate ||
-          flags?.isCheck ||
-          flags?.isForced ||
-          (typeof move.bestMateInMoves === "number" &&
-            move.bestMateInMoves !== 0) ||
-          (typeof move.playerMateInMoves === "number" &&
-            move.playerMateInMoves !== 0)) && (
-          <div className="flex flex-wrap items-center gap-1.5">
-            {flags?.isCheckmate && (
-              <Badge className="bg-rose-500/15 text-rose-200 border-rose-500/40 border font-bold">
-                <Skull className="h-3 w-3 mr-1" />
-                {t.review.flags.checkmate}
-              </Badge>
-            )}
-            {flags?.isCheck && !flags?.isCheckmate && (
-              <Badge className="bg-orange-500/15 text-orange-200 border-orange-500/40 border font-semibold">
-                <ShieldAlert className="h-3 w-3 mr-1" />
-                {t.review.flags.check}
-              </Badge>
-            )}
-            {flags?.isForced && (
-              <Badge className="bg-sky-500/15 text-sky-200 border-sky-500/40 border font-semibold">
-                <Lock className="h-3 w-3 mr-1" />
-                {t.review.flags.forced}
-              </Badge>
-            )}
-            {typeof move.bestMateInMoves === "number" &&
-              move.bestMateInMoves !== 0 && (
-                <Badge className="bg-emerald-500/15 text-emerald-200 border-emerald-500/40 border font-mono">
-                  {formatMateBadge(
-                    t.review.flags.mateInBest,
-                    move.bestMateInMoves,
-                    t.review.flags.whiteShort,
-                    t.review.flags.blackShort
-                  )}
-                </Badge>
-              )}
-            {typeof move.playerMateInMoves === "number" &&
-              move.playerMateInMoves !== 0 &&
-              move.playerMateInMoves !== move.bestMateInMoves && (
-                <Badge className="bg-purple-500/15 text-purple-200 border-purple-500/40 border font-mono">
-                  {formatMateBadge(
-                    t.review.flags.mateInPlayer,
-                    move.playerMateInMoves,
-                    t.review.flags.whiteShort,
-                    t.review.flags.blackShort
-                  )}
-                </Badge>
-              )}
-          </div>
-        )}
-        <div className="text-xs text-slate-300 space-y-1">
-          <div>
-            {t.review.evalAfterPlayed}:{" "}
-            <span className="font-mono">{formatEval(move.playerEval)}</span>
-          </div>
-          {isSubOptimal && move.bestMove && (
-            <div className="flex items-start gap-1 text-emerald-300 flex-wrap">
-              <AlertTriangle className="h-3 w-3 shrink-0 mt-0.5" />
-              <span className="inline-flex flex-wrap items-center gap-x-1 gap-y-0.5">
-                {t.review.bestWas}{" "}
-                <strong className="inline-flex items-center font-mono font-semibold">
-                  <SanNotation
-                    verboseMove={
-                      fenBefore && move.bestMove
-                        ? uciToVerboseMoveFromFen(fenBefore, move.bestMove)
-                        : null
-                    }
-                    fallbackSan={move.bestSan || move.bestMove}
-                    movingColor={
-                      move.sideToMove === "white" ? "w" : "b"
-                    }
-                    pieceSet={boardSettings.pieceSet}
-                    size="sm"
-                  />
-                </strong>
-                {move.bestSan && (
-                  <span className="text-[10px] text-emerald-400/60 font-mono">
-                    ({move.bestMove})
-                  </span>
-                )}
-                <span className="font-mono">({formatEval(move.bestEval)})</span>
-              </span>
-            </div>
-          )}
-        </div>
-
-        {showCoach && (
-          <CloneParadoxCard
-            move={move}
-            fenBefore={fenBefore!}
-            personaConfig={personaConfig}
-            getPersonaStyleMove={getPersonaStyleMove}
-            reviewBlocked={reviewBlocked}
-          />
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-/**
- * Coup « style clone » (Stockfish + MultiPV + profil) pour les coups sous-optimaux.
- */
-function CloneParadoxCard({
-  move,
-  fenBefore,
-  personaConfig,
-  getPersonaStyleMove,
-  reviewBlocked,
-}: {
-  move: ReviewedMove;
-  fenBefore: string;
-  personaConfig: EngineConfig | null;
-  getPersonaStyleMove: (
-    fen: string,
-    config: EngineConfig,
-    opts?: { depth?: number; movetime?: number }
-  ) => Promise<string>;
-  reviewBlocked: boolean;
-}) {
-  const { t } = useLanguage();
-  const { settings: boardSettings } = useChessboardSettings();
-  const [status, setStatus] = useState<"idle" | "loading" | "ready" | "error">(
-    "idle"
-  );
-  const [cloneUci, setCloneUci] = useState<string | null>(null);
-
-  useEffect(() => {
-    setStatus("idle");
-    setCloneUci(null);
-  }, [move.ply, move.uci]);
-
-  const handleClick = useCallback(() => {
-    if (!personaConfig || reviewBlocked) return;
-    setStatus("loading");
-    void getPersonaStyleMove(fenBefore, personaConfig, {
-      depth: Math.min(14, personaConfig.depth),
-      movetime: Math.min(800, personaConfig.timeControl),
-    })
-      .then((uci) => {
-        setCloneUci(uci);
-        setStatus("ready");
-      })
-      .catch(() => setStatus("error"));
-  }, [personaConfig, reviewBlocked, fenBefore, getPersonaStyleMove]);
-
-  const cloneSan =
-    cloneUci && fenBefore ? uciToSan(fenBefore, cloneUci) : null;
-
-  return (
-    <div className="pt-2 border-t border-cyan-500/25 mt-2 space-y-2">
-      <div className="flex items-center gap-2 text-[11px] font-semibold text-cyan-200/90 uppercase tracking-wide">
-        <Bot className="h-3.5 w-3.5 shrink-0" />
-        {t.review.paradox.title}
-      </div>
-      <p className="text-[10px] text-slate-500 leading-snug">
-        {t.review.paradox.subtitle}
-      </p>
-      {!personaConfig ? (
-        <p className="text-xs text-slate-400">
-          {t.review.paradox.noPersona}{" "}
-          <Link href="/analyze" className="text-cyan-400 hover:underline">
-            {t.review.paradox.openAnalyze}
-          </Link>
-        </p>
-      ) : reviewBlocked ? (
-        <p className="text-xs text-amber-200/80">{t.review.paradox.busy}</p>
-      ) : status === "idle" ? (
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={handleClick}
-          className="border-cyan-500/40 bg-cyan-500/10 text-cyan-100 hover:bg-cyan-500/20"
-        >
-          <Sparkles className="h-3.5 w-3.5 mr-1.5" />
-          {t.review.paradox.button}
-        </Button>
-      ) : status === "loading" ? (
-        <div className="rounded border border-cyan-500/30 bg-cyan-500/10 px-3 py-2 text-xs text-cyan-100 flex items-center gap-2">
-          <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
-          {t.review.paradox.loading}
-        </div>
-      ) : status === "error" ? (
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs text-red-300">{t.review.paradox.error}</span>
-          <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={handleClick}>
-            {t.review.paradox.retry}
-          </Button>
-        </div>
-      ) : (
-        <div className="rounded border border-cyan-500/25 bg-slate-950/50 px-3 py-2 text-xs space-y-1.5">
-          <div className="text-cyan-200/90 font-medium">
-            {t.review.paradox.cloneWouldPlay}
-          </div>
-          {cloneUci && move.bestMove && cloneUci === move.bestMove && (
-            <p className="text-emerald-300/90">{t.review.paradox.sameAsEngine}</p>
-          )}
-          {cloneUci && cloneUci === move.uci && cloneUci !== move.bestMove && (
-            <p className="text-amber-200/90">{t.review.paradox.sameAsPlayed}</p>
-          )}
-          {cloneSan && (
-            <div className="inline-flex items-center gap-1 font-mono text-slate-100">
-              <SanNotation
-                verboseMove={uciToVerboseMoveFromFen(fenBefore, cloneUci!)}
-                fallbackSan={cloneSan}
-                movingColor={move.sideToMove === "white" ? "w" : "b"}
-                pieceSet={boardSettings.pieceSet}
-                size="sm"
-              />
-              <span className="text-[10px] text-slate-500">({cloneUci})</span>
-            </div>
-          )}
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-7 text-[11px] text-slate-400"
-            onClick={handleClick}
-          >
-            {t.review.paradox.retry}
-          </Button>
-        </div>
-      )}
-    </div>
-  );
-}
-
 function SummaryCard({
   parsed,
   review,
   status,
+  compact = false,
 }: {
   parsed: ParsedGameForReview;
   review: import("@/lib/game-review").GameReviewResult | null;
   status: ReviewStatus;
+  compact?: boolean;
 }) {
   const { t } = useLanguage();
   const whiteName = parsed.headers.White ?? t.review.white;
   const blackName = parsed.headers.Black ?? t.review.black;
   const result = parsed.headers.Result ?? "*";
   const event = parsed.headers.Event;
+
+  if (compact) {
+    return (
+      <Card className="bg-slate-900/60 border-cyan-500/20">
+        <CardContent className="py-1.5 px-2 space-y-1 text-xs">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-[10px] uppercase tracking-wider text-slate-500 font-bold shrink-0">
+              {t.review.summaryTitle}
+            </span>
+            <span className="text-slate-200 truncate">{whiteName}</span>
+            <span className="text-cyan-300 font-mono shrink-0">{result}</span>
+            <span className="text-slate-200 truncate">{blackName}</span>
+          </div>
+          {review ? (
+            <div className="flex items-center gap-3 text-[11px] text-slate-400">
+              <span className="truncate">
+                {whiteName}:{" "}
+                <strong className="text-cyan-300">{review.white.accuracy.toFixed(0)}%</strong>
+              </span>
+              <span className="truncate">
+                {blackName}:{" "}
+                <strong className="text-cyan-300">{review.black.accuracy.toFixed(0)}%</strong>
+              </span>
+            </div>
+          ) : (
+            <div className="text-[11px] text-slate-500">
+              {status === "running" ? t.review.computing : t.review.notYetAvailable}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="bg-slate-900/60 border-cyan-500/20">
@@ -2192,6 +1609,7 @@ function SideStat({
   const { t } = useLanguage();
   const items: Array<{ key: keyof typeof counts; label: string }> = [
     { key: "brilliant", label: t.review.classBrilliant },
+    { key: "great", label: t.review.classGreat },
     { key: "best", label: t.review.classBest },
     { key: "excellent", label: t.review.classExcellent },
     { key: "good", label: t.review.classGood },
@@ -2215,7 +1633,7 @@ function SideStat({
           </span>
         </div>
       </div>
-      <div className="grid grid-cols-4 sm:grid-cols-8 gap-0.5">
+      <div className="grid grid-cols-5 sm:grid-cols-9 gap-0.5">
         {items.map((it) => {
           const c = CLASSIFICATION_COLORS[it.key];
           const n = counts[it.key] ?? 0;
@@ -2239,13 +1657,47 @@ function KeyMomentsCard({
   onPrev,
   onNext,
   disabled,
+  compact = false,
 }: {
   count: number;
   onPrev: () => void;
   onNext: () => void;
   disabled: boolean;
+  compact?: boolean;
 }) {
   const { t } = useLanguage();
+  if (compact) {
+    return (
+      <div className="flex items-center gap-2 rounded-md border border-amber-500/20 bg-slate-900/60 px-2 py-1">
+        <span className="text-[10px] uppercase tracking-wider text-amber-300 font-bold truncate">
+          {t.review.keyMomentsTitle}{" "}
+          <span className="text-slate-400 font-normal">({count})</span>
+        </span>
+        <div className="ml-auto flex gap-1 shrink-0">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={onPrev}
+            disabled={disabled}
+            className="h-6 w-7 p-0 border-amber-500/40 text-amber-200 hover:bg-amber-500/10"
+            title={t.review.prev}
+          >
+            <ChevronLeft className="h-3.5 w-3.5" />
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={onNext}
+            disabled={disabled}
+            className="h-6 w-7 p-0 border-amber-500/40 text-amber-200 hover:bg-amber-500/10"
+            title={t.review.next}
+          >
+            <ChevronRight className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      </div>
+    );
+  }
   return (
     <Card className="bg-slate-900/60 border-amber-500/20">
       <CardHeader className="py-2 pb-1">
