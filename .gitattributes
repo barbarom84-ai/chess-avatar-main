@@ -1,0 +1,2 @@
+# Parity contract files are hashed (parity/manifest.json): keep LF on every platform.
+parity/** text eol=lf

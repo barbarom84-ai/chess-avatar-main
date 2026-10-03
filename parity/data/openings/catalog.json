@@ -1,0 +1,2504 @@
+[
+  {
+    "id": "italian-game",
+    "name": {
+      "fr": "Partie Italienne",
+      "en": "Italian Game"
+    },
+    "eco": "C50",
+    "color": "white",
+    "difficulty": "beginner",
+    "character": "classical",
+    "tags": [
+      "e4",
+      "classique",
+      "développement",
+      "attaque"
+    ],
+    "guided": false,
+    "hook": {
+      "fr": "Développement logique et combat central — idéal pour comprendre les fondamentaux.",
+      "en": "Sound development and central tension — ideal for learning fundamentals."
+    },
+    "overview": {
+      "fr": "Après 1.e4 e5 2.Cf3 Cc6, le fou en c4 vise f7 et appuie le centre. Les blancs cherchent souvent d3 puis le roc court, parfois c3 et d4 pour ouvrir le centre. Les noirs réagissent par …F6, …d5 tactique, ou défense à deux fianchetti.",
+      "en": "After 1.e4 e5 2.Nf3 Nc6, Bc4 eyes f7 and supports the center. White often plays d3 and short castle, sometimes c3 and d4 to open the center. Black answers with …Bc5, …Nf6, a timely …d5, or double fianchetto systems."
+    },
+    "mainIdeas": [
+      {
+        "fr": "Contrôler le centre et développer sans perdre de temps.",
+        "en": "Control the center and develop without wasting time."
+      },
+      {
+        "fr": "La case f7 (et f2 côté noir) reste une cible tactique classique.",
+        "en": "The f7 square (and f2 for Black) remains a classic tactical target."
+      },
+      {
+        "fr": "Selon la variante, viser d2–d4 ou au contraire garder la tension avec d3.",
+        "en": "Depending on the line, aim for d2–d4 or keep tension with d3."
+      }
+    ],
+    "modelLine": [
+      {
+        "uci": "e2e4",
+        "comment": {
+          "fr": "Ouverture du centre.",
+          "en": "Open the center."
+        }
+      },
+      {
+        "uci": "e7e5",
+        "comment": {
+          "fr": "Réponse symétrique classique.",
+          "en": "Classical symmetrical reply."
+        }
+      },
+      {
+        "uci": "g1f3",
+        "comment": {
+          "fr": "Développement du cavalier vers le centre.",
+          "en": "Develop the knight toward the center."
+        }
+      },
+      {
+        "uci": "b8c6",
+        "comment": {
+          "fr": "Défend e5 et développe.",
+          "en": "Defends e5 and develops."
+        }
+      },
+      {
+        "uci": "f1c4",
+        "comment": {
+          "fr": "Fou actif, pression latente sur f7.",
+          "en": "Active bishop, latent pressure on f7."
+        }
+      },
+      {
+        "uci": "f8c5",
+        "comment": {
+          "fr": "Contre-attaque naturelle sur f2.",
+          "en": "Natural counterplay against f2."
+        }
+      },
+      {
+        "uci": "c2c3",
+        "comment": {
+          "fr": "Prépare d4 avec solidité.",
+          "en": "Prepares d4 on solid footing."
+        }
+      },
+      {
+        "uci": "g8f6",
+        "comment": {
+          "fr": "Développement et attaque sur e4.",
+          "en": "Development and pressure on e4."
+        }
+      }
+    ],
+    "historicalGames": [
+      {
+        "id": "opera-1858",
+        "openingId": "italian-game",
+        "white": "Paul Morphy",
+        "black": "Duke Karl / Count Isouard",
+        "result": "1-0",
+        "date": "1858",
+        "event": {
+          "fr": "Partie d’opéra (Paris)",
+          "en": "Opera Game (Paris)"
+        },
+        "anecdote": {
+          "fr": "On raconte que la consultation noire jouait depuis une loge du théâtre pendant une représentation — d’où le nom. Morphy illustre développement rapide et combinaison finale spectaculaire.",
+          "en": "Legend says Black’s team played from a theatre box during a performance — hence the name. Morphy shows rapid development and a spectacular mating combination."
+        },
+        "movesSan": "",
+        "movesUci": [
+          "e2e4",
+          "e7e5",
+          "g1f3",
+          "d7d6",
+          "d2d4",
+          "c8g4",
+          "d4e5",
+          "g4f3",
+          "d1f3",
+          "d6e5",
+          "f1c4",
+          "g8f6",
+          "f3b3",
+          "d8e7",
+          "b1c3",
+          "c7c6",
+          "c1g5",
+          "b7b5",
+          "c3b5",
+          "c6b5",
+          "c4b5",
+          "b8d7",
+          "e1c1",
+          "a8d8",
+          "d1d7",
+          "d8d7",
+          "h1d1",
+          "e7e6",
+          "b5d7",
+          "f6d7",
+          "b3b8",
+          "d7b8",
+          "d1d8"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "spanish-opening",
+    "name": {
+      "fr": "Ruy Lopez (Espagnole)",
+      "en": "Ruy Lopez (Spanish)"
+    },
+    "eco": "C60",
+    "color": "white",
+    "difficulty": "intermediate",
+    "character": "classical",
+    "tags": [
+      "e4",
+      "classique",
+      "positionnel",
+      "théorie"
+    ],
+    "guided": false,
+    "hook": {
+      "fr": "La ligne la plus étudiée au monde — structure riche et plans de longue haleine.",
+      "en": "The most analyzed opening in the world — rich structure and long-term plans."
+    },
+    "overview": {
+      "fr": "Le Fb5 épinglette le cavalier c6 et demande aux noirs de montrer leur plan : …a6, défense steinitz, berlinese, ou structures fermées. Les blancs visent souvent le jeu positionnel ou l’attaque des rocs opposés.",
+      "en": "The Ruy Lopez Bb5 pins the Nc6 and asks Black to show their plan: …a6, Steinitz, Berlin, or closed setups. White often aims for positional play or opposite-side castling attacks."
+    },
+    "mainIdeas": [
+      {
+        "fr": "Maintenir la tension centrale plutôt que tout échanger trop tôt.",
+        "en": "Maintain central tension rather than exchanging everything early."
+      },
+      {
+        "fr": "Les noirs peuvent accepter une structure avec pion double pour l’activité.",
+        "en": "Black may accept doubled pawns for piece activity."
+      }
+    ],
+    "modelLine": [
+      {
+        "uci": "e2e4",
+        "comment": {
+          "fr": "Contrôle central.",
+          "en": "Central control."
+        }
+      },
+      {
+        "uci": "e7e5",
+        "comment": {
+          "fr": "Réponse classique.",
+          "en": "Classical reply."
+        }
+      },
+      {
+        "uci": "g1f3",
+        "comment": {
+          "fr": "Développement.",
+          "en": "Development."
+        }
+      },
+      {
+        "uci": "b8c6",
+        "comment": {
+          "fr": "Défense du pion e5.",
+          "en": "Defends the e5 pawn."
+        }
+      },
+      {
+        "uci": "f1b5",
+        "comment": {
+          "fr": "Ruy Lopez : pression sur la structure noire.",
+          "en": "Ruy Lopez: pressure on Black’s structure."
+        }
+      },
+      {
+        "uci": "a7a6",
+        "comment": {
+          "fr": "Morphy : force le fou à décider.",
+          "en": "Morphy: forces the bishop to decide."
+        }
+      },
+      {
+        "uci": "b5a4",
+        "comment": {
+          "fr": "Maintien de l’épinglette latérale.",
+          "en": "Keeps the lateral pin idea."
+        }
+      }
+    ],
+    "historicalGames": [
+      {
+        "id": "bird-anderssen-1851-london",
+        "openingId": "spanish-opening",
+        "white": "Bird, Henry Edward",
+        "black": "Anderssen, Adolf",
+        "result": "1-0",
+        "date": "1851.??.??",
+        "event": {
+          "fr": "Tournoi international de Londres (London2)",
+          "en": "London international tournament (London2)"
+        },
+        "anecdote": {
+          "fr": "Lors du premier grand tournoi international à Londres en 1851, Bird bat Anderssen dans une Espagnole fougueuse (ECO C65) : roques opposés et finale où les blancs convertissent l’avantage.",
+          "en": "At the first major international tournament in London, 1851, Bird defeated Anderssen in a sharp Spanish (ECO C65): opposite-side castling and a finish where White converts the edge."
+        },
+        "movesSan": "",
+        "movesUci": [
+          "e2e4",
+          "e7e5",
+          "g1f3",
+          "b8c6",
+          "f1b5",
+          "g8f6",
+          "d2d4",
+          "c6d4",
+          "f3d4",
+          "e5d4",
+          "e4e5",
+          "f6e4",
+          "e1g1",
+          "d8h4",
+          "g2g3",
+          "h4h3",
+          "b5e2",
+          "d7d5",
+          "e5d6",
+          "f8d6",
+          "d1d4",
+          "c8f5",
+          "b1c3",
+          "e8c8",
+          "d4a7",
+          "e4c3",
+          "b2c3",
+          "c7c6",
+          "c1e3",
+          "f5e4",
+          "a7a8",
+          "c8d7",
+          "a8b7",
+          "d7e8",
+          "f2f3",
+          "d6g3",
+          "f1f2",
+          "g3f2",
+          "e3f2",
+          "e4d5",
+          "c3c4",
+          "d5e6",
+          "b7c6",
+          "e8e7",
+          "f2c5",
+          "e7f6",
+          "c6c7",
+          "f6g6",
+          "g1h1",
+          "h7h6",
+          "a1g1",
+          "g6h7",
+          "g1g3",
+          "h3h5",
+          "e2d3",
+          "e6f5",
+          "c7e5",
+          "g7g6",
+          "e5f6",
+          "h8g8",
+          "f6f7",
+          "g8g7",
+          "f7f6",
+          "d8d7",
+          "c5d4",
+          "d7e7",
+          "c4c5",
+          "f5d3",
+          "c2d3",
+          "g6g5",
+          "c5c6",
+          "e7e1",
+          "d4g1",
+          "g7f7",
+          "f6d8",
+          "f7f3",
+          "c6c7",
+          "f3g3",
+          "d8d7",
+          "h7g6",
+          "d7d6",
+          "g6f7",
+          "d6g3",
+          "e1e8",
+          "g3f2",
+          "f7g8",
+          "f2f5"
+        ]
+      },
+      {
+        "id": "steinitz-zukertort-1886-wch-r14",
+        "openingId": "spanish-opening",
+        "white": "Steinitz, William",
+        "black": "Zukertort, Johannes Hermann",
+        "result": "1/2-1/2",
+        "date": "1886.03.12",
+        "event": {
+          "fr": "Championnat du monde 1886 (États-Unis), 14ᵉ partie — nulle",
+          "en": "1886 World Championship (USA), game 14 — draw"
+        },
+        "anecdote": {
+          "fr": "Partie réelle de la première finale du championnat du monde : ouverture espagnole, variante berlinoise (C67), comme dans le fichier PGN du dépôt.",
+          "en": "From the first official world championship match: Spanish Opening, Berlin Defense (C67), matching the bundled PGN in the repo."
+        },
+        "movesSan": "",
+        "movesUci": [
+          "e2e4",
+          "e7e5",
+          "g1f3",
+          "b8c6",
+          "f1b5",
+          "g8f6",
+          "e1g1",
+          "f6e4",
+          "f1e1",
+          "e4d6",
+          "f3e5",
+          "f8e7",
+          "b5d3",
+          "e8g8",
+          "b1c3",
+          "c6e5",
+          "e1e5",
+          "c7c6",
+          "b2b3",
+          "d6e8",
+          "c1b2",
+          "d7d5",
+          "d1f3",
+          "e7f6",
+          "e5e2",
+          "e8c7",
+          "b2a3",
+          "f8e8",
+          "a1e1",
+          "c7e6",
+          "c3a4",
+          "c8d7",
+          "a4c5",
+          "e6c5",
+          "e2e8",
+          "d7e8",
+          "a3c5",
+          "b7b6",
+          "c5a3",
+          "e8d7",
+          "f3g3",
+          "c6c5",
+          "c2c3",
+          "d7e6",
+          "a3b2",
+          "d8d7",
+          "d3c2",
+          "a8e8",
+          "h2h3",
+          "b6b5",
+          "d2d4",
+          "c5d4",
+          "c3d4",
+          "e8c8",
+          "c2d3",
+          "e6f5",
+          "d3f5",
+          "d7f5",
+          "g3g4",
+          "f5g4",
+          "h3g4",
+          "h7h6",
+          "e1e2",
+          "b5b4",
+          "g2g3",
+          "a7a5",
+          "g1f1",
+          "a5a4",
+          "b3a4",
+          "c8a8",
+          "e2e1",
+          "a8a4",
+          "e1a1",
+          "g8f8",
+          "f1e2",
+          "f8e7",
+          "e2d3",
+          "a4a6",
+          "a2a3",
+          "b4a3",
+          "a1a3",
+          "a6a3",
+          "b2a3",
+          "e7d7",
+          "a3f8",
+          "d7e8",
+          "f8d6",
+          "g7g6",
+          "d6e5",
+          "f6d8",
+          "e5g7",
+          "h6h5",
+          "g4h5",
+          "g6h5",
+          "g7e5",
+          "e8d7"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "kings-gambit",
+    "name": {
+      "fr": "Gambit du Roi",
+      "en": "King's Gambit"
+    },
+    "eco": "C30",
+    "color": "white",
+    "difficulty": "advanced",
+    "character": "gambit",
+    "tags": [
+      "e4",
+      "gambit",
+      "agressif",
+      "sacrifice",
+      "attaque"
+    ],
+    "guided": false,
+    "hook": {
+      "fr": "Gambit agressif sacrifiant un pion pour l'initiative et l'attaque",
+      "en": "Aggressive gambit sacrificing a pawn for initiative and attack"
+    },
+    "overview": {
+      "fr": "Gambit agressif sacrifiant un pion pour l'initiative et l'attaque",
+      "en": "Aggressive gambit sacrificing a pawn for initiative and attack"
+    },
+    "mainIdeas": [],
+    "modelLine": [
+      {
+        "uci": "e2e4",
+        "comment": {
+          "fr": "",
+          "en": ""
+        }
+      },
+      {
+        "uci": "e7e5",
+        "comment": {
+          "fr": "",
+          "en": ""
+        }
+      },
+      {
+        "uci": "f2f4",
+        "comment": {
+          "fr": "",
+          "en": ""
+        }
+      }
+    ],
+    "historicalGames": []
+  },
+  {
+    "id": "vienna-game",
+    "name": {
+      "fr": "Partie Viennoise",
+      "en": "Vienna Game"
+    },
+    "eco": "C25",
+    "color": "white",
+    "difficulty": "intermediate",
+    "character": "tactical",
+    "tags": [
+      "e4",
+      "flexible",
+      "tactique"
+    ],
+    "guided": false,
+    "hook": {
+      "fr": "Ouverture flexible préparant f4 ou d4 avec possibilités tactiques",
+      "en": "Flexible opening preparing f4 or d4 with tactical possibilities"
+    },
+    "overview": {
+      "fr": "Ouverture flexible préparant f4 ou d4 avec possibilités tactiques",
+      "en": "Flexible opening preparing f4 or d4 with tactical possibilities"
+    },
+    "mainIdeas": [],
+    "modelLine": [
+      {
+        "uci": "e2e4",
+        "comment": {
+          "fr": "",
+          "en": ""
+        }
+      },
+      {
+        "uci": "e7e5",
+        "comment": {
+          "fr": "",
+          "en": ""
+        }
+      },
+      {
+        "uci": "b1c3",
+        "comment": {
+          "fr": "",
+          "en": ""
+        }
+      }
+    ],
+    "historicalGames": []
+  },
+  {
+    "id": "scotch-game",
+    "name": {
+      "fr": "Partie Écossaise",
+      "en": "Scotch Game"
+    },
+    "eco": "C44",
+    "color": "white",
+    "difficulty": "beginner",
+    "character": "aggressive",
+    "tags": [
+      "e4",
+      "direct",
+      "ouvert",
+      "agressif"
+    ],
+    "guided": false,
+    "hook": {
+      "fr": "Ouverture directe ouvrant rapidement le centre",
+      "en": "Direct opening quickly opening the center"
+    },
+    "overview": {
+      "fr": "Ouverture directe ouvrant rapidement le centre",
+      "en": "Direct opening quickly opening the center"
+    },
+    "mainIdeas": [],
+    "modelLine": [
+      {
+        "uci": "e2e4",
+        "comment": {
+          "fr": "",
+          "en": ""
+        }
+      },
+      {
+        "uci": "e7e5",
+        "comment": {
+          "fr": "",
+          "en": ""
+        }
+      },
+      {
+        "uci": "g1f3",
+        "comment": {
+          "fr": "",
+          "en": ""
+        }
+      },
+      {
+        "uci": "b8c6",
+        "comment": {
+          "fr": "",
+          "en": ""
+        }
+      },
+      {
+        "uci": "d2d4",
+        "comment": {
+          "fr": "",
+          "en": ""
+        }
+      }
+    ],
+    "historicalGames": []
+  },
+  {
+    "id": "sicilian-defense",
+    "name": {
+      "fr": "Défense Sicilienne",
+      "en": "Sicilian Defense"
+    },
+    "eco": "B20",
+    "color": "black",
+    "difficulty": "advanced",
+    "character": "aggressive",
+    "tags": [
+      "e4",
+      "agressif",
+      "déséquilibré",
+      "populaire"
+    ],
+    "guided": false,
+    "hook": {
+      "fr": "Réponse asymétrique et combative aux blancs — asymétrie = chances des deux côtés.",
+      "en": "Asymmetrical, fighting reply to 1.e4 — imbalance gives both sides chances."
+    },
+    "overview": {
+      "fr": "Après 1.e4 c5, les noirs contrôlent d4 sans verrouiller le centre. Les variantes Najdorf, Dragon, Sveshnikov offrent des profils très différents (tactique, attaque de rois, pions compensés).",
+      "en": "After 1.e4 c5, Black controls d4 without locking the center. Najdorf, Dragon, and Sveshnikov offer very different profiles."
+    },
+    "mainIdeas": [
+      {
+        "fr": "Les noirs acceptent souvent un retard de développement pour une structure de pions dynamique.",
+        "en": "Black often accepts lagging development for a dynamic pawn structure."
+      },
+      {
+        "fr": "Les blancs exploitent souvent l’avance d’espace à l’aile dame.",
+        "en": "White often exploits extra queenside space."
+      }
+    ],
+    "modelLine": [
+      {
+        "uci": "e2e4",
+        "comment": {
+          "fr": "1.e4",
+          "en": "1.e4"
+        }
+      },
+      {
+        "uci": "c7c5",
+        "comment": {
+          "fr": "Sicilienne : asymétrie immédiate.",
+          "en": "Sicilian: immediate imbalance."
+        }
+      },
+      {
+        "uci": "g1f3",
+        "comment": {
+          "fr": "Développement naturel.",
+          "en": "Natural development."
+        }
+      },
+      {
+        "uci": "d7d6",
+        "comment": {
+          "fr": "Variante « ancienne » solide.",
+          "en": "Solid ‘old’ Scheveningen-style setup."
+        }
+      },
+      {
+        "uci": "d2d4",
+        "comment": {
+          "fr": "Les blancs attaquent le centre.",
+          "en": "White strikes at the center."
+        }
+      },
+      {
+        "uci": "c5d4",
+        "comment": {
+          "fr": "Prise en passant structurel.",
+          "en": "Structural capture."
+        }
+      }
+    ],
+    "historicalGames": [
+      {
+        "id": "fischer-petrosian-1971",
+        "openingId": "sicilian-defense",
+        "white": "Bobby Fischer",
+        "black": "Tigran Petrosian",
+        "result": "1-0",
+        "date": "1971",
+        "event": {
+          "fr": "Candidats (extrait thématique sicilienne)",
+          "en": "Candidates (Sicilian thematic excerpt)"
+        },
+        "anecdote": {
+          "fr": "Lors du match des Candidats, Fischer affichait une préparation redoutable en Sicilienne ; la série de victoires a marqué l’histoire du championnat du monde.",
+          "en": "In the Candidates, Fischer’s Sicilian prep was fearsome; the run of wins became world-championship lore."
+        },
+        "movesSan": "",
+        "movesUci": [
+          "e2e4",
+          "c7c5",
+          "g1f3",
+          "d7d6",
+          "d2d4",
+          "c5d4",
+          "f3d4",
+          "g8f6",
+          "b1c3",
+          "a7a6",
+          "f2f4"
+        ]
+      },
+      {
+        "id": "anderssen-suhle-1864",
+        "openingId": "sicilian-defense",
+        "white": "Anderssen, Adolf",
+        "black": "Suhle, Berthold",
+        "result": "1-0",
+        "date": "1864.07.??",
+        "event": {
+          "fr": "Match de parties amicales, Berlin (ronde 3)",
+          "en": "Casual match, Berlin (round 3)"
+        },
+        "anecdote": {
+          "fr": "Série de parties à Berlin en 1864 entre Anderssen et Suhle ; cette Sicilienne (ECO B20) montre 2.Fc4 puis un milieu de jeu tactique où les blancs exploitent la colonne ouverte.",
+          "en": "A 1864 Berlin match between Anderssen and Suhle; this Sicilian (ECO B20) features 2.Bc4 and a tactical middlegame where White exploits the open lines."
+        },
+        "movesSan": "",
+        "movesUci": [
+          "e2e4",
+          "c7c5",
+          "f1c4",
+          "e7e6",
+          "b1c3",
+          "a7a6",
+          "a2a4",
+          "b8c6",
+          "d2d3",
+          "g8f6",
+          "c1d2",
+          "d7d5",
+          "c4a2",
+          "d5e4",
+          "d3e4",
+          "b7b6",
+          "g1f3",
+          "c8b7",
+          "e1g1",
+          "f8e7",
+          "f1e1",
+          "e8g8",
+          "a2c4",
+          "c6d4",
+          "d2f4",
+          "h7h6",
+          "f4e5",
+          "a8c8",
+          "d1d3",
+          "d4c6",
+          "d3f1",
+          "c6e5",
+          "f3e5",
+          "d8c7",
+          "f2f4",
+          "c8a8",
+          "a1d1",
+          "f8d8",
+          "d1d3",
+          "d8d4",
+          "b2b3",
+          "a8d8",
+          "d3e3",
+          "d4d2",
+          "c4d3",
+          "c5c4",
+          "e5c4",
+          "e7c5",
+          "c4d2",
+          "f6g4",
+          "c3d1",
+          "g7g5",
+          "g1h1",
+          "g4e3",
+          "d1e3",
+          "g5f4",
+          "e3g4",
+          "g8g7",
+          "e4e5",
+          "h6h5",
+          "g4f6",
+          "c5e3",
+          "f6h5",
+          "g7f8",
+          "h5f4"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "french-defense",
+    "name": {
+      "fr": "Défense Française",
+      "en": "French Defense"
+    },
+    "eco": "C00",
+    "color": "black",
+    "difficulty": "intermediate",
+    "character": "positional",
+    "tags": [
+      "e4",
+      "solide",
+      "positionnel",
+      "contre-attaque"
+    ],
+    "guided": false,
+    "hook": {
+      "fr": "Structure e6–d5 solide ; les noirs acceptent un cavalier parfois passif pour un centre compact.",
+      "en": "Solid e6–d5 structure; Black may accept a passive knight for a compact center."
+    },
+    "overview": {
+      "fr": "1.e4 e6 mène souvent à des positions fermées après …d5. Les plans blancs incluent e5, ed, ou Tg1 avec f4. Les noirs cherchent contre-jeu …c5 ou …f6 selon les variantes.",
+      "en": "1.e4 e6 often leads to closed positions after …d5. White plans include e5, exd5, or Rg1 with f4. Black seeks …c5 or …f6 counterplay."
+    },
+    "mainIdeas": [
+      {
+        "fr": "La chaîne de pions d5–e6 peut être solide mais passive ; cherche les ruptures …c5, …f6.",
+        "en": "The d5–e6 chain can be solid but passive; look for …c5, …f6 breaks."
+      }
+    ],
+    "modelLine": [
+      {
+        "uci": "e2e4",
+        "comment": {
+          "fr": "1.e4",
+          "en": "1.e4"
+        }
+      },
+      {
+        "uci": "e7e6",
+        "comment": {
+          "fr": "Française.",
+          "en": "French Defense."
+        }
+      },
+      {
+        "uci": "d2d4",
+        "comment": {
+          "fr": "Prise d’espace.",
+          "en": "Grabs space."
+        }
+      },
+      {
+        "uci": "d7d5",
+        "comment": {
+          "fr": "Challenge central.",
+          "en": "Central challenge."
+        }
+      },
+      {
+        "uci": "e4e5",
+        "comment": {
+          "fr": "Avance : espace mais cases claires pour Cd7.",
+          "en": "Advance: space but holes for Nd7."
+        }
+      },
+      {
+        "uci": "c7c5",
+        "comment": {
+          "fr": "Rupture classique contre la chaîne.",
+          "en": "Classic break vs the chain."
+        }
+      }
+    ],
+    "historicalGames": [
+      {
+        "id": "hebert-seirawan-1982-luzern",
+        "openingId": "french-defense",
+        "white": "Hebert, Jean",
+        "black": "Seirawan, Yasser",
+        "result": "0-1",
+        "date": "1982.11.08",
+        "event": {
+          "fr": "Olympiade de Lucerne 1982 — ronde 9 (Canada – États-Unis)",
+          "en": "1982 Lucerne Olympiad — round 9 (Canada vs United States)"
+        },
+        "anecdote": {
+          "fr": "Partie d’équipe au plus haut niveau : une française avec 2.d3 (ligne C00) où les noirs échangent les dames tôt puis imposent un jeu de positions et de finale à la Seirawan.",
+          "en": "A top-team board: a French with 2.d3 (C00) where Black trades queens early and outplays White in the middlegame and ending."
+        },
+        "movesSan": "",
+        "movesUci": [
+          "e2e4",
+          "e7e6",
+          "d2d3",
+          "d7d5",
+          "b1d2",
+          "g8f6",
+          "g1f3",
+          "c7c5",
+          "g2g3",
+          "b7b6",
+          "c2c3",
+          "f8e7",
+          "d1a4",
+          "d8d7",
+          "a4d7",
+          "c8d7",
+          "e4e5",
+          "f6g8",
+          "a2a3",
+          "f7f5",
+          "h2h4",
+          "g8h6",
+          "d3d4",
+          "h6f7",
+          "f1d3",
+          "a7a5",
+          "b2b3",
+          "b8a6",
+          "d2f1",
+          "h7h6",
+          "f1e3",
+          "g7g5",
+          "h4g5",
+          "h6g5",
+          "h1h8",
+          "f7h8",
+          "g3g4",
+          "f5f4",
+          "e3c2",
+          "a5a4",
+          "b3a4",
+          "c5c4",
+          "d3h7",
+          "e8f7",
+          "c2b4",
+          "h8g6",
+          "b4a6",
+          "a8a6",
+          "a1b1",
+          "d7c6",
+          "a4a5",
+          "b6b5",
+          "a3a4",
+          "b5a4",
+          "b1a1",
+          "f7g7",
+          "h7g6",
+          "g7g6",
+          "c1a3",
+          "e7a3",
+          "a1a3",
+          "a6a5",
+          "f3d2",
+          "c6e8",
+          "f2f3",
+          "a5a7",
+          "e1f2",
+          "a7b7",
+          "f2e1",
+          "g6g7",
+          "e1d1",
+          "g7f8",
+          "d1e1",
+          "f8e7",
+          "a3a1",
+          "b7b3",
+          "d2b3",
+          "c4b3",
+          "a1b1",
+          "e8g6",
+          "b1b2",
+          "e7d7"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "caro-kann",
+    "name": {
+      "fr": "Défense Caro-Kann",
+      "en": "Caro-Kann Defense"
+    },
+    "eco": "B10",
+    "color": "black",
+    "difficulty": "beginner",
+    "character": "defensive",
+    "tags": [
+      "e4",
+      "solide",
+      "défensif",
+      "stable"
+    ],
+    "guided": false,
+    "hook": {
+      "fr": "Défense solide avec …c6 puis …d5 : moins de tactique brute qu’en Sicilienne, très populaire en club.",
+      "en": "Solid …c6 then …d5: less early fire than the Sicilian, very popular at club level."
+    },
+    "overview": {
+      "fr": "Les noirs repoussent le pion central blanc avec …c6 avant …d5. Variantes classique, avancée, et De Bruycker offrent des profils allant du solide au dynamique.",
+      "en": "Black meets the central pawn with …c6 before …d5. Classical, Advance, and Tartakower-style setups range from solid to dynamic."
+    },
+    "mainIdeas": [
+      {
+        "fr": "Souvent une structure avec pion d5 et pions e6/c6 : compact mais il faut du contre-jeu.",
+        "en": "Often a d5 pawn with e6/c6 support: compact but Black needs counterplay."
+      }
+    ],
+    "modelLine": [
+      {
+        "uci": "e2e4",
+        "comment": {
+          "fr": "1.e4",
+          "en": "1.e4"
+        }
+      },
+      {
+        "uci": "c7c6",
+        "comment": {
+          "fr": "Caro-Kann.",
+          "en": "Caro-Kann Defense."
+        }
+      },
+      {
+        "uci": "d2d4",
+        "comment": {
+          "fr": "Espace central.",
+          "en": "Central space."
+        }
+      },
+      {
+        "uci": "d7d5",
+        "comment": {
+          "fr": "Challenge immédiat.",
+          "en": "Immediate challenge."
+        }
+      },
+      {
+        "uci": "b1c3",
+        "comment": {
+          "fr": "Développement ; évite la prise tôt si tu préfères la classique.",
+          "en": "Development; avoids early exchange if you prefer Classical ideas."
+        }
+      }
+    ],
+    "historicalGames": [
+      {
+        "id": "caro-capablanca",
+        "openingId": "caro-kann",
+        "white": "José Raúl Capablanca",
+        "black": "Frank Marshall",
+        "result": "1-0",
+        "date": "1909",
+        "event": {
+          "fr": "Exemple de jeu positionnel (extrait pédagogique)",
+          "en": "Positional play example (teaching excerpt)"
+        },
+        "anecdote": {
+          "fr": "",
+          "en": ""
+        },
+        "movesSan": "",
+        "movesUci": [
+          "e2e4",
+          "c7c6",
+          "d2d4",
+          "d7d5",
+          "b1c3",
+          "d5e4",
+          "c3e4",
+          "g8f6"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "pirc-defense",
+    "name": {
+      "fr": "Défense Pirc",
+      "en": "Pirc Defense"
+    },
+    "eco": "B07",
+    "color": "black",
+    "difficulty": "intermediate",
+    "character": "hypermodern",
+    "tags": [
+      "e4",
+      "hypermoderne",
+      "fianchetto",
+      "flexible"
+    ],
+    "guided": false,
+    "hook": {
+      "fr": "Défense hypermoderne avec fianchetto et contre-attaque au centre",
+      "en": "Hypermodern defense with fianchetto and center counterattack"
+    },
+    "overview": {
+      "fr": "Défense hypermoderne avec fianchetto et contre-attaque au centre",
+      "en": "Hypermodern defense with fianchetto and center counterattack"
+    },
+    "mainIdeas": [],
+    "modelLine": [
+      {
+        "uci": "e2e4",
+        "comment": {
+          "fr": "",
+          "en": ""
+        }
+      },
+      {
+        "uci": "d7d6",
+        "comment": {
+          "fr": "",
+          "en": ""
+        }
+      },
+      {
+        "uci": "d2d4",
+        "comment": {
+          "fr": "",
+          "en": ""
+        }
+      },
+      {
+        "uci": "g8f6",
+        "comment": {
+          "fr": "",
+          "en": ""
+        }
+      },
+      {
+        "uci": "b1c3",
+        "comment": {
+          "fr": "",
+          "en": ""
+        }
+      },
+      {
+        "uci": "g7g6",
+        "comment": {
+          "fr": "",
+          "en": ""
+        }
+      }
+    ],
+    "historicalGames": []
+  },
+  {
+    "id": "alekhine-defense",
+    "name": {
+      "fr": "Défense Alekhine",
+      "en": "Alekhine's Defense"
+    },
+    "eco": "B02",
+    "color": "black",
+    "difficulty": "advanced",
+    "character": "hypermodern",
+    "tags": [
+      "e4",
+      "hypermoderne",
+      "provocateur",
+      "original"
+    ],
+    "guided": false,
+    "hook": {
+      "fr": "Défense hypermoderne : les noirs incitent e4–e5 pour attaquer la chaîne de pions plus tard.",
+      "en": "Hypermodern defense: Black tempts e4–e5 to attack the pawn chain later."
+    },
+    "overview": {
+      "fr": "1.e4 Cf6 provoque 2.e5. Les noirs reculent le cavalier et cherchent des cases d5 et b6 affaiblies. Les blancs peuvent jouer solide (d4, f4) ou tactique.",
+      "en": "1.e4 Nf6 provokes 2.e5. Black retreats the knight and targets weak d5/b6 squares. White can play solidly (d4, f4) or sharply."
+    },
+    "mainIdeas": [
+      {
+        "fr": "Les pions blancs avancés peuvent devenir des cibles après …d6 / …d5.",
+        "en": "White’s advanced pawns can become targets after …d6 / …d5."
+      }
+    ],
+    "modelLine": [
+      {
+        "uci": "e2e4",
+        "comment": {
+          "fr": "1.e4",
+          "en": "1.e4"
+        }
+      },
+      {
+        "uci": "g8f6",
+        "comment": {
+          "fr": "Alekhine : attaque immédiate sur e4.",
+          "en": "Alekhine: immediate hit on e4."
+        }
+      },
+      {
+        "uci": "e4e5",
+        "comment": {
+          "fr": "Gain de temps et d’espace.",
+          "en": "Gains time and space."
+        }
+      },
+      {
+        "uci": "f6d5",
+        "comment": {
+          "fr": "Cavalier central flexible.",
+          "en": "Flexible central knight."
+        }
+      },
+      {
+        "uci": "d2d4",
+        "comment": {
+          "fr": "Soutien de e5 et ouverture lignes.",
+          "en": "Supports e5 and opens lines."
+        }
+      }
+    ],
+    "historicalGames": [
+      {
+        "id": "bogoljubow-alekhine-karlsbad-1923",
+        "openingId": "alekhine-defense",
+        "white": "Bogoljubow, Efim",
+        "black": "Alekhine, Alexander",
+        "result": "0-1",
+        "date": "1923.05.10",
+        "event": {
+          "fr": "Tournoi international de maîtres, Karlsbad 1923 — ronde 10",
+          "en": "Karlsbad 1923 International Masters — round 10"
+        },
+        "anecdote": {
+          "fr": "Une Alekhine (ECO B02) où les blancs choisissent 2.Cc3 au lieu de 2.e5 : la partie reste tranchante et Alekhine convertit une attaque de roi.",
+          "en": "An Alekhine (ECO B02) where White opts for 2.Nc3 instead of 2.e5: the game stays sharp and Alekhine converts a kingside attack."
+        },
+        "movesSan": "",
+        "movesUci": [
+          "e2e4",
+          "g8f6",
+          "b1c3",
+          "d7d5",
+          "e4e5",
+          "f6d7",
+          "d2d4",
+          "c7c5",
+          "f1b5",
+          "b8c6",
+          "g1f3",
+          "a7a6",
+          "b5c6",
+          "b7c6",
+          "e5e6",
+          "f7e6",
+          "e1g1",
+          "e6e5",
+          "d4e5",
+          "e7e6",
+          "f3g5",
+          "d8e7",
+          "f2f4",
+          "g7g6",
+          "d1g4",
+          "d7b6",
+          "b2b3",
+          "c5c4",
+          "c1e3",
+          "c6c5",
+          "e3f2",
+          "h7h6",
+          "g5f3",
+          "e7f7",
+          "f3h4",
+          "h8g8",
+          "a2a4",
+          "c4b3",
+          "c2b3",
+          "c8b7",
+          "a4a5",
+          "b6d7",
+          "f2g3",
+          "d5d4",
+          "c3a4",
+          "b7d5",
+          "a1b1",
+          "a8b8",
+          "g4d1",
+          "b8b5",
+          "g3e1",
+          "f7e7",
+          "d1d3",
+          "g6g5",
+          "h4g6",
+          "e7f7",
+          "g6f8",
+          "g5f4",
+          "e1g3",
+          "f7f8",
+          "f1f4",
+          "f8g7",
+          "b3b4",
+          "g7g6",
+          "d3d1",
+          "g8f8",
+          "f4g4",
+          "g6f5",
+          "b1b2",
+          "b5b4",
+          "b2b4",
+          "c5b4",
+          "a4b2",
+          "d5b3",
+          "d1e2",
+          "f5b1",
+          "g3e1",
+          "f8f5",
+          "g4e4",
+          "b3d5",
+          "g2g4",
+          "d4d3",
+          "e2d2",
+          "d7e5",
+          "e4e5",
+          "f5e5",
+          "b2d3",
+          "e5e4",
+          "g1f2",
+          "e4d4",
+          "f2e3",
+          "d4e4",
+          "e3f2",
+          "e4d4",
+          "f2e3",
+          "d4g4",
+          "e1g3",
+          "b1g1",
+          "d2f2",
+          "g4e4",
+          "e3d2",
+          "g1a1",
+          "d3e5",
+          "e4e5"
+        ]
+      },
+      {
+        "id": "donchenko-bortnyk-tt-chesscom-2024",
+        "openingId": "alekhine-defense",
+        "white": "Donchenko, Alexander",
+        "black": "Bortnyk, Olexandr",
+        "result": "0-1",
+        "date": "2024.03.26",
+        "event": {
+          "fr": "Titled Tuesday (Chess.com), session internationale — ronde 9",
+          "en": "Titled Tuesday (Chess.com), international late — round 9"
+        },
+        "anecdote": {
+          "fr": "Même famille B02 (2.Cc3 d5) que Karlsbad 1923 : une partie de blitz moderne où les blancs tentent le jeu d’attaque au roi, mais les noirs terminent par un mat de dame sur c1.",
+          "en": "Same B02 family (2.Nc3 d5) as Karlsbad 1923: a modern blitz game where White goes for a king attack, but Black finishes with a queen mate on c1."
+        },
+        "movesSan": "",
+        "movesUci": [
+          "e2e4",
+          "g8f6",
+          "b1c3",
+          "d7d5",
+          "e4e5",
+          "f6d7",
+          "d2d4",
+          "c7c5",
+          "c3d5",
+          "c5d4",
+          "d1d4",
+          "d7b6",
+          "f1b5",
+          "b8c6",
+          "c2c4",
+          "e7e6",
+          "c1g5",
+          "d8d7",
+          "e1c1",
+          "e6d5",
+          "d4h4",
+          "a7a6",
+          "c4d5",
+          "a6b5",
+          "e5e6",
+          "f7e6",
+          "d5c6",
+          "d7c6",
+          "c1b1",
+          "e6e5",
+          "g1f3",
+          "c8f5",
+          "b1a1",
+          "b6c4",
+          "d1d8",
+          "a8d8",
+          "g5d8",
+          "c4a3",
+          "f3e5",
+          "a3c2",
+          "a1b1",
+          "c2e1",
+          "b1a1",
+          "c6c1"
+        ]
+      },
+      {
+        "id": "dovliatov-mamedyarov-baku-2006",
+        "openingId": "alekhine-defense",
+        "white": "Dovliatov, Sanan",
+        "black": "Mamedyarov, Shakhriyar",
+        "result": "0-1",
+        "date": "2006.05.08",
+        "event": {
+          "fr": "President’s Cup de Bakou 2006 — ronde 5",
+          "en": "2006 Baku President’s Cup — round 5"
+        },
+        "anecdote": {
+          "fr": "Alekhine moderne (2.e5 Cd5, fianchetto roi) : Mamedyarov accepte une structure avec pions c doublés et un jeu tactique où la dame et le fou g7 décident vite.",
+          "en": "Modern Alekhine (2.e5 Nd5, kingside fianchetto): Mamedyarov accepts doubled c-pawns and sharp play where the queen and Bg7 decide quickly."
+        },
+        "movesSan": "",
+        "movesUci": [
+          "e2e4",
+          "g8f6",
+          "e4e5",
+          "f6d5",
+          "g2g3",
+          "d7d6",
+          "e5d6",
+          "d8d6",
+          "f1g2",
+          "b8c6",
+          "b1c3",
+          "d5c3",
+          "b2c3",
+          "g7g6",
+          "g1f3",
+          "f8g7",
+          "e1g1",
+          "e8g8",
+          "d2d4",
+          "e7e5",
+          "d4e5",
+          "d6c5",
+          "a1b1",
+          "c5c3",
+          "c1f4",
+          "f8d8",
+          "d1c1",
+          "b7b6",
+          "f1e1",
+          "c8e6",
+          "f4h6",
+          "e6a2",
+          "h6g7",
+          "g8g7",
+          "b1a1",
+          "a2d5",
+          "c1g5",
+          "d5f3",
+          "g5f6",
+          "g7g8",
+          "g2f3",
+          "c6d4",
+          "f3a8",
+          "d8a8",
+          "e1d1",
+          "a7a5",
+          "a1a4",
+          "c7c5",
+          "f6b6",
+          "c3c2",
+          "d1a1",
+          "a8e8",
+          "h2h4",
+          "d4f3",
+          "g1g2",
+          "f3e5",
+          "a1a2",
+          "c2d3",
+          "b6b7",
+          "e5c4",
+          "b7c6",
+          "e8e1",
+          "a4c4",
+          "d3c4",
+          "a2b2",
+          "g8g7",
+          "g2h2",
+          "a5a4",
+          "c6f3",
+          "c4e4"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "queens-gambit",
+    "name": {
+      "fr": "Gambit Dame",
+      "en": "Queen's Gambit"
+    },
+    "eco": "D06",
+    "color": "white",
+    "difficulty": "intermediate",
+    "character": "positional",
+    "tags": [
+      "d4",
+      "classique",
+      "positionnel",
+      "populaire"
+    ],
+    "guided": false,
+    "hook": {
+      "fr": "1.d4 d5 2.c4 : les blancs offrent un pion pour ouvrir lignes et pression.",
+      "en": "1.d4 d5 2.c4: White offers a pawn for lines and pressure."
+    },
+    "overview": {
+      "fr": "Gambit accepté : structure de pions intéressante pour les noirs. Gambit refusé : jeu positionnel classique avec …e6. Les blancs visent souvent e3, Fd3, Cc3.",
+      "en": "Accepted: interesting pawn structures for Black. Declined: classical positional play with …e6. White often aims for e3, Bd3, Nc3."
+    },
+    "mainIdeas": [
+      {
+        "fr": "La tension c4–d5 structure beaucoup de plans de milieu de partie.",
+        "en": "The c4–d5 tension structures many middlegame plans."
+      }
+    ],
+    "modelLine": [
+      {
+        "uci": "d2d4",
+        "comment": {
+          "fr": "1.d4",
+          "en": "1.d4"
+        }
+      },
+      {
+        "uci": "d7d5",
+        "comment": {
+          "fr": "Symétrie centrale.",
+          "en": "Central symmetry."
+        }
+      },
+      {
+        "uci": "c2c4",
+        "comment": {
+          "fr": "Gambit dame.",
+          "en": "Queen’s Gambit."
+        }
+      },
+      {
+        "uci": "e7e6",
+        "comment": {
+          "fr": "Refusée : structure solide.",
+          "en": "Declined: solid structure."
+        }
+      },
+      {
+        "uci": "b1c3",
+        "comment": {
+          "fr": "Développement et pression.",
+          "en": "Development and pressure."
+        }
+      }
+    ],
+    "historicalGames": []
+  },
+  {
+    "id": "london-system",
+    "name": {
+      "fr": "Système de Londres",
+      "en": "London System"
+    },
+    "eco": "D02",
+    "color": "white",
+    "difficulty": "beginner",
+    "character": "positional",
+    "tags": [
+      "d4",
+      "système",
+      "solide",
+      "débutant",
+      "flexible"
+    ],
+    "guided": false,
+    "hook": {
+      "fr": "Structure blanche flexible (d4, Ff4, e3, Cf3) — populaire en blitz et pour éviter la grosse théorie.",
+      "en": "Flexible White setup (d4, Bf4, e3, Nf3) — popular in blitz and to avoid heavy theory."
+    },
+    "overview": {
+      "fr": "Les blancs développent sans engagement précoce en e4. Le fou f4 évite souvent le blocage e3–Ff1. Les noirs peuvent opposer …d5, …e6, ou un fianchetto roi.",
+      "en": "White develops without early e4 commitment. Bf4 often avoids e3–Bf1 blockage. Black can meet with …d5, …e6, or a kingside fianchetto."
+    },
+    "mainIdeas": [
+      {
+        "fr": "Contrôle e5 et cases claires ; parfois c3 puis e4 en milieu de partie.",
+        "en": "Control e5 and light squares; sometimes c3 then e4 later."
+      }
+    ],
+    "modelLine": [
+      {
+        "uci": "d2d4",
+        "comment": {
+          "fr": "Contrôle central.",
+          "en": "Central control."
+        }
+      },
+      {
+        "uci": "d7d5",
+        "comment": {
+          "fr": "Réponse solide.",
+          "en": "Solid reply."
+        }
+      },
+      {
+        "uci": "c1f4",
+        "comment": {
+          "fr": "Londres : fou actif avant e3.",
+          "en": "London: active bishop before e3."
+        }
+      },
+      {
+        "uci": "e7e6",
+        "comment": {
+          "fr": "Structure solide noire.",
+          "en": "Solid Black structure."
+        }
+      },
+      {
+        "uci": "e2e3",
+        "comment": {
+          "fr": "Soutien du centre et Fc1–d3 possible.",
+          "en": "Supports center; Bd3 possible."
+        }
+      },
+      {
+        "uci": "c7c5",
+        "comment": {
+          "fr": "Rupture classique.",
+          "en": "Classic break."
+        }
+      }
+    ],
+    "historicalGames": [
+      {
+        "id": "maroczy-spielmann-prague-1908",
+        "openingId": "london-system",
+        "white": "Maroczy, Geza",
+        "black": "Spielmann, Rudolf",
+        "result": "1-0",
+        "date": "1908.06.05",
+        "event": {
+          "fr": "Tournoi international de maîtres, Prague 1908 — ronde 14",
+          "en": "Prague 1908 International Masters — round 14"
+        },
+        "anecdote": {
+          "fr": "Une ligne D02 (d4, Ff4, e3) typique de la « Londres » du tournage : structure avec pions c et jeu de tours sur la colonne c avant la finale gagnante.",
+          "en": "A D02 London-style line (d4, Bf4, e3): c-pawn structure and rook play on the c-file before a winning ending."
+        },
+        "movesSan": "",
+        "movesUci": [
+          "d2d4",
+          "d7d5",
+          "c1f4",
+          "g8f6",
+          "e2e3",
+          "c8f5",
+          "f1d3",
+          "f5g6",
+          "g1f3",
+          "e7e6",
+          "f3e5",
+          "f8d6",
+          "b1d2",
+          "c7c6",
+          "h2h3",
+          "d8c7",
+          "d2f3",
+          "b8d7",
+          "f4h2",
+          "g6e4",
+          "e5d7",
+          "f6d7",
+          "h2d6",
+          "c7d6",
+          "d3e4",
+          "d5e4",
+          "f3d2",
+          "f7f5",
+          "c2c3",
+          "e6e5",
+          "d1b3",
+          "e5d4",
+          "c3d4",
+          "e8c8",
+          "e1g1",
+          "d8e8",
+          "a1c1",
+          "c8b8",
+          "c1c3",
+          "g7g5",
+          "f1c1",
+          "b8a8",
+          "d2c4",
+          "d6b8",
+          "c4a5",
+          "d7f6",
+          "b3a4",
+          "b8c7",
+          "c3c5",
+          "c7d7",
+          "a5c4",
+          "a8b8",
+          "c4e5",
+          "e8e5",
+          "c5e5",
+          "f6d5",
+          "c1c5",
+          "d7f7",
+          "a4b3",
+          "h8c8",
+          "a2a4",
+          "h7h5",
+          "c5d5",
+          "c6d5",
+          "b3d5"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "kings-indian-attack",
+    "name": {
+      "fr": "Attaque Indienne du Roi",
+      "en": "King's Indian Attack"
+    },
+    "eco": "A07",
+    "color": "white",
+    "difficulty": "beginner",
+    "character": "positional",
+    "tags": [
+      "système",
+      "fianchetto",
+      "flexible",
+      "universel"
+    ],
+    "guided": false,
+    "hook": {
+      "fr": "Setup flexible avec fianchetto, utilisable contre tout",
+      "en": "Flexible setup with fianchetto, usable against anything"
+    },
+    "overview": {
+      "fr": "Setup flexible avec fianchetto, utilisable contre tout",
+      "en": "Flexible setup with fianchetto, usable against anything"
+    },
+    "mainIdeas": [],
+    "modelLine": [
+      {
+        "uci": "g1f3",
+        "comment": {
+          "fr": "",
+          "en": ""
+        }
+      },
+      {
+        "uci": "d7d5",
+        "comment": {
+          "fr": "",
+          "en": ""
+        }
+      },
+      {
+        "uci": "g2g3",
+        "comment": {
+          "fr": "",
+          "en": ""
+        }
+      },
+      {
+        "uci": "g8f6",
+        "comment": {
+          "fr": "",
+          "en": ""
+        }
+      },
+      {
+        "uci": "f1g2",
+        "comment": {
+          "fr": "",
+          "en": ""
+        }
+      }
+    ],
+    "historicalGames": []
+  },
+  {
+    "id": "catalan-opening",
+    "name": {
+      "fr": "Catalane",
+      "en": "Catalan Opening"
+    },
+    "eco": "E00",
+    "color": "white",
+    "difficulty": "advanced",
+    "character": "positional",
+    "tags": [
+      "d4",
+      "positionnel",
+      "fianchetto",
+      "sophistiqué"
+    ],
+    "guided": false,
+    "hook": {
+      "fr": "Ouverture sophistiquée combinant le Gambit Dame et le fianchetto",
+      "en": "Sophisticated opening combining the Queen's Gambit and fianchetto"
+    },
+    "overview": {
+      "fr": "Ouverture sophistiquée combinant le Gambit Dame et le fianchetto",
+      "en": "Sophisticated opening combining the Queen's Gambit and fianchetto"
+    },
+    "mainIdeas": [],
+    "modelLine": [
+      {
+        "uci": "d2d4",
+        "comment": {
+          "fr": "",
+          "en": ""
+        }
+      },
+      {
+        "uci": "g8f6",
+        "comment": {
+          "fr": "",
+          "en": ""
+        }
+      },
+      {
+        "uci": "c2c4",
+        "comment": {
+          "fr": "",
+          "en": ""
+        }
+      },
+      {
+        "uci": "e7e6",
+        "comment": {
+          "fr": "",
+          "en": ""
+        }
+      },
+      {
+        "uci": "g2g3",
+        "comment": {
+          "fr": "",
+          "en": ""
+        }
+      }
+    ],
+    "historicalGames": []
+  },
+  {
+    "id": "kings-indian-defense",
+    "name": {
+      "fr": "Défense Indienne du Roi",
+      "en": "King's Indian Defense"
+    },
+    "eco": "E60",
+    "color": "black",
+    "difficulty": "advanced",
+    "character": "aggressive",
+    "tags": [
+      "d4",
+      "fianchetto",
+      "agressif",
+      "dynamique"
+    ],
+    "guided": false,
+    "hook": {
+      "fr": "Fianchetto roi, …d6, …e5 ou …c5 : explosion tactique fréquente sur l’aile roi.",
+      "en": "Kingside fianchetto, …d6, …e5 or …c5: frequent kingside fireworks."
+    },
+    "overview": {
+      "fr": "Les noirs laissent souvent les blancs former un grand pion central puis attaquent avec …e5 ou …f5. Les blancs peuvent jouer e4 ou fianchetto dame (Fianchetto variation).",
+      "en": "Black often lets White build a big center then strikes with …e5 or …f5. White may play e4 or a Catalan-style fianchetto."
+    },
+    "mainIdeas": [
+      {
+        "fr": "Combat typique : expansion blanche au centre vs assaut noir sur le roi.",
+        "en": "Typical fight: White central expansion vs Black’s kingside assault."
+      }
+    ],
+    "modelLine": [
+      {
+        "uci": "d2d4",
+        "comment": {
+          "fr": "1.d4",
+          "en": "1.d4"
+        }
+      },
+      {
+        "uci": "g8f6",
+        "comment": {
+          "fr": "Développement flexible.",
+          "en": "Flexible development."
+        }
+      },
+      {
+        "uci": "c2c4",
+        "comment": {
+          "fr": "Grande présence dame.",
+          "en": "Big queen’s wing."
+        }
+      },
+      {
+        "uci": "g7g6",
+        "comment": {
+          "fr": "Prépare fianchetto.",
+          "en": "Prepares fianchetto."
+        }
+      },
+      {
+        "uci": "b1c3",
+        "comment": {
+          "fr": "Développement.",
+          "en": "Development."
+        }
+      },
+      {
+        "uci": "f8g7",
+        "comment": {
+          "fr": "Diagonale longue.",
+          "en": "Long diagonal."
+        }
+      }
+    ],
+    "historicalGames": [
+      {
+        "id": "kasparov-karpov-kid",
+        "openingId": "kings-indian-defense",
+        "white": "Anatoly Karpov",
+        "black": "Garry Kasparov",
+        "result": "1/2-1/2",
+        "date": "1985",
+        "event": {
+          "fr": "Match du monde (exemple de structure GIND)",
+          "en": "World Championship (KID-style structure example)"
+        },
+        "anecdote": {
+          "fr": "",
+          "en": ""
+        },
+        "movesSan": "",
+        "movesUci": [
+          "d2d4",
+          "g8f6",
+          "c2c4",
+          "g7g6",
+          "b1c3",
+          "f8g7",
+          "e2e4",
+          "d7d6"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "nimzo-indian-defense",
+    "name": {
+      "fr": "Défense Nimzo-Indienne",
+      "en": "Nimzo-Indian Defense"
+    },
+    "eco": "E20",
+    "color": "black",
+    "difficulty": "advanced",
+    "character": "positional",
+    "tags": [
+      "d4",
+      "hypermoderne",
+      "positionnel",
+      "contrôle"
+    ],
+    "guided": false,
+    "hook": {
+      "fr": "3.Fb4+ : hypermoderne — les noirs pincent le cavalier tout en contrôlant e4.",
+      "en": "3.Bb4+: hypermodern — Black pins the knight while controlling e4."
+    },
+    "overview": {
+      "fr": "Après 1.d4 Cf6 2.c4 e6 3.Cc3 Fb4, les noirs évitent …d5 immédiat et visent souvent le bloc est-indien ou la variante Rubinstein.",
+      "en": "After 1.d4 Nf6 2.c4 e6 3.Nc3 Bb4, Black avoids immediate …d5 and often heads for KID-style or Rubinstein setups."
+    },
+    "mainIdeas": [
+      {
+        "fr": "Le fou en b4 force les blancs à choisir : a3, e3, ou accepter la structure.",
+        "en": "The Bb4 bishop forces White to choose: a3, e3, or accept the structure."
+      }
+    ],
+    "modelLine": [
+      {
+        "uci": "d2d4",
+        "comment": {
+          "fr": "1.d4",
+          "en": "1.d4"
+        }
+      },
+      {
+        "uci": "g8f6",
+        "comment": {
+          "fr": "1…Cf6",
+          "en": "1…Nf6"
+        }
+      },
+      {
+        "uci": "c2c4",
+        "comment": {
+          "fr": "2.c4",
+          "en": "2.c4"
+        }
+      },
+      {
+        "uci": "e7e6",
+        "comment": {
+          "fr": "2…e6",
+          "en": "2…e6"
+        }
+      },
+      {
+        "uci": "b1c3",
+        "comment": {
+          "fr": "3.Cc3",
+          "en": "3.Nc3"
+        }
+      },
+      {
+        "uci": "f8b4",
+        "comment": {
+          "fr": "3…Fb4+ Nimzo-indienne.",
+          "en": "3…Bb4+ Nimzo-Indian."
+        }
+      }
+    ],
+    "historicalGames": [
+      {
+        "id": "nimzo-demo",
+        "openingId": "nimzo-indian-defense",
+        "white": "Illustration",
+        "black": "Structure typique",
+        "result": "*",
+        "date": "—",
+        "event": {
+          "fr": "Mini-ligne pédagogique",
+          "en": "Teaching mini-line"
+        },
+        "anecdote": {
+          "fr": "",
+          "en": ""
+        },
+        "movesSan": "",
+        "movesUci": [
+          "d2d4",
+          "g8f6",
+          "c2c4",
+          "e7e6",
+          "b1c3",
+          "f8b4",
+          "c1d2"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "grunfeld-defense",
+    "name": {
+      "fr": "Défense Grünfeld",
+      "en": "Grünfeld Defense"
+    },
+    "eco": "D70",
+    "color": "black",
+    "difficulty": "expert",
+    "character": "hypermodern",
+    "tags": [
+      "d4",
+      "hypermoderne",
+      "complexe",
+      "théorique"
+    ],
+    "guided": false,
+    "hook": {
+      "fr": "…d5 dynamique contre d4/c4 : les noirs acceptent un centre blanc large pour contre-attaquer.",
+      "en": "Dynamic …d5 vs d4/c4: Black accepts a wide white center to counterattack."
+    },
+    "overview": {
+      "fr": "Après 1.d4 Cf6 2.c4 g6 3.Cc3 d5, les noirs visent …F7 et pression sur d4. Kasparov et nombreux GMI l’ont popularisée.",
+      "en": "After 1.d4 Nf6 2.c4 g6 3.Nc3 d5, Black aims for …Bg7 and pressure on d4. Kasparov and many GMs championed it."
+    },
+    "mainIdeas": [
+      {
+        "fr": "Sacrifices de pion ou contre-jeu sur la colonne c selon les variantes.",
+        "en": "Pawn sacrifices or counterplay on the c-file depending on lines."
+      }
+    ],
+    "modelLine": [
+      {
+        "uci": "d2d4",
+        "comment": {
+          "fr": "1.d4",
+          "en": "1.d4"
+        }
+      },
+      {
+        "uci": "g8f6",
+        "comment": {
+          "fr": "1…Cf6",
+          "en": "1…Nf6"
+        }
+      },
+      {
+        "uci": "c2c4",
+        "comment": {
+          "fr": "2.c4",
+          "en": "2.c4"
+        }
+      },
+      {
+        "uci": "g7g6",
+        "comment": {
+          "fr": "2…g6",
+          "en": "2…g6"
+        }
+      },
+      {
+        "uci": "b1c3",
+        "comment": {
+          "fr": "3.Cc3",
+          "en": "3.Nc3"
+        }
+      },
+      {
+        "uci": "d7d5",
+        "comment": {
+          "fr": "3…d5 Grünfeld.",
+          "en": "3…d5 Grünfeld."
+        }
+      }
+    ],
+    "historicalGames": []
+  },
+  {
+    "id": "english-opening",
+    "name": {
+      "fr": "Ouverture Anglaise",
+      "en": "English Opening"
+    },
+    "eco": "A10",
+    "color": "white",
+    "difficulty": "intermediate",
+    "character": "positional",
+    "tags": [
+      "flexible",
+      "positionnel",
+      "transpositions"
+    ],
+    "guided": false,
+    "hook": {
+      "fr": "1.c4 : contrôle du centre par le flanc — transpositions vers des milliers de plans.",
+      "en": "1.c4: flank central control — transpositions to countless plans."
+    },
+    "overview": {
+      "fr": "L’anglaise peut mener à réti, catalane, sicilienne inversée, ou hedgehog. Flexibilité maximale pour le joueur de blancs.",
+      "en": "The English can lead to Réti, Catalan, reversed Sicilian, or hedgehog. Maximum flexibility for White."
+    },
+    "mainIdeas": [
+      {
+        "fr": "Retarder e4 ou le jouer selon la réponse noire ; souvent g3, Fg2.",
+        "en": "Delay e4 or play it depending on Black; often g3, Bg2."
+      }
+    ],
+    "modelLine": [
+      {
+        "uci": "c2c4",
+        "comment": {
+          "fr": "1.c4",
+          "en": "1.c4"
+        }
+      },
+      {
+        "uci": "e7e5",
+        "comment": {
+          "fr": "1…e5 symétrique possible.",
+          "en": "1…e5 symmetrical possible."
+        }
+      },
+      {
+        "uci": "g1f3",
+        "comment": {
+          "fr": "2.Cf3",
+          "en": "2.Nf3"
+        }
+      },
+      {
+        "uci": "b8c6",
+        "comment": {
+          "fr": "2…Cc6",
+          "en": "2…Nc6"
+        }
+      }
+    ],
+    "historicalGames": []
+  },
+  {
+    "id": "reti-opening",
+    "name": {
+      "fr": "Ouverture Réti",
+      "en": "Réti Opening"
+    },
+    "eco": "A04",
+    "color": "white",
+    "difficulty": "intermediate",
+    "character": "hypermodern",
+    "tags": [
+      "hypermoderne",
+      "flexible",
+      "contrôle"
+    ],
+    "guided": false,
+    "hook": {
+      "fr": "1.Cf3 : hypermoderne — contrôle central sans pion e4/d4 immédiat, très flexible.",
+      "en": "1.Nf3: hypermodern — central control without an immediate e4/d4, highly flexible."
+    },
+    "overview": {
+      "fr": "Les blancs retardent le choix central. Souvent c4, g3, ou d4 plus tard selon la réponse noire. Idéal pour éviter des masses de théorie sur une seule ligne.",
+      "en": "White delays the central commitment. Often c4, g3, or d4 later depending on Black. Good for avoiding one huge theoretical line."
+    },
+    "mainIdeas": [
+      {
+        "fr": "Flexibilité : la même première série de coups peut mener à des plans très différents.",
+        "en": "Flexibility: the same early moves can lead to very different plans."
+      }
+    ],
+    "modelLine": [
+      {
+        "uci": "g1f3",
+        "comment": {
+          "fr": "Réti / Zukertort.",
+          "en": "Réti / Zukertort."
+        }
+      },
+      {
+        "uci": "d7d5",
+        "comment": {
+          "fr": "Réponse centrale classique.",
+          "en": "Classical central reply."
+        }
+      },
+      {
+        "uci": "c2c4",
+        "comment": {
+          "fr": "Anglaise / catalane possible.",
+          "en": "English / Catalan possible."
+        }
+      },
+      {
+        "uci": "d5c4",
+        "comment": {
+          "fr": "Si les noirs prennent, structure asymétrique.",
+          "en": "If Black captures, asymmetrical structure."
+        }
+      }
+    ],
+    "historicalGames": []
+  },
+  {
+    "id": "bird-opening",
+    "name": {
+      "fr": "Ouverture Bird",
+      "en": "Bird's Opening"
+    },
+    "eco": "A02",
+    "color": "white",
+    "difficulty": "intermediate",
+    "character": "aggressive",
+    "tags": [
+      "agressif",
+      "original",
+      "attaque"
+    ],
+    "guided": false,
+    "hook": {
+      "fr": "Ouverture agressive contrôlant e5 et préparant l'attaque",
+      "en": "Aggressive opening controlling e5 and preparing an attack"
+    },
+    "overview": {
+      "fr": "Ouverture agressive contrôlant e5 et préparant l'attaque",
+      "en": "Aggressive opening controlling e5 and preparing an attack"
+    },
+    "mainIdeas": [],
+    "modelLine": [
+      {
+        "uci": "f2f4",
+        "comment": {
+          "fr": "",
+          "en": ""
+        }
+      }
+    ],
+    "historicalGames": []
+  },
+  {
+    "id": "evans-gambit",
+    "name": {
+      "fr": "Gambit Evans",
+      "en": "Evans Gambit"
+    },
+    "eco": "C51",
+    "color": "white",
+    "difficulty": "advanced",
+    "character": "gambit",
+    "tags": [
+      "e4",
+      "gambit",
+      "romantique",
+      "initiative"
+    ],
+    "guided": false,
+    "hook": {
+      "fr": "4.b4 ! : un pion offert pour lignes ouvertes et initiative — romantique mais encore dangereux.",
+      "en": "4.b4!: a pawn for open lines and initiative — romantic but still dangerous."
+    },
+    "overview": {
+      "fr": "Après 1.e4 e5 2.Cf3 Cc6 3.Fc4 Fc5, 4.b4 vise à dévier le fou noir et accélérer l’attaque. Accepté ou refusé, les positions restent vives.",
+      "en": "After 1.e4 e5 2.Nf3 Nc6 3.Bc4 Bc5, 4.b4 aims to divert Black’s bishop and speed up the attack."
+    },
+    "mainIdeas": [
+      {
+        "fr": "Développement rapide, colonnes ouvertes, parfois sacrifice de pièce sur e5 ou f7.",
+        "en": "Fast development, open files, sometimes piece sacrifices on e5 or f7."
+      }
+    ],
+    "modelLine": [
+      {
+        "uci": "e2e4",
+        "comment": {
+          "fr": "1.e4",
+          "en": "1.e4"
+        }
+      },
+      {
+        "uci": "e7e5",
+        "comment": {
+          "fr": "1…e5",
+          "en": "1…e5"
+        }
+      },
+      {
+        "uci": "g1f3",
+        "comment": {
+          "fr": "2.Cf3",
+          "en": "2.Nf3"
+        }
+      },
+      {
+        "uci": "b8c6",
+        "comment": {
+          "fr": "2…Cc6",
+          "en": "2…Nc6"
+        }
+      },
+      {
+        "uci": "f1c4",
+        "comment": {
+          "fr": "3.Fc4",
+          "en": "3.Bc4"
+        }
+      },
+      {
+        "uci": "f8c5",
+        "comment": {
+          "fr": "3…Fc5",
+          "en": "3…Bc5"
+        }
+      },
+      {
+        "uci": "b2b4",
+        "comment": {
+          "fr": "4.b4 Gambit Evans.",
+          "en": "4.b4 Evans Gambit."
+        }
+      }
+    ],
+    "historicalGames": [
+      {
+        "id": "evans-walker-1850",
+        "openingId": "evans-gambit",
+        "white": "Captain Evans",
+        "black": "William Walker",
+        "result": "1-0",
+        "date": "1850",
+        "event": {
+          "fr": "Partie historique (extrait)",
+          "en": "Historic game (excerpt)"
+        },
+        "anecdote": {
+          "fr": "Le capitaine Evans popularisa ce gambit à bord des navires ; le coup 4.b4 porte son nom.",
+          "en": "Captain Evans popularized this gambit at sea; 4.b4 bears his name."
+        },
+        "movesSan": "",
+        "movesUci": [
+          "e2e4",
+          "e7e5",
+          "g1f3",
+          "b8c6",
+          "f1c4",
+          "f8c5",
+          "b2b4",
+          "c5b4",
+          "c2c3",
+          "b4a5",
+          "d2d4"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "budapest-gambit",
+    "name": {
+      "fr": "Gambit de Budapest",
+      "en": "Budapest Gambit"
+    },
+    "eco": "A51",
+    "color": "black",
+    "difficulty": "intermediate",
+    "character": "gambit",
+    "tags": [
+      "d4",
+      "gambit",
+      "agressif",
+      "contre-jeu"
+    ],
+    "guided": false,
+    "hook": {
+      "fr": "Gambit agressif contre 1.d4, cherchant l'initiative",
+      "en": "Aggressive gambit against 1.d4, seeking the initiative"
+    },
+    "overview": {
+      "fr": "Gambit agressif contre 1.d4, cherchant l'initiative",
+      "en": "Aggressive gambit against 1.d4, seeking the initiative"
+    },
+    "mainIdeas": [],
+    "modelLine": [
+      {
+        "uci": "d2d4",
+        "comment": {
+          "fr": "",
+          "en": ""
+        }
+      },
+      {
+        "uci": "g8f6",
+        "comment": {
+          "fr": "",
+          "en": ""
+        }
+      },
+      {
+        "uci": "c2c4",
+        "comment": {
+          "fr": "",
+          "en": ""
+        }
+      },
+      {
+        "uci": "e7e5",
+        "comment": {
+          "fr": "",
+          "en": ""
+        }
+      }
+    ],
+    "historicalGames": []
+  }
+]

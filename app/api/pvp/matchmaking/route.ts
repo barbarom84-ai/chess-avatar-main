@@ -11,6 +11,7 @@ import {
 } from "@/lib/pvp-matchmaking";
 import { findRecentMatchmakingStarterGame } from "@/lib/pvp-new-game-dedup";
 
+import type { PvpMatchmakingResponse, PvpOkResponse } from "@/lib/api-contract";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
 
@@ -37,7 +38,7 @@ export async function GET(request: NextRequest) {
 
   if (error) return jsonError(error.message ?? "Lookup failed", 500);
   if (!row) {
-    return NextResponse.json({ inQueue: false });
+    return NextResponse.json({ inQueue: false } satisfies PvpMatchmakingResponse);
   }
 
   const entry = row as PvpMatchmakingRow;
@@ -50,14 +51,14 @@ export async function GET(request: NextRequest) {
       role: match.role,
       game: match.game,
       serverNow: Date.now(),
-    });
+    } satisfies PvpMatchmakingResponse);
   }
 
   return NextResponse.json({
     inQueue: true,
     timePreset: entry.time_preset,
     queueSize: match.queueSize,
-  });
+  } satisfies PvpMatchmakingResponse);
 }
 
 /** Rejoindre la file pour une cadence live (timed). */
@@ -86,7 +87,7 @@ export async function POST(request: NextRequest) {
       game: recent.game,
       serverNow: Date.now(),
       reused: true,
-    });
+    } satisfies PvpMatchmakingResponse);
   }
 
   const entry = await upsertMatchmakingEntry(sb, user, rawPreset);
@@ -99,7 +100,7 @@ export async function POST(request: NextRequest) {
       role: match.role,
       game: match.game,
       serverNow: Date.now(),
-    });
+    } satisfies PvpMatchmakingResponse);
   }
 
   return NextResponse.json({
@@ -107,7 +108,7 @@ export async function POST(request: NextRequest) {
     inQueue: true,
     timePreset: rawPreset,
     queueSize: match.queueSize,
-  });
+  } satisfies PvpMatchmakingResponse);
 }
 
 /** Quitter la file d'attente. */
@@ -122,5 +123,5 @@ export async function DELETE(request: NextRequest) {
   if (!sb) return jsonError("Server misconfigured", 503);
 
   await leaveMatchmakingQueue(sb, user.id);
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true } satisfies PvpOkResponse);
 }

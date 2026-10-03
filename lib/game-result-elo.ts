@@ -4,24 +4,13 @@
  * and contradicts a mid-70% accuracy score.
  */
 
-export const GAME_ELO_MIN = 400;
-export const GAME_ELO_MAX = 3000;
+import { PARITY } from "@/lib/parity-contract";
+
+export const GAME_ELO_MIN = PARITY.gameElo.min;
+export const GAME_ELO_MAX = PARITY.gameElo.max;
 
 /** Accuracy % → typical online rating (Lichess / Chess.com ballpark). */
-const ACCURACY_ELO_ANCHORS: ReadonlyArray<readonly [number, number]> = [
-  [40, 400],
-  [50, 700],
-  [60, 1000],
-  [70, 1350],
-  [75, 1550],
-  [80, 1750],
-  [85, 2000],
-  [90, 2250],
-  [93, 2450],
-  [96, 2650],
-  [98, 2800],
-  [100, 3000],
-];
+const ACCURACY_ELO_ANCHORS = PARITY.gameElo.accuracyAnchors;
 
 export function clampGameElo(elo: number): number {
   return Math.min(GAME_ELO_MAX, Math.max(GAME_ELO_MIN, Math.round(elo)));
@@ -48,7 +37,7 @@ export function estimatedEloFromAccuracy(accuracyPercent: number): number {
 
 export type GameWinner = "white" | "black" | "draw";
 
-const RESULT_NUDGE = 50;
+const RESULT_NUDGE = PARITY.gameElo.resultNudge;
 
 /**
  * Elo for both sides from this game's accuracies (same curve).

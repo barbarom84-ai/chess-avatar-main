@@ -1,0 +1,280 @@
+{
+  "contractVersion": 1,
+  "fromAccuracy": [
+    {
+      "input": 0,
+      "expected": 400
+    },
+    {
+      "input": 10,
+      "expected": 400
+    },
+    {
+      "input": 39.9,
+      "expected": 400
+    },
+    {
+      "input": 40,
+      "expected": 400
+    },
+    {
+      "input": 41,
+      "expected": 430
+    },
+    {
+      "input": 45.5,
+      "expected": 565
+    },
+    {
+      "input": 50,
+      "expected": 700
+    },
+    {
+      "input": 55,
+      "expected": 850
+    },
+    {
+      "input": 62.5,
+      "expected": 1088
+    },
+    {
+      "input": 70,
+      "expected": 1350
+    },
+    {
+      "input": 72.3,
+      "expected": 1442
+    },
+    {
+      "input": 75,
+      "expected": 1550
+    },
+    {
+      "input": 80,
+      "expected": 1750
+    },
+    {
+      "input": 84.9,
+      "expected": 1995
+    },
+    {
+      "input": 90,
+      "expected": 2250
+    },
+    {
+      "input": 93,
+      "expected": 2450
+    },
+    {
+      "input": 95,
+      "expected": 2583
+    },
+    {
+      "input": 97,
+      "expected": 2725
+    },
+    {
+      "input": 98,
+      "expected": 2800
+    },
+    {
+      "input": 99.4,
+      "expected": 2940
+    },
+    {
+      "input": 100,
+      "expected": 3000
+    }
+  ],
+  "forGame": [
+    {
+      "accuracyWhite": 72.3,
+      "accuracyBlack": 64.1,
+      "winner": "white",
+      "expected": {
+        "eloWhite": 1492,
+        "eloBlack": 1093
+      }
+    },
+    {
+      "accuracyWhite": 98,
+      "accuracyBlack": 40,
+      "winner": "white",
+      "expected": {
+        "eloWhite": 2850,
+        "eloBlack": 400
+      }
+    },
+    {
+      "accuracyWhite": 40,
+      "accuracyBlack": 99.4,
+      "winner": "white",
+      "expected": {
+        "eloWhite": 450,
+        "eloBlack": 2890
+      }
+    },
+    {
+      "accuracyWhite": 100,
+      "accuracyBlack": 100,
+      "winner": "white",
+      "expected": {
+        "eloWhite": 3000,
+        "eloBlack": 2950
+      }
+    },
+    {
+      "accuracyWhite": 0,
+      "accuracyBlack": 0,
+      "winner": "white",
+      "expected": {
+        "eloWhite": 450,
+        "eloBlack": 400
+      }
+    },
+    {
+      "accuracyWhite": 55,
+      "accuracyBlack": null,
+      "winner": "white",
+      "expected": {
+        "eloWhite": 900,
+        "eloBlack": null
+      }
+    },
+    {
+      "accuracyWhite": null,
+      "accuracyBlack": 88,
+      "winner": "white",
+      "expected": {
+        "eloWhite": null,
+        "eloBlack": 2100
+      }
+    },
+    {
+      "accuracyWhite": 72.3,
+      "accuracyBlack": 64.1,
+      "winner": "black",
+      "expected": {
+        "eloWhite": 1392,
+        "eloBlack": 1193
+      }
+    },
+    {
+      "accuracyWhite": 98,
+      "accuracyBlack": 40,
+      "winner": "black",
+      "expected": {
+        "eloWhite": 2750,
+        "eloBlack": 450
+      }
+    },
+    {
+      "accuracyWhite": 40,
+      "accuracyBlack": 99.4,
+      "winner": "black",
+      "expected": {
+        "eloWhite": 400,
+        "eloBlack": 2990
+      }
+    },
+    {
+      "accuracyWhite": 100,
+      "accuracyBlack": 100,
+      "winner": "black",
+      "expected": {
+        "eloWhite": 2950,
+        "eloBlack": 3000
+      }
+    },
+    {
+      "accuracyWhite": 0,
+      "accuracyBlack": 0,
+      "winner": "black",
+      "expected": {
+        "eloWhite": 400,
+        "eloBlack": 450
+      }
+    },
+    {
+      "accuracyWhite": 55,
+      "accuracyBlack": null,
+      "winner": "black",
+      "expected": {
+        "eloWhite": 800,
+        "eloBlack": null
+      }
+    },
+    {
+      "accuracyWhite": null,
+      "accuracyBlack": 88,
+      "winner": "black",
+      "expected": {
+        "eloWhite": null,
+        "eloBlack": 2200
+      }
+    },
+    {
+      "accuracyWhite": 72.3,
+      "accuracyBlack": 64.1,
+      "winner": "draw",
+      "expected": {
+        "eloWhite": 1442,
+        "eloBlack": 1143
+      }
+    },
+    {
+      "accuracyWhite": 98,
+      "accuracyBlack": 40,
+      "winner": "draw",
+      "expected": {
+        "eloWhite": 2800,
+        "eloBlack": 400
+      }
+    },
+    {
+      "accuracyWhite": 40,
+      "accuracyBlack": 99.4,
+      "winner": "draw",
+      "expected": {
+        "eloWhite": 400,
+        "eloBlack": 2940
+      }
+    },
+    {
+      "accuracyWhite": 100,
+      "accuracyBlack": 100,
+      "winner": "draw",
+      "expected": {
+        "eloWhite": 3000,
+        "eloBlack": 3000
+      }
+    },
+    {
+      "accuracyWhite": 0,
+      "accuracyBlack": 0,
+      "winner": "draw",
+      "expected": {
+        "eloWhite": 400,
+        "eloBlack": 400
+      }
+    },
+    {
+      "accuracyWhite": 55,
+      "accuracyBlack": null,
+      "winner": "draw",
+      "expected": {
+        "eloWhite": 850,
+        "eloBlack": null
+      }
+    },
+    {
+      "accuracyWhite": null,
+      "accuracyBlack": 88,
+      "winner": "draw",
+      "expected": {
+        "eloWhite": null,
+        "eloBlack": 2150
+      }
+    }
+  ]
+}

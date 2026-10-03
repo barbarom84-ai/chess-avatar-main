@@ -7,6 +7,7 @@ import {
   removeAccountFriend,
 } from "@/lib/account-server";
 
+import type { FriendsListResponse } from "@/lib/api-contract";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
 
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const friends = await listAccountFriends(sb, user.id);
-    return NextResponse.json({ friends });
+    return NextResponse.json({ friends } satisfies FriendsListResponse);
   } catch (error) {
     return jsonError(error instanceof Error ? error.message : "Friends load failed", 500);
   }
@@ -52,7 +53,7 @@ export async function POST(request: NextRequest) {
   try {
     await addAccountFriend(sb, user.id, friendUserId, label);
     const friends = await listAccountFriends(sb, user.id);
-    return NextResponse.json({ friends });
+    return NextResponse.json({ friends } satisfies FriendsListResponse);
   } catch (error) {
     return jsonError(error instanceof Error ? error.message : "Friend add failed", 500);
   }
@@ -71,7 +72,7 @@ export async function DELETE(request: NextRequest) {
   try {
     await removeAccountFriend(sb, user.id, friendUserId);
     const friends = await listAccountFriends(sb, user.id);
-    return NextResponse.json({ friends });
+    return NextResponse.json({ friends } satisfies FriendsListResponse);
   } catch (error) {
     return jsonError(error instanceof Error ? error.message : "Friend remove failed", 500);
   }

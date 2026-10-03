@@ -4,6 +4,7 @@ import {
   requireAscensionAuth,
 } from "@/lib/ascension/server-auth";
 
+import type { AscensionCardResponse, AscensionPatchCardResponse } from "@/lib/api-contract";
 export const runtime = "nodejs";
 
 const ALLOWED_CLASSES = new Set([
@@ -48,7 +49,7 @@ export async function GET(request: NextRequest) {
     card: mapDbChampionCard(data as Record<string, unknown>),
     unlockedSkills: (skills.data ?? []).map((r) => String(r.skill_id)),
     completedPuzzleIds: (completions.data ?? []).map((r) => String(r.puzzle_id)),
-  });
+  } satisfies AscensionCardResponse);
 }
 
 export async function PATCH(request: NextRequest) {
@@ -97,5 +98,5 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: error?.message ?? "Update failed" }, { status: 500 });
   }
 
-  return NextResponse.json({ card: mapDbChampionCard(data as Record<string, unknown>) });
+  return NextResponse.json({ card: mapDbChampionCard(data as Record<string, unknown>) } satisfies AscensionPatchCardResponse);
 }

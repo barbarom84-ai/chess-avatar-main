@@ -1,5 +1,5 @@
 import { OPENINGS_DATABASE, getOpeningName } from "@/lib/openings-library";
-import { getAllLessons } from "@/lib/opening-lessons";
+import { getAllLessons, type OpeningLesson } from "@/lib/opening-lessons";
 
 export type CatalogLocalized = { fr: string; en: string };
 
@@ -30,7 +30,7 @@ export type OpeningCatalogEntry = {
   }[];
 };
 
-function difficultyLabel(d: number): string {
+export function difficultyLabel(d: number): string {
   if (d <= 2) return "beginner";
   if (d === 3) return "intermediate";
   if (d === 4) return "advanced";
@@ -38,8 +38,10 @@ function difficultyLabel(d: number): string {
 }
 
 /** Catalogue compact (noyau) au format consommé par ChessAvatar Android. */
-export function buildOpeningCatalog(): OpeningCatalogEntry[] {
-  const lessons = new Map(getAllLessons().map((l) => [l.openingId, l]));
+export function buildOpeningCatalog(
+  allLessons: OpeningLesson[] = getAllLessons()
+): OpeningCatalogEntry[] {
+  const lessons = new Map(allLessons.map((l) => [l.openingId, l]));
   return OPENINGS_DATABASE.map((opening) => {
     const lesson = lessons.get(opening.id);
     return {
