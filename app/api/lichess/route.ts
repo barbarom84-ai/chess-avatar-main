@@ -3,6 +3,7 @@ import { isValidChessUsername } from "@/lib/chess-username";
 import { rateLimit } from "@/lib/rate-limit";
 import { pickLichessPlatformRating } from "@/lib/platform-rating";
 
+import type { PlatformGamesResponse } from "@/lib/api-contract";
 export async function GET(request: NextRequest) {
   const limited = rateLimit(request, { windowMs: 60_000, max: 40 });
   if (!limited.ok) {
@@ -79,7 +80,7 @@ export async function GET(request: NextRequest) {
       })
       .filter((game) => game !== null);
 
-    return NextResponse.json({ games, avatarUrl, platformRating: platformRating ?? null });
+    return NextResponse.json({ games, avatarUrl, platformRating: platformRating ?? null } satisfies PlatformGamesResponse);
   } catch (error) {
     console.error("Server Error:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });

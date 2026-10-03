@@ -1,0 +1,198 @@
+{
+  "contractVersion": 1,
+  "divergences": [
+    {
+      "id": "puzzles-direct-lichess",
+      "description": "Android appelle lichess.org directement pour les puzzles (le web /api/puzzles/random met en cache un puzzle par difficulté pendant 5 minutes)."
+    },
+    {
+      "id": "admin-pages-web-only",
+      "description": "Les pages d'administration (learn, puzzles, ascension, ops, site) n'existent que sur le web."
+    },
+    {
+      "id": "i18n-separate",
+      "description": "Les chaînes d'interface FR/EN sont maintenues séparément (lib/i18n côté web, ui/i18n côté Android)."
+    },
+    {
+      "id": "pvp-finished-games-direct-supabase",
+      "description": "Android lit les parties PvP terminées directement dans la table pvp_games (pas de route HTTP dédiée côté web)."
+    }
+  ],
+  "files": [
+    {
+      "path": "parity/api-fixtures/responses.json",
+      "android": "app/src/test/resources/parity/api-fixtures/responses.json",
+      "sha256": "39c97dbde87c40a2059c461c57162435cfb4fa7835a824802229c97f3ea926e2"
+    },
+    {
+      "path": "parity/constants.json",
+      "android": "parity/constants.json",
+      "sha256": "7a19b2bd7cabdc383b1c59e8f0f4af06913497574b888749ffca9f37c68b83a5"
+    },
+    {
+      "path": "parity/data/openings/catalog.json",
+      "android": "app/src/main/assets/openings/catalog.json",
+      "sha256": "21520af8c900b5844ec8b1bea591885bd2c6495257e3831496b68c223aba31ad"
+    },
+    {
+      "path": "parity/data/openings/historical-games.json",
+      "android": "app/src/main/assets/openings/historical-games.json",
+      "sha256": "ba267f9204c72befd5b935a2f810bcf086a902b20c994d759a406c63f01475bf"
+    },
+    {
+      "path": "parity/data/openings/lessons.json",
+      "android": "app/src/main/assets/openings/lessons.json",
+      "sha256": "0b6b0173d3bcbd8c829a1ddc40b0d0895f7a32246543a677cf71ff025561d45a"
+    },
+    {
+      "path": "parity/data/personalities.json",
+      "android": "app/src/main/assets/personalities/personalities.json",
+      "sha256": "3d98e0a5e523268537a89ff5146a3ebb8b559a65f3d88095c79848de780f68f5"
+    },
+    {
+      "path": "parity/vectors/elo.json",
+      "android": "app/src/test/resources/parity/vectors/elo.json",
+      "sha256": "49d9e7bd403d191a6a0cfcc72f8c7152999e9ebce809668cd7ec558852cc2a2c"
+    },
+    {
+      "path": "parity/vectors/engine-params.json",
+      "android": "app/src/test/resources/parity/vectors/engine-params.json",
+      "sha256": "b22e0ce1dbee67b031915d5c921b4c24b37bcbf53ad71ded81f33fe002baf920"
+    },
+    {
+      "path": "parity/vectors/fantasy.json",
+      "android": "app/src/test/resources/parity/vectors/fantasy.json",
+      "sha256": "75203f860bfc3347852cbde73543f6eaa8c99b4f8137e5171354619d3307b914"
+    },
+    {
+      "path": "parity/vectors/forced-lines.json",
+      "android": "app/src/test/resources/parity/vectors/forced-lines.json",
+      "sha256": "4b2e9270564cd0da9142b060fb311e79550b23d4b6b3193b8d7a67b64cd1b230"
+    },
+    {
+      "path": "parity/vectors/game-elo.json",
+      "android": "app/src/test/resources/parity/vectors/game-elo.json",
+      "sha256": "bb83537e67281054ac1620f4fd21eb46c1d421bd06111194fdfe2125597c6b64"
+    },
+    {
+      "path": "parity/vectors/persona.json",
+      "android": "app/src/test/resources/parity/vectors/persona.json",
+      "sha256": "e1630af6d08e4944752c9b4643b52b66c4d493f6004e5e16c26202d7982672a8"
+    },
+    {
+      "path": "parity/vectors/review.json",
+      "android": "app/src/test/resources/parity/vectors/review.json",
+      "sha256": "e0939b89fb30fe74fa5d9d215f448ea5046b289dcacdf372fdd53ebd835d6e4a"
+    },
+    {
+      "path": "parity/vectors/threat-arrows.json",
+      "android": "app/src/test/resources/parity/vectors/threat-arrows.json",
+      "sha256": "74f12020924b18c97371c0a999046379d06f6fab5173ec4bfab29f57c5d65ccb"
+    },
+    {
+      "path": "public/personalities/alekhine.webp",
+      "android": "app/src/main/assets/personalities/alekhine.webp",
+      "sha256": "cbe5bd09527ebcbedc8503c69ca014456464094079e49237642fcf0d084fdac3"
+    },
+    {
+      "path": "public/personalities/capablanca.webp",
+      "android": "app/src/main/assets/personalities/capablanca.webp",
+      "sha256": "02f477cfef0b313ae991e7bc5cc9dda20b849334fb66f746d57e54ddfb92b56b"
+    },
+    {
+      "path": "public/personalities/carlsen.webp",
+      "android": "app/src/main/assets/personalities/carlsen.webp",
+      "sha256": "ba764ef2bde46a45b8f4c6eb30655af0bbf36c2f4207ce15a9b73fdab5f563c3"
+    },
+    {
+      "path": "public/personalities/curie.webp",
+      "android": "app/src/main/assets/personalities/curie.webp",
+      "sha256": "8e2469ff9f75fa2b217c8ba8690ba6a7d95ab0bde26b83e38709f3f3a6ea1793"
+    },
+    {
+      "path": "public/personalities/einstein.webp",
+      "android": "app/src/main/assets/personalities/einstein.webp",
+      "sha256": "37755529ee6dbf52600d38501f8d0424d2ac58ccdfe1ceff4d97784996a3a856"
+    },
+    {
+      "path": "public/personalities/fischer.webp",
+      "android": "app/src/main/assets/personalities/fischer.webp",
+      "sha256": "2e5c4b01458dae2253c6a465648b21badc76bb5aeee7b26915fa7716f859c65d"
+    },
+    {
+      "path": "public/personalities/hal.webp",
+      "android": "app/src/main/assets/personalities/hal.webp",
+      "sha256": "a8c41b9a4b9e4a1651283901471052fc2a3edb63c2e148ddd4581acf66084f2d"
+    },
+    {
+      "path": "public/personalities/holmes.webp",
+      "android": "app/src/main/assets/personalities/holmes.webp",
+      "sha256": "6d552ba828afc44eec78142c46b2fa52ab8219a101df6f2d4ad143cecc514f00"
+    },
+    {
+      "path": "public/personalities/karpov.webp",
+      "android": "app/src/main/assets/personalities/karpov.webp",
+      "sha256": "602f9e057be95b3ec8c8a6cfd61eaf293e01cd0fee131426ba75240fa66fae05"
+    },
+    {
+      "path": "public/personalities/kasparov.webp",
+      "android": "app/src/main/assets/personalities/kasparov.webp",
+      "sha256": "d3f46a2045ce28461c5ba7c993643d33f2438b13d12c69a2a6004ec616c711fb"
+    },
+    {
+      "path": "public/personalities/larsen.webp",
+      "android": "app/src/main/assets/personalities/larsen.webp",
+      "sha256": "c2f3a90a1eb0cd646a5ff2e7aaf7aa9d61fea77c2062ad7c2595b098c6bf7ce0"
+    },
+    {
+      "path": "public/personalities/lasker.webp",
+      "android": "app/src/main/assets/personalities/lasker.webp",
+      "sha256": "a92e12a6347420bb234c543c0f84a20406732f5069286a23f445d538b60b363e"
+    },
+    {
+      "path": "public/personalities/moriarty.webp",
+      "android": "app/src/main/assets/personalities/moriarty.webp",
+      "sha256": "45affc25d3bc23875673089067cac18c0350de71e9df215a8d492e34820a2c10"
+    },
+    {
+      "path": "public/personalities/morphy.webp",
+      "android": "app/src/main/assets/personalities/morphy.webp",
+      "sha256": "41130c770b47729454cde08b6e482532db937a47746ce96bc97098d1b629295c"
+    },
+    {
+      "path": "public/personalities/newton.webp",
+      "android": "app/src/main/assets/personalities/newton.webp",
+      "sha256": "3b2a2fe5701384bfe292dbf3c3d5df969eb8a6ea32eb62786d830404d4f36dd7"
+    },
+    {
+      "path": "public/personalities/nimzowitsch.webp",
+      "android": "app/src/main/assets/personalities/nimzowitsch.webp",
+      "sha256": "97e68371d45f15610bcddd364a113de1c64275e483ef938657d2e3ef2f4589a9"
+    },
+    {
+      "path": "public/personalities/philidor.webp",
+      "android": "app/src/main/assets/personalities/philidor.webp",
+      "sha256": "5b367a32917dbc43876aca4966dbad591276e12ec25ded4776a1768f812d82e6"
+    },
+    {
+      "path": "public/personalities/red-queen.webp",
+      "android": "app/src/main/assets/personalities/red-queen.webp",
+      "sha256": "2aa615638a0ea76c935e9091e13094b8aaa9b1209bd9b67cedfb3e864704b4a8"
+    },
+    {
+      "path": "public/personalities/steinitz.webp",
+      "android": "app/src/main/assets/personalities/steinitz.webp",
+      "sha256": "79d7a5713e311d384f39fb3767ccb7fed37a14c0e67d34f36194dcac1afc7259"
+    },
+    {
+      "path": "public/personalities/tal.webp",
+      "android": "app/src/main/assets/personalities/tal.webp",
+      "sha256": "c1aeba801e336d2554e2d21cbacd08d77e023a9c7fe14bf2f43a32676440331b"
+    },
+    {
+      "path": "public/personalities/turing.webp",
+      "android": "app/src/main/assets/personalities/turing.webp",
+      "sha256": "46e9487934f42bee6b04da5881db6a934900b35090dc27b17dfc63bc60795575"
+    }
+  ]
+}

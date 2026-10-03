@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { rateLimit } from "@/lib/rate-limit";
 import { loadFeaturedProfilesFromDatabase } from "@/lib/arena-featured-persist";
 
+import type { ArenaChampionsResponse } from "@/lib/api-contract";
 /** Liste des champions déjà en base (sans ré-import Lichess/Chess.com). */
 export async function GET(request: NextRequest) {
   const limited = await rateLimit(request, { windowMs: 60_000, max: 30 });
@@ -26,7 +27,7 @@ export async function GET(request: NextRequest) {
       hasSeedOwner: Boolean(
         process.env.FEATURED_PROFILE_SEED_USER_ID?.trim()
       ),
-    });
+    } satisfies ArenaChampionsResponse);
   } catch (err) {
     console.error("[arena/champions]", err);
     return NextResponse.json(

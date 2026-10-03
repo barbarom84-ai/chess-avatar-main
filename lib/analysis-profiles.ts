@@ -3,6 +3,8 @@
  * Single source of truth shared by analysis-engine and game-review.
  */
 
+import { PARITY } from "@/lib/parity-contract";
+
 export type AnalysisStrictnessId = "relaxed" | "standard" | "strict";
 
 /** Upper limits of expected points lost (0..1) per classification. */
@@ -19,12 +21,7 @@ export interface AnalysisProfile {
 }
 
 /** Android / chess.com reference thresholds. */
-const STANDARD_BANDS: WinLossBands = {
-  excellent: 0.02,
-  good: 0.05,
-  inaccuracy: 0.1,
-  mistake: 0.2,
-};
+const STANDARD_BANDS: WinLossBands = { ...PARITY.review.standardBands };
 
 function scaleBands(factor: number): WinLossBands {
   return {
@@ -38,7 +35,7 @@ function scaleBands(factor: number): WinLossBands {
 /** Wider bands — friendlier labels for casual players. */
 const RELAXED: AnalysisProfile = {
   id: "relaxed",
-  winLossBands: scaleBands(1.5),
+  winLossBands: scaleBands(PARITY.review.bandScale.relaxed),
 };
 
 const STANDARD: AnalysisProfile = {
@@ -49,7 +46,7 @@ const STANDARD: AnalysisProfile = {
 /** Tighter bands — closer to engine truth for strong players. */
 const STRICT: AnalysisProfile = {
   id: "strict",
-  winLossBands: scaleBands(0.7),
+  winLossBands: scaleBands(PARITY.review.bandScale.strict),
 };
 
 export const ANALYSIS_PROFILES: Record<AnalysisStrictnessId, AnalysisProfile> = {

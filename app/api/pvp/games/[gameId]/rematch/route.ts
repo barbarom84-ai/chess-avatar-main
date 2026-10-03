@@ -12,6 +12,7 @@ import {
   type PvpRematchRole,
 } from "@/lib/pvp-rematch";
 
+import type { PvpRematchResponse } from "@/lib/api-contract";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
 
@@ -36,7 +37,7 @@ function rematchResponse(
     role,
     serverNow: Date.now(),
     ...extra,
-  });
+  } satisfies PvpRematchResponse);
 }
 
 /** Create a rematch lobby from a finished game (optional color swap). */

@@ -3,6 +3,7 @@ import { isValidChessUsername } from "@/lib/chess-username";
 import { rateLimit } from "@/lib/rate-limit";
 import { pickChessComPlatformRating } from "@/lib/platform-rating";
 
+import type { PlatformGamesResponse } from "@/lib/api-contract";
 interface ChessComArchiveGame {
   uuid?: string;
   end_time?: number;
@@ -144,7 +145,7 @@ export async function GET(request: NextRequest) {
         games: normalizedGames, 
         avatarUrl: avatar || "https://www.chess.com/bundles/web/images/user-image.svg",
         platformRating: platformRating ?? null
-    });
+    } satisfies PlatformGamesResponse);
 
   } catch {
     return NextResponse.json({ error: "Chess.com API error", errorKey: "genericError" }, { status: 500 });

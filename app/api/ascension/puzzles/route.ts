@@ -19,6 +19,7 @@ import {
   mapDbCampaignTrack,
 } from "@/lib/ascension/campaign-tracks";
 
+import type { AscensionPuzzlesResponse } from "@/lib/api-contract";
 export const runtime = "nodejs";
 
 export async function GET(request: NextRequest) {
@@ -128,5 +129,5 @@ export async function GET(request: NextRequest) {
     fantasyTrackUnlocked: trackUnlock.fantasy ?? false,
     premiumPuzzlesPerTrack: ASCENSION_PREMIUM_PUZZLES_PER_TRACK,
     freePuzzlesPerTrack: ASCENSION_FREE_PUZZLES_PER_TRACK,
-  });
+  } satisfies AscensionPuzzlesResponse);
 }

@@ -6,11 +6,13 @@ import { hasActivePremiumAccess } from "@/lib/subscription-access";
 import { buildSystemPrompt, type ChatRequest } from "@/lib/avatar-chat-prompt";
 import { localizeFrenchCoachText } from "@/lib/localized-san";
 import { hydrateReviewChatContext, expandReviewCoachUserMessage } from "@/lib/review-coach-context";
+import { PARITY } from "@/lib/parity-contract";
 
+import type { CoachChatResponse } from "@/lib/api-contract";
 export const runtime = "nodejs";
 
 const MODEL = "gpt-4o-mini";
-const FREE_DAILY_QUOTA = 20;
+const FREE_DAILY_QUOTA = PARITY.coach.freeDailyQuota;
 
 interface ChatRequestBody extends ChatRequest {
   history?: { role: "user" | "assistant"; content: string }[];
@@ -156,7 +158,7 @@ export async function POST(req: NextRequest) {
       reply,
       remaining,
       limit: isPremium ? null : FREE_DAILY_QUOTA,
-    });
+    } satisfies CoachChatResponse);
   } catch {
     return NextResponse.json({ error: "OPENAI_ERROR" }, { status: 502 });
   }

@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { resolveChampionTier } from "@/lib/ascension/tiers";
 import { mapDbChampionCard, requireAscensionAuth } from "@/lib/ascension/server-auth";
 
+import type { AscensionInitResponse } from "@/lib/api-contract";
 export const runtime = "nodejs";
 
 async function ensureChampionCard(admin: SupabaseClient, userId: string) {
@@ -64,7 +65,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const card = await ensureChampionCard(auth.ctx.admin, auth.ctx.user.id);
-    return NextResponse.json({ card });
+    return NextResponse.json({ card } satisfies AscensionInitResponse);
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Init failed" },
@@ -81,7 +82,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const card = await ensureChampionCard(auth.ctx.admin, auth.ctx.user.id);
-    return NextResponse.json({ card });
+    return NextResponse.json({ card } satisfies AscensionInitResponse);
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Load failed" },

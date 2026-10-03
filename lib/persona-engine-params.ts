@@ -1,11 +1,8 @@
 import type { EngineConfig } from "@/lib/analysis";
 import { DEFAULT_HUMAN_BLUNDER_INTERVAL } from "@/lib/bot-move-count";
+import { MAX_PROFILE_ELO, MIN_PROFILE_ELO, UCI_ELO_MAX, UCI_ELO_MIN } from "@/lib/elo-bounds";
 
-/** Aligné sur Android `EloBounds.kt`. */
-export const UCI_ELO_MIN = 1320;
-export const UCI_ELO_MAX = 3190;
-export const MAX_PROFILE_ELO = 3500;
-export const MIN_PROFILE_ELO = 400;
+export { MAX_PROFILE_ELO, MIN_PROFILE_ELO, UCI_ELO_MAX, UCI_ELO_MIN };
 
 /** Kotlin `Double.toInt()` (truncates toward zero) + clamp 400–3500. */
 export function clampProfileElo(elo: number): number {

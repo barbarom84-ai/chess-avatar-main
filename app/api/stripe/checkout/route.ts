@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { getStripe, getStripePriceId } from '@/lib/stripe';
 
+import type { StripeCheckoutResponse } from "@/lib/api-contract";
 export async function POST(req: NextRequest) {
   try {
     const authHeader = req.headers.get('authorization');
@@ -62,7 +63,7 @@ export async function POST(req: NextRequest) {
       metadata: { userId: user.id, currency: validCurrency },
     });
 
-    return NextResponse.json({ url: session.url });
+    return NextResponse.json({ url: session.url } satisfies StripeCheckoutResponse);
   } catch (error: unknown) {
     console.error("Stripe checkout error:", error);
     return NextResponse.json(

@@ -1,0 +1,2882 @@
+{
+  "contractVersion": 1,
+  "variants": [
+    {
+      "games": [
+        {
+          "id": "opera-1858",
+          "pgn": "[Event \"?\"]\n[Site \"?\"]\n[Date \"????.??.??\"]\n[Round \"?\"]\n[White \"Paul Morphy\"]\n[Black \"Duke Karl / Count Isouard\"]\n[Result \"*\"]\n[WhiteElo \"1500\"]\n[BlackElo \"1400\"]\n[Opening \"Sicilian Defense\"]\n\n1. e4 e5 2. Nf3 d6 3. d4 Bg4 4. dxe5 Bxf3 5. Qxf3 dxe5 6. Bc4 Nf6 7. Qb3 Qe7 8. Nc3 c6 9. Bg5 b5 10. Nxb5 cxb5 11. Bxb5+ Nbd7 12. O-O-O Rd8 13. Rxd7 Rxd7 14. Rd1 Qe6 15. Bxd7+ Nxd7 16. Qb8+ Nxb8 17. Rd8# *",
+          "winner": "white",
+          "players": {
+            "white": {
+              "user": {
+                "name": "Paul Morphy"
+              }
+            },
+            "black": {
+              "username": "Duke Karl / Count Isouard"
+            }
+          }
+        },
+        {
+          "id": "bird-anderssen-1851-london",
+          "pgn": "[Event \"?\"]\n[Site \"?\"]\n[Date \"????.??.??\"]\n[Round \"?\"]\n[White \"Bird, Henry Edward\"]\n[Black \"Anderssen, Adolf\"]\n[Result \"*\"]\n[WhiteElo \"1637\"]\n[BlackElo \"1651\"]\n[ECOUrl \"https://www.chess.com/openings/Italian-Game\"]\n\n1. e4 e5 2. Nf3 Nc6 3. Bb5 Nf6 4. d4 Nxd4 5. Nxd4 exd4 6. e5 Ne4 7. O-O Qh4 8. g3 Qh3 9. Be2 d5 10. exd6 Bxd6 11. Qxd4 Bf5 12. Nc3 O-O-O 13. Qxa7 Nxc3 14. bxc3 c6 15. Be3 Be4 16. Qa8+ Kd7 17. Qxb7+ Ke8 18. f3 Bxg3 19. Rf2 Bxf2+ 20. Bxf2 Bd5 21. c4 Be6 22. Qxc6+ Ke7 23. Bc5+ Kf6 24. Qc7 Kg6 25. Kh1 h6 26. Rg1+ Kh7 27. Rg3 Qh5 28. Bd3+ Bf5 29. Qe5 g6 30. Qf6 Rhg8 31. Qxf7+ Rg7 32. Qf6 Rdd7 33. Bd4 Rde7 34. c5 Bxd3 35. cxd3 g5 36. c6 Re1+ 37. Bg1 Rf7 38. Qd8 Rxf3 39. c7 Rxg3 40. Qd7+ Kg6 41. Qd6+ Kf7 42. Qxg3 Re8 43. Qf2+ Kg8 44. Qf5 *",
+          "winner": "white",
+          "players": {
+            "white": {
+              "username": "Bird, Henry Edward"
+            },
+            "black": {
+              "username": "Anderssen, Adolf"
+            }
+          }
+        },
+        {
+          "id": "steinitz-zukertort-1886-wch-r14",
+          "pgn": "[Event \"?\"]\n[Site \"?\"]\n[Date \"????.??.??\"]\n[Round \"?\"]\n[White \"Steinitz, William\"]\n[Black \"Zukertort, Johannes Hermann\"]\n[Result \"*\"]\n[WhiteElo \"1774\"]\n[BlackElo \"1902\"]\n[ECO \"C50\"]\n\n1. e4 e5 2. Nf3 Nc6 3. Bb5 Nf6 4. O-O Nxe4 5. Re1 Nd6 6. Nxe5 Be7 7. Bd3 O-O 8. Nc3 Nxe5 9. Rxe5 c6 10. b3 Ne8 11. Bb2 d5 12. Qf3 Bf6 13. Re2 Nc7 14. Ba3 Re8 15. Rae1 Ne6 16. Na4 Bd7 17. Nc5 Nxc5 18. Rxe8+ Bxe8 19. Bxc5 b6 20. Ba3 Bd7 21. Qg3 c5 22. c3 Be6 23. Bb2 Qd7 24. Bc2 Re8 25. h3 b5 26. d4 cxd4 27. cxd4 Rc8 28. Bd3 Bf5 29. Bxf5 Qxf5 30. Qg4 Qxg4 31. hxg4 h6 32. Re2 b4 33. g3 a5 34. Kf1 a4 35. bxa4 Ra8 36. Re1 Rxa4 37. Ra1 Kf8 38. Ke2 Ke7 39. Kd3 Ra6 40. a3 bxa3 41. Rxa3 Rxa3+ 42. Bxa3+ Kd7 43. Bf8 Ke8 44. Bd6 g6 45. Be5 Bd8 46. Bg7 h5 47. gxh5 gxh5 48. Be5 Kd7 *",
+          "winner": "draw",
+          "players": {
+            "white": {
+              "user": {
+                "name": "Steinitz, William"
+              }
+            },
+            "black": {
+              "username": "Zukertort, Johannes Hermann"
+            }
+          }
+        },
+        {
+          "id": "fischer-petrosian-1971",
+          "pgn": "[Event \"?\"]\n[Site \"?\"]\n[Date \"????.??.??\"]\n[Round \"?\"]\n[White \"Bobby Fischer\"]\n[Black \"Tigran Petrosian\"]\n[Result \"*\"]\n[WhiteElo \"1911\"]\n[BlackElo \"2153\"]\n[Opening \"Sicilian Defense\"]\n\n1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 a6 6. f4 *",
+          "winner": "white",
+          "players": {
+            "white": {
+              "username": "Bobby Fischer"
+            },
+            "black": {
+              "username": "Tigran Petrosian"
+            }
+          }
+        },
+        {
+          "id": "anderssen-suhle-1864",
+          "pgn": "[Event \"?\"]\n[Site \"?\"]\n[Date \"????.??.??\"]\n[Round \"?\"]\n[White \"Anderssen, Adolf\"]\n[Black \"Suhle, Berthold\"]\n[Result \"*\"]\n[WhiteElo \"2048\"]\n[BlackElo \"1404\"]\n[ECOUrl \"https://www.chess.com/openings/Italian-Game\"]\n\n1. e4 c5 2. Bc4 e6 3. Nc3 a6 4. a4 Nc6 5. d3 Nf6 6. Bd2 d5 7. Ba2 dxe4 8. dxe4 b6 9. Nf3 Bb7 10. O-O Be7 11. Re1 O-O 12. Bc4 Nd4 13. Bf4 h6 14. Be5 Rc8 15. Qd3 Nc6 16. Qf1 Nxe5 17. Nxe5 Qc7 18. f4 Ra8 19. Rad1 Rfd8 20. Rd3 Rd4 21. b3 Rad8 22. Rde3 Rd2 23. Bd3 c4 24. Nxc4 Bc5 25. Nxd2 Ng4 26. Nd1 g5 27. Kh1 Nxe3 28. Nxe3 gxf4 29. Ng4 Kg7 30. e5 h5 31. Nf6 Be3 32. Nxh5+ Kf8 33. Nxf4 *",
+          "winner": "white",
+          "players": {
+            "white": {
+              "user": {
+                "name": "Anderssen, Adolf"
+              }
+            },
+            "black": {
+              "username": "Suhle, Berthold"
+            }
+          }
+        },
+        {
+          "id": "hebert-seirawan-1982-luzern",
+          "pgn": "[Event \"?\"]\n[Site \"?\"]\n[Date \"????.??.??\"]\n[Round \"?\"]\n[White \"Hebert, Jean\"]\n[Black \"Seirawan, Yasser\"]\n[Result \"*\"]\n[WhiteElo \"2185\"]\n[BlackElo \"1655\"]\n[ECO \"C50\"]\n\n1. e4 e6 2. d3 d5 3. Nd2 Nf6 4. Ngf3 c5 5. g3 b6 6. c3 Be7 7. Qa4+ Qd7 8. Qxd7+ Bxd7 9. e5 Ng8 10. a3 f5 11. h4 Nh6 12. d4 Nf7 13. Bd3 a5 14. b3 Na6 15. Nf1 h6 16. Ne3 g5 17. hxg5 hxg5 18. Rxh8+ Nxh8 19. g4 f4 20. Nc2 a4 21. bxa4 c4 22. Bh7 Kf7 23. Nb4 Ng6 24. Nxa6 Rxa6 25. Rb1 Bc6 26. a5 b5 27. a4 bxa4 28. Ra1 Kg7 29. Bxg6 Kxg6 30. Ba3 Bxa3 31. Rxa3 Rxa5 32. Nd2 Be8 33. f3 Ra7 34. Kf2 Rb7 35. Ke1 Kg7 36. Kd1 Kf8 37. Ke1 Ke7 38. Ra1 Rb3 39. Nxb3 cxb3 40. Rb1 Bg6 41. Rb2 Kd7 *",
+          "winner": "black",
+          "players": {
+            "white": {
+              "username": "Hebert, Jean"
+            },
+            "black": {
+              "username": "Seirawan, Yasser"
+            }
+          }
+        },
+        {
+          "id": "bogoljubow-alekhine-karlsbad-1923",
+          "pgn": "[Event \"?\"]\n[Site \"?\"]\n[Date \"????.??.??\"]\n[Round \"?\"]\n[White \"Bogoljubow, Efim\"]\n[Black \"Alekhine, Alexander\"]\n[Result \"*\"]\n[WhiteElo \"2322\"]\n[BlackElo \"1906\"]\n[Opening \"Sicilian Defense\"]\n\n1. e4 Nf6 2. Nc3 d5 3. e5 Nfd7 4. d4 c5 5. Bb5 Nc6 6. Nf3 a6 7. Bxc6 bxc6 8. e6 fxe6 9. O-O e5 10. dxe5 e6 11. Ng5 Qe7 12. f4 g6 13. Qg4 Nb6 14. b3 c4 15. Be3 c5 16. Bf2 h6 17. Nf3 Qf7 18. Nh4 Rg8 19. a4 cxb3 20. cxb3 Bb7 21. a5 Nd7 22. Bg3 d4 23. Na4 Bd5 24. Rab1 Rb8 25. Qd1 Rb5 26. Be1 Qe7 27. Qd3 g5 28. Ng6 Qf7 29. Nxf8 gxf4 30. Bg3 Qxf8 31. Rxf4 Qg7 32. b4 Qg6 33. Qd1 Rf8 34. Rg4 Qf5 35. Rb2 Rxb4 36. Rxb4 cxb4 37. Nb2 Bb3 38. Qe2 Qb1+ 39. Be1 Rf5 40. Re4 Bd5 41. g4 d3 42. Qd2 Nxe5 43. Rxe5 Rxe5 44. Nxd3 Re4 45. Kf2 Rd4 46. Ke3 Re4+ 47. Kf2 Rd4 48. Ke3 Rxg4 49. Bg3 Qg1+ 50. Qf2 Re4+ 51. Kd2 Qa1 52. Ne5 Rxe5 *",
+          "winner": "black",
+          "players": {
+            "white": {
+              "user": {
+                "name": "Bogoljubow, Efim"
+              }
+            },
+            "black": {
+              "username": "Alekhine, Alexander"
+            }
+          }
+        },
+        {
+          "id": "donchenko-bortnyk-tt-chesscom-2024",
+          "pgn": "[Event \"?\"]\n[Site \"?\"]\n[Date \"????.??.??\"]\n[Round \"?\"]\n[White \"Donchenko, Alexander\"]\n[Black \"Bortnyk, Olexandr\"]\n[Result \"*\"]\n[WhiteElo \"1559\"]\n[BlackElo \"2157\"]\n[ECOUrl \"https://www.chess.com/openings/Italian-Game\"]\n\n1. e4 Nf6 2. Nc3 d5 3. e5 Nfd7 4. d4 c5 5. Nxd5 cxd4 6. Qxd4 Nb6 7. Bb5+ Nc6 8. c4 e6 9. Bg5 Qd7 10. O-O-O exd5 11. Qh4 a6 12. cxd5 axb5 13. e6 fxe6 14. dxc6 Qxc6+ 15. Kb1 e5 16. Nf3 Bf5+ 17. Ka1 Nc4 18. Rd8+ Rxd8 19. Bxd8 Na3 20. Nxe5 Nc2+ 21. Kb1 Ne1+ 22. Ka1 Qc1# *",
+          "winner": "black",
+          "players": {
+            "white": {
+              "username": "Donchenko, Alexander"
+            },
+            "black": {
+              "username": "Bortnyk, Olexandr"
+            }
+          }
+        },
+        {
+          "id": "dovliatov-mamedyarov-baku-2006",
+          "pgn": "[Event \"?\"]\n[Site \"?\"]\n[Date \"????.??.??\"]\n[Round \"?\"]\n[White \"Dovliatov, Sanan\"]\n[Black \"Mamedyarov, Shakhriyar\"]\n[Result \"*\"]\n[WhiteElo \"1696\"]\n[BlackElo \"1408\"]\n[ECO \"C50\"]\n\n1. e4 Nf6 2. e5 Nd5 3. g3 d6 4. exd6 Qxd6 5. Bg2 Nc6 6. Nc3 Nxc3 7. bxc3 g6 8. Nf3 Bg7 9. O-O O-O 10. d4 e5 11. dxe5 Qc5 12. Rb1 Qxc3 13. Bf4 Rd8 14. Qc1 b6 15. Re1 Be6 16. Bh6 Bxa2 17. Bxg7 Kxg7 18. Ra1 Bd5 19. Qg5 Bxf3 20. Qf6+ Kg8 21. Bxf3 Nd4 22. Bxa8 Rxa8 23. Red1 a5 24. Ra4 c5 25. Qxb6 Qxc2 26. Rda1 Re8 27. h4 Nf3+ 28. Kg2 Nxe5 29. R1a2 Qd3 30. Qb7 Nc4 31. Qc6 Re1 32. Rxc4 Qxc4 33. Rb2 Kg7 34. Kh2 a4 35. Qf3 Qe4 *",
+          "winner": "black",
+          "players": {
+            "white": {
+              "user": {
+                "name": "Dovliatov, Sanan"
+              }
+            },
+            "black": {
+              "username": "Mamedyarov, Shakhriyar"
+            }
+          }
+        },
+        {
+          "id": "maroczy-spielmann-prague-1908",
+          "pgn": "[Event \"?\"]\n[Site \"?\"]\n[Date \"????.??.??\"]\n[Round \"?\"]\n[White \"Maroczy, Geza\"]\n[Black \"Spielmann, Rudolf\"]\n[Result \"*\"]\n[WhiteElo \"1833\"]\n[BlackElo \"1659\"]\n[Opening \"Sicilian Defense\"]\n\n1. d4 d5 2. Bf4 Nf6 3. e3 Bf5 4. Bd3 Bg6 5. Nf3 e6 6. Ne5 Bd6 7. Nd2 c6 8. h3 Qc7 9. Ndf3 Nbd7 10. Bh2 Be4 11. Nxd7 Nxd7 12. Bxd6 Qxd6 13. Bxe4 dxe4 14. Nd2 f5 15. c3 e5 16. Qb3 exd4 17. cxd4 O-O-O 18. O-O Rde8 19. Rac1 Kb8 20. Rc3 g5 21. Rfc1 Ka8 22. Nc4 Qb8 23. Na5 Nf6 24. Qa4 Qc7 25. Rc5 Qd7 26. Nc4 Kb8 27. Ne5 Rxe5 28. Rxe5 Nd5 29. Rc5 Qf7 30. Qb3 Rc8 31. a4 h5 32. Rcxd5 cxd5 33. Qxd5 *",
+          "winner": "white",
+          "players": {
+            "white": {
+              "username": "Maroczy, Geza"
+            },
+            "black": {
+              "username": "Spielmann, Rudolf"
+            }
+          }
+        },
+        {
+          "id": "evans-walker-1850",
+          "pgn": "[Event \"?\"]\n[Site \"?\"]\n[Date \"????.??.??\"]\n[Round \"?\"]\n[White \"Captain Evans\"]\n[Black \"William Walker\"]\n[Result \"*\"]\n[WhiteElo \"1970\"]\n[BlackElo \"1910\"]\n[ECOUrl \"https://www.chess.com/openings/Italian-Game\"]\n\n1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. b4 Bxb4 5. c3 Ba5 6. d4 *",
+          "winner": "white",
+          "players": {
+            "white": {
+              "user": {
+                "name": "Captain Evans"
+              }
+            },
+            "black": {
+              "username": "William Walker"
+            }
+          }
+        }
+      ],
+      "cases": [
+        {
+          "username": "Paul Morphy",
+          "platformRating": null,
+          "expected": {
+            "stats": {
+              "gameCount": 11,
+              "winRate": 45,
+              "drawRate": 9,
+              "lossRate": 45,
+              "style": "Chaotique",
+              "topOpenings": [
+                {
+                  "name": "Sicilian Defense",
+                  "count": 4
+                },
+                {
+                  "name": "Italian Game",
+                  "count": 4
+                },
+                {
+                  "name": "ECO C50",
+                  "count": 3
+                }
+              ],
+              "avgMoves": 60
+            },
+            "config": {
+              "name": "Bot_Paul Morphy",
+              "elo": 1792,
+              "difficulty": 2,
+              "aggressiveness": 50,
+              "threads": 2,
+              "depth": 9,
+              "timeControl": 600,
+              "favoriteOpening": "Sicilian Defense",
+              "playStyle": "tactique",
+              "openings": {
+                "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1": "e2e4",
+                "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2": "g1f3",
+                "rnbqkbnr/ppp2ppp/3p4/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 0 3": "d2d4",
+                "rn1qkbnr/ppp2ppp/3p4/4p3/3PP1b1/5N2/PPP2PPP/RNBQKB1R w KQkq - 1 4": "d4e5",
+                "rn1qkbnr/ppp2ppp/3p4/4P3/4P3/5b2/PPP2PPP/RNBQKB1R w KQkq - 0 5": "d1f3",
+                "rn1qkbnr/ppp2ppp/8/4p3/4P3/5Q2/PPP2PPP/RNB1KB1R w KQkq - 0 6": "f1c4",
+                "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1": "e7e5",
+                "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2": "b8c6",
+                "r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3": "g8f6",
+                "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/3PP3/5N2/PPP2PPP/RNBQK2R b KQkq - 0 4": "c6d4",
+                "r1bqkb1r/pppp1ppp/5n2/1B2p3/3NP3/8/PPP2PPP/RNBQK2R b KQkq - 0 5": "e5d4",
+                "r1bqkb1r/pppp1ppp/5n2/1B2P3/3p4/8/PPP2PPP/RNBQK2R b KQkq - 0 6": "f6e4",
+                "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQ1RK1 b kq - 5 4": "f6e4",
+                "r1bqkb1r/pppp1ppp/2n5/1B2p3/4n3/5N2/PPPP1PPP/RNBQR1K1 b kq - 1 5": "e4d6",
+                "r1bqkb1r/pppp1ppp/2nn4/1B2N3/8/8/PPPP1PPP/RNBQR1K1 b kq - 0 6": "f8e7",
+                "rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2": "d7d6",
+                "rnbqkbnr/pp2pppp/3p4/2p5/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 3": "c5d4",
+                "rnbqkbnr/pp2pppp/3p4/8/3NP3/8/PPP2PPP/RNBQKB1R b KQkq - 0 4": "g8f6",
+                "rnbqkb1r/pp2pppp/3p1n2/8/3NP3/2N5/PPP2PPP/R1BQKB1R b KQkq - 2 5": "a7a6",
+                "rnbqkbnr/pp1ppppp/8/2p5/2B1P3/8/PPPP1PPP/RNBQK1NR b KQkq - 1 2": "e7e6",
+                "rnbqkbnr/pp1p1ppp/4p3/2p5/2B1P3/2N5/PPPP1PPP/R1BQK1NR b KQkq - 1 3": "a7a6",
+                "rnbqkbnr/1p1p1ppp/p3p3/2p5/P1B1P3/2N5/1PPP1PPP/R1BQK1NR b KQkq - 0 4": "b8c6",
+                "r1bqkbnr/1p1p1ppp/p1n1p3/2p5/P1B1P3/2NP4/1PP2PPP/R1BQK1NR b KQkq - 0 5": "g8f6",
+                "r1bqkb1r/1p1p1ppp/p1n1pn2/2p5/P1B1P3/2NP4/1PPB1PPP/R2QK1NR b KQkq - 2 6": "d7d5",
+                "rnbqkbnr/pppp1ppp/4p3/8/4P3/3P4/PPP2PPP/RNBQKBNR b KQkq - 0 2": "d7d5",
+                "rnbqkbnr/ppp2ppp/4p3/3p4/4P3/3P4/PPPN1PPP/R1BQKBNR b KQkq - 1 3": "g8f6",
+                "rnbqkb1r/ppp2ppp/4pn2/3p4/4P3/3P1N2/PPPN1PPP/R1BQKB1R b KQkq - 3 4": "c7c5",
+                "rnbqkb1r/pp3ppp/4pn2/2pp4/4P3/3P1NP1/PPPN1P1P/R1BQKB1R b KQkq - 0 5": "b7b6",
+                "rnbqkb1r/p4ppp/1p2pn2/2pp4/4P3/2PP1NP1/PP1N1P1P/R1BQKB1R b KQkq - 0 6": "f8e7",
+                "rnbqkb1r/pppppppp/5n2/8/4P3/2N5/PPPP1PPP/R1BQKBNR b KQkq - 2 2": "d7d5",
+                "rnbqkb1r/ppp1pppp/5n2/3pP3/8/2N5/PPPP1PPP/R1BQKBNR b KQkq - 0 3": "f6d7",
+                "rnbqkb1r/pppnpppp/8/3pP3/3P4/2N5/PPP2PPP/R1BQKBNR b KQkq - 0 4": "c7c5",
+                "rnbqkb1r/pp1npppp/8/1BppP3/3P4/2N5/PPP2PPP/R1BQK1NR b KQkq - 1 5": "b8c6",
+                "r1bqkb1r/pp1npppp/2n5/1BppP3/3P4/2N2N2/PPP2PPP/R1BQK2R b KQkq - 3 6": "a7a6",
+                "rnbqkb1r/pp1npppp/8/2pNP3/3P4/8/PPP2PPP/R1BQKBNR b KQkq - 0 5": "c5d4",
+                "rnbqkb1r/pp1npppp/8/3NP3/3Q4/8/PPP2PPP/R1B1KBNR b KQkq - 0 6": "d7b6",
+                "rnbqkb1r/pppppppp/5n2/4P3/8/8/PPPP1PPP/RNBQKBNR b KQkq - 0 2": "f6d5",
+                "rnbqkb1r/pppppppp/8/3nP3/8/6P1/PPPP1P1P/RNBQKBNR b KQkq - 0 3": "d7d6",
+                "rnbqkb1r/ppp1pppp/3P4/3n4/8/6P1/PPPP1P1P/RNBQKBNR b KQkq - 0 4": "d8d6",
+                "rnb1kb1r/ppp1pppp/3q4/3n4/8/6P1/PPPP1PBP/RNBQK1NR b KQkq - 1 5": "b8c6",
+                "r1b1kb1r/ppp1pppp/2nq4/3n4/8/2N3P1/PPPP1PBP/R1BQK1NR b KQkq - 3 6": "d5c3",
+                "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq - 0 1": "d7d5",
+                "rnbqkbnr/ppp1pppp/8/3p4/3P1B2/8/PPP1PPPP/RN1QKBNR b KQkq - 1 2": "g8f6",
+                "rnbqkb1r/ppp1pppp/5n2/3p4/3P1B2/4P3/PPP2PPP/RN1QKBNR b KQkq - 0 3": "c8f5",
+                "rn1qkb1r/ppp1pppp/5n2/3p1b2/3P1B2/3BP3/PPP2PPP/RN1QK1NR b KQkq - 2 4": "f5g6",
+                "rn1qkb1r/ppp1pppp/5nb1/3p4/3P1B2/3BPN2/PPP2PPP/RN1QK2R b KQkq - 4 5": "e7e6",
+                "rn1qkb1r/ppp2ppp/4pnb1/3pN3/3P1B2/3BP3/PPP2PPP/RN1QK2R b KQkq - 1 6": "f8d6",
+                "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3": "f8c5",
+                "r1bqk1nr/pppp1ppp/2n5/2b1p3/1PB1P3/5N2/P1PP1PPP/RNBQK2R b KQkq - 0 4": "c5b4",
+                "r1bqk1nr/pppp1ppp/2n5/4p3/1bB1P3/2P2N2/P2P1PPP/RNBQK2R b KQkq - 0 5": "b4a5"
+              },
+              "humanBlunderInterval": 10
+            }
+          }
+        },
+        {
+          "username": "Paul Morphy",
+          "platformRating": 2150,
+          "expected": {
+            "stats": {
+              "gameCount": 11,
+              "winRate": 45,
+              "drawRate": 9,
+              "lossRate": 45,
+              "style": "Chaotique",
+              "topOpenings": [
+                {
+                  "name": "Sicilian Defense",
+                  "count": 4
+                },
+                {
+                  "name": "Italian Game",
+                  "count": 4
+                },
+                {
+                  "name": "ECO C50",
+                  "count": 3
+                }
+              ],
+              "avgMoves": 60
+            },
+            "config": {
+              "name": "Bot_Paul Morphy",
+              "elo": 2150,
+              "difficulty": 2,
+              "aggressiveness": 50,
+              "threads": 2,
+              "depth": 9,
+              "timeControl": 600,
+              "favoriteOpening": "Sicilian Defense",
+              "playStyle": "tactique",
+              "openings": {
+                "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1": "e2e4",
+                "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2": "g1f3",
+                "rnbqkbnr/ppp2ppp/3p4/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 0 3": "d2d4",
+                "rn1qkbnr/ppp2ppp/3p4/4p3/3PP1b1/5N2/PPP2PPP/RNBQKB1R w KQkq - 1 4": "d4e5",
+                "rn1qkbnr/ppp2ppp/3p4/4P3/4P3/5b2/PPP2PPP/RNBQKB1R w KQkq - 0 5": "d1f3",
+                "rn1qkbnr/ppp2ppp/8/4p3/4P3/5Q2/PPP2PPP/RNB1KB1R w KQkq - 0 6": "f1c4",
+                "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1": "e7e5",
+                "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2": "b8c6",
+                "r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3": "g8f6",
+                "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/3PP3/5N2/PPP2PPP/RNBQK2R b KQkq - 0 4": "c6d4",
+                "r1bqkb1r/pppp1ppp/5n2/1B2p3/3NP3/8/PPP2PPP/RNBQK2R b KQkq - 0 5": "e5d4",
+                "r1bqkb1r/pppp1ppp/5n2/1B2P3/3p4/8/PPP2PPP/RNBQK2R b KQkq - 0 6": "f6e4",
+                "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQ1RK1 b kq - 5 4": "f6e4",
+                "r1bqkb1r/pppp1ppp/2n5/1B2p3/4n3/5N2/PPPP1PPP/RNBQR1K1 b kq - 1 5": "e4d6",
+                "r1bqkb1r/pppp1ppp/2nn4/1B2N3/8/8/PPPP1PPP/RNBQR1K1 b kq - 0 6": "f8e7",
+                "rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2": "d7d6",
+                "rnbqkbnr/pp2pppp/3p4/2p5/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 3": "c5d4",
+                "rnbqkbnr/pp2pppp/3p4/8/3NP3/8/PPP2PPP/RNBQKB1R b KQkq - 0 4": "g8f6",
+                "rnbqkb1r/pp2pppp/3p1n2/8/3NP3/2N5/PPP2PPP/R1BQKB1R b KQkq - 2 5": "a7a6",
+                "rnbqkbnr/pp1ppppp/8/2p5/2B1P3/8/PPPP1PPP/RNBQK1NR b KQkq - 1 2": "e7e6",
+                "rnbqkbnr/pp1p1ppp/4p3/2p5/2B1P3/2N5/PPPP1PPP/R1BQK1NR b KQkq - 1 3": "a7a6",
+                "rnbqkbnr/1p1p1ppp/p3p3/2p5/P1B1P3/2N5/1PPP1PPP/R1BQK1NR b KQkq - 0 4": "b8c6",
+                "r1bqkbnr/1p1p1ppp/p1n1p3/2p5/P1B1P3/2NP4/1PP2PPP/R1BQK1NR b KQkq - 0 5": "g8f6",
+                "r1bqkb1r/1p1p1ppp/p1n1pn2/2p5/P1B1P3/2NP4/1PPB1PPP/R2QK1NR b KQkq - 2 6": "d7d5",
+                "rnbqkbnr/pppp1ppp/4p3/8/4P3/3P4/PPP2PPP/RNBQKBNR b KQkq - 0 2": "d7d5",
+                "rnbqkbnr/ppp2ppp/4p3/3p4/4P3/3P4/PPPN1PPP/R1BQKBNR b KQkq - 1 3": "g8f6",
+                "rnbqkb1r/ppp2ppp/4pn2/3p4/4P3/3P1N2/PPPN1PPP/R1BQKB1R b KQkq - 3 4": "c7c5",
+                "rnbqkb1r/pp3ppp/4pn2/2pp4/4P3/3P1NP1/PPPN1P1P/R1BQKB1R b KQkq - 0 5": "b7b6",
+                "rnbqkb1r/p4ppp/1p2pn2/2pp4/4P3/2PP1NP1/PP1N1P1P/R1BQKB1R b KQkq - 0 6": "f8e7",
+                "rnbqkb1r/pppppppp/5n2/8/4P3/2N5/PPPP1PPP/R1BQKBNR b KQkq - 2 2": "d7d5",
+                "rnbqkb1r/ppp1pppp/5n2/3pP3/8/2N5/PPPP1PPP/R1BQKBNR b KQkq - 0 3": "f6d7",
+                "rnbqkb1r/pppnpppp/8/3pP3/3P4/2N5/PPP2PPP/R1BQKBNR b KQkq - 0 4": "c7c5",
+                "rnbqkb1r/pp1npppp/8/1BppP3/3P4/2N5/PPP2PPP/R1BQK1NR b KQkq - 1 5": "b8c6",
+                "r1bqkb1r/pp1npppp/2n5/1BppP3/3P4/2N2N2/PPP2PPP/R1BQK2R b KQkq - 3 6": "a7a6",
+                "rnbqkb1r/pp1npppp/8/2pNP3/3P4/8/PPP2PPP/R1BQKBNR b KQkq - 0 5": "c5d4",
+                "rnbqkb1r/pp1npppp/8/3NP3/3Q4/8/PPP2PPP/R1B1KBNR b KQkq - 0 6": "d7b6",
+                "rnbqkb1r/pppppppp/5n2/4P3/8/8/PPPP1PPP/RNBQKBNR b KQkq - 0 2": "f6d5",
+                "rnbqkb1r/pppppppp/8/3nP3/8/6P1/PPPP1P1P/RNBQKBNR b KQkq - 0 3": "d7d6",
+                "rnbqkb1r/ppp1pppp/3P4/3n4/8/6P1/PPPP1P1P/RNBQKBNR b KQkq - 0 4": "d8d6",
+                "rnb1kb1r/ppp1pppp/3q4/3n4/8/6P1/PPPP1PBP/RNBQK1NR b KQkq - 1 5": "b8c6",
+                "r1b1kb1r/ppp1pppp/2nq4/3n4/8/2N3P1/PPPP1PBP/R1BQK1NR b KQkq - 3 6": "d5c3",
+                "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq - 0 1": "d7d5",
+                "rnbqkbnr/ppp1pppp/8/3p4/3P1B2/8/PPP1PPPP/RN1QKBNR b KQkq - 1 2": "g8f6",
+                "rnbqkb1r/ppp1pppp/5n2/3p4/3P1B2/4P3/PPP2PPP/RN1QKBNR b KQkq - 0 3": "c8f5",
+                "rn1qkb1r/ppp1pppp/5n2/3p1b2/3P1B2/3BP3/PPP2PPP/RN1QK1NR b KQkq - 2 4": "f5g6",
+                "rn1qkb1r/ppp1pppp/5nb1/3p4/3P1B2/3BPN2/PPP2PPP/RN1QK2R b KQkq - 4 5": "e7e6",
+                "rn1qkb1r/ppp2ppp/4pnb1/3pN3/3P1B2/3BP3/PPP2PPP/RN1QK2R b KQkq - 1 6": "f8d6",
+                "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3": "f8c5",
+                "r1bqk1nr/pppp1ppp/2n5/2b1p3/1PB1P3/5N2/P1PP1PPP/RNBQK2R b KQkq - 0 4": "c5b4",
+                "r1bqk1nr/pppp1ppp/2n5/4p3/1bB1P3/2P2N2/P2P1PPP/RNBQK2R b KQkq - 0 5": "b4a5"
+              },
+              "humanBlunderInterval": 10
+            }
+          }
+        },
+        {
+          "username": "Bird, Henry Edward",
+          "platformRating": null,
+          "expected": {
+            "stats": {
+              "gameCount": 11,
+              "winRate": 45,
+              "drawRate": 9,
+              "lossRate": 45,
+              "style": "Chaotique",
+              "topOpenings": [
+                {
+                  "name": "Sicilian Defense",
+                  "count": 4
+                },
+                {
+                  "name": "Italian Game",
+                  "count": 4
+                },
+                {
+                  "name": "ECO C50",
+                  "count": 3
+                }
+              ],
+              "avgMoves": 60
+            },
+            "config": {
+              "name": "Bot_Bird, Henry Edward",
+              "elo": 1792,
+              "difficulty": 2,
+              "aggressiveness": 50,
+              "threads": 2,
+              "depth": 9,
+              "timeControl": 600,
+              "favoriteOpening": "Sicilian Defense",
+              "playStyle": "tactique",
+              "openings": {
+                "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1": "e7e5",
+                "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2": "b8c6",
+                "rnbqkbnr/ppp2ppp/3p4/4p3/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 3": "c8g4",
+                "rn1qkbnr/ppp2ppp/3p4/4P3/4P1b1/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 4": "g4f3",
+                "rn1qkbnr/ppp2ppp/3p4/4P3/4P3/5Q2/PPP2PPP/RNB1KB1R b KQkq - 0 5": "d6e5",
+                "rn1qkbnr/ppp2ppp/8/4p3/2B1P3/5Q2/PPP2PPP/RNB1K2R b KQkq - 1 6": "g8f6",
+                "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1": "e2e4",
+                "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2": "g1f3",
+                "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3": "f1b5",
+                "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4": "d2d4",
+                "r1bqkb1r/pppp1ppp/5n2/1B2p3/3nP3/5N2/PPP2PPP/RNBQK2R w KQkq - 0 5": "f3d4",
+                "r1bqkb1r/pppp1ppp/5n2/1B6/3pP3/8/PPP2PPP/RNBQK2R w KQkq - 0 6": "e4e5",
+                "r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3": "g8f6",
+                "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQ1RK1 b kq - 5 4": "f6e4",
+                "r1bqkb1r/pppp1ppp/2n5/1B2p3/4n3/5N2/PPPP1PPP/RNBQR1K1 b kq - 1 5": "e4d6",
+                "r1bqkb1r/pppp1ppp/2nn4/1B2N3/8/8/PPPP1PPP/RNBQR1K1 b kq - 0 6": "f8e7",
+                "rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2": "d7d6",
+                "rnbqkbnr/pp2pppp/3p4/2p5/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 3": "c5d4",
+                "rnbqkbnr/pp2pppp/3p4/8/3NP3/8/PPP2PPP/RNBQKB1R b KQkq - 0 4": "g8f6",
+                "rnbqkb1r/pp2pppp/3p1n2/8/3NP3/2N5/PPP2PPP/R1BQKB1R b KQkq - 2 5": "a7a6",
+                "rnbqkbnr/pp1ppppp/8/2p5/2B1P3/8/PPPP1PPP/RNBQK1NR b KQkq - 1 2": "e7e6",
+                "rnbqkbnr/pp1p1ppp/4p3/2p5/2B1P3/2N5/PPPP1PPP/R1BQK1NR b KQkq - 1 3": "a7a6",
+                "rnbqkbnr/1p1p1ppp/p3p3/2p5/P1B1P3/2N5/1PPP1PPP/R1BQK1NR b KQkq - 0 4": "b8c6",
+                "r1bqkbnr/1p1p1ppp/p1n1p3/2p5/P1B1P3/2NP4/1PP2PPP/R1BQK1NR b KQkq - 0 5": "g8f6",
+                "r1bqkb1r/1p1p1ppp/p1n1pn2/2p5/P1B1P3/2NP4/1PPB1PPP/R2QK1NR b KQkq - 2 6": "d7d5",
+                "rnbqkbnr/pppp1ppp/4p3/8/4P3/3P4/PPP2PPP/RNBQKBNR b KQkq - 0 2": "d7d5",
+                "rnbqkbnr/ppp2ppp/4p3/3p4/4P3/3P4/PPPN1PPP/R1BQKBNR b KQkq - 1 3": "g8f6",
+                "rnbqkb1r/ppp2ppp/4pn2/3p4/4P3/3P1N2/PPPN1PPP/R1BQKB1R b KQkq - 3 4": "c7c5",
+                "rnbqkb1r/pp3ppp/4pn2/2pp4/4P3/3P1NP1/PPPN1P1P/R1BQKB1R b KQkq - 0 5": "b7b6",
+                "rnbqkb1r/p4ppp/1p2pn2/2pp4/4P3/2PP1NP1/PP1N1P1P/R1BQKB1R b KQkq - 0 6": "f8e7",
+                "rnbqkb1r/pppppppp/5n2/8/4P3/2N5/PPPP1PPP/R1BQKBNR b KQkq - 2 2": "d7d5",
+                "rnbqkb1r/ppp1pppp/5n2/3pP3/8/2N5/PPPP1PPP/R1BQKBNR b KQkq - 0 3": "f6d7",
+                "rnbqkb1r/pppnpppp/8/3pP3/3P4/2N5/PPP2PPP/R1BQKBNR b KQkq - 0 4": "c7c5",
+                "rnbqkb1r/pp1npppp/8/1BppP3/3P4/2N5/PPP2PPP/R1BQK1NR b KQkq - 1 5": "b8c6",
+                "r1bqkb1r/pp1npppp/2n5/1BppP3/3P4/2N2N2/PPP2PPP/R1BQK2R b KQkq - 3 6": "a7a6",
+                "rnbqkb1r/pp1npppp/8/2pNP3/3P4/8/PPP2PPP/R1BQKBNR b KQkq - 0 5": "c5d4",
+                "rnbqkb1r/pp1npppp/8/3NP3/3Q4/8/PPP2PPP/R1B1KBNR b KQkq - 0 6": "d7b6",
+                "rnbqkb1r/pppppppp/5n2/4P3/8/8/PPPP1PPP/RNBQKBNR b KQkq - 0 2": "f6d5",
+                "rnbqkb1r/pppppppp/8/3nP3/8/6P1/PPPP1P1P/RNBQKBNR b KQkq - 0 3": "d7d6",
+                "rnbqkb1r/ppp1pppp/3P4/3n4/8/6P1/PPPP1P1P/RNBQKBNR b KQkq - 0 4": "d8d6",
+                "rnb1kb1r/ppp1pppp/3q4/3n4/8/6P1/PPPP1PBP/RNBQK1NR b KQkq - 1 5": "b8c6",
+                "r1b1kb1r/ppp1pppp/2nq4/3n4/8/2N3P1/PPPP1PBP/R1BQK1NR b KQkq - 3 6": "d5c3",
+                "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq - 0 1": "d7d5",
+                "rnbqkbnr/ppp1pppp/8/3p4/3P1B2/8/PPP1PPPP/RN1QKBNR b KQkq - 1 2": "g8f6",
+                "rnbqkb1r/ppp1pppp/5n2/3p4/3P1B2/4P3/PPP2PPP/RN1QKBNR b KQkq - 0 3": "c8f5",
+                "rn1qkb1r/ppp1pppp/5n2/3p1b2/3P1B2/3BP3/PPP2PPP/RN1QK1NR b KQkq - 2 4": "f5g6",
+                "rn1qkb1r/ppp1pppp/5nb1/3p4/3P1B2/3BPN2/PPP2PPP/RN1QK2R b KQkq - 4 5": "e7e6",
+                "rn1qkb1r/ppp2ppp/4pnb1/3pN3/3P1B2/3BP3/PPP2PPP/RN1QK2R b KQkq - 1 6": "f8d6",
+                "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3": "f8c5",
+                "r1bqk1nr/pppp1ppp/2n5/2b1p3/1PB1P3/5N2/P1PP1PPP/RNBQK2R b KQkq - 0 4": "c5b4",
+                "r1bqk1nr/pppp1ppp/2n5/4p3/1bB1P3/2P2N2/P2P1PPP/RNBQK2R b KQkq - 0 5": "b4a5"
+              },
+              "humanBlunderInterval": 10
+            }
+          }
+        },
+        {
+          "username": "Bird, Henry Edward",
+          "platformRating": 2150,
+          "expected": {
+            "stats": {
+              "gameCount": 11,
+              "winRate": 45,
+              "drawRate": 9,
+              "lossRate": 45,
+              "style": "Chaotique",
+              "topOpenings": [
+                {
+                  "name": "Sicilian Defense",
+                  "count": 4
+                },
+                {
+                  "name": "Italian Game",
+                  "count": 4
+                },
+                {
+                  "name": "ECO C50",
+                  "count": 3
+                }
+              ],
+              "avgMoves": 60
+            },
+            "config": {
+              "name": "Bot_Bird, Henry Edward",
+              "elo": 2150,
+              "difficulty": 2,
+              "aggressiveness": 50,
+              "threads": 2,
+              "depth": 9,
+              "timeControl": 600,
+              "favoriteOpening": "Sicilian Defense",
+              "playStyle": "tactique",
+              "openings": {
+                "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1": "e7e5",
+                "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2": "b8c6",
+                "rnbqkbnr/ppp2ppp/3p4/4p3/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 3": "c8g4",
+                "rn1qkbnr/ppp2ppp/3p4/4P3/4P1b1/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 4": "g4f3",
+                "rn1qkbnr/ppp2ppp/3p4/4P3/4P3/5Q2/PPP2PPP/RNB1KB1R b KQkq - 0 5": "d6e5",
+                "rn1qkbnr/ppp2ppp/8/4p3/2B1P3/5Q2/PPP2PPP/RNB1K2R b KQkq - 1 6": "g8f6",
+                "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1": "e2e4",
+                "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2": "g1f3",
+                "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3": "f1b5",
+                "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4": "d2d4",
+                "r1bqkb1r/pppp1ppp/5n2/1B2p3/3nP3/5N2/PPP2PPP/RNBQK2R w KQkq - 0 5": "f3d4",
+                "r1bqkb1r/pppp1ppp/5n2/1B6/3pP3/8/PPP2PPP/RNBQK2R w KQkq - 0 6": "e4e5",
+                "r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3": "g8f6",
+                "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQ1RK1 b kq - 5 4": "f6e4",
+                "r1bqkb1r/pppp1ppp/2n5/1B2p3/4n3/5N2/PPPP1PPP/RNBQR1K1 b kq - 1 5": "e4d6",
+                "r1bqkb1r/pppp1ppp/2nn4/1B2N3/8/8/PPPP1PPP/RNBQR1K1 b kq - 0 6": "f8e7",
+                "rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2": "d7d6",
+                "rnbqkbnr/pp2pppp/3p4/2p5/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 3": "c5d4",
+                "rnbqkbnr/pp2pppp/3p4/8/3NP3/8/PPP2PPP/RNBQKB1R b KQkq - 0 4": "g8f6",
+                "rnbqkb1r/pp2pppp/3p1n2/8/3NP3/2N5/PPP2PPP/R1BQKB1R b KQkq - 2 5": "a7a6",
+                "rnbqkbnr/pp1ppppp/8/2p5/2B1P3/8/PPPP1PPP/RNBQK1NR b KQkq - 1 2": "e7e6",
+                "rnbqkbnr/pp1p1ppp/4p3/2p5/2B1P3/2N5/PPPP1PPP/R1BQK1NR b KQkq - 1 3": "a7a6",
+                "rnbqkbnr/1p1p1ppp/p3p3/2p5/P1B1P3/2N5/1PPP1PPP/R1BQK1NR b KQkq - 0 4": "b8c6",
+                "r1bqkbnr/1p1p1ppp/p1n1p3/2p5/P1B1P3/2NP4/1PP2PPP/R1BQK1NR b KQkq - 0 5": "g8f6",
+                "r1bqkb1r/1p1p1ppp/p1n1pn2/2p5/P1B1P3/2NP4/1PPB1PPP/R2QK1NR b KQkq - 2 6": "d7d5",
+                "rnbqkbnr/pppp1ppp/4p3/8/4P3/3P4/PPP2PPP/RNBQKBNR b KQkq - 0 2": "d7d5",
+                "rnbqkbnr/ppp2ppp/4p3/3p4/4P3/3P4/PPPN1PPP/R1BQKBNR b KQkq - 1 3": "g8f6",
+                "rnbqkb1r/ppp2ppp/4pn2/3p4/4P3/3P1N2/PPPN1PPP/R1BQKB1R b KQkq - 3 4": "c7c5",
+                "rnbqkb1r/pp3ppp/4pn2/2pp4/4P3/3P1NP1/PPPN1P1P/R1BQKB1R b KQkq - 0 5": "b7b6",
+                "rnbqkb1r/p4ppp/1p2pn2/2pp4/4P3/2PP1NP1/PP1N1P1P/R1BQKB1R b KQkq - 0 6": "f8e7",
+                "rnbqkb1r/pppppppp/5n2/8/4P3/2N5/PPPP1PPP/R1BQKBNR b KQkq - 2 2": "d7d5",
+                "rnbqkb1r/ppp1pppp/5n2/3pP3/8/2N5/PPPP1PPP/R1BQKBNR b KQkq - 0 3": "f6d7",
+                "rnbqkb1r/pppnpppp/8/3pP3/3P4/2N5/PPP2PPP/R1BQKBNR b KQkq - 0 4": "c7c5",
+                "rnbqkb1r/pp1npppp/8/1BppP3/3P4/2N5/PPP2PPP/R1BQK1NR b KQkq - 1 5": "b8c6",
+                "r1bqkb1r/pp1npppp/2n5/1BppP3/3P4/2N2N2/PPP2PPP/R1BQK2R b KQkq - 3 6": "a7a6",
+                "rnbqkb1r/pp1npppp/8/2pNP3/3P4/8/PPP2PPP/R1BQKBNR b KQkq - 0 5": "c5d4",
+                "rnbqkb1r/pp1npppp/8/3NP3/3Q4/8/PPP2PPP/R1B1KBNR b KQkq - 0 6": "d7b6",
+                "rnbqkb1r/pppppppp/5n2/4P3/8/8/PPPP1PPP/RNBQKBNR b KQkq - 0 2": "f6d5",
+                "rnbqkb1r/pppppppp/8/3nP3/8/6P1/PPPP1P1P/RNBQKBNR b KQkq - 0 3": "d7d6",
+                "rnbqkb1r/ppp1pppp/3P4/3n4/8/6P1/PPPP1P1P/RNBQKBNR b KQkq - 0 4": "d8d6",
+                "rnb1kb1r/ppp1pppp/3q4/3n4/8/6P1/PPPP1PBP/RNBQK1NR b KQkq - 1 5": "b8c6",
+                "r1b1kb1r/ppp1pppp/2nq4/3n4/8/2N3P1/PPPP1PBP/R1BQK1NR b KQkq - 3 6": "d5c3",
+                "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq - 0 1": "d7d5",
+                "rnbqkbnr/ppp1pppp/8/3p4/3P1B2/8/PPP1PPPP/RN1QKBNR b KQkq - 1 2": "g8f6",
+                "rnbqkb1r/ppp1pppp/5n2/3p4/3P1B2/4P3/PPP2PPP/RN1QKBNR b KQkq - 0 3": "c8f5",
+                "rn1qkb1r/ppp1pppp/5n2/3p1b2/3P1B2/3BP3/PPP2PPP/RN1QK1NR b KQkq - 2 4": "f5g6",
+                "rn1qkb1r/ppp1pppp/5nb1/3p4/3P1B2/3BPN2/PPP2PPP/RN1QK2R b KQkq - 4 5": "e7e6",
+                "rn1qkb1r/ppp2ppp/4pnb1/3pN3/3P1B2/3BP3/PPP2PPP/RN1QK2R b KQkq - 1 6": "f8d6",
+                "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3": "f8c5",
+                "r1bqk1nr/pppp1ppp/2n5/2b1p3/1PB1P3/5N2/P1PP1PPP/RNBQK2R b KQkq - 0 4": "c5b4",
+                "r1bqk1nr/pppp1ppp/2n5/4p3/1bB1P3/2P2N2/P2P1PPP/RNBQK2R b KQkq - 0 5": "b4a5"
+              },
+              "humanBlunderInterval": 10
+            }
+          }
+        },
+        {
+          "username": "Steinitz, William",
+          "platformRating": null,
+          "expected": {
+            "stats": {
+              "gameCount": 11,
+              "winRate": 36,
+              "drawRate": 9,
+              "lossRate": 55,
+              "style": "Chaotique",
+              "topOpenings": [
+                {
+                  "name": "Sicilian Defense",
+                  "count": 4
+                },
+                {
+                  "name": "Italian Game",
+                  "count": 4
+                },
+                {
+                  "name": "ECO C50",
+                  "count": 3
+                }
+              ],
+              "avgMoves": 60
+            },
+            "config": {
+              "name": "Bot_Steinitz, William",
+              "elo": 1774,
+              "difficulty": 1,
+              "aggressiveness": 50,
+              "threads": 2,
+              "depth": 6,
+              "timeControl": 750,
+              "favoriteOpening": "Sicilian Defense",
+              "playStyle": "tactique",
+              "openings": {
+                "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1": "e7e5",
+                "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2": "b8c6",
+                "rnbqkbnr/ppp2ppp/3p4/4p3/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 3": "c8g4",
+                "rn1qkbnr/ppp2ppp/3p4/4P3/4P1b1/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 4": "g4f3",
+                "rn1qkbnr/ppp2ppp/3p4/4P3/4P3/5Q2/PPP2PPP/RNB1KB1R b KQkq - 0 5": "d6e5",
+                "rn1qkbnr/ppp2ppp/8/4p3/2B1P3/5Q2/PPP2PPP/RNB1K2R b KQkq - 1 6": "g8f6",
+                "r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3": "g8f6",
+                "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/3PP3/5N2/PPP2PPP/RNBQK2R b KQkq - 0 4": "c6d4",
+                "r1bqkb1r/pppp1ppp/5n2/1B2p3/3NP3/8/PPP2PPP/RNBQK2R b KQkq - 0 5": "e5d4",
+                "r1bqkb1r/pppp1ppp/5n2/1B2P3/3p4/8/PPP2PPP/RNBQK2R b KQkq - 0 6": "f6e4",
+                "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1": "e2e4",
+                "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2": "g1f3",
+                "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3": "f1b5",
+                "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4": "e1g1",
+                "r1bqkb1r/pppp1ppp/2n5/1B2p3/4n3/5N2/PPPP1PPP/RNBQ1RK1 w kq - 0 5": "f1e1",
+                "r1bqkb1r/pppp1ppp/2nn4/1B2p3/8/5N2/PPPP1PPP/RNBQR1K1 w kq - 2 6": "f3e5",
+                "rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2": "d7d6",
+                "rnbqkbnr/pp2pppp/3p4/2p5/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 3": "c5d4",
+                "rnbqkbnr/pp2pppp/3p4/8/3NP3/8/PPP2PPP/RNBQKB1R b KQkq - 0 4": "g8f6",
+                "rnbqkb1r/pp2pppp/3p1n2/8/3NP3/2N5/PPP2PPP/R1BQKB1R b KQkq - 2 5": "a7a6",
+                "rnbqkbnr/pp1ppppp/8/2p5/2B1P3/8/PPPP1PPP/RNBQK1NR b KQkq - 1 2": "e7e6",
+                "rnbqkbnr/pp1p1ppp/4p3/2p5/2B1P3/2N5/PPPP1PPP/R1BQK1NR b KQkq - 1 3": "a7a6",
+                "rnbqkbnr/1p1p1ppp/p3p3/2p5/P1B1P3/2N5/1PPP1PPP/R1BQK1NR b KQkq - 0 4": "b8c6",
+                "r1bqkbnr/1p1p1ppp/p1n1p3/2p5/P1B1P3/2NP4/1PP2PPP/R1BQK1NR b KQkq - 0 5": "g8f6",
+                "r1bqkb1r/1p1p1ppp/p1n1pn2/2p5/P1B1P3/2NP4/1PPB1PPP/R2QK1NR b KQkq - 2 6": "d7d5",
+                "rnbqkbnr/pppp1ppp/4p3/8/4P3/3P4/PPP2PPP/RNBQKBNR b KQkq - 0 2": "d7d5",
+                "rnbqkbnr/ppp2ppp/4p3/3p4/4P3/3P4/PPPN1PPP/R1BQKBNR b KQkq - 1 3": "g8f6",
+                "rnbqkb1r/ppp2ppp/4pn2/3p4/4P3/3P1N2/PPPN1PPP/R1BQKB1R b KQkq - 3 4": "c7c5",
+                "rnbqkb1r/pp3ppp/4pn2/2pp4/4P3/3P1NP1/PPPN1P1P/R1BQKB1R b KQkq - 0 5": "b7b6",
+                "rnbqkb1r/p4ppp/1p2pn2/2pp4/4P3/2PP1NP1/PP1N1P1P/R1BQKB1R b KQkq - 0 6": "f8e7",
+                "rnbqkb1r/pppppppp/5n2/8/4P3/2N5/PPPP1PPP/R1BQKBNR b KQkq - 2 2": "d7d5",
+                "rnbqkb1r/ppp1pppp/5n2/3pP3/8/2N5/PPPP1PPP/R1BQKBNR b KQkq - 0 3": "f6d7",
+                "rnbqkb1r/pppnpppp/8/3pP3/3P4/2N5/PPP2PPP/R1BQKBNR b KQkq - 0 4": "c7c5",
+                "rnbqkb1r/pp1npppp/8/1BppP3/3P4/2N5/PPP2PPP/R1BQK1NR b KQkq - 1 5": "b8c6",
+                "r1bqkb1r/pp1npppp/2n5/1BppP3/3P4/2N2N2/PPP2PPP/R1BQK2R b KQkq - 3 6": "a7a6",
+                "rnbqkb1r/pp1npppp/8/2pNP3/3P4/8/PPP2PPP/R1BQKBNR b KQkq - 0 5": "c5d4",
+                "rnbqkb1r/pp1npppp/8/3NP3/3Q4/8/PPP2PPP/R1B1KBNR b KQkq - 0 6": "d7b6",
+                "rnbqkb1r/pppppppp/5n2/4P3/8/8/PPPP1PPP/RNBQKBNR b KQkq - 0 2": "f6d5",
+                "rnbqkb1r/pppppppp/8/3nP3/8/6P1/PPPP1P1P/RNBQKBNR b KQkq - 0 3": "d7d6",
+                "rnbqkb1r/ppp1pppp/3P4/3n4/8/6P1/PPPP1P1P/RNBQKBNR b KQkq - 0 4": "d8d6",
+                "rnb1kb1r/ppp1pppp/3q4/3n4/8/6P1/PPPP1PBP/RNBQK1NR b KQkq - 1 5": "b8c6",
+                "r1b1kb1r/ppp1pppp/2nq4/3n4/8/2N3P1/PPPP1PBP/R1BQK1NR b KQkq - 3 6": "d5c3",
+                "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq - 0 1": "d7d5",
+                "rnbqkbnr/ppp1pppp/8/3p4/3P1B2/8/PPP1PPPP/RN1QKBNR b KQkq - 1 2": "g8f6",
+                "rnbqkb1r/ppp1pppp/5n2/3p4/3P1B2/4P3/PPP2PPP/RN1QKBNR b KQkq - 0 3": "c8f5",
+                "rn1qkb1r/ppp1pppp/5n2/3p1b2/3P1B2/3BP3/PPP2PPP/RN1QK1NR b KQkq - 2 4": "f5g6",
+                "rn1qkb1r/ppp1pppp/5nb1/3p4/3P1B2/3BPN2/PPP2PPP/RN1QK2R b KQkq - 4 5": "e7e6",
+                "rn1qkb1r/ppp2ppp/4pnb1/3pN3/3P1B2/3BP3/PPP2PPP/RN1QK2R b KQkq - 1 6": "f8d6",
+                "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3": "f8c5",
+                "r1bqk1nr/pppp1ppp/2n5/2b1p3/1PB1P3/5N2/P1PP1PPP/RNBQK2R b KQkq - 0 4": "c5b4",
+                "r1bqk1nr/pppp1ppp/2n5/4p3/1bB1P3/2P2N2/P2P1PPP/RNBQK2R b KQkq - 0 5": "b4a5"
+              },
+              "humanBlunderInterval": 10
+            }
+          }
+        },
+        {
+          "username": "Steinitz, William",
+          "platformRating": 2150,
+          "expected": {
+            "stats": {
+              "gameCount": 11,
+              "winRate": 36,
+              "drawRate": 9,
+              "lossRate": 55,
+              "style": "Chaotique",
+              "topOpenings": [
+                {
+                  "name": "Sicilian Defense",
+                  "count": 4
+                },
+                {
+                  "name": "Italian Game",
+                  "count": 4
+                },
+                {
+                  "name": "ECO C50",
+                  "count": 3
+                }
+              ],
+              "avgMoves": 60
+            },
+            "config": {
+              "name": "Bot_Steinitz, William",
+              "elo": 2150,
+              "difficulty": 1,
+              "aggressiveness": 50,
+              "threads": 2,
+              "depth": 6,
+              "timeControl": 750,
+              "favoriteOpening": "Sicilian Defense",
+              "playStyle": "tactique",
+              "openings": {
+                "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1": "e7e5",
+                "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2": "b8c6",
+                "rnbqkbnr/ppp2ppp/3p4/4p3/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 3": "c8g4",
+                "rn1qkbnr/ppp2ppp/3p4/4P3/4P1b1/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 4": "g4f3",
+                "rn1qkbnr/ppp2ppp/3p4/4P3/4P3/5Q2/PPP2PPP/RNB1KB1R b KQkq - 0 5": "d6e5",
+                "rn1qkbnr/ppp2ppp/8/4p3/2B1P3/5Q2/PPP2PPP/RNB1K2R b KQkq - 1 6": "g8f6",
+                "r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3": "g8f6",
+                "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/3PP3/5N2/PPP2PPP/RNBQK2R b KQkq - 0 4": "c6d4",
+                "r1bqkb1r/pppp1ppp/5n2/1B2p3/3NP3/8/PPP2PPP/RNBQK2R b KQkq - 0 5": "e5d4",
+                "r1bqkb1r/pppp1ppp/5n2/1B2P3/3p4/8/PPP2PPP/RNBQK2R b KQkq - 0 6": "f6e4",
+                "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1": "e2e4",
+                "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2": "g1f3",
+                "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3": "f1b5",
+                "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4": "e1g1",
+                "r1bqkb1r/pppp1ppp/2n5/1B2p3/4n3/5N2/PPPP1PPP/RNBQ1RK1 w kq - 0 5": "f1e1",
+                "r1bqkb1r/pppp1ppp/2nn4/1B2p3/8/5N2/PPPP1PPP/RNBQR1K1 w kq - 2 6": "f3e5",
+                "rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2": "d7d6",
+                "rnbqkbnr/pp2pppp/3p4/2p5/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 3": "c5d4",
+                "rnbqkbnr/pp2pppp/3p4/8/3NP3/8/PPP2PPP/RNBQKB1R b KQkq - 0 4": "g8f6",
+                "rnbqkb1r/pp2pppp/3p1n2/8/3NP3/2N5/PPP2PPP/R1BQKB1R b KQkq - 2 5": "a7a6",
+                "rnbqkbnr/pp1ppppp/8/2p5/2B1P3/8/PPPP1PPP/RNBQK1NR b KQkq - 1 2": "e7e6",
+                "rnbqkbnr/pp1p1ppp/4p3/2p5/2B1P3/2N5/PPPP1PPP/R1BQK1NR b KQkq - 1 3": "a7a6",
+                "rnbqkbnr/1p1p1ppp/p3p3/2p5/P1B1P3/2N5/1PPP1PPP/R1BQK1NR b KQkq - 0 4": "b8c6",
+                "r1bqkbnr/1p1p1ppp/p1n1p3/2p5/P1B1P3/2NP4/1PP2PPP/R1BQK1NR b KQkq - 0 5": "g8f6",
+                "r1bqkb1r/1p1p1ppp/p1n1pn2/2p5/P1B1P3/2NP4/1PPB1PPP/R2QK1NR b KQkq - 2 6": "d7d5",
+                "rnbqkbnr/pppp1ppp/4p3/8/4P3/3P4/PPP2PPP/RNBQKBNR b KQkq - 0 2": "d7d5",
+                "rnbqkbnr/ppp2ppp/4p3/3p4/4P3/3P4/PPPN1PPP/R1BQKBNR b KQkq - 1 3": "g8f6",
+                "rnbqkb1r/ppp2ppp/4pn2/3p4/4P3/3P1N2/PPPN1PPP/R1BQKB1R b KQkq - 3 4": "c7c5",
+                "rnbqkb1r/pp3ppp/4pn2/2pp4/4P3/3P1NP1/PPPN1P1P/R1BQKB1R b KQkq - 0 5": "b7b6",
+                "rnbqkb1r/p4ppp/1p2pn2/2pp4/4P3/2PP1NP1/PP1N1P1P/R1BQKB1R b KQkq - 0 6": "f8e7",
+                "rnbqkb1r/pppppppp/5n2/8/4P3/2N5/PPPP1PPP/R1BQKBNR b KQkq - 2 2": "d7d5",
+                "rnbqkb1r/ppp1pppp/5n2/3pP3/8/2N5/PPPP1PPP/R1BQKBNR b KQkq - 0 3": "f6d7",
+                "rnbqkb1r/pppnpppp/8/3pP3/3P4/2N5/PPP2PPP/R1BQKBNR b KQkq - 0 4": "c7c5",
+                "rnbqkb1r/pp1npppp/8/1BppP3/3P4/2N5/PPP2PPP/R1BQK1NR b KQkq - 1 5": "b8c6",
+                "r1bqkb1r/pp1npppp/2n5/1BppP3/3P4/2N2N2/PPP2PPP/R1BQK2R b KQkq - 3 6": "a7a6",
+                "rnbqkb1r/pp1npppp/8/2pNP3/3P4/8/PPP2PPP/R1BQKBNR b KQkq - 0 5": "c5d4",
+                "rnbqkb1r/pp1npppp/8/3NP3/3Q4/8/PPP2PPP/R1B1KBNR b KQkq - 0 6": "d7b6",
+                "rnbqkb1r/pppppppp/5n2/4P3/8/8/PPPP1PPP/RNBQKBNR b KQkq - 0 2": "f6d5",
+                "rnbqkb1r/pppppppp/8/3nP3/8/6P1/PPPP1P1P/RNBQKBNR b KQkq - 0 3": "d7d6",
+                "rnbqkb1r/ppp1pppp/3P4/3n4/8/6P1/PPPP1P1P/RNBQKBNR b KQkq - 0 4": "d8d6",
+                "rnb1kb1r/ppp1pppp/3q4/3n4/8/6P1/PPPP1PBP/RNBQK1NR b KQkq - 1 5": "b8c6",
+                "r1b1kb1r/ppp1pppp/2nq4/3n4/8/2N3P1/PPPP1PBP/R1BQK1NR b KQkq - 3 6": "d5c3",
+                "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq - 0 1": "d7d5",
+                "rnbqkbnr/ppp1pppp/8/3p4/3P1B2/8/PPP1PPPP/RN1QKBNR b KQkq - 1 2": "g8f6",
+                "rnbqkb1r/ppp1pppp/5n2/3p4/3P1B2/4P3/PPP2PPP/RN1QKBNR b KQkq - 0 3": "c8f5",
+                "rn1qkb1r/ppp1pppp/5n2/3p1b2/3P1B2/3BP3/PPP2PPP/RN1QK1NR b KQkq - 2 4": "f5g6",
+                "rn1qkb1r/ppp1pppp/5nb1/3p4/3P1B2/3BPN2/PPP2PPP/RN1QK2R b KQkq - 4 5": "e7e6",
+                "rn1qkb1r/ppp2ppp/4pnb1/3pN3/3P1B2/3BP3/PPP2PPP/RN1QK2R b KQkq - 1 6": "f8d6",
+                "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3": "f8c5",
+                "r1bqk1nr/pppp1ppp/2n5/2b1p3/1PB1P3/5N2/P1PP1PPP/RNBQK2R b KQkq - 0 4": "c5b4",
+                "r1bqk1nr/pppp1ppp/2n5/4p3/1bB1P3/2P2N2/P2P1PPP/RNBQK2R b KQkq - 0 5": "b4a5"
+              },
+              "humanBlunderInterval": 10
+            }
+          }
+        }
+      ]
+    },
+    {
+      "games": [
+        {
+          "id": "opera-1858",
+          "pgn": "[Event \"?\"]\n[Site \"?\"]\n[Date \"????.??.??\"]\n[Round \"?\"]\n[White \"Paul Morphy\"]\n[Black \"Duke Karl / Count Isouard\"]\n[Result \"*\"]\n[Opening \"Sicilian Defense\"]\n\n1. e4 e5 2. Nf3 d6 3. d4 Bg4 4. dxe5 Bxf3 5. Qxf3 dxe5 6. Bc4 Nf6 7. Qb3 Qe7 8. Nc3 c6 9. Bg5 b5 10. Nxb5 cxb5 11. Bxb5+ Nbd7 12. O-O-O Rd8 13. Rxd7 Rxd7 14. Rd1 Qe6 15. Bxd7+ Nxd7 16. Qb8+ Nxb8 17. Rd8# *",
+          "winner": "white",
+          "players": {
+            "white": {
+              "user": {
+                "name": "Paul Morphy"
+              }
+            },
+            "black": {
+              "username": "Duke Karl / Count Isouard"
+            }
+          }
+        },
+        {
+          "id": "bird-anderssen-1851-london",
+          "pgn": "[Event \"?\"]\n[Site \"?\"]\n[Date \"????.??.??\"]\n[Round \"?\"]\n[White \"Bird, Henry Edward\"]\n[Black \"Anderssen, Adolf\"]\n[Result \"*\"]\n[ECOUrl \"https://www.chess.com/openings/Italian-Game\"]\n\n1. e4 e5 2. Nf3 Nc6 3. Bb5 Nf6 4. d4 Nxd4 5. Nxd4 exd4 6. e5 Ne4 7. O-O Qh4 8. g3 Qh3 9. Be2 d5 10. exd6 Bxd6 11. Qxd4 Bf5 12. Nc3 O-O-O 13. Qxa7 Nxc3 14. bxc3 c6 15. Be3 Be4 16. Qa8+ Kd7 17. Qxb7+ Ke8 18. f3 Bxg3 19. Rf2 Bxf2+ 20. Bxf2 Bd5 21. c4 Be6 22. Qxc6+ Ke7 23. Bc5+ Kf6 24. Qc7 Kg6 25. Kh1 h6 26. Rg1+ Kh7 27. Rg3 Qh5 28. Bd3+ Bf5 29. Qe5 g6 30. Qf6 Rhg8 31. Qxf7+ Rg7 32. Qf6 Rdd7 33. Bd4 Rde7 34. c5 Bxd3 35. cxd3 g5 36. c6 Re1+ 37. Bg1 Rf7 38. Qd8 Rxf3 39. c7 Rxg3 40. Qd7+ Kg6 41. Qd6+ Kf7 42. Qxg3 Re8 43. Qf2+ Kg8 44. Qf5 *",
+          "winner": "white",
+          "players": {
+            "white": {
+              "username": "Bird, Henry Edward"
+            },
+            "black": {
+              "username": "Anderssen, Adolf"
+            }
+          }
+        },
+        {
+          "id": "steinitz-zukertort-1886-wch-r14",
+          "pgn": "[Event \"?\"]\n[Site \"?\"]\n[Date \"????.??.??\"]\n[Round \"?\"]\n[White \"Steinitz, William\"]\n[Black \"Zukertort, Johannes Hermann\"]\n[Result \"*\"]\n[ECO \"C50\"]\n\n1. e4 e5 2. Nf3 Nc6 3. Bb5 Nf6 4. O-O Nxe4 5. Re1 Nd6 6. Nxe5 Be7 7. Bd3 O-O 8. Nc3 Nxe5 9. Rxe5 c6 10. b3 Ne8 11. Bb2 d5 12. Qf3 Bf6 13. Re2 Nc7 14. Ba3 Re8 15. Rae1 Ne6 16. Na4 Bd7 17. Nc5 Nxc5 18. Rxe8+ Bxe8 19. Bxc5 b6 20. Ba3 Bd7 21. Qg3 c5 22. c3 Be6 23. Bb2 Qd7 24. Bc2 Re8 25. h3 b5 26. d4 cxd4 27. cxd4 Rc8 28. Bd3 Bf5 29. Bxf5 Qxf5 30. Qg4 Qxg4 31. hxg4 h6 32. Re2 b4 33. g3 a5 34. Kf1 a4 35. bxa4 Ra8 36. Re1 Rxa4 37. Ra1 Kf8 38. Ke2 Ke7 39. Kd3 Ra6 40. a3 bxa3 41. Rxa3 Rxa3+ 42. Bxa3+ Kd7 43. Bf8 Ke8 44. Bd6 g6 45. Be5 Bd8 46. Bg7 h5 47. gxh5 gxh5 48. Be5 Kd7 *",
+          "winner": "draw",
+          "players": {
+            "white": {
+              "user": {
+                "name": "Steinitz, William"
+              }
+            },
+            "black": {
+              "username": "Zukertort, Johannes Hermann"
+            }
+          }
+        },
+        {
+          "id": "fischer-petrosian-1971",
+          "pgn": "[Event \"?\"]\n[Site \"?\"]\n[Date \"????.??.??\"]\n[Round \"?\"]\n[White \"Bobby Fischer\"]\n[Black \"Tigran Petrosian\"]\n[Result \"*\"]\n[Opening \"Sicilian Defense\"]\n\n1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 a6 6. f4 *",
+          "winner": "white",
+          "players": {
+            "white": {
+              "username": "Bobby Fischer"
+            },
+            "black": {
+              "username": "Tigran Petrosian"
+            }
+          }
+        },
+        {
+          "id": "anderssen-suhle-1864",
+          "pgn": "[Event \"?\"]\n[Site \"?\"]\n[Date \"????.??.??\"]\n[Round \"?\"]\n[White \"Anderssen, Adolf\"]\n[Black \"Suhle, Berthold\"]\n[Result \"*\"]\n[ECOUrl \"https://www.chess.com/openings/Italian-Game\"]\n\n1. e4 c5 2. Bc4 e6 3. Nc3 a6 4. a4 Nc6 5. d3 Nf6 6. Bd2 d5 7. Ba2 dxe4 8. dxe4 b6 9. Nf3 Bb7 10. O-O Be7 11. Re1 O-O 12. Bc4 Nd4 13. Bf4 h6 14. Be5 Rc8 15. Qd3 Nc6 16. Qf1 Nxe5 17. Nxe5 Qc7 18. f4 Ra8 19. Rad1 Rfd8 20. Rd3 Rd4 21. b3 Rad8 22. Rde3 Rd2 23. Bd3 c4 24. Nxc4 Bc5 25. Nxd2 Ng4 26. Nd1 g5 27. Kh1 Nxe3 28. Nxe3 gxf4 29. Ng4 Kg7 30. e5 h5 31. Nf6 Be3 32. Nxh5+ Kf8 33. Nxf4 *",
+          "winner": "white",
+          "players": {
+            "white": {
+              "user": {
+                "name": "Anderssen, Adolf"
+              }
+            },
+            "black": {
+              "username": "Suhle, Berthold"
+            }
+          }
+        },
+        {
+          "id": "hebert-seirawan-1982-luzern",
+          "pgn": "[Event \"?\"]\n[Site \"?\"]\n[Date \"????.??.??\"]\n[Round \"?\"]\n[White \"Hebert, Jean\"]\n[Black \"Seirawan, Yasser\"]\n[Result \"*\"]\n[ECO \"C50\"]\n\n1. e4 e6 2. d3 d5 3. Nd2 Nf6 4. Ngf3 c5 5. g3 b6 6. c3 Be7 7. Qa4+ Qd7 8. Qxd7+ Bxd7 9. e5 Ng8 10. a3 f5 11. h4 Nh6 12. d4 Nf7 13. Bd3 a5 14. b3 Na6 15. Nf1 h6 16. Ne3 g5 17. hxg5 hxg5 18. Rxh8+ Nxh8 19. g4 f4 20. Nc2 a4 21. bxa4 c4 22. Bh7 Kf7 23. Nb4 Ng6 24. Nxa6 Rxa6 25. Rb1 Bc6 26. a5 b5 27. a4 bxa4 28. Ra1 Kg7 29. Bxg6 Kxg6 30. Ba3 Bxa3 31. Rxa3 Rxa5 32. Nd2 Be8 33. f3 Ra7 34. Kf2 Rb7 35. Ke1 Kg7 36. Kd1 Kf8 37. Ke1 Ke7 38. Ra1 Rb3 39. Nxb3 cxb3 40. Rb1 Bg6 41. Rb2 Kd7 *",
+          "winner": "black",
+          "players": {
+            "white": {
+              "username": "Hebert, Jean"
+            },
+            "black": {
+              "username": "Seirawan, Yasser"
+            }
+          }
+        },
+        {
+          "id": "bogoljubow-alekhine-karlsbad-1923",
+          "pgn": "[Event \"?\"]\n[Site \"?\"]\n[Date \"????.??.??\"]\n[Round \"?\"]\n[White \"Bogoljubow, Efim\"]\n[Black \"Alekhine, Alexander\"]\n[Result \"*\"]\n[Opening \"Sicilian Defense\"]\n\n1. e4 Nf6 2. Nc3 d5 3. e5 Nfd7 4. d4 c5 5. Bb5 Nc6 6. Nf3 a6 7. Bxc6 bxc6 8. e6 fxe6 9. O-O e5 10. dxe5 e6 11. Ng5 Qe7 12. f4 g6 13. Qg4 Nb6 14. b3 c4 15. Be3 c5 16. Bf2 h6 17. Nf3 Qf7 18. Nh4 Rg8 19. a4 cxb3 20. cxb3 Bb7 21. a5 Nd7 22. Bg3 d4 23. Na4 Bd5 24. Rab1 Rb8 25. Qd1 Rb5 26. Be1 Qe7 27. Qd3 g5 28. Ng6 Qf7 29. Nxf8 gxf4 30. Bg3 Qxf8 31. Rxf4 Qg7 32. b4 Qg6 33. Qd1 Rf8 34. Rg4 Qf5 35. Rb2 Rxb4 36. Rxb4 cxb4 37. Nb2 Bb3 38. Qe2 Qb1+ 39. Be1 Rf5 40. Re4 Bd5 41. g4 d3 42. Qd2 Nxe5 43. Rxe5 Rxe5 44. Nxd3 Re4 45. Kf2 Rd4 46. Ke3 Re4+ 47. Kf2 Rd4 48. Ke3 Rxg4 49. Bg3 Qg1+ 50. Qf2 Re4+ 51. Kd2 Qa1 52. Ne5 Rxe5 *",
+          "winner": "black",
+          "players": {
+            "white": {
+              "user": {
+                "name": "Bogoljubow, Efim"
+              }
+            },
+            "black": {
+              "username": "Alekhine, Alexander"
+            }
+          }
+        },
+        {
+          "id": "donchenko-bortnyk-tt-chesscom-2024",
+          "pgn": "[Event \"?\"]\n[Site \"?\"]\n[Date \"????.??.??\"]\n[Round \"?\"]\n[White \"Donchenko, Alexander\"]\n[Black \"Bortnyk, Olexandr\"]\n[Result \"*\"]\n[ECOUrl \"https://www.chess.com/openings/Italian-Game\"]\n\n1. e4 Nf6 2. Nc3 d5 3. e5 Nfd7 4. d4 c5 5. Nxd5 cxd4 6. Qxd4 Nb6 7. Bb5+ Nc6 8. c4 e6 9. Bg5 Qd7 10. O-O-O exd5 11. Qh4 a6 12. cxd5 axb5 13. e6 fxe6 14. dxc6 Qxc6+ 15. Kb1 e5 16. Nf3 Bf5+ 17. Ka1 Nc4 18. Rd8+ Rxd8 19. Bxd8 Na3 20. Nxe5 Nc2+ 21. Kb1 Ne1+ 22. Ka1 Qc1# *",
+          "winner": "black",
+          "players": {
+            "white": {
+              "username": "Donchenko, Alexander"
+            },
+            "black": {
+              "username": "Bortnyk, Olexandr"
+            }
+          }
+        },
+        {
+          "id": "dovliatov-mamedyarov-baku-2006",
+          "pgn": "[Event \"?\"]\n[Site \"?\"]\n[Date \"????.??.??\"]\n[Round \"?\"]\n[White \"Dovliatov, Sanan\"]\n[Black \"Mamedyarov, Shakhriyar\"]\n[Result \"*\"]\n[ECO \"C50\"]\n\n1. e4 Nf6 2. e5 Nd5 3. g3 d6 4. exd6 Qxd6 5. Bg2 Nc6 6. Nc3 Nxc3 7. bxc3 g6 8. Nf3 Bg7 9. O-O O-O 10. d4 e5 11. dxe5 Qc5 12. Rb1 Qxc3 13. Bf4 Rd8 14. Qc1 b6 15. Re1 Be6 16. Bh6 Bxa2 17. Bxg7 Kxg7 18. Ra1 Bd5 19. Qg5 Bxf3 20. Qf6+ Kg8 21. Bxf3 Nd4 22. Bxa8 Rxa8 23. Red1 a5 24. Ra4 c5 25. Qxb6 Qxc2 26. Rda1 Re8 27. h4 Nf3+ 28. Kg2 Nxe5 29. R1a2 Qd3 30. Qb7 Nc4 31. Qc6 Re1 32. Rxc4 Qxc4 33. Rb2 Kg7 34. Kh2 a4 35. Qf3 Qe4 *",
+          "winner": "black",
+          "players": {
+            "white": {
+              "user": {
+                "name": "Dovliatov, Sanan"
+              }
+            },
+            "black": {
+              "username": "Mamedyarov, Shakhriyar"
+            }
+          }
+        },
+        {
+          "id": "maroczy-spielmann-prague-1908",
+          "pgn": "[Event \"?\"]\n[Site \"?\"]\n[Date \"????.??.??\"]\n[Round \"?\"]\n[White \"Maroczy, Geza\"]\n[Black \"Spielmann, Rudolf\"]\n[Result \"*\"]\n[Opening \"Sicilian Defense\"]\n\n1. d4 d5 2. Bf4 Nf6 3. e3 Bf5 4. Bd3 Bg6 5. Nf3 e6 6. Ne5 Bd6 7. Nd2 c6 8. h3 Qc7 9. Ndf3 Nbd7 10. Bh2 Be4 11. Nxd7 Nxd7 12. Bxd6 Qxd6 13. Bxe4 dxe4 14. Nd2 f5 15. c3 e5 16. Qb3 exd4 17. cxd4 O-O-O 18. O-O Rde8 19. Rac1 Kb8 20. Rc3 g5 21. Rfc1 Ka8 22. Nc4 Qb8 23. Na5 Nf6 24. Qa4 Qc7 25. Rc5 Qd7 26. Nc4 Kb8 27. Ne5 Rxe5 28. Rxe5 Nd5 29. Rc5 Qf7 30. Qb3 Rc8 31. a4 h5 32. Rcxd5 cxd5 33. Qxd5 *",
+          "winner": "white",
+          "players": {
+            "white": {
+              "username": "Maroczy, Geza"
+            },
+            "black": {
+              "username": "Spielmann, Rudolf"
+            }
+          }
+        },
+        {
+          "id": "evans-walker-1850",
+          "pgn": "[Event \"?\"]\n[Site \"?\"]\n[Date \"????.??.??\"]\n[Round \"?\"]\n[White \"Captain Evans\"]\n[Black \"William Walker\"]\n[Result \"*\"]\n[ECOUrl \"https://www.chess.com/openings/Italian-Game\"]\n\n1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. b4 Bxb4 5. c3 Ba5 6. d4 *",
+          "winner": "white",
+          "players": {
+            "white": {
+              "user": {
+                "name": "Captain Evans"
+              }
+            },
+            "black": {
+              "username": "William Walker"
+            }
+          }
+        }
+      ],
+      "cases": [
+        {
+          "username": "Paul Morphy",
+          "platformRating": null,
+          "expected": {
+            "stats": {
+              "gameCount": 11,
+              "winRate": 45,
+              "drawRate": 9,
+              "lossRate": 45,
+              "style": "Chaotique",
+              "topOpenings": [
+                {
+                  "name": "Sicilian Defense",
+                  "count": 4
+                },
+                {
+                  "name": "Italian Game",
+                  "count": 4
+                },
+                {
+                  "name": "ECO C50",
+                  "count": 3
+                }
+              ],
+              "avgMoves": 60
+            },
+            "config": {
+              "name": "Bot_Paul Morphy",
+              "elo": 2027,
+              "difficulty": 2,
+              "aggressiveness": 50,
+              "threads": 2,
+              "depth": 9,
+              "timeControl": 600,
+              "favoriteOpening": "Sicilian Defense",
+              "playStyle": "tactique",
+              "openings": {
+                "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1": "e2e4",
+                "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2": "g1f3",
+                "rnbqkbnr/ppp2ppp/3p4/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 0 3": "d2d4",
+                "rn1qkbnr/ppp2ppp/3p4/4p3/3PP1b1/5N2/PPP2PPP/RNBQKB1R w KQkq - 1 4": "d4e5",
+                "rn1qkbnr/ppp2ppp/3p4/4P3/4P3/5b2/PPP2PPP/RNBQKB1R w KQkq - 0 5": "d1f3",
+                "rn1qkbnr/ppp2ppp/8/4p3/4P3/5Q2/PPP2PPP/RNB1KB1R w KQkq - 0 6": "f1c4",
+                "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1": "e7e5",
+                "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2": "b8c6",
+                "r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3": "g8f6",
+                "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/3PP3/5N2/PPP2PPP/RNBQK2R b KQkq - 0 4": "c6d4",
+                "r1bqkb1r/pppp1ppp/5n2/1B2p3/3NP3/8/PPP2PPP/RNBQK2R b KQkq - 0 5": "e5d4",
+                "r1bqkb1r/pppp1ppp/5n2/1B2P3/3p4/8/PPP2PPP/RNBQK2R b KQkq - 0 6": "f6e4",
+                "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQ1RK1 b kq - 5 4": "f6e4",
+                "r1bqkb1r/pppp1ppp/2n5/1B2p3/4n3/5N2/PPPP1PPP/RNBQR1K1 b kq - 1 5": "e4d6",
+                "r1bqkb1r/pppp1ppp/2nn4/1B2N3/8/8/PPPP1PPP/RNBQR1K1 b kq - 0 6": "f8e7",
+                "rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2": "d7d6",
+                "rnbqkbnr/pp2pppp/3p4/2p5/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 3": "c5d4",
+                "rnbqkbnr/pp2pppp/3p4/8/3NP3/8/PPP2PPP/RNBQKB1R b KQkq - 0 4": "g8f6",
+                "rnbqkb1r/pp2pppp/3p1n2/8/3NP3/2N5/PPP2PPP/R1BQKB1R b KQkq - 2 5": "a7a6",
+                "rnbqkbnr/pp1ppppp/8/2p5/2B1P3/8/PPPP1PPP/RNBQK1NR b KQkq - 1 2": "e7e6",
+                "rnbqkbnr/pp1p1ppp/4p3/2p5/2B1P3/2N5/PPPP1PPP/R1BQK1NR b KQkq - 1 3": "a7a6",
+                "rnbqkbnr/1p1p1ppp/p3p3/2p5/P1B1P3/2N5/1PPP1PPP/R1BQK1NR b KQkq - 0 4": "b8c6",
+                "r1bqkbnr/1p1p1ppp/p1n1p3/2p5/P1B1P3/2NP4/1PP2PPP/R1BQK1NR b KQkq - 0 5": "g8f6",
+                "r1bqkb1r/1p1p1ppp/p1n1pn2/2p5/P1B1P3/2NP4/1PPB1PPP/R2QK1NR b KQkq - 2 6": "d7d5",
+                "rnbqkbnr/pppp1ppp/4p3/8/4P3/3P4/PPP2PPP/RNBQKBNR b KQkq - 0 2": "d7d5",
+                "rnbqkbnr/ppp2ppp/4p3/3p4/4P3/3P4/PPPN1PPP/R1BQKBNR b KQkq - 1 3": "g8f6",
+                "rnbqkb1r/ppp2ppp/4pn2/3p4/4P3/3P1N2/PPPN1PPP/R1BQKB1R b KQkq - 3 4": "c7c5",
+                "rnbqkb1r/pp3ppp/4pn2/2pp4/4P3/3P1NP1/PPPN1P1P/R1BQKB1R b KQkq - 0 5": "b7b6",
+                "rnbqkb1r/p4ppp/1p2pn2/2pp4/4P3/2PP1NP1/PP1N1P1P/R1BQKB1R b KQkq - 0 6": "f8e7",
+                "rnbqkb1r/pppppppp/5n2/8/4P3/2N5/PPPP1PPP/R1BQKBNR b KQkq - 2 2": "d7d5",
+                "rnbqkb1r/ppp1pppp/5n2/3pP3/8/2N5/PPPP1PPP/R1BQKBNR b KQkq - 0 3": "f6d7",
+                "rnbqkb1r/pppnpppp/8/3pP3/3P4/2N5/PPP2PPP/R1BQKBNR b KQkq - 0 4": "c7c5",
+                "rnbqkb1r/pp1npppp/8/1BppP3/3P4/2N5/PPP2PPP/R1BQK1NR b KQkq - 1 5": "b8c6",
+                "r1bqkb1r/pp1npppp/2n5/1BppP3/3P4/2N2N2/PPP2PPP/R1BQK2R b KQkq - 3 6": "a7a6",
+                "rnbqkb1r/pp1npppp/8/2pNP3/3P4/8/PPP2PPP/R1BQKBNR b KQkq - 0 5": "c5d4",
+                "rnbqkb1r/pp1npppp/8/3NP3/3Q4/8/PPP2PPP/R1B1KBNR b KQkq - 0 6": "d7b6",
+                "rnbqkb1r/pppppppp/5n2/4P3/8/8/PPPP1PPP/RNBQKBNR b KQkq - 0 2": "f6d5",
+                "rnbqkb1r/pppppppp/8/3nP3/8/6P1/PPPP1P1P/RNBQKBNR b KQkq - 0 3": "d7d6",
+                "rnbqkb1r/ppp1pppp/3P4/3n4/8/6P1/PPPP1P1P/RNBQKBNR b KQkq - 0 4": "d8d6",
+                "rnb1kb1r/ppp1pppp/3q4/3n4/8/6P1/PPPP1PBP/RNBQK1NR b KQkq - 1 5": "b8c6",
+                "r1b1kb1r/ppp1pppp/2nq4/3n4/8/2N3P1/PPPP1PBP/R1BQK1NR b KQkq - 3 6": "d5c3",
+                "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq - 0 1": "d7d5",
+                "rnbqkbnr/ppp1pppp/8/3p4/3P1B2/8/PPP1PPPP/RN1QKBNR b KQkq - 1 2": "g8f6",
+                "rnbqkb1r/ppp1pppp/5n2/3p4/3P1B2/4P3/PPP2PPP/RN1QKBNR b KQkq - 0 3": "c8f5",
+                "rn1qkb1r/ppp1pppp/5n2/3p1b2/3P1B2/3BP3/PPP2PPP/RN1QK1NR b KQkq - 2 4": "f5g6",
+                "rn1qkb1r/ppp1pppp/5nb1/3p4/3P1B2/3BPN2/PPP2PPP/RN1QK2R b KQkq - 4 5": "e7e6",
+                "rn1qkb1r/ppp2ppp/4pnb1/3pN3/3P1B2/3BP3/PPP2PPP/RN1QK2R b KQkq - 1 6": "f8d6",
+                "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3": "f8c5",
+                "r1bqk1nr/pppp1ppp/2n5/2b1p3/1PB1P3/5N2/P1PP1PPP/RNBQK2R b KQkq - 0 4": "c5b4",
+                "r1bqk1nr/pppp1ppp/2n5/4p3/1bB1P3/2P2N2/P2P1PPP/RNBQK2R b KQkq - 0 5": "b4a5"
+              },
+              "humanBlunderInterval": 10
+            }
+          }
+        },
+        {
+          "username": "Paul Morphy",
+          "platformRating": 2150,
+          "expected": {
+            "stats": {
+              "gameCount": 11,
+              "winRate": 45,
+              "drawRate": 9,
+              "lossRate": 45,
+              "style": "Chaotique",
+              "topOpenings": [
+                {
+                  "name": "Sicilian Defense",
+                  "count": 4
+                },
+                {
+                  "name": "Italian Game",
+                  "count": 4
+                },
+                {
+                  "name": "ECO C50",
+                  "count": 3
+                }
+              ],
+              "avgMoves": 60
+            },
+            "config": {
+              "name": "Bot_Paul Morphy",
+              "elo": 2150,
+              "difficulty": 2,
+              "aggressiveness": 50,
+              "threads": 2,
+              "depth": 9,
+              "timeControl": 600,
+              "favoriteOpening": "Sicilian Defense",
+              "playStyle": "tactique",
+              "openings": {
+                "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1": "e2e4",
+                "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2": "g1f3",
+                "rnbqkbnr/ppp2ppp/3p4/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 0 3": "d2d4",
+                "rn1qkbnr/ppp2ppp/3p4/4p3/3PP1b1/5N2/PPP2PPP/RNBQKB1R w KQkq - 1 4": "d4e5",
+                "rn1qkbnr/ppp2ppp/3p4/4P3/4P3/5b2/PPP2PPP/RNBQKB1R w KQkq - 0 5": "d1f3",
+                "rn1qkbnr/ppp2ppp/8/4p3/4P3/5Q2/PPP2PPP/RNB1KB1R w KQkq - 0 6": "f1c4",
+                "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1": "e7e5",
+                "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2": "b8c6",
+                "r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3": "g8f6",
+                "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/3PP3/5N2/PPP2PPP/RNBQK2R b KQkq - 0 4": "c6d4",
+                "r1bqkb1r/pppp1ppp/5n2/1B2p3/3NP3/8/PPP2PPP/RNBQK2R b KQkq - 0 5": "e5d4",
+                "r1bqkb1r/pppp1ppp/5n2/1B2P3/3p4/8/PPP2PPP/RNBQK2R b KQkq - 0 6": "f6e4",
+                "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQ1RK1 b kq - 5 4": "f6e4",
+                "r1bqkb1r/pppp1ppp/2n5/1B2p3/4n3/5N2/PPPP1PPP/RNBQR1K1 b kq - 1 5": "e4d6",
+                "r1bqkb1r/pppp1ppp/2nn4/1B2N3/8/8/PPPP1PPP/RNBQR1K1 b kq - 0 6": "f8e7",
+                "rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2": "d7d6",
+                "rnbqkbnr/pp2pppp/3p4/2p5/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 3": "c5d4",
+                "rnbqkbnr/pp2pppp/3p4/8/3NP3/8/PPP2PPP/RNBQKB1R b KQkq - 0 4": "g8f6",
+                "rnbqkb1r/pp2pppp/3p1n2/8/3NP3/2N5/PPP2PPP/R1BQKB1R b KQkq - 2 5": "a7a6",
+                "rnbqkbnr/pp1ppppp/8/2p5/2B1P3/8/PPPP1PPP/RNBQK1NR b KQkq - 1 2": "e7e6",
+                "rnbqkbnr/pp1p1ppp/4p3/2p5/2B1P3/2N5/PPPP1PPP/R1BQK1NR b KQkq - 1 3": "a7a6",
+                "rnbqkbnr/1p1p1ppp/p3p3/2p5/P1B1P3/2N5/1PPP1PPP/R1BQK1NR b KQkq - 0 4": "b8c6",
+                "r1bqkbnr/1p1p1ppp/p1n1p3/2p5/P1B1P3/2NP4/1PP2PPP/R1BQK1NR b KQkq - 0 5": "g8f6",
+                "r1bqkb1r/1p1p1ppp/p1n1pn2/2p5/P1B1P3/2NP4/1PPB1PPP/R2QK1NR b KQkq - 2 6": "d7d5",
+                "rnbqkbnr/pppp1ppp/4p3/8/4P3/3P4/PPP2PPP/RNBQKBNR b KQkq - 0 2": "d7d5",
+                "rnbqkbnr/ppp2ppp/4p3/3p4/4P3/3P4/PPPN1PPP/R1BQKBNR b KQkq - 1 3": "g8f6",
+                "rnbqkb1r/ppp2ppp/4pn2/3p4/4P3/3P1N2/PPPN1PPP/R1BQKB1R b KQkq - 3 4": "c7c5",
+                "rnbqkb1r/pp3ppp/4pn2/2pp4/4P3/3P1NP1/PPPN1P1P/R1BQKB1R b KQkq - 0 5": "b7b6",
+                "rnbqkb1r/p4ppp/1p2pn2/2pp4/4P3/2PP1NP1/PP1N1P1P/R1BQKB1R b KQkq - 0 6": "f8e7",
+                "rnbqkb1r/pppppppp/5n2/8/4P3/2N5/PPPP1PPP/R1BQKBNR b KQkq - 2 2": "d7d5",
+                "rnbqkb1r/ppp1pppp/5n2/3pP3/8/2N5/PPPP1PPP/R1BQKBNR b KQkq - 0 3": "f6d7",
+                "rnbqkb1r/pppnpppp/8/3pP3/3P4/2N5/PPP2PPP/R1BQKBNR b KQkq - 0 4": "c7c5",
+                "rnbqkb1r/pp1npppp/8/1BppP3/3P4/2N5/PPP2PPP/R1BQK1NR b KQkq - 1 5": "b8c6",
+                "r1bqkb1r/pp1npppp/2n5/1BppP3/3P4/2N2N2/PPP2PPP/R1BQK2R b KQkq - 3 6": "a7a6",
+                "rnbqkb1r/pp1npppp/8/2pNP3/3P4/8/PPP2PPP/R1BQKBNR b KQkq - 0 5": "c5d4",
+                "rnbqkb1r/pp1npppp/8/3NP3/3Q4/8/PPP2PPP/R1B1KBNR b KQkq - 0 6": "d7b6",
+                "rnbqkb1r/pppppppp/5n2/4P3/8/8/PPPP1PPP/RNBQKBNR b KQkq - 0 2": "f6d5",
+                "rnbqkb1r/pppppppp/8/3nP3/8/6P1/PPPP1P1P/RNBQKBNR b KQkq - 0 3": "d7d6",
+                "rnbqkb1r/ppp1pppp/3P4/3n4/8/6P1/PPPP1P1P/RNBQKBNR b KQkq - 0 4": "d8d6",
+                "rnb1kb1r/ppp1pppp/3q4/3n4/8/6P1/PPPP1PBP/RNBQK1NR b KQkq - 1 5": "b8c6",
+                "r1b1kb1r/ppp1pppp/2nq4/3n4/8/2N3P1/PPPP1PBP/R1BQK1NR b KQkq - 3 6": "d5c3",
+                "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq - 0 1": "d7d5",
+                "rnbqkbnr/ppp1pppp/8/3p4/3P1B2/8/PPP1PPPP/RN1QKBNR b KQkq - 1 2": "g8f6",
+                "rnbqkb1r/ppp1pppp/5n2/3p4/3P1B2/4P3/PPP2PPP/RN1QKBNR b KQkq - 0 3": "c8f5",
+                "rn1qkb1r/ppp1pppp/5n2/3p1b2/3P1B2/3BP3/PPP2PPP/RN1QK1NR b KQkq - 2 4": "f5g6",
+                "rn1qkb1r/ppp1pppp/5nb1/3p4/3P1B2/3BPN2/PPP2PPP/RN1QK2R b KQkq - 4 5": "e7e6",
+                "rn1qkb1r/ppp2ppp/4pnb1/3pN3/3P1B2/3BP3/PPP2PPP/RN1QK2R b KQkq - 1 6": "f8d6",
+                "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3": "f8c5",
+                "r1bqk1nr/pppp1ppp/2n5/2b1p3/1PB1P3/5N2/P1PP1PPP/RNBQK2R b KQkq - 0 4": "c5b4",
+                "r1bqk1nr/pppp1ppp/2n5/4p3/1bB1P3/2P2N2/P2P1PPP/RNBQK2R b KQkq - 0 5": "b4a5"
+              },
+              "humanBlunderInterval": 10
+            }
+          }
+        },
+        {
+          "username": "Bird, Henry Edward",
+          "platformRating": null,
+          "expected": {
+            "stats": {
+              "gameCount": 11,
+              "winRate": 45,
+              "drawRate": 9,
+              "lossRate": 45,
+              "style": "Chaotique",
+              "topOpenings": [
+                {
+                  "name": "Sicilian Defense",
+                  "count": 4
+                },
+                {
+                  "name": "Italian Game",
+                  "count": 4
+                },
+                {
+                  "name": "ECO C50",
+                  "count": 3
+                }
+              ],
+              "avgMoves": 60
+            },
+            "config": {
+              "name": "Bot_Bird, Henry Edward",
+              "elo": 2027,
+              "difficulty": 2,
+              "aggressiveness": 50,
+              "threads": 2,
+              "depth": 9,
+              "timeControl": 600,
+              "favoriteOpening": "Sicilian Defense",
+              "playStyle": "tactique",
+              "openings": {
+                "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1": "e7e5",
+                "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2": "b8c6",
+                "rnbqkbnr/ppp2ppp/3p4/4p3/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 3": "c8g4",
+                "rn1qkbnr/ppp2ppp/3p4/4P3/4P1b1/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 4": "g4f3",
+                "rn1qkbnr/ppp2ppp/3p4/4P3/4P3/5Q2/PPP2PPP/RNB1KB1R b KQkq - 0 5": "d6e5",
+                "rn1qkbnr/ppp2ppp/8/4p3/2B1P3/5Q2/PPP2PPP/RNB1K2R b KQkq - 1 6": "g8f6",
+                "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1": "e2e4",
+                "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2": "g1f3",
+                "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3": "f1b5",
+                "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4": "d2d4",
+                "r1bqkb1r/pppp1ppp/5n2/1B2p3/3nP3/5N2/PPP2PPP/RNBQK2R w KQkq - 0 5": "f3d4",
+                "r1bqkb1r/pppp1ppp/5n2/1B6/3pP3/8/PPP2PPP/RNBQK2R w KQkq - 0 6": "e4e5",
+                "r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3": "g8f6",
+                "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQ1RK1 b kq - 5 4": "f6e4",
+                "r1bqkb1r/pppp1ppp/2n5/1B2p3/4n3/5N2/PPPP1PPP/RNBQR1K1 b kq - 1 5": "e4d6",
+                "r1bqkb1r/pppp1ppp/2nn4/1B2N3/8/8/PPPP1PPP/RNBQR1K1 b kq - 0 6": "f8e7",
+                "rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2": "d7d6",
+                "rnbqkbnr/pp2pppp/3p4/2p5/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 3": "c5d4",
+                "rnbqkbnr/pp2pppp/3p4/8/3NP3/8/PPP2PPP/RNBQKB1R b KQkq - 0 4": "g8f6",
+                "rnbqkb1r/pp2pppp/3p1n2/8/3NP3/2N5/PPP2PPP/R1BQKB1R b KQkq - 2 5": "a7a6",
+                "rnbqkbnr/pp1ppppp/8/2p5/2B1P3/8/PPPP1PPP/RNBQK1NR b KQkq - 1 2": "e7e6",
+                "rnbqkbnr/pp1p1ppp/4p3/2p5/2B1P3/2N5/PPPP1PPP/R1BQK1NR b KQkq - 1 3": "a7a6",
+                "rnbqkbnr/1p1p1ppp/p3p3/2p5/P1B1P3/2N5/1PPP1PPP/R1BQK1NR b KQkq - 0 4": "b8c6",
+                "r1bqkbnr/1p1p1ppp/p1n1p3/2p5/P1B1P3/2NP4/1PP2PPP/R1BQK1NR b KQkq - 0 5": "g8f6",
+                "r1bqkb1r/1p1p1ppp/p1n1pn2/2p5/P1B1P3/2NP4/1PPB1PPP/R2QK1NR b KQkq - 2 6": "d7d5",
+                "rnbqkbnr/pppp1ppp/4p3/8/4P3/3P4/PPP2PPP/RNBQKBNR b KQkq - 0 2": "d7d5",
+                "rnbqkbnr/ppp2ppp/4p3/3p4/4P3/3P4/PPPN1PPP/R1BQKBNR b KQkq - 1 3": "g8f6",
+                "rnbqkb1r/ppp2ppp/4pn2/3p4/4P3/3P1N2/PPPN1PPP/R1BQKB1R b KQkq - 3 4": "c7c5",
+                "rnbqkb1r/pp3ppp/4pn2/2pp4/4P3/3P1NP1/PPPN1P1P/R1BQKB1R b KQkq - 0 5": "b7b6",
+                "rnbqkb1r/p4ppp/1p2pn2/2pp4/4P3/2PP1NP1/PP1N1P1P/R1BQKB1R b KQkq - 0 6": "f8e7",
+                "rnbqkb1r/pppppppp/5n2/8/4P3/2N5/PPPP1PPP/R1BQKBNR b KQkq - 2 2": "d7d5",
+                "rnbqkb1r/ppp1pppp/5n2/3pP3/8/2N5/PPPP1PPP/R1BQKBNR b KQkq - 0 3": "f6d7",
+                "rnbqkb1r/pppnpppp/8/3pP3/3P4/2N5/PPP2PPP/R1BQKBNR b KQkq - 0 4": "c7c5",
+                "rnbqkb1r/pp1npppp/8/1BppP3/3P4/2N5/PPP2PPP/R1BQK1NR b KQkq - 1 5": "b8c6",
+                "r1bqkb1r/pp1npppp/2n5/1BppP3/3P4/2N2N2/PPP2PPP/R1BQK2R b KQkq - 3 6": "a7a6",
+                "rnbqkb1r/pp1npppp/8/2pNP3/3P4/8/PPP2PPP/R1BQKBNR b KQkq - 0 5": "c5d4",
+                "rnbqkb1r/pp1npppp/8/3NP3/3Q4/8/PPP2PPP/R1B1KBNR b KQkq - 0 6": "d7b6",
+                "rnbqkb1r/pppppppp/5n2/4P3/8/8/PPPP1PPP/RNBQKBNR b KQkq - 0 2": "f6d5",
+                "rnbqkb1r/pppppppp/8/3nP3/8/6P1/PPPP1P1P/RNBQKBNR b KQkq - 0 3": "d7d6",
+                "rnbqkb1r/ppp1pppp/3P4/3n4/8/6P1/PPPP1P1P/RNBQKBNR b KQkq - 0 4": "d8d6",
+                "rnb1kb1r/ppp1pppp/3q4/3n4/8/6P1/PPPP1PBP/RNBQK1NR b KQkq - 1 5": "b8c6",
+                "r1b1kb1r/ppp1pppp/2nq4/3n4/8/2N3P1/PPPP1PBP/R1BQK1NR b KQkq - 3 6": "d5c3",
+                "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq - 0 1": "d7d5",
+                "rnbqkbnr/ppp1pppp/8/3p4/3P1B2/8/PPP1PPPP/RN1QKBNR b KQkq - 1 2": "g8f6",
+                "rnbqkb1r/ppp1pppp/5n2/3p4/3P1B2/4P3/PPP2PPP/RN1QKBNR b KQkq - 0 3": "c8f5",
+                "rn1qkb1r/ppp1pppp/5n2/3p1b2/3P1B2/3BP3/PPP2PPP/RN1QK1NR b KQkq - 2 4": "f5g6",
+                "rn1qkb1r/ppp1pppp/5nb1/3p4/3P1B2/3BPN2/PPP2PPP/RN1QK2R b KQkq - 4 5": "e7e6",
+                "rn1qkb1r/ppp2ppp/4pnb1/3pN3/3P1B2/3BP3/PPP2PPP/RN1QK2R b KQkq - 1 6": "f8d6",
+                "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3": "f8c5",
+                "r1bqk1nr/pppp1ppp/2n5/2b1p3/1PB1P3/5N2/P1PP1PPP/RNBQK2R b KQkq - 0 4": "c5b4",
+                "r1bqk1nr/pppp1ppp/2n5/4p3/1bB1P3/2P2N2/P2P1PPP/RNBQK2R b KQkq - 0 5": "b4a5"
+              },
+              "humanBlunderInterval": 10
+            }
+          }
+        },
+        {
+          "username": "Bird, Henry Edward",
+          "platformRating": 2150,
+          "expected": {
+            "stats": {
+              "gameCount": 11,
+              "winRate": 45,
+              "drawRate": 9,
+              "lossRate": 45,
+              "style": "Chaotique",
+              "topOpenings": [
+                {
+                  "name": "Sicilian Defense",
+                  "count": 4
+                },
+                {
+                  "name": "Italian Game",
+                  "count": 4
+                },
+                {
+                  "name": "ECO C50",
+                  "count": 3
+                }
+              ],
+              "avgMoves": 60
+            },
+            "config": {
+              "name": "Bot_Bird, Henry Edward",
+              "elo": 2150,
+              "difficulty": 2,
+              "aggressiveness": 50,
+              "threads": 2,
+              "depth": 9,
+              "timeControl": 600,
+              "favoriteOpening": "Sicilian Defense",
+              "playStyle": "tactique",
+              "openings": {
+                "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1": "e7e5",
+                "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2": "b8c6",
+                "rnbqkbnr/ppp2ppp/3p4/4p3/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 3": "c8g4",
+                "rn1qkbnr/ppp2ppp/3p4/4P3/4P1b1/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 4": "g4f3",
+                "rn1qkbnr/ppp2ppp/3p4/4P3/4P3/5Q2/PPP2PPP/RNB1KB1R b KQkq - 0 5": "d6e5",
+                "rn1qkbnr/ppp2ppp/8/4p3/2B1P3/5Q2/PPP2PPP/RNB1K2R b KQkq - 1 6": "g8f6",
+                "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1": "e2e4",
+                "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2": "g1f3",
+                "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3": "f1b5",
+                "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4": "d2d4",
+                "r1bqkb1r/pppp1ppp/5n2/1B2p3/3nP3/5N2/PPP2PPP/RNBQK2R w KQkq - 0 5": "f3d4",
+                "r1bqkb1r/pppp1ppp/5n2/1B6/3pP3/8/PPP2PPP/RNBQK2R w KQkq - 0 6": "e4e5",
+                "r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3": "g8f6",
+                "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQ1RK1 b kq - 5 4": "f6e4",
+                "r1bqkb1r/pppp1ppp/2n5/1B2p3/4n3/5N2/PPPP1PPP/RNBQR1K1 b kq - 1 5": "e4d6",
+                "r1bqkb1r/pppp1ppp/2nn4/1B2N3/8/8/PPPP1PPP/RNBQR1K1 b kq - 0 6": "f8e7",
+                "rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2": "d7d6",
+                "rnbqkbnr/pp2pppp/3p4/2p5/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 3": "c5d4",
+                "rnbqkbnr/pp2pppp/3p4/8/3NP3/8/PPP2PPP/RNBQKB1R b KQkq - 0 4": "g8f6",
+                "rnbqkb1r/pp2pppp/3p1n2/8/3NP3/2N5/PPP2PPP/R1BQKB1R b KQkq - 2 5": "a7a6",
+                "rnbqkbnr/pp1ppppp/8/2p5/2B1P3/8/PPPP1PPP/RNBQK1NR b KQkq - 1 2": "e7e6",
+                "rnbqkbnr/pp1p1ppp/4p3/2p5/2B1P3/2N5/PPPP1PPP/R1BQK1NR b KQkq - 1 3": "a7a6",
+                "rnbqkbnr/1p1p1ppp/p3p3/2p5/P1B1P3/2N5/1PPP1PPP/R1BQK1NR b KQkq - 0 4": "b8c6",
+                "r1bqkbnr/1p1p1ppp/p1n1p3/2p5/P1B1P3/2NP4/1PP2PPP/R1BQK1NR b KQkq - 0 5": "g8f6",
+                "r1bqkb1r/1p1p1ppp/p1n1pn2/2p5/P1B1P3/2NP4/1PPB1PPP/R2QK1NR b KQkq - 2 6": "d7d5",
+                "rnbqkbnr/pppp1ppp/4p3/8/4P3/3P4/PPP2PPP/RNBQKBNR b KQkq - 0 2": "d7d5",
+                "rnbqkbnr/ppp2ppp/4p3/3p4/4P3/3P4/PPPN1PPP/R1BQKBNR b KQkq - 1 3": "g8f6",
+                "rnbqkb1r/ppp2ppp/4pn2/3p4/4P3/3P1N2/PPPN1PPP/R1BQKB1R b KQkq - 3 4": "c7c5",
+                "rnbqkb1r/pp3ppp/4pn2/2pp4/4P3/3P1NP1/PPPN1P1P/R1BQKB1R b KQkq - 0 5": "b7b6",
+                "rnbqkb1r/p4ppp/1p2pn2/2pp4/4P3/2PP1NP1/PP1N1P1P/R1BQKB1R b KQkq - 0 6": "f8e7",
+                "rnbqkb1r/pppppppp/5n2/8/4P3/2N5/PPPP1PPP/R1BQKBNR b KQkq - 2 2": "d7d5",
+                "rnbqkb1r/ppp1pppp/5n2/3pP3/8/2N5/PPPP1PPP/R1BQKBNR b KQkq - 0 3": "f6d7",
+                "rnbqkb1r/pppnpppp/8/3pP3/3P4/2N5/PPP2PPP/R1BQKBNR b KQkq - 0 4": "c7c5",
+                "rnbqkb1r/pp1npppp/8/1BppP3/3P4/2N5/PPP2PPP/R1BQK1NR b KQkq - 1 5": "b8c6",
+                "r1bqkb1r/pp1npppp/2n5/1BppP3/3P4/2N2N2/PPP2PPP/R1BQK2R b KQkq - 3 6": "a7a6",
+                "rnbqkb1r/pp1npppp/8/2pNP3/3P4/8/PPP2PPP/R1BQKBNR b KQkq - 0 5": "c5d4",
+                "rnbqkb1r/pp1npppp/8/3NP3/3Q4/8/PPP2PPP/R1B1KBNR b KQkq - 0 6": "d7b6",
+                "rnbqkb1r/pppppppp/5n2/4P3/8/8/PPPP1PPP/RNBQKBNR b KQkq - 0 2": "f6d5",
+                "rnbqkb1r/pppppppp/8/3nP3/8/6P1/PPPP1P1P/RNBQKBNR b KQkq - 0 3": "d7d6",
+                "rnbqkb1r/ppp1pppp/3P4/3n4/8/6P1/PPPP1P1P/RNBQKBNR b KQkq - 0 4": "d8d6",
+                "rnb1kb1r/ppp1pppp/3q4/3n4/8/6P1/PPPP1PBP/RNBQK1NR b KQkq - 1 5": "b8c6",
+                "r1b1kb1r/ppp1pppp/2nq4/3n4/8/2N3P1/PPPP1PBP/R1BQK1NR b KQkq - 3 6": "d5c3",
+                "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq - 0 1": "d7d5",
+                "rnbqkbnr/ppp1pppp/8/3p4/3P1B2/8/PPP1PPPP/RN1QKBNR b KQkq - 1 2": "g8f6",
+                "rnbqkb1r/ppp1pppp/5n2/3p4/3P1B2/4P3/PPP2PPP/RN1QKBNR b KQkq - 0 3": "c8f5",
+                "rn1qkb1r/ppp1pppp/5n2/3p1b2/3P1B2/3BP3/PPP2PPP/RN1QK1NR b KQkq - 2 4": "f5g6",
+                "rn1qkb1r/ppp1pppp/5nb1/3p4/3P1B2/3BPN2/PPP2PPP/RN1QK2R b KQkq - 4 5": "e7e6",
+                "rn1qkb1r/ppp2ppp/4pnb1/3pN3/3P1B2/3BP3/PPP2PPP/RN1QK2R b KQkq - 1 6": "f8d6",
+                "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3": "f8c5",
+                "r1bqk1nr/pppp1ppp/2n5/2b1p3/1PB1P3/5N2/P1PP1PPP/RNBQK2R b KQkq - 0 4": "c5b4",
+                "r1bqk1nr/pppp1ppp/2n5/4p3/1bB1P3/2P2N2/P2P1PPP/RNBQK2R b KQkq - 0 5": "b4a5"
+              },
+              "humanBlunderInterval": 10
+            }
+          }
+        },
+        {
+          "username": "Steinitz, William",
+          "platformRating": null,
+          "expected": {
+            "stats": {
+              "gameCount": 11,
+              "winRate": 36,
+              "drawRate": 9,
+              "lossRate": 55,
+              "style": "Chaotique",
+              "topOpenings": [
+                {
+                  "name": "Sicilian Defense",
+                  "count": 4
+                },
+                {
+                  "name": "Italian Game",
+                  "count": 4
+                },
+                {
+                  "name": "ECO C50",
+                  "count": 3
+                }
+              ],
+              "avgMoves": 60
+            },
+            "config": {
+              "name": "Bot_Steinitz, William",
+              "elo": 1781,
+              "difficulty": 1,
+              "aggressiveness": 50,
+              "threads": 2,
+              "depth": 6,
+              "timeControl": 750,
+              "favoriteOpening": "Sicilian Defense",
+              "playStyle": "tactique",
+              "openings": {
+                "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1": "e7e5",
+                "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2": "b8c6",
+                "rnbqkbnr/ppp2ppp/3p4/4p3/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 3": "c8g4",
+                "rn1qkbnr/ppp2ppp/3p4/4P3/4P1b1/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 4": "g4f3",
+                "rn1qkbnr/ppp2ppp/3p4/4P3/4P3/5Q2/PPP2PPP/RNB1KB1R b KQkq - 0 5": "d6e5",
+                "rn1qkbnr/ppp2ppp/8/4p3/2B1P3/5Q2/PPP2PPP/RNB1K2R b KQkq - 1 6": "g8f6",
+                "r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3": "g8f6",
+                "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/3PP3/5N2/PPP2PPP/RNBQK2R b KQkq - 0 4": "c6d4",
+                "r1bqkb1r/pppp1ppp/5n2/1B2p3/3NP3/8/PPP2PPP/RNBQK2R b KQkq - 0 5": "e5d4",
+                "r1bqkb1r/pppp1ppp/5n2/1B2P3/3p4/8/PPP2PPP/RNBQK2R b KQkq - 0 6": "f6e4",
+                "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1": "e2e4",
+                "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2": "g1f3",
+                "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3": "f1b5",
+                "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4": "e1g1",
+                "r1bqkb1r/pppp1ppp/2n5/1B2p3/4n3/5N2/PPPP1PPP/RNBQ1RK1 w kq - 0 5": "f1e1",
+                "r1bqkb1r/pppp1ppp/2nn4/1B2p3/8/5N2/PPPP1PPP/RNBQR1K1 w kq - 2 6": "f3e5",
+                "rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2": "d7d6",
+                "rnbqkbnr/pp2pppp/3p4/2p5/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 3": "c5d4",
+                "rnbqkbnr/pp2pppp/3p4/8/3NP3/8/PPP2PPP/RNBQKB1R b KQkq - 0 4": "g8f6",
+                "rnbqkb1r/pp2pppp/3p1n2/8/3NP3/2N5/PPP2PPP/R1BQKB1R b KQkq - 2 5": "a7a6",
+                "rnbqkbnr/pp1ppppp/8/2p5/2B1P3/8/PPPP1PPP/RNBQK1NR b KQkq - 1 2": "e7e6",
+                "rnbqkbnr/pp1p1ppp/4p3/2p5/2B1P3/2N5/PPPP1PPP/R1BQK1NR b KQkq - 1 3": "a7a6",
+                "rnbqkbnr/1p1p1ppp/p3p3/2p5/P1B1P3/2N5/1PPP1PPP/R1BQK1NR b KQkq - 0 4": "b8c6",
+                "r1bqkbnr/1p1p1ppp/p1n1p3/2p5/P1B1P3/2NP4/1PP2PPP/R1BQK1NR b KQkq - 0 5": "g8f6",
+                "r1bqkb1r/1p1p1ppp/p1n1pn2/2p5/P1B1P3/2NP4/1PPB1PPP/R2QK1NR b KQkq - 2 6": "d7d5",
+                "rnbqkbnr/pppp1ppp/4p3/8/4P3/3P4/PPP2PPP/RNBQKBNR b KQkq - 0 2": "d7d5",
+                "rnbqkbnr/ppp2ppp/4p3/3p4/4P3/3P4/PPPN1PPP/R1BQKBNR b KQkq - 1 3": "g8f6",
+                "rnbqkb1r/ppp2ppp/4pn2/3p4/4P3/3P1N2/PPPN1PPP/R1BQKB1R b KQkq - 3 4": "c7c5",
+                "rnbqkb1r/pp3ppp/4pn2/2pp4/4P3/3P1NP1/PPPN1P1P/R1BQKB1R b KQkq - 0 5": "b7b6",
+                "rnbqkb1r/p4ppp/1p2pn2/2pp4/4P3/2PP1NP1/PP1N1P1P/R1BQKB1R b KQkq - 0 6": "f8e7",
+                "rnbqkb1r/pppppppp/5n2/8/4P3/2N5/PPPP1PPP/R1BQKBNR b KQkq - 2 2": "d7d5",
+                "rnbqkb1r/ppp1pppp/5n2/3pP3/8/2N5/PPPP1PPP/R1BQKBNR b KQkq - 0 3": "f6d7",
+                "rnbqkb1r/pppnpppp/8/3pP3/3P4/2N5/PPP2PPP/R1BQKBNR b KQkq - 0 4": "c7c5",
+                "rnbqkb1r/pp1npppp/8/1BppP3/3P4/2N5/PPP2PPP/R1BQK1NR b KQkq - 1 5": "b8c6",
+                "r1bqkb1r/pp1npppp/2n5/1BppP3/3P4/2N2N2/PPP2PPP/R1BQK2R b KQkq - 3 6": "a7a6",
+                "rnbqkb1r/pp1npppp/8/2pNP3/3P4/8/PPP2PPP/R1BQKBNR b KQkq - 0 5": "c5d4",
+                "rnbqkb1r/pp1npppp/8/3NP3/3Q4/8/PPP2PPP/R1B1KBNR b KQkq - 0 6": "d7b6",
+                "rnbqkb1r/pppppppp/5n2/4P3/8/8/PPPP1PPP/RNBQKBNR b KQkq - 0 2": "f6d5",
+                "rnbqkb1r/pppppppp/8/3nP3/8/6P1/PPPP1P1P/RNBQKBNR b KQkq - 0 3": "d7d6",
+                "rnbqkb1r/ppp1pppp/3P4/3n4/8/6P1/PPPP1P1P/RNBQKBNR b KQkq - 0 4": "d8d6",
+                "rnb1kb1r/ppp1pppp/3q4/3n4/8/6P1/PPPP1PBP/RNBQK1NR b KQkq - 1 5": "b8c6",
+                "r1b1kb1r/ppp1pppp/2nq4/3n4/8/2N3P1/PPPP1PBP/R1BQK1NR b KQkq - 3 6": "d5c3",
+                "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq - 0 1": "d7d5",
+                "rnbqkbnr/ppp1pppp/8/3p4/3P1B2/8/PPP1PPPP/RN1QKBNR b KQkq - 1 2": "g8f6",
+                "rnbqkb1r/ppp1pppp/5n2/3p4/3P1B2/4P3/PPP2PPP/RN1QKBNR b KQkq - 0 3": "c8f5",
+                "rn1qkb1r/ppp1pppp/5n2/3p1b2/3P1B2/3BP3/PPP2PPP/RN1QK1NR b KQkq - 2 4": "f5g6",
+                "rn1qkb1r/ppp1pppp/5nb1/3p4/3P1B2/3BPN2/PPP2PPP/RN1QK2R b KQkq - 4 5": "e7e6",
+                "rn1qkb1r/ppp2ppp/4pnb1/3pN3/3P1B2/3BP3/PPP2PPP/RN1QK2R b KQkq - 1 6": "f8d6",
+                "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3": "f8c5",
+                "r1bqk1nr/pppp1ppp/2n5/2b1p3/1PB1P3/5N2/P1PP1PPP/RNBQK2R b KQkq - 0 4": "c5b4",
+                "r1bqk1nr/pppp1ppp/2n5/4p3/1bB1P3/2P2N2/P2P1PPP/RNBQK2R b KQkq - 0 5": "b4a5"
+              },
+              "humanBlunderInterval": 10
+            }
+          }
+        },
+        {
+          "username": "Steinitz, William",
+          "platformRating": 2150,
+          "expected": {
+            "stats": {
+              "gameCount": 11,
+              "winRate": 36,
+              "drawRate": 9,
+              "lossRate": 55,
+              "style": "Chaotique",
+              "topOpenings": [
+                {
+                  "name": "Sicilian Defense",
+                  "count": 4
+                },
+                {
+                  "name": "Italian Game",
+                  "count": 4
+                },
+                {
+                  "name": "ECO C50",
+                  "count": 3
+                }
+              ],
+              "avgMoves": 60
+            },
+            "config": {
+              "name": "Bot_Steinitz, William",
+              "elo": 2150,
+              "difficulty": 1,
+              "aggressiveness": 50,
+              "threads": 2,
+              "depth": 6,
+              "timeControl": 750,
+              "favoriteOpening": "Sicilian Defense",
+              "playStyle": "tactique",
+              "openings": {
+                "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1": "e7e5",
+                "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2": "b8c6",
+                "rnbqkbnr/ppp2ppp/3p4/4p3/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 3": "c8g4",
+                "rn1qkbnr/ppp2ppp/3p4/4P3/4P1b1/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 4": "g4f3",
+                "rn1qkbnr/ppp2ppp/3p4/4P3/4P3/5Q2/PPP2PPP/RNB1KB1R b KQkq - 0 5": "d6e5",
+                "rn1qkbnr/ppp2ppp/8/4p3/2B1P3/5Q2/PPP2PPP/RNB1K2R b KQkq - 1 6": "g8f6",
+                "r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3": "g8f6",
+                "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/3PP3/5N2/PPP2PPP/RNBQK2R b KQkq - 0 4": "c6d4",
+                "r1bqkb1r/pppp1ppp/5n2/1B2p3/3NP3/8/PPP2PPP/RNBQK2R b KQkq - 0 5": "e5d4",
+                "r1bqkb1r/pppp1ppp/5n2/1B2P3/3p4/8/PPP2PPP/RNBQK2R b KQkq - 0 6": "f6e4",
+                "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1": "e2e4",
+                "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2": "g1f3",
+                "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3": "f1b5",
+                "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4": "e1g1",
+                "r1bqkb1r/pppp1ppp/2n5/1B2p3/4n3/5N2/PPPP1PPP/RNBQ1RK1 w kq - 0 5": "f1e1",
+                "r1bqkb1r/pppp1ppp/2nn4/1B2p3/8/5N2/PPPP1PPP/RNBQR1K1 w kq - 2 6": "f3e5",
+                "rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2": "d7d6",
+                "rnbqkbnr/pp2pppp/3p4/2p5/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 3": "c5d4",
+                "rnbqkbnr/pp2pppp/3p4/8/3NP3/8/PPP2PPP/RNBQKB1R b KQkq - 0 4": "g8f6",
+                "rnbqkb1r/pp2pppp/3p1n2/8/3NP3/2N5/PPP2PPP/R1BQKB1R b KQkq - 2 5": "a7a6",
+                "rnbqkbnr/pp1ppppp/8/2p5/2B1P3/8/PPPP1PPP/RNBQK1NR b KQkq - 1 2": "e7e6",
+                "rnbqkbnr/pp1p1ppp/4p3/2p5/2B1P3/2N5/PPPP1PPP/R1BQK1NR b KQkq - 1 3": "a7a6",
+                "rnbqkbnr/1p1p1ppp/p3p3/2p5/P1B1P3/2N5/1PPP1PPP/R1BQK1NR b KQkq - 0 4": "b8c6",
+                "r1bqkbnr/1p1p1ppp/p1n1p3/2p5/P1B1P3/2NP4/1PP2PPP/R1BQK1NR b KQkq - 0 5": "g8f6",
+                "r1bqkb1r/1p1p1ppp/p1n1pn2/2p5/P1B1P3/2NP4/1PPB1PPP/R2QK1NR b KQkq - 2 6": "d7d5",
+                "rnbqkbnr/pppp1ppp/4p3/8/4P3/3P4/PPP2PPP/RNBQKBNR b KQkq - 0 2": "d7d5",
+                "rnbqkbnr/ppp2ppp/4p3/3p4/4P3/3P4/PPPN1PPP/R1BQKBNR b KQkq - 1 3": "g8f6",
+                "rnbqkb1r/ppp2ppp/4pn2/3p4/4P3/3P1N2/PPPN1PPP/R1BQKB1R b KQkq - 3 4": "c7c5",
+                "rnbqkb1r/pp3ppp/4pn2/2pp4/4P3/3P1NP1/PPPN1P1P/R1BQKB1R b KQkq - 0 5": "b7b6",
+                "rnbqkb1r/p4ppp/1p2pn2/2pp4/4P3/2PP1NP1/PP1N1P1P/R1BQKB1R b KQkq - 0 6": "f8e7",
+                "rnbqkb1r/pppppppp/5n2/8/4P3/2N5/PPPP1PPP/R1BQKBNR b KQkq - 2 2": "d7d5",
+                "rnbqkb1r/ppp1pppp/5n2/3pP3/8/2N5/PPPP1PPP/R1BQKBNR b KQkq - 0 3": "f6d7",
+                "rnbqkb1r/pppnpppp/8/3pP3/3P4/2N5/PPP2PPP/R1BQKBNR b KQkq - 0 4": "c7c5",
+                "rnbqkb1r/pp1npppp/8/1BppP3/3P4/2N5/PPP2PPP/R1BQK1NR b KQkq - 1 5": "b8c6",
+                "r1bqkb1r/pp1npppp/2n5/1BppP3/3P4/2N2N2/PPP2PPP/R1BQK2R b KQkq - 3 6": "a7a6",
+                "rnbqkb1r/pp1npppp/8/2pNP3/3P4/8/PPP2PPP/R1BQKBNR b KQkq - 0 5": "c5d4",
+                "rnbqkb1r/pp1npppp/8/3NP3/3Q4/8/PPP2PPP/R1B1KBNR b KQkq - 0 6": "d7b6",
+                "rnbqkb1r/pppppppp/5n2/4P3/8/8/PPPP1PPP/RNBQKBNR b KQkq - 0 2": "f6d5",
+                "rnbqkb1r/pppppppp/8/3nP3/8/6P1/PPPP1P1P/RNBQKBNR b KQkq - 0 3": "d7d6",
+                "rnbqkb1r/ppp1pppp/3P4/3n4/8/6P1/PPPP1P1P/RNBQKBNR b KQkq - 0 4": "d8d6",
+                "rnb1kb1r/ppp1pppp/3q4/3n4/8/6P1/PPPP1PBP/RNBQK1NR b KQkq - 1 5": "b8c6",
+                "r1b1kb1r/ppp1pppp/2nq4/3n4/8/2N3P1/PPPP1PBP/R1BQK1NR b KQkq - 3 6": "d5c3",
+                "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq - 0 1": "d7d5",
+                "rnbqkbnr/ppp1pppp/8/3p4/3P1B2/8/PPP1PPPP/RN1QKBNR b KQkq - 1 2": "g8f6",
+                "rnbqkb1r/ppp1pppp/5n2/3p4/3P1B2/4P3/PPP2PPP/RN1QKBNR b KQkq - 0 3": "c8f5",
+                "rn1qkb1r/ppp1pppp/5n2/3p1b2/3P1B2/3BP3/PPP2PPP/RN1QK1NR b KQkq - 2 4": "f5g6",
+                "rn1qkb1r/ppp1pppp/5nb1/3p4/3P1B2/3BPN2/PPP2PPP/RN1QK2R b KQkq - 4 5": "e7e6",
+                "rn1qkb1r/ppp2ppp/4pnb1/3pN3/3P1B2/3BP3/PPP2PPP/RN1QK2R b KQkq - 1 6": "f8d6",
+                "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3": "f8c5",
+                "r1bqk1nr/pppp1ppp/2n5/2b1p3/1PB1P3/5N2/P1PP1PPP/RNBQK2R b KQkq - 0 4": "c5b4",
+                "r1bqk1nr/pppp1ppp/2n5/4p3/1bB1P3/2P2N2/P2P1PPP/RNBQK2R b KQkq - 0 5": "b4a5"
+              },
+              "humanBlunderInterval": 10
+            }
+          }
+        }
+      ]
+    },
+    {
+      "games": [
+        {
+          "id": "opera-1858",
+          "pgn": "[Event \"?\"]\n[Site \"?\"]\n[Date \"????.??.??\"]\n[Round \"?\"]\n[White \"Paul Morphy\"]\n[Black \"Duke Karl / Count Isouard\"]\n[Result \"*\"]\n[WhiteElo \"1500\"]\n[BlackElo \"1400\"]\n[Opening \"Sicilian Defense\"]\n\n1. e4 e5 2. Nf3 d6 3. d4 Bg4 4. dxe5 Bxf3 5. Qxf3 dxe5 6. Bc4 Nf6 7. Qb3 Qe7 8. Nc3 c6 9. Bg5 b5 10. Nxb5 cxb5 11. Bxb5+ Nbd7 12. O-O-O Rd8 13. Rxd7 Rxd7 14. Rd1 Qe6 15. Bxd7+ Nxd7 16. Qb8+ Nxb8 17. Rd8# *",
+          "winner": null,
+          "players": {
+            "white": {
+              "user": {
+                "name": "Paul Morphy"
+              }
+            },
+            "black": {
+              "username": "Duke Karl / Count Isouard"
+            }
+          }
+        },
+        {
+          "id": "bird-anderssen-1851-london",
+          "pgn": "[Event \"?\"]\n[Site \"?\"]\n[Date \"????.??.??\"]\n[Round \"?\"]\n[White \"Bird, Henry Edward\"]\n[Black \"Anderssen, Adolf\"]\n[Result \"*\"]\n[WhiteElo \"1637\"]\n[BlackElo \"1651\"]\n[ECOUrl \"https://www.chess.com/openings/Italian-Game\"]\n\n1. e4 e5 2. Nf3 Nc6 3. Bb5 Nf6 4. d4 Nxd4 5. Nxd4 exd4 6. e5 Ne4 7. O-O Qh4 8. g3 Qh3 9. Be2 d5 10. exd6 Bxd6 11. Qxd4 Bf5 12. Nc3 O-O-O 13. Qxa7 Nxc3 14. bxc3 c6 15. Be3 Be4 16. Qa8+ Kd7 17. Qxb7+ Ke8 18. f3 Bxg3 19. Rf2 Bxf2+ 20. Bxf2 Bd5 21. c4 Be6 22. Qxc6+ Ke7 23. Bc5+ Kf6 24. Qc7 Kg6 25. Kh1 h6 26. Rg1+ Kh7 27. Rg3 Qh5 28. Bd3+ Bf5 29. Qe5 g6 30. Qf6 Rhg8 31. Qxf7+ Rg7 32. Qf6 Rdd7 33. Bd4 Rde7 34. c5 Bxd3 35. cxd3 g5 36. c6 Re1+ 37. Bg1 Rf7 38. Qd8 Rxf3 39. c7 Rxg3 40. Qd7+ Kg6 41. Qd6+ Kf7 42. Qxg3 Re8 43. Qf2+ Kg8 44. Qf5 *",
+          "winner": "white",
+          "players": {
+            "white": {
+              "username": "Bird, Henry Edward"
+            },
+            "black": {
+              "username": "Anderssen, Adolf"
+            }
+          }
+        },
+        {
+          "id": "steinitz-zukertort-1886-wch-r14",
+          "pgn": "[Event \"?\"]\n[Site \"?\"]\n[Date \"????.??.??\"]\n[Round \"?\"]\n[White \"Steinitz, William\"]\n[Black \"Zukertort, Johannes Hermann\"]\n[Result \"*\"]\n[WhiteElo \"1774\"]\n[BlackElo \"1902\"]\n[ECO \"C50\"]\n\n1. e4 e5 2. Nf3 Nc6 3. Bb5 Nf6 4. O-O Nxe4 5. Re1 Nd6 6. Nxe5 Be7 7. Bd3 O-O 8. Nc3 Nxe5 9. Rxe5 c6 10. b3 Ne8 11. Bb2 d5 12. Qf3 Bf6 13. Re2 Nc7 14. Ba3 Re8 15. Rae1 Ne6 16. Na4 Bd7 17. Nc5 Nxc5 18. Rxe8+ Bxe8 19. Bxc5 b6 20. Ba3 Bd7 21. Qg3 c5 22. c3 Be6 23. Bb2 Qd7 24. Bc2 Re8 25. h3 b5 26. d4 cxd4 27. cxd4 Rc8 28. Bd3 Bf5 29. Bxf5 Qxf5 30. Qg4 Qxg4 31. hxg4 h6 32. Re2 b4 33. g3 a5 34. Kf1 a4 35. bxa4 Ra8 36. Re1 Rxa4 37. Ra1 Kf8 38. Ke2 Ke7 39. Kd3 Ra6 40. a3 bxa3 41. Rxa3 Rxa3+ 42. Bxa3+ Kd7 43. Bf8 Ke8 44. Bd6 g6 45. Be5 Bd8 46. Bg7 h5 47. gxh5 gxh5 48. Be5 Kd7 *",
+          "winner": null,
+          "players": {
+            "white": {
+              "user": {
+                "name": "Steinitz, William"
+              }
+            },
+            "black": {
+              "username": "Zukertort, Johannes Hermann"
+            }
+          }
+        },
+        {
+          "id": "fischer-petrosian-1971",
+          "pgn": "[Event \"?\"]\n[Site \"?\"]\n[Date \"????.??.??\"]\n[Round \"?\"]\n[White \"Bobby Fischer\"]\n[Black \"Tigran Petrosian\"]\n[Result \"*\"]\n[WhiteElo \"1911\"]\n[BlackElo \"2153\"]\n[Opening \"Sicilian Defense\"]\n\n1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 a6 6. f4 *",
+          "winner": "white",
+          "players": {
+            "white": {
+              "username": "Bobby Fischer"
+            },
+            "black": {
+              "username": "Tigran Petrosian"
+            }
+          }
+        },
+        {
+          "id": "anderssen-suhle-1864",
+          "pgn": "[Event \"?\"]\n[Site \"?\"]\n[Date \"????.??.??\"]\n[Round \"?\"]\n[White \"Anderssen, Adolf\"]\n[Black \"Suhle, Berthold\"]\n[Result \"*\"]\n[WhiteElo \"2048\"]\n[BlackElo \"1404\"]\n[ECOUrl \"https://www.chess.com/openings/Italian-Game\"]\n\n1. e4 c5 2. Bc4 e6 3. Nc3 a6 4. a4 Nc6 5. d3 Nf6 6. Bd2 d5 7. Ba2 dxe4 8. dxe4 b6 9. Nf3 Bb7 10. O-O Be7 11. Re1 O-O 12. Bc4 Nd4 13. Bf4 h6 14. Be5 Rc8 15. Qd3 Nc6 16. Qf1 Nxe5 17. Nxe5 Qc7 18. f4 Ra8 19. Rad1 Rfd8 20. Rd3 Rd4 21. b3 Rad8 22. Rde3 Rd2 23. Bd3 c4 24. Nxc4 Bc5 25. Nxd2 Ng4 26. Nd1 g5 27. Kh1 Nxe3 28. Nxe3 gxf4 29. Ng4 Kg7 30. e5 h5 31. Nf6 Be3 32. Nxh5+ Kf8 33. Nxf4 *",
+          "winner": null,
+          "players": {
+            "white": {
+              "user": {
+                "name": "Anderssen, Adolf"
+              }
+            },
+            "black": {
+              "username": "Suhle, Berthold"
+            }
+          }
+        },
+        {
+          "id": "hebert-seirawan-1982-luzern",
+          "pgn": "[Event \"?\"]\n[Site \"?\"]\n[Date \"????.??.??\"]\n[Round \"?\"]\n[White \"Hebert, Jean\"]\n[Black \"Seirawan, Yasser\"]\n[Result \"*\"]\n[WhiteElo \"2185\"]\n[BlackElo \"1655\"]\n[ECO \"C50\"]\n\n1. e4 e6 2. d3 d5 3. Nd2 Nf6 4. Ngf3 c5 5. g3 b6 6. c3 Be7 7. Qa4+ Qd7 8. Qxd7+ Bxd7 9. e5 Ng8 10. a3 f5 11. h4 Nh6 12. d4 Nf7 13. Bd3 a5 14. b3 Na6 15. Nf1 h6 16. Ne3 g5 17. hxg5 hxg5 18. Rxh8+ Nxh8 19. g4 f4 20. Nc2 a4 21. bxa4 c4 22. Bh7 Kf7 23. Nb4 Ng6 24. Nxa6 Rxa6 25. Rb1 Bc6 26. a5 b5 27. a4 bxa4 28. Ra1 Kg7 29. Bxg6 Kxg6 30. Ba3 Bxa3 31. Rxa3 Rxa5 32. Nd2 Be8 33. f3 Ra7 34. Kf2 Rb7 35. Ke1 Kg7 36. Kd1 Kf8 37. Ke1 Ke7 38. Ra1 Rb3 39. Nxb3 cxb3 40. Rb1 Bg6 41. Rb2 Kd7 *",
+          "winner": "black",
+          "players": {
+            "white": {
+              "username": "Hebert, Jean"
+            },
+            "black": {
+              "username": "Seirawan, Yasser"
+            }
+          }
+        },
+        {
+          "id": "bogoljubow-alekhine-karlsbad-1923",
+          "pgn": "[Event \"?\"]\n[Site \"?\"]\n[Date \"????.??.??\"]\n[Round \"?\"]\n[White \"Bogoljubow, Efim\"]\n[Black \"Alekhine, Alexander\"]\n[Result \"*\"]\n[WhiteElo \"2322\"]\n[BlackElo \"1906\"]\n[Opening \"Sicilian Defense\"]\n\n1. e4 Nf6 2. Nc3 d5 3. e5 Nfd7 4. d4 c5 5. Bb5 Nc6 6. Nf3 a6 7. Bxc6 bxc6 8. e6 fxe6 9. O-O e5 10. dxe5 e6 11. Ng5 Qe7 12. f4 g6 13. Qg4 Nb6 14. b3 c4 15. Be3 c5 16. Bf2 h6 17. Nf3 Qf7 18. Nh4 Rg8 19. a4 cxb3 20. cxb3 Bb7 21. a5 Nd7 22. Bg3 d4 23. Na4 Bd5 24. Rab1 Rb8 25. Qd1 Rb5 26. Be1 Qe7 27. Qd3 g5 28. Ng6 Qf7 29. Nxf8 gxf4 30. Bg3 Qxf8 31. Rxf4 Qg7 32. b4 Qg6 33. Qd1 Rf8 34. Rg4 Qf5 35. Rb2 Rxb4 36. Rxb4 cxb4 37. Nb2 Bb3 38. Qe2 Qb1+ 39. Be1 Rf5 40. Re4 Bd5 41. g4 d3 42. Qd2 Nxe5 43. Rxe5 Rxe5 44. Nxd3 Re4 45. Kf2 Rd4 46. Ke3 Re4+ 47. Kf2 Rd4 48. Ke3 Rxg4 49. Bg3 Qg1+ 50. Qf2 Re4+ 51. Kd2 Qa1 52. Ne5 Rxe5 *",
+          "winner": null,
+          "players": {
+            "white": {
+              "user": {
+                "name": "Bogoljubow, Efim"
+              }
+            },
+            "black": {
+              "username": "Alekhine, Alexander"
+            }
+          }
+        },
+        {
+          "id": "donchenko-bortnyk-tt-chesscom-2024",
+          "pgn": "[Event \"?\"]\n[Site \"?\"]\n[Date \"????.??.??\"]\n[Round \"?\"]\n[White \"Donchenko, Alexander\"]\n[Black \"Bortnyk, Olexandr\"]\n[Result \"*\"]\n[WhiteElo \"1559\"]\n[BlackElo \"2157\"]\n[ECOUrl \"https://www.chess.com/openings/Italian-Game\"]\n\n1. e4 Nf6 2. Nc3 d5 3. e5 Nfd7 4. d4 c5 5. Nxd5 cxd4 6. Qxd4 Nb6 7. Bb5+ Nc6 8. c4 e6 9. Bg5 Qd7 10. O-O-O exd5 11. Qh4 a6 12. cxd5 axb5 13. e6 fxe6 14. dxc6 Qxc6+ 15. Kb1 e5 16. Nf3 Bf5+ 17. Ka1 Nc4 18. Rd8+ Rxd8 19. Bxd8 Na3 20. Nxe5 Nc2+ 21. Kb1 Ne1+ 22. Ka1 Qc1# *",
+          "winner": "black",
+          "players": {
+            "white": {
+              "username": "Donchenko, Alexander"
+            },
+            "black": {
+              "username": "Bortnyk, Olexandr"
+            }
+          }
+        },
+        {
+          "id": "dovliatov-mamedyarov-baku-2006",
+          "pgn": "[Event \"?\"]\n[Site \"?\"]\n[Date \"????.??.??\"]\n[Round \"?\"]\n[White \"Dovliatov, Sanan\"]\n[Black \"Mamedyarov, Shakhriyar\"]\n[Result \"*\"]\n[WhiteElo \"1696\"]\n[BlackElo \"1408\"]\n[ECO \"C50\"]\n\n1. e4 Nf6 2. e5 Nd5 3. g3 d6 4. exd6 Qxd6 5. Bg2 Nc6 6. Nc3 Nxc3 7. bxc3 g6 8. Nf3 Bg7 9. O-O O-O 10. d4 e5 11. dxe5 Qc5 12. Rb1 Qxc3 13. Bf4 Rd8 14. Qc1 b6 15. Re1 Be6 16. Bh6 Bxa2 17. Bxg7 Kxg7 18. Ra1 Bd5 19. Qg5 Bxf3 20. Qf6+ Kg8 21. Bxf3 Nd4 22. Bxa8 Rxa8 23. Red1 a5 24. Ra4 c5 25. Qxb6 Qxc2 26. Rda1 Re8 27. h4 Nf3+ 28. Kg2 Nxe5 29. R1a2 Qd3 30. Qb7 Nc4 31. Qc6 Re1 32. Rxc4 Qxc4 33. Rb2 Kg7 34. Kh2 a4 35. Qf3 Qe4 *",
+          "winner": null,
+          "players": {
+            "white": {
+              "user": {
+                "name": "Dovliatov, Sanan"
+              }
+            },
+            "black": {
+              "username": "Mamedyarov, Shakhriyar"
+            }
+          }
+        },
+        {
+          "id": "maroczy-spielmann-prague-1908",
+          "pgn": "[Event \"?\"]\n[Site \"?\"]\n[Date \"????.??.??\"]\n[Round \"?\"]\n[White \"Maroczy, Geza\"]\n[Black \"Spielmann, Rudolf\"]\n[Result \"*\"]\n[WhiteElo \"1833\"]\n[BlackElo \"1659\"]\n[Opening \"Sicilian Defense\"]\n\n1. d4 d5 2. Bf4 Nf6 3. e3 Bf5 4. Bd3 Bg6 5. Nf3 e6 6. Ne5 Bd6 7. Nd2 c6 8. h3 Qc7 9. Ndf3 Nbd7 10. Bh2 Be4 11. Nxd7 Nxd7 12. Bxd6 Qxd6 13. Bxe4 dxe4 14. Nd2 f5 15. c3 e5 16. Qb3 exd4 17. cxd4 O-O-O 18. O-O Rde8 19. Rac1 Kb8 20. Rc3 g5 21. Rfc1 Ka8 22. Nc4 Qb8 23. Na5 Nf6 24. Qa4 Qc7 25. Rc5 Qd7 26. Nc4 Kb8 27. Ne5 Rxe5 28. Rxe5 Nd5 29. Rc5 Qf7 30. Qb3 Rc8 31. a4 h5 32. Rcxd5 cxd5 33. Qxd5 *",
+          "winner": "white",
+          "players": {
+            "white": {
+              "username": "Maroczy, Geza"
+            },
+            "black": {
+              "username": "Spielmann, Rudolf"
+            }
+          }
+        },
+        {
+          "id": "evans-walker-1850",
+          "pgn": "[Event \"?\"]\n[Site \"?\"]\n[Date \"????.??.??\"]\n[Round \"?\"]\n[White \"Captain Evans\"]\n[Black \"William Walker\"]\n[Result \"*\"]\n[WhiteElo \"1970\"]\n[BlackElo \"1910\"]\n[ECOUrl \"https://www.chess.com/openings/Italian-Game\"]\n\n1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. b4 Bxb4 5. c3 Ba5 6. d4 *",
+          "winner": null,
+          "players": {
+            "white": {
+              "user": {
+                "name": "Captain Evans"
+              }
+            },
+            "black": {
+              "username": "William Walker"
+            }
+          }
+        }
+      ],
+      "cases": [
+        {
+          "username": "Paul Morphy",
+          "platformRating": null,
+          "expected": {
+            "stats": {
+              "gameCount": 11,
+              "winRate": 18,
+              "drawRate": 55,
+              "lossRate": 27,
+              "style": "Solide",
+              "topOpenings": [
+                {
+                  "name": "Sicilian Defense",
+                  "count": 4
+                },
+                {
+                  "name": "Italian Game",
+                  "count": 4
+                },
+                {
+                  "name": "ECO C50",
+                  "count": 3
+                }
+              ],
+              "avgMoves": 60
+            },
+            "config": {
+              "name": "Bot_Paul Morphy",
+              "elo": 1738,
+              "difficulty": 1,
+              "aggressiveness": 20,
+              "threads": 2,
+              "depth": 6,
+              "timeControl": 750,
+              "favoriteOpening": "Sicilian Defense",
+              "playStyle": "solide",
+              "openings": {
+                "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1": "e2e4",
+                "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2": "g1f3",
+                "rnbqkbnr/ppp2ppp/3p4/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 0 3": "d2d4",
+                "rn1qkbnr/ppp2ppp/3p4/4p3/3PP1b1/5N2/PPP2PPP/RNBQKB1R w KQkq - 1 4": "d4e5",
+                "rn1qkbnr/ppp2ppp/3p4/4P3/4P3/5b2/PPP2PPP/RNBQKB1R w KQkq - 0 5": "d1f3",
+                "rn1qkbnr/ppp2ppp/8/4p3/4P3/5Q2/PPP2PPP/RNB1KB1R w KQkq - 0 6": "f1c4",
+                "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1": "e7e5",
+                "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2": "b8c6",
+                "r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3": "g8f6",
+                "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/3PP3/5N2/PPP2PPP/RNBQK2R b KQkq - 0 4": "c6d4",
+                "r1bqkb1r/pppp1ppp/5n2/1B2p3/3NP3/8/PPP2PPP/RNBQK2R b KQkq - 0 5": "e5d4",
+                "r1bqkb1r/pppp1ppp/5n2/1B2P3/3p4/8/PPP2PPP/RNBQK2R b KQkq - 0 6": "f6e4",
+                "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQ1RK1 b kq - 5 4": "f6e4",
+                "r1bqkb1r/pppp1ppp/2n5/1B2p3/4n3/5N2/PPPP1PPP/RNBQR1K1 b kq - 1 5": "e4d6",
+                "r1bqkb1r/pppp1ppp/2nn4/1B2N3/8/8/PPPP1PPP/RNBQR1K1 b kq - 0 6": "f8e7",
+                "rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2": "d7d6",
+                "rnbqkbnr/pp2pppp/3p4/2p5/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 3": "c5d4",
+                "rnbqkbnr/pp2pppp/3p4/8/3NP3/8/PPP2PPP/RNBQKB1R b KQkq - 0 4": "g8f6",
+                "rnbqkb1r/pp2pppp/3p1n2/8/3NP3/2N5/PPP2PPP/R1BQKB1R b KQkq - 2 5": "a7a6",
+                "rnbqkbnr/pp1ppppp/8/2p5/2B1P3/8/PPPP1PPP/RNBQK1NR b KQkq - 1 2": "e7e6",
+                "rnbqkbnr/pp1p1ppp/4p3/2p5/2B1P3/2N5/PPPP1PPP/R1BQK1NR b KQkq - 1 3": "a7a6",
+                "rnbqkbnr/1p1p1ppp/p3p3/2p5/P1B1P3/2N5/1PPP1PPP/R1BQK1NR b KQkq - 0 4": "b8c6",
+                "r1bqkbnr/1p1p1ppp/p1n1p3/2p5/P1B1P3/2NP4/1PP2PPP/R1BQK1NR b KQkq - 0 5": "g8f6",
+                "r1bqkb1r/1p1p1ppp/p1n1pn2/2p5/P1B1P3/2NP4/1PPB1PPP/R2QK1NR b KQkq - 2 6": "d7d5",
+                "rnbqkbnr/pppp1ppp/4p3/8/4P3/3P4/PPP2PPP/RNBQKBNR b KQkq - 0 2": "d7d5",
+                "rnbqkbnr/ppp2ppp/4p3/3p4/4P3/3P4/PPPN1PPP/R1BQKBNR b KQkq - 1 3": "g8f6",
+                "rnbqkb1r/ppp2ppp/4pn2/3p4/4P3/3P1N2/PPPN1PPP/R1BQKB1R b KQkq - 3 4": "c7c5",
+                "rnbqkb1r/pp3ppp/4pn2/2pp4/4P3/3P1NP1/PPPN1P1P/R1BQKB1R b KQkq - 0 5": "b7b6",
+                "rnbqkb1r/p4ppp/1p2pn2/2pp4/4P3/2PP1NP1/PP1N1P1P/R1BQKB1R b KQkq - 0 6": "f8e7",
+                "rnbqkb1r/pppppppp/5n2/8/4P3/2N5/PPPP1PPP/R1BQKBNR b KQkq - 2 2": "d7d5",
+                "rnbqkb1r/ppp1pppp/5n2/3pP3/8/2N5/PPPP1PPP/R1BQKBNR b KQkq - 0 3": "f6d7",
+                "rnbqkb1r/pppnpppp/8/3pP3/3P4/2N5/PPP2PPP/R1BQKBNR b KQkq - 0 4": "c7c5",
+                "rnbqkb1r/pp1npppp/8/1BppP3/3P4/2N5/PPP2PPP/R1BQK1NR b KQkq - 1 5": "b8c6",
+                "r1bqkb1r/pp1npppp/2n5/1BppP3/3P4/2N2N2/PPP2PPP/R1BQK2R b KQkq - 3 6": "a7a6",
+                "rnbqkb1r/pp1npppp/8/2pNP3/3P4/8/PPP2PPP/R1BQKBNR b KQkq - 0 5": "c5d4",
+                "rnbqkb1r/pp1npppp/8/3NP3/3Q4/8/PPP2PPP/R1B1KBNR b KQkq - 0 6": "d7b6",
+                "rnbqkb1r/pppppppp/5n2/4P3/8/8/PPPP1PPP/RNBQKBNR b KQkq - 0 2": "f6d5",
+                "rnbqkb1r/pppppppp/8/3nP3/8/6P1/PPPP1P1P/RNBQKBNR b KQkq - 0 3": "d7d6",
+                "rnbqkb1r/ppp1pppp/3P4/3n4/8/6P1/PPPP1P1P/RNBQKBNR b KQkq - 0 4": "d8d6",
+                "rnb1kb1r/ppp1pppp/3q4/3n4/8/6P1/PPPP1PBP/RNBQK1NR b KQkq - 1 5": "b8c6",
+                "r1b1kb1r/ppp1pppp/2nq4/3n4/8/2N3P1/PPPP1PBP/R1BQK1NR b KQkq - 3 6": "d5c3",
+                "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq - 0 1": "d7d5",
+                "rnbqkbnr/ppp1pppp/8/3p4/3P1B2/8/PPP1PPPP/RN1QKBNR b KQkq - 1 2": "g8f6",
+                "rnbqkb1r/ppp1pppp/5n2/3p4/3P1B2/4P3/PPP2PPP/RN1QKBNR b KQkq - 0 3": "c8f5",
+                "rn1qkb1r/ppp1pppp/5n2/3p1b2/3P1B2/3BP3/PPP2PPP/RN1QK1NR b KQkq - 2 4": "f5g6",
+                "rn1qkb1r/ppp1pppp/5nb1/3p4/3P1B2/3BPN2/PPP2PPP/RN1QK2R b KQkq - 4 5": "e7e6",
+                "rn1qkb1r/ppp2ppp/4pnb1/3pN3/3P1B2/3BP3/PPP2PPP/RN1QK2R b KQkq - 1 6": "f8d6",
+                "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3": "f8c5",
+                "r1bqk1nr/pppp1ppp/2n5/2b1p3/1PB1P3/5N2/P1PP1PPP/RNBQK2R b KQkq - 0 4": "c5b4",
+                "r1bqk1nr/pppp1ppp/2n5/4p3/1bB1P3/2P2N2/P2P1PPP/RNBQK2R b KQkq - 0 5": "b4a5"
+              },
+              "humanBlunderInterval": 10
+            }
+          }
+        },
+        {
+          "username": "Paul Morphy",
+          "platformRating": 2150,
+          "expected": {
+            "stats": {
+              "gameCount": 11,
+              "winRate": 18,
+              "drawRate": 55,
+              "lossRate": 27,
+              "style": "Solide",
+              "topOpenings": [
+                {
+                  "name": "Sicilian Defense",
+                  "count": 4
+                },
+                {
+                  "name": "Italian Game",
+                  "count": 4
+                },
+                {
+                  "name": "ECO C50",
+                  "count": 3
+                }
+              ],
+              "avgMoves": 60
+            },
+            "config": {
+              "name": "Bot_Paul Morphy",
+              "elo": 2150,
+              "difficulty": 1,
+              "aggressiveness": 20,
+              "threads": 2,
+              "depth": 6,
+              "timeControl": 750,
+              "favoriteOpening": "Sicilian Defense",
+              "playStyle": "solide",
+              "openings": {
+                "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1": "e2e4",
+                "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2": "g1f3",
+                "rnbqkbnr/ppp2ppp/3p4/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 0 3": "d2d4",
+                "rn1qkbnr/ppp2ppp/3p4/4p3/3PP1b1/5N2/PPP2PPP/RNBQKB1R w KQkq - 1 4": "d4e5",
+                "rn1qkbnr/ppp2ppp/3p4/4P3/4P3/5b2/PPP2PPP/RNBQKB1R w KQkq - 0 5": "d1f3",
+                "rn1qkbnr/ppp2ppp/8/4p3/4P3/5Q2/PPP2PPP/RNB1KB1R w KQkq - 0 6": "f1c4",
+                "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1": "e7e5",
+                "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2": "b8c6",
+                "r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3": "g8f6",
+                "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/3PP3/5N2/PPP2PPP/RNBQK2R b KQkq - 0 4": "c6d4",
+                "r1bqkb1r/pppp1ppp/5n2/1B2p3/3NP3/8/PPP2PPP/RNBQK2R b KQkq - 0 5": "e5d4",
+                "r1bqkb1r/pppp1ppp/5n2/1B2P3/3p4/8/PPP2PPP/RNBQK2R b KQkq - 0 6": "f6e4",
+                "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQ1RK1 b kq - 5 4": "f6e4",
+                "r1bqkb1r/pppp1ppp/2n5/1B2p3/4n3/5N2/PPPP1PPP/RNBQR1K1 b kq - 1 5": "e4d6",
+                "r1bqkb1r/pppp1ppp/2nn4/1B2N3/8/8/PPPP1PPP/RNBQR1K1 b kq - 0 6": "f8e7",
+                "rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2": "d7d6",
+                "rnbqkbnr/pp2pppp/3p4/2p5/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 3": "c5d4",
+                "rnbqkbnr/pp2pppp/3p4/8/3NP3/8/PPP2PPP/RNBQKB1R b KQkq - 0 4": "g8f6",
+                "rnbqkb1r/pp2pppp/3p1n2/8/3NP3/2N5/PPP2PPP/R1BQKB1R b KQkq - 2 5": "a7a6",
+                "rnbqkbnr/pp1ppppp/8/2p5/2B1P3/8/PPPP1PPP/RNBQK1NR b KQkq - 1 2": "e7e6",
+                "rnbqkbnr/pp1p1ppp/4p3/2p5/2B1P3/2N5/PPPP1PPP/R1BQK1NR b KQkq - 1 3": "a7a6",
+                "rnbqkbnr/1p1p1ppp/p3p3/2p5/P1B1P3/2N5/1PPP1PPP/R1BQK1NR b KQkq - 0 4": "b8c6",
+                "r1bqkbnr/1p1p1ppp/p1n1p3/2p5/P1B1P3/2NP4/1PP2PPP/R1BQK1NR b KQkq - 0 5": "g8f6",
+                "r1bqkb1r/1p1p1ppp/p1n1pn2/2p5/P1B1P3/2NP4/1PPB1PPP/R2QK1NR b KQkq - 2 6": "d7d5",
+                "rnbqkbnr/pppp1ppp/4p3/8/4P3/3P4/PPP2PPP/RNBQKBNR b KQkq - 0 2": "d7d5",
+                "rnbqkbnr/ppp2ppp/4p3/3p4/4P3/3P4/PPPN1PPP/R1BQKBNR b KQkq - 1 3": "g8f6",
+                "rnbqkb1r/ppp2ppp/4pn2/3p4/4P3/3P1N2/PPPN1PPP/R1BQKB1R b KQkq - 3 4": "c7c5",
+                "rnbqkb1r/pp3ppp/4pn2/2pp4/4P3/3P1NP1/PPPN1P1P/R1BQKB1R b KQkq - 0 5": "b7b6",
+                "rnbqkb1r/p4ppp/1p2pn2/2pp4/4P3/2PP1NP1/PP1N1P1P/R1BQKB1R b KQkq - 0 6": "f8e7",
+                "rnbqkb1r/pppppppp/5n2/8/4P3/2N5/PPPP1PPP/R1BQKBNR b KQkq - 2 2": "d7d5",
+                "rnbqkb1r/ppp1pppp/5n2/3pP3/8/2N5/PPPP1PPP/R1BQKBNR b KQkq - 0 3": "f6d7",
+                "rnbqkb1r/pppnpppp/8/3pP3/3P4/2N5/PPP2PPP/R1BQKBNR b KQkq - 0 4": "c7c5",
+                "rnbqkb1r/pp1npppp/8/1BppP3/3P4/2N5/PPP2PPP/R1BQK1NR b KQkq - 1 5": "b8c6",
+                "r1bqkb1r/pp1npppp/2n5/1BppP3/3P4/2N2N2/PPP2PPP/R1BQK2R b KQkq - 3 6": "a7a6",
+                "rnbqkb1r/pp1npppp/8/2pNP3/3P4/8/PPP2PPP/R1BQKBNR b KQkq - 0 5": "c5d4",
+                "rnbqkb1r/pp1npppp/8/3NP3/3Q4/8/PPP2PPP/R1B1KBNR b KQkq - 0 6": "d7b6",
+                "rnbqkb1r/pppppppp/5n2/4P3/8/8/PPPP1PPP/RNBQKBNR b KQkq - 0 2": "f6d5",
+                "rnbqkb1r/pppppppp/8/3nP3/8/6P1/PPPP1P1P/RNBQKBNR b KQkq - 0 3": "d7d6",
+                "rnbqkb1r/ppp1pppp/3P4/3n4/8/6P1/PPPP1P1P/RNBQKBNR b KQkq - 0 4": "d8d6",
+                "rnb1kb1r/ppp1pppp/3q4/3n4/8/6P1/PPPP1PBP/RNBQK1NR b KQkq - 1 5": "b8c6",
+                "r1b1kb1r/ppp1pppp/2nq4/3n4/8/2N3P1/PPPP1PBP/R1BQK1NR b KQkq - 3 6": "d5c3",
+                "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq - 0 1": "d7d5",
+                "rnbqkbnr/ppp1pppp/8/3p4/3P1B2/8/PPP1PPPP/RN1QKBNR b KQkq - 1 2": "g8f6",
+                "rnbqkb1r/ppp1pppp/5n2/3p4/3P1B2/4P3/PPP2PPP/RN1QKBNR b KQkq - 0 3": "c8f5",
+                "rn1qkb1r/ppp1pppp/5n2/3p1b2/3P1B2/3BP3/PPP2PPP/RN1QK1NR b KQkq - 2 4": "f5g6",
+                "rn1qkb1r/ppp1pppp/5nb1/3p4/3P1B2/3BPN2/PPP2PPP/RN1QK2R b KQkq - 4 5": "e7e6",
+                "rn1qkb1r/ppp2ppp/4pnb1/3pN3/3P1B2/3BP3/PPP2PPP/RN1QK2R b KQkq - 1 6": "f8d6",
+                "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3": "f8c5",
+                "r1bqk1nr/pppp1ppp/2n5/2b1p3/1PB1P3/5N2/P1PP1PPP/RNBQK2R b KQkq - 0 4": "c5b4",
+                "r1bqk1nr/pppp1ppp/2n5/4p3/1bB1P3/2P2N2/P2P1PPP/RNBQK2R b KQkq - 0 5": "b4a5"
+              },
+              "humanBlunderInterval": 10
+            }
+          }
+        },
+        {
+          "username": "Bird, Henry Edward",
+          "platformRating": null,
+          "expected": {
+            "stats": {
+              "gameCount": 11,
+              "winRate": 27,
+              "drawRate": 55,
+              "lossRate": 18,
+              "style": "Solide",
+              "topOpenings": [
+                {
+                  "name": "Sicilian Defense",
+                  "count": 4
+                },
+                {
+                  "name": "Italian Game",
+                  "count": 4
+                },
+                {
+                  "name": "ECO C50",
+                  "count": 3
+                }
+              ],
+              "avgMoves": 60
+            },
+            "config": {
+              "name": "Bot_Bird, Henry Edward",
+              "elo": 1756,
+              "difficulty": 1,
+              "aggressiveness": 20,
+              "threads": 2,
+              "depth": 6,
+              "timeControl": 750,
+              "favoriteOpening": "Sicilian Defense",
+              "playStyle": "solide",
+              "openings": {
+                "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1": "e7e5",
+                "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2": "b8c6",
+                "rnbqkbnr/ppp2ppp/3p4/4p3/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 3": "c8g4",
+                "rn1qkbnr/ppp2ppp/3p4/4P3/4P1b1/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 4": "g4f3",
+                "rn1qkbnr/ppp2ppp/3p4/4P3/4P3/5Q2/PPP2PPP/RNB1KB1R b KQkq - 0 5": "d6e5",
+                "rn1qkbnr/ppp2ppp/8/4p3/2B1P3/5Q2/PPP2PPP/RNB1K2R b KQkq - 1 6": "g8f6",
+                "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1": "e2e4",
+                "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2": "g1f3",
+                "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3": "f1b5",
+                "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4": "d2d4",
+                "r1bqkb1r/pppp1ppp/5n2/1B2p3/3nP3/5N2/PPP2PPP/RNBQK2R w KQkq - 0 5": "f3d4",
+                "r1bqkb1r/pppp1ppp/5n2/1B6/3pP3/8/PPP2PPP/RNBQK2R w KQkq - 0 6": "e4e5",
+                "r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3": "g8f6",
+                "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQ1RK1 b kq - 5 4": "f6e4",
+                "r1bqkb1r/pppp1ppp/2n5/1B2p3/4n3/5N2/PPPP1PPP/RNBQR1K1 b kq - 1 5": "e4d6",
+                "r1bqkb1r/pppp1ppp/2nn4/1B2N3/8/8/PPPP1PPP/RNBQR1K1 b kq - 0 6": "f8e7",
+                "rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2": "d7d6",
+                "rnbqkbnr/pp2pppp/3p4/2p5/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 3": "c5d4",
+                "rnbqkbnr/pp2pppp/3p4/8/3NP3/8/PPP2PPP/RNBQKB1R b KQkq - 0 4": "g8f6",
+                "rnbqkb1r/pp2pppp/3p1n2/8/3NP3/2N5/PPP2PPP/R1BQKB1R b KQkq - 2 5": "a7a6",
+                "rnbqkbnr/pp1ppppp/8/2p5/2B1P3/8/PPPP1PPP/RNBQK1NR b KQkq - 1 2": "e7e6",
+                "rnbqkbnr/pp1p1ppp/4p3/2p5/2B1P3/2N5/PPPP1PPP/R1BQK1NR b KQkq - 1 3": "a7a6",
+                "rnbqkbnr/1p1p1ppp/p3p3/2p5/P1B1P3/2N5/1PPP1PPP/R1BQK1NR b KQkq - 0 4": "b8c6",
+                "r1bqkbnr/1p1p1ppp/p1n1p3/2p5/P1B1P3/2NP4/1PP2PPP/R1BQK1NR b KQkq - 0 5": "g8f6",
+                "r1bqkb1r/1p1p1ppp/p1n1pn2/2p5/P1B1P3/2NP4/1PPB1PPP/R2QK1NR b KQkq - 2 6": "d7d5",
+                "rnbqkbnr/pppp1ppp/4p3/8/4P3/3P4/PPP2PPP/RNBQKBNR b KQkq - 0 2": "d7d5",
+                "rnbqkbnr/ppp2ppp/4p3/3p4/4P3/3P4/PPPN1PPP/R1BQKBNR b KQkq - 1 3": "g8f6",
+                "rnbqkb1r/ppp2ppp/4pn2/3p4/4P3/3P1N2/PPPN1PPP/R1BQKB1R b KQkq - 3 4": "c7c5",
+                "rnbqkb1r/pp3ppp/4pn2/2pp4/4P3/3P1NP1/PPPN1P1P/R1BQKB1R b KQkq - 0 5": "b7b6",
+                "rnbqkb1r/p4ppp/1p2pn2/2pp4/4P3/2PP1NP1/PP1N1P1P/R1BQKB1R b KQkq - 0 6": "f8e7",
+                "rnbqkb1r/pppppppp/5n2/8/4P3/2N5/PPPP1PPP/R1BQKBNR b KQkq - 2 2": "d7d5",
+                "rnbqkb1r/ppp1pppp/5n2/3pP3/8/2N5/PPPP1PPP/R1BQKBNR b KQkq - 0 3": "f6d7",
+                "rnbqkb1r/pppnpppp/8/3pP3/3P4/2N5/PPP2PPP/R1BQKBNR b KQkq - 0 4": "c7c5",
+                "rnbqkb1r/pp1npppp/8/1BppP3/3P4/2N5/PPP2PPP/R1BQK1NR b KQkq - 1 5": "b8c6",
+                "r1bqkb1r/pp1npppp/2n5/1BppP3/3P4/2N2N2/PPP2PPP/R1BQK2R b KQkq - 3 6": "a7a6",
+                "rnbqkb1r/pp1npppp/8/2pNP3/3P4/8/PPP2PPP/R1BQKBNR b KQkq - 0 5": "c5d4",
+                "rnbqkb1r/pp1npppp/8/3NP3/3Q4/8/PPP2PPP/R1B1KBNR b KQkq - 0 6": "d7b6",
+                "rnbqkb1r/pppppppp/5n2/4P3/8/8/PPPP1PPP/RNBQKBNR b KQkq - 0 2": "f6d5",
+                "rnbqkb1r/pppppppp/8/3nP3/8/6P1/PPPP1P1P/RNBQKBNR b KQkq - 0 3": "d7d6",
+                "rnbqkb1r/ppp1pppp/3P4/3n4/8/6P1/PPPP1P1P/RNBQKBNR b KQkq - 0 4": "d8d6",
+                "rnb1kb1r/ppp1pppp/3q4/3n4/8/6P1/PPPP1PBP/RNBQK1NR b KQkq - 1 5": "b8c6",
+                "r1b1kb1r/ppp1pppp/2nq4/3n4/8/2N3P1/PPPP1PBP/R1BQK1NR b KQkq - 3 6": "d5c3",
+                "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq - 0 1": "d7d5",
+                "rnbqkbnr/ppp1pppp/8/3p4/3P1B2/8/PPP1PPPP/RN1QKBNR b KQkq - 1 2": "g8f6",
+                "rnbqkb1r/ppp1pppp/5n2/3p4/3P1B2/4P3/PPP2PPP/RN1QKBNR b KQkq - 0 3": "c8f5",
+                "rn1qkb1r/ppp1pppp/5n2/3p1b2/3P1B2/3BP3/PPP2PPP/RN1QK1NR b KQkq - 2 4": "f5g6",
+                "rn1qkb1r/ppp1pppp/5nb1/3p4/3P1B2/3BPN2/PPP2PPP/RN1QK2R b KQkq - 4 5": "e7e6",
+                "rn1qkb1r/ppp2ppp/4pnb1/3pN3/3P1B2/3BP3/PPP2PPP/RN1QK2R b KQkq - 1 6": "f8d6",
+                "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3": "f8c5",
+                "r1bqk1nr/pppp1ppp/2n5/2b1p3/1PB1P3/5N2/P1PP1PPP/RNBQK2R b KQkq - 0 4": "c5b4",
+                "r1bqk1nr/pppp1ppp/2n5/4p3/1bB1P3/2P2N2/P2P1PPP/RNBQK2R b KQkq - 0 5": "b4a5"
+              },
+              "humanBlunderInterval": 10
+            }
+          }
+        },
+        {
+          "username": "Bird, Henry Edward",
+          "platformRating": 2150,
+          "expected": {
+            "stats": {
+              "gameCount": 11,
+              "winRate": 27,
+              "drawRate": 55,
+              "lossRate": 18,
+              "style": "Solide",
+              "topOpenings": [
+                {
+                  "name": "Sicilian Defense",
+                  "count": 4
+                },
+                {
+                  "name": "Italian Game",
+                  "count": 4
+                },
+                {
+                  "name": "ECO C50",
+                  "count": 3
+                }
+              ],
+              "avgMoves": 60
+            },
+            "config": {
+              "name": "Bot_Bird, Henry Edward",
+              "elo": 2150,
+              "difficulty": 1,
+              "aggressiveness": 20,
+              "threads": 2,
+              "depth": 6,
+              "timeControl": 750,
+              "favoriteOpening": "Sicilian Defense",
+              "playStyle": "solide",
+              "openings": {
+                "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1": "e7e5",
+                "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2": "b8c6",
+                "rnbqkbnr/ppp2ppp/3p4/4p3/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 3": "c8g4",
+                "rn1qkbnr/ppp2ppp/3p4/4P3/4P1b1/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 4": "g4f3",
+                "rn1qkbnr/ppp2ppp/3p4/4P3/4P3/5Q2/PPP2PPP/RNB1KB1R b KQkq - 0 5": "d6e5",
+                "rn1qkbnr/ppp2ppp/8/4p3/2B1P3/5Q2/PPP2PPP/RNB1K2R b KQkq - 1 6": "g8f6",
+                "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1": "e2e4",
+                "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2": "g1f3",
+                "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3": "f1b5",
+                "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4": "d2d4",
+                "r1bqkb1r/pppp1ppp/5n2/1B2p3/3nP3/5N2/PPP2PPP/RNBQK2R w KQkq - 0 5": "f3d4",
+                "r1bqkb1r/pppp1ppp/5n2/1B6/3pP3/8/PPP2PPP/RNBQK2R w KQkq - 0 6": "e4e5",
+                "r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3": "g8f6",
+                "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQ1RK1 b kq - 5 4": "f6e4",
+                "r1bqkb1r/pppp1ppp/2n5/1B2p3/4n3/5N2/PPPP1PPP/RNBQR1K1 b kq - 1 5": "e4d6",
+                "r1bqkb1r/pppp1ppp/2nn4/1B2N3/8/8/PPPP1PPP/RNBQR1K1 b kq - 0 6": "f8e7",
+                "rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2": "d7d6",
+                "rnbqkbnr/pp2pppp/3p4/2p5/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 3": "c5d4",
+                "rnbqkbnr/pp2pppp/3p4/8/3NP3/8/PPP2PPP/RNBQKB1R b KQkq - 0 4": "g8f6",
+                "rnbqkb1r/pp2pppp/3p1n2/8/3NP3/2N5/PPP2PPP/R1BQKB1R b KQkq - 2 5": "a7a6",
+                "rnbqkbnr/pp1ppppp/8/2p5/2B1P3/8/PPPP1PPP/RNBQK1NR b KQkq - 1 2": "e7e6",
+                "rnbqkbnr/pp1p1ppp/4p3/2p5/2B1P3/2N5/PPPP1PPP/R1BQK1NR b KQkq - 1 3": "a7a6",
+                "rnbqkbnr/1p1p1ppp/p3p3/2p5/P1B1P3/2N5/1PPP1PPP/R1BQK1NR b KQkq - 0 4": "b8c6",
+                "r1bqkbnr/1p1p1ppp/p1n1p3/2p5/P1B1P3/2NP4/1PP2PPP/R1BQK1NR b KQkq - 0 5": "g8f6",
+                "r1bqkb1r/1p1p1ppp/p1n1pn2/2p5/P1B1P3/2NP4/1PPB1PPP/R2QK1NR b KQkq - 2 6": "d7d5",
+                "rnbqkbnr/pppp1ppp/4p3/8/4P3/3P4/PPP2PPP/RNBQKBNR b KQkq - 0 2": "d7d5",
+                "rnbqkbnr/ppp2ppp/4p3/3p4/4P3/3P4/PPPN1PPP/R1BQKBNR b KQkq - 1 3": "g8f6",
+                "rnbqkb1r/ppp2ppp/4pn2/3p4/4P3/3P1N2/PPPN1PPP/R1BQKB1R b KQkq - 3 4": "c7c5",
+                "rnbqkb1r/pp3ppp/4pn2/2pp4/4P3/3P1NP1/PPPN1P1P/R1BQKB1R b KQkq - 0 5": "b7b6",
+                "rnbqkb1r/p4ppp/1p2pn2/2pp4/4P3/2PP1NP1/PP1N1P1P/R1BQKB1R b KQkq - 0 6": "f8e7",
+                "rnbqkb1r/pppppppp/5n2/8/4P3/2N5/PPPP1PPP/R1BQKBNR b KQkq - 2 2": "d7d5",
+                "rnbqkb1r/ppp1pppp/5n2/3pP3/8/2N5/PPPP1PPP/R1BQKBNR b KQkq - 0 3": "f6d7",
+                "rnbqkb1r/pppnpppp/8/3pP3/3P4/2N5/PPP2PPP/R1BQKBNR b KQkq - 0 4": "c7c5",
+                "rnbqkb1r/pp1npppp/8/1BppP3/3P4/2N5/PPP2PPP/R1BQK1NR b KQkq - 1 5": "b8c6",
+                "r1bqkb1r/pp1npppp/2n5/1BppP3/3P4/2N2N2/PPP2PPP/R1BQK2R b KQkq - 3 6": "a7a6",
+                "rnbqkb1r/pp1npppp/8/2pNP3/3P4/8/PPP2PPP/R1BQKBNR b KQkq - 0 5": "c5d4",
+                "rnbqkb1r/pp1npppp/8/3NP3/3Q4/8/PPP2PPP/R1B1KBNR b KQkq - 0 6": "d7b6",
+                "rnbqkb1r/pppppppp/5n2/4P3/8/8/PPPP1PPP/RNBQKBNR b KQkq - 0 2": "f6d5",
+                "rnbqkb1r/pppppppp/8/3nP3/8/6P1/PPPP1P1P/RNBQKBNR b KQkq - 0 3": "d7d6",
+                "rnbqkb1r/ppp1pppp/3P4/3n4/8/6P1/PPPP1P1P/RNBQKBNR b KQkq - 0 4": "d8d6",
+                "rnb1kb1r/ppp1pppp/3q4/3n4/8/6P1/PPPP1PBP/RNBQK1NR b KQkq - 1 5": "b8c6",
+                "r1b1kb1r/ppp1pppp/2nq4/3n4/8/2N3P1/PPPP1PBP/R1BQK1NR b KQkq - 3 6": "d5c3",
+                "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq - 0 1": "d7d5",
+                "rnbqkbnr/ppp1pppp/8/3p4/3P1B2/8/PPP1PPPP/RN1QKBNR b KQkq - 1 2": "g8f6",
+                "rnbqkb1r/ppp1pppp/5n2/3p4/3P1B2/4P3/PPP2PPP/RN1QKBNR b KQkq - 0 3": "c8f5",
+                "rn1qkb1r/ppp1pppp/5n2/3p1b2/3P1B2/3BP3/PPP2PPP/RN1QK1NR b KQkq - 2 4": "f5g6",
+                "rn1qkb1r/ppp1pppp/5nb1/3p4/3P1B2/3BPN2/PPP2PPP/RN1QK2R b KQkq - 4 5": "e7e6",
+                "rn1qkb1r/ppp2ppp/4pnb1/3pN3/3P1B2/3BP3/PPP2PPP/RN1QK2R b KQkq - 1 6": "f8d6",
+                "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3": "f8c5",
+                "r1bqk1nr/pppp1ppp/2n5/2b1p3/1PB1P3/5N2/P1PP1PPP/RNBQK2R b KQkq - 0 4": "c5b4",
+                "r1bqk1nr/pppp1ppp/2n5/4p3/1bB1P3/2P2N2/P2P1PPP/RNBQK2R b KQkq - 0 5": "b4a5"
+              },
+              "humanBlunderInterval": 10
+            }
+          }
+        },
+        {
+          "username": "Steinitz, William",
+          "platformRating": null,
+          "expected": {
+            "stats": {
+              "gameCount": 11,
+              "winRate": 18,
+              "drawRate": 55,
+              "lossRate": 27,
+              "style": "Solide",
+              "topOpenings": [
+                {
+                  "name": "Sicilian Defense",
+                  "count": 4
+                },
+                {
+                  "name": "Italian Game",
+                  "count": 4
+                },
+                {
+                  "name": "ECO C50",
+                  "count": 3
+                }
+              ],
+              "avgMoves": 60
+            },
+            "config": {
+              "name": "Bot_Steinitz, William",
+              "elo": 1738,
+              "difficulty": 1,
+              "aggressiveness": 20,
+              "threads": 2,
+              "depth": 6,
+              "timeControl": 750,
+              "favoriteOpening": "Sicilian Defense",
+              "playStyle": "solide",
+              "openings": {
+                "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1": "e7e5",
+                "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2": "b8c6",
+                "rnbqkbnr/ppp2ppp/3p4/4p3/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 3": "c8g4",
+                "rn1qkbnr/ppp2ppp/3p4/4P3/4P1b1/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 4": "g4f3",
+                "rn1qkbnr/ppp2ppp/3p4/4P3/4P3/5Q2/PPP2PPP/RNB1KB1R b KQkq - 0 5": "d6e5",
+                "rn1qkbnr/ppp2ppp/8/4p3/2B1P3/5Q2/PPP2PPP/RNB1K2R b KQkq - 1 6": "g8f6",
+                "r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3": "g8f6",
+                "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/3PP3/5N2/PPP2PPP/RNBQK2R b KQkq - 0 4": "c6d4",
+                "r1bqkb1r/pppp1ppp/5n2/1B2p3/3NP3/8/PPP2PPP/RNBQK2R b KQkq - 0 5": "e5d4",
+                "r1bqkb1r/pppp1ppp/5n2/1B2P3/3p4/8/PPP2PPP/RNBQK2R b KQkq - 0 6": "f6e4",
+                "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1": "e2e4",
+                "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2": "g1f3",
+                "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3": "f1b5",
+                "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4": "e1g1",
+                "r1bqkb1r/pppp1ppp/2n5/1B2p3/4n3/5N2/PPPP1PPP/RNBQ1RK1 w kq - 0 5": "f1e1",
+                "r1bqkb1r/pppp1ppp/2nn4/1B2p3/8/5N2/PPPP1PPP/RNBQR1K1 w kq - 2 6": "f3e5",
+                "rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2": "d7d6",
+                "rnbqkbnr/pp2pppp/3p4/2p5/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 3": "c5d4",
+                "rnbqkbnr/pp2pppp/3p4/8/3NP3/8/PPP2PPP/RNBQKB1R b KQkq - 0 4": "g8f6",
+                "rnbqkb1r/pp2pppp/3p1n2/8/3NP3/2N5/PPP2PPP/R1BQKB1R b KQkq - 2 5": "a7a6",
+                "rnbqkbnr/pp1ppppp/8/2p5/2B1P3/8/PPPP1PPP/RNBQK1NR b KQkq - 1 2": "e7e6",
+                "rnbqkbnr/pp1p1ppp/4p3/2p5/2B1P3/2N5/PPPP1PPP/R1BQK1NR b KQkq - 1 3": "a7a6",
+                "rnbqkbnr/1p1p1ppp/p3p3/2p5/P1B1P3/2N5/1PPP1PPP/R1BQK1NR b KQkq - 0 4": "b8c6",
+                "r1bqkbnr/1p1p1ppp/p1n1p3/2p5/P1B1P3/2NP4/1PP2PPP/R1BQK1NR b KQkq - 0 5": "g8f6",
+                "r1bqkb1r/1p1p1ppp/p1n1pn2/2p5/P1B1P3/2NP4/1PPB1PPP/R2QK1NR b KQkq - 2 6": "d7d5",
+                "rnbqkbnr/pppp1ppp/4p3/8/4P3/3P4/PPP2PPP/RNBQKBNR b KQkq - 0 2": "d7d5",
+                "rnbqkbnr/ppp2ppp/4p3/3p4/4P3/3P4/PPPN1PPP/R1BQKBNR b KQkq - 1 3": "g8f6",
+                "rnbqkb1r/ppp2ppp/4pn2/3p4/4P3/3P1N2/PPPN1PPP/R1BQKB1R b KQkq - 3 4": "c7c5",
+                "rnbqkb1r/pp3ppp/4pn2/2pp4/4P3/3P1NP1/PPPN1P1P/R1BQKB1R b KQkq - 0 5": "b7b6",
+                "rnbqkb1r/p4ppp/1p2pn2/2pp4/4P3/2PP1NP1/PP1N1P1P/R1BQKB1R b KQkq - 0 6": "f8e7",
+                "rnbqkb1r/pppppppp/5n2/8/4P3/2N5/PPPP1PPP/R1BQKBNR b KQkq - 2 2": "d7d5",
+                "rnbqkb1r/ppp1pppp/5n2/3pP3/8/2N5/PPPP1PPP/R1BQKBNR b KQkq - 0 3": "f6d7",
+                "rnbqkb1r/pppnpppp/8/3pP3/3P4/2N5/PPP2PPP/R1BQKBNR b KQkq - 0 4": "c7c5",
+                "rnbqkb1r/pp1npppp/8/1BppP3/3P4/2N5/PPP2PPP/R1BQK1NR b KQkq - 1 5": "b8c6",
+                "r1bqkb1r/pp1npppp/2n5/1BppP3/3P4/2N2N2/PPP2PPP/R1BQK2R b KQkq - 3 6": "a7a6",
+                "rnbqkb1r/pp1npppp/8/2pNP3/3P4/8/PPP2PPP/R1BQKBNR b KQkq - 0 5": "c5d4",
+                "rnbqkb1r/pp1npppp/8/3NP3/3Q4/8/PPP2PPP/R1B1KBNR b KQkq - 0 6": "d7b6",
+                "rnbqkb1r/pppppppp/5n2/4P3/8/8/PPPP1PPP/RNBQKBNR b KQkq - 0 2": "f6d5",
+                "rnbqkb1r/pppppppp/8/3nP3/8/6P1/PPPP1P1P/RNBQKBNR b KQkq - 0 3": "d7d6",
+                "rnbqkb1r/ppp1pppp/3P4/3n4/8/6P1/PPPP1P1P/RNBQKBNR b KQkq - 0 4": "d8d6",
+                "rnb1kb1r/ppp1pppp/3q4/3n4/8/6P1/PPPP1PBP/RNBQK1NR b KQkq - 1 5": "b8c6",
+                "r1b1kb1r/ppp1pppp/2nq4/3n4/8/2N3P1/PPPP1PBP/R1BQK1NR b KQkq - 3 6": "d5c3",
+                "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq - 0 1": "d7d5",
+                "rnbqkbnr/ppp1pppp/8/3p4/3P1B2/8/PPP1PPPP/RN1QKBNR b KQkq - 1 2": "g8f6",
+                "rnbqkb1r/ppp1pppp/5n2/3p4/3P1B2/4P3/PPP2PPP/RN1QKBNR b KQkq - 0 3": "c8f5",
+                "rn1qkb1r/ppp1pppp/5n2/3p1b2/3P1B2/3BP3/PPP2PPP/RN1QK1NR b KQkq - 2 4": "f5g6",
+                "rn1qkb1r/ppp1pppp/5nb1/3p4/3P1B2/3BPN2/PPP2PPP/RN1QK2R b KQkq - 4 5": "e7e6",
+                "rn1qkb1r/ppp2ppp/4pnb1/3pN3/3P1B2/3BP3/PPP2PPP/RN1QK2R b KQkq - 1 6": "f8d6",
+                "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3": "f8c5",
+                "r1bqk1nr/pppp1ppp/2n5/2b1p3/1PB1P3/5N2/P1PP1PPP/RNBQK2R b KQkq - 0 4": "c5b4",
+                "r1bqk1nr/pppp1ppp/2n5/4p3/1bB1P3/2P2N2/P2P1PPP/RNBQK2R b KQkq - 0 5": "b4a5"
+              },
+              "humanBlunderInterval": 10
+            }
+          }
+        },
+        {
+          "username": "Steinitz, William",
+          "platformRating": 2150,
+          "expected": {
+            "stats": {
+              "gameCount": 11,
+              "winRate": 18,
+              "drawRate": 55,
+              "lossRate": 27,
+              "style": "Solide",
+              "topOpenings": [
+                {
+                  "name": "Sicilian Defense",
+                  "count": 4
+                },
+                {
+                  "name": "Italian Game",
+                  "count": 4
+                },
+                {
+                  "name": "ECO C50",
+                  "count": 3
+                }
+              ],
+              "avgMoves": 60
+            },
+            "config": {
+              "name": "Bot_Steinitz, William",
+              "elo": 2150,
+              "difficulty": 1,
+              "aggressiveness": 20,
+              "threads": 2,
+              "depth": 6,
+              "timeControl": 750,
+              "favoriteOpening": "Sicilian Defense",
+              "playStyle": "solide",
+              "openings": {
+                "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1": "e7e5",
+                "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2": "b8c6",
+                "rnbqkbnr/ppp2ppp/3p4/4p3/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 3": "c8g4",
+                "rn1qkbnr/ppp2ppp/3p4/4P3/4P1b1/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 4": "g4f3",
+                "rn1qkbnr/ppp2ppp/3p4/4P3/4P3/5Q2/PPP2PPP/RNB1KB1R b KQkq - 0 5": "d6e5",
+                "rn1qkbnr/ppp2ppp/8/4p3/2B1P3/5Q2/PPP2PPP/RNB1K2R b KQkq - 1 6": "g8f6",
+                "r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3": "g8f6",
+                "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/3PP3/5N2/PPP2PPP/RNBQK2R b KQkq - 0 4": "c6d4",
+                "r1bqkb1r/pppp1ppp/5n2/1B2p3/3NP3/8/PPP2PPP/RNBQK2R b KQkq - 0 5": "e5d4",
+                "r1bqkb1r/pppp1ppp/5n2/1B2P3/3p4/8/PPP2PPP/RNBQK2R b KQkq - 0 6": "f6e4",
+                "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1": "e2e4",
+                "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2": "g1f3",
+                "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3": "f1b5",
+                "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4": "e1g1",
+                "r1bqkb1r/pppp1ppp/2n5/1B2p3/4n3/5N2/PPPP1PPP/RNBQ1RK1 w kq - 0 5": "f1e1",
+                "r1bqkb1r/pppp1ppp/2nn4/1B2p3/8/5N2/PPPP1PPP/RNBQR1K1 w kq - 2 6": "f3e5",
+                "rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2": "d7d6",
+                "rnbqkbnr/pp2pppp/3p4/2p5/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 3": "c5d4",
+                "rnbqkbnr/pp2pppp/3p4/8/3NP3/8/PPP2PPP/RNBQKB1R b KQkq - 0 4": "g8f6",
+                "rnbqkb1r/pp2pppp/3p1n2/8/3NP3/2N5/PPP2PPP/R1BQKB1R b KQkq - 2 5": "a7a6",
+                "rnbqkbnr/pp1ppppp/8/2p5/2B1P3/8/PPPP1PPP/RNBQK1NR b KQkq - 1 2": "e7e6",
+                "rnbqkbnr/pp1p1ppp/4p3/2p5/2B1P3/2N5/PPPP1PPP/R1BQK1NR b KQkq - 1 3": "a7a6",
+                "rnbqkbnr/1p1p1ppp/p3p3/2p5/P1B1P3/2N5/1PPP1PPP/R1BQK1NR b KQkq - 0 4": "b8c6",
+                "r1bqkbnr/1p1p1ppp/p1n1p3/2p5/P1B1P3/2NP4/1PP2PPP/R1BQK1NR b KQkq - 0 5": "g8f6",
+                "r1bqkb1r/1p1p1ppp/p1n1pn2/2p5/P1B1P3/2NP4/1PPB1PPP/R2QK1NR b KQkq - 2 6": "d7d5",
+                "rnbqkbnr/pppp1ppp/4p3/8/4P3/3P4/PPP2PPP/RNBQKBNR b KQkq - 0 2": "d7d5",
+                "rnbqkbnr/ppp2ppp/4p3/3p4/4P3/3P4/PPPN1PPP/R1BQKBNR b KQkq - 1 3": "g8f6",
+                "rnbqkb1r/ppp2ppp/4pn2/3p4/4P3/3P1N2/PPPN1PPP/R1BQKB1R b KQkq - 3 4": "c7c5",
+                "rnbqkb1r/pp3ppp/4pn2/2pp4/4P3/3P1NP1/PPPN1P1P/R1BQKB1R b KQkq - 0 5": "b7b6",
+                "rnbqkb1r/p4ppp/1p2pn2/2pp4/4P3/2PP1NP1/PP1N1P1P/R1BQKB1R b KQkq - 0 6": "f8e7",
+                "rnbqkb1r/pppppppp/5n2/8/4P3/2N5/PPPP1PPP/R1BQKBNR b KQkq - 2 2": "d7d5",
+                "rnbqkb1r/ppp1pppp/5n2/3pP3/8/2N5/PPPP1PPP/R1BQKBNR b KQkq - 0 3": "f6d7",
+                "rnbqkb1r/pppnpppp/8/3pP3/3P4/2N5/PPP2PPP/R1BQKBNR b KQkq - 0 4": "c7c5",
+                "rnbqkb1r/pp1npppp/8/1BppP3/3P4/2N5/PPP2PPP/R1BQK1NR b KQkq - 1 5": "b8c6",
+                "r1bqkb1r/pp1npppp/2n5/1BppP3/3P4/2N2N2/PPP2PPP/R1BQK2R b KQkq - 3 6": "a7a6",
+                "rnbqkb1r/pp1npppp/8/2pNP3/3P4/8/PPP2PPP/R1BQKBNR b KQkq - 0 5": "c5d4",
+                "rnbqkb1r/pp1npppp/8/3NP3/3Q4/8/PPP2PPP/R1B1KBNR b KQkq - 0 6": "d7b6",
+                "rnbqkb1r/pppppppp/5n2/4P3/8/8/PPPP1PPP/RNBQKBNR b KQkq - 0 2": "f6d5",
+                "rnbqkb1r/pppppppp/8/3nP3/8/6P1/PPPP1P1P/RNBQKBNR b KQkq - 0 3": "d7d6",
+                "rnbqkb1r/ppp1pppp/3P4/3n4/8/6P1/PPPP1P1P/RNBQKBNR b KQkq - 0 4": "d8d6",
+                "rnb1kb1r/ppp1pppp/3q4/3n4/8/6P1/PPPP1PBP/RNBQK1NR b KQkq - 1 5": "b8c6",
+                "r1b1kb1r/ppp1pppp/2nq4/3n4/8/2N3P1/PPPP1PBP/R1BQK1NR b KQkq - 3 6": "d5c3",
+                "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq - 0 1": "d7d5",
+                "rnbqkbnr/ppp1pppp/8/3p4/3P1B2/8/PPP1PPPP/RN1QKBNR b KQkq - 1 2": "g8f6",
+                "rnbqkb1r/ppp1pppp/5n2/3p4/3P1B2/4P3/PPP2PPP/RN1QKBNR b KQkq - 0 3": "c8f5",
+                "rn1qkb1r/ppp1pppp/5n2/3p1b2/3P1B2/3BP3/PPP2PPP/RN1QK1NR b KQkq - 2 4": "f5g6",
+                "rn1qkb1r/ppp1pppp/5nb1/3p4/3P1B2/3BPN2/PPP2PPP/RN1QK2R b KQkq - 4 5": "e7e6",
+                "rn1qkb1r/ppp2ppp/4pnb1/3pN3/3P1B2/3BP3/PPP2PPP/RN1QK2R b KQkq - 1 6": "f8d6",
+                "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3": "f8c5",
+                "r1bqk1nr/pppp1ppp/2n5/2b1p3/1PB1P3/5N2/P1PP1PPP/RNBQK2R b KQkq - 0 4": "c5b4",
+                "r1bqk1nr/pppp1ppp/2n5/4p3/1bB1P3/2P2N2/P2P1PPP/RNBQK2R b KQkq - 0 5": "b4a5"
+              },
+              "humanBlunderInterval": 10
+            }
+          }
+        }
+      ]
+    },
+    {
+      "games": [
+        {
+          "id": "opera-1858",
+          "pgn": "[Event \"?\"]\n[Site \"?\"]\n[Date \"????.??.??\"]\n[Round \"?\"]\n[White \"Paul Morphy\"]\n[Black \"Duke Karl / Count Isouard\"]\n[Result \"*\"]\n[WhiteElo \"1500\"]\n[BlackElo \"1400\"]\n[Opening \"Sicilian Defense\"]\n\n1. e4 e5 2. Nf3 d6 3. d4 Bg4 4. dxe5 Bxf3 5. Qxf3 dxe5 6. Bc4 Nf6 7. Qb3 Qe7 8. Nc3 c6 9. Bg5 b5 10. Nxb5 cxb5 11. Bxb5+ Nbd7 12. O-O-O Rd8 13. Rxd7 Rxd7 14. Rd1 Qe6 15. Bxd7+ Nxd7 16. Qb8+ Nxb8 17. Rd8# *",
+          "winner": "white",
+          "opening": {
+            "name": "Ouverture inconnue"
+          },
+          "players": {
+            "white": {
+              "user": {
+                "name": "Paul Morphy"
+              }
+            },
+            "black": {
+              "username": "Duke Karl / Count Isouard"
+            }
+          }
+        },
+        {
+          "id": "bird-anderssen-1851-london",
+          "pgn": "[Event \"?\"]\n[Site \"?\"]\n[Date \"????.??.??\"]\n[Round \"?\"]\n[White \"Bird, Henry Edward\"]\n[Black \"Anderssen, Adolf\"]\n[Result \"*\"]\n[WhiteElo \"1637\"]\n[BlackElo \"1651\"]\n[ECOUrl \"https://www.chess.com/openings/Italian-Game\"]\n\n1. e4 e5 2. Nf3 Nc6 3. Bb5 Nf6 4. d4 Nxd4 5. Nxd4 exd4 6. e5 Ne4 7. O-O Qh4 8. g3 Qh3 9. Be2 d5 10. exd6 Bxd6 11. Qxd4 Bf5 12. Nc3 O-O-O 13. Qxa7 Nxc3 14. bxc3 c6 15. Be3 Be4 16. Qa8+ Kd7 17. Qxb7+ Ke8 18. f3 Bxg3 19. Rf2 Bxf2+ 20. Bxf2 Bd5 21. c4 Be6 22. Qxc6+ Ke7 23. Bc5+ Kf6 24. Qc7 Kg6 25. Kh1 h6 26. Rg1+ Kh7 27. Rg3 Qh5 28. Bd3+ Bf5 29. Qe5 g6 30. Qf6 Rhg8 31. Qxf7+ Rg7 32. Qf6 Rdd7 33. Bd4 Rde7 34. c5 Bxd3 35. cxd3 g5 36. c6 Re1+ 37. Bg1 Rf7 38. Qd8 Rxf3 39. c7 Rxg3 40. Qd7+ Kg6 41. Qd6+ Kf7 42. Qxg3 Re8 43. Qf2+ Kg8 44. Qf5 *",
+          "winner": "white",
+          "players": {
+            "white": {
+              "username": "Bird, Henry Edward"
+            },
+            "black": {
+              "username": "Anderssen, Adolf"
+            }
+          }
+        },
+        {
+          "id": "steinitz-zukertort-1886-wch-r14",
+          "pgn": "[Event \"?\"]\n[Site \"?\"]\n[Date \"????.??.??\"]\n[Round \"?\"]\n[White \"Steinitz, William\"]\n[Black \"Zukertort, Johannes Hermann\"]\n[Result \"*\"]\n[WhiteElo \"1774\"]\n[BlackElo \"1902\"]\n[ECO \"C50\"]\n\n1. e4 e5 2. Nf3 Nc6 3. Bb5 Nf6 4. O-O Nxe4 5. Re1 Nd6 6. Nxe5 Be7 7. Bd3 O-O 8. Nc3 Nxe5 9. Rxe5 c6 10. b3 Ne8 11. Bb2 d5 12. Qf3 Bf6 13. Re2 Nc7 14. Ba3 Re8 15. Rae1 Ne6 16. Na4 Bd7 17. Nc5 Nxc5 18. Rxe8+ Bxe8 19. Bxc5 b6 20. Ba3 Bd7 21. Qg3 c5 22. c3 Be6 23. Bb2 Qd7 24. Bc2 Re8 25. h3 b5 26. d4 cxd4 27. cxd4 Rc8 28. Bd3 Bf5 29. Bxf5 Qxf5 30. Qg4 Qxg4 31. hxg4 h6 32. Re2 b4 33. g3 a5 34. Kf1 a4 35. bxa4 Ra8 36. Re1 Rxa4 37. Ra1 Kf8 38. Ke2 Ke7 39. Kd3 Ra6 40. a3 bxa3 41. Rxa3 Rxa3+ 42. Bxa3+ Kd7 43. Bf8 Ke8 44. Bd6 g6 45. Be5 Bd8 46. Bg7 h5 47. gxh5 gxh5 48. Be5 Kd7 *",
+          "winner": "draw",
+          "players": {
+            "white": {
+              "user": {
+                "name": "Steinitz, William"
+              }
+            },
+            "black": {
+              "username": "Zukertort, Johannes Hermann"
+            }
+          }
+        },
+        {
+          "id": "fischer-petrosian-1971",
+          "pgn": "[Event \"?\"]\n[Site \"?\"]\n[Date \"????.??.??\"]\n[Round \"?\"]\n[White \"Bobby Fischer\"]\n[Black \"Tigran Petrosian\"]\n[Result \"*\"]\n[WhiteElo \"1911\"]\n[BlackElo \"2153\"]\n[Opening \"Sicilian Defense\"]\n\n1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 a6 6. f4 *",
+          "winner": "white",
+          "players": {
+            "white": {
+              "username": "Bobby Fischer"
+            },
+            "black": {
+              "username": "Tigran Petrosian"
+            }
+          }
+        },
+        {
+          "id": "anderssen-suhle-1864",
+          "pgn": "[Event \"?\"]\n[Site \"?\"]\n[Date \"????.??.??\"]\n[Round \"?\"]\n[White \"Anderssen, Adolf\"]\n[Black \"Suhle, Berthold\"]\n[Result \"*\"]\n[WhiteElo \"2048\"]\n[BlackElo \"1404\"]\n[ECOUrl \"https://www.chess.com/openings/Italian-Game\"]\n\n1. e4 c5 2. Bc4 e6 3. Nc3 a6 4. a4 Nc6 5. d3 Nf6 6. Bd2 d5 7. Ba2 dxe4 8. dxe4 b6 9. Nf3 Bb7 10. O-O Be7 11. Re1 O-O 12. Bc4 Nd4 13. Bf4 h6 14. Be5 Rc8 15. Qd3 Nc6 16. Qf1 Nxe5 17. Nxe5 Qc7 18. f4 Ra8 19. Rad1 Rfd8 20. Rd3 Rd4 21. b3 Rad8 22. Rde3 Rd2 23. Bd3 c4 24. Nxc4 Bc5 25. Nxd2 Ng4 26. Nd1 g5 27. Kh1 Nxe3 28. Nxe3 gxf4 29. Ng4 Kg7 30. e5 h5 31. Nf6 Be3 32. Nxh5+ Kf8 33. Nxf4 *",
+          "winner": "white",
+          "opening": {
+            "name": "Ouverture inconnue"
+          },
+          "players": {
+            "white": {
+              "user": {
+                "name": "Anderssen, Adolf"
+              }
+            },
+            "black": {
+              "username": "Suhle, Berthold"
+            }
+          }
+        },
+        {
+          "id": "hebert-seirawan-1982-luzern",
+          "pgn": "[Event \"?\"]\n[Site \"?\"]\n[Date \"????.??.??\"]\n[Round \"?\"]\n[White \"Hebert, Jean\"]\n[Black \"Seirawan, Yasser\"]\n[Result \"*\"]\n[WhiteElo \"2185\"]\n[BlackElo \"1655\"]\n[ECO \"C50\"]\n\n1. e4 e6 2. d3 d5 3. Nd2 Nf6 4. Ngf3 c5 5. g3 b6 6. c3 Be7 7. Qa4+ Qd7 8. Qxd7+ Bxd7 9. e5 Ng8 10. a3 f5 11. h4 Nh6 12. d4 Nf7 13. Bd3 a5 14. b3 Na6 15. Nf1 h6 16. Ne3 g5 17. hxg5 hxg5 18. Rxh8+ Nxh8 19. g4 f4 20. Nc2 a4 21. bxa4 c4 22. Bh7 Kf7 23. Nb4 Ng6 24. Nxa6 Rxa6 25. Rb1 Bc6 26. a5 b5 27. a4 bxa4 28. Ra1 Kg7 29. Bxg6 Kxg6 30. Ba3 Bxa3 31. Rxa3 Rxa5 32. Nd2 Be8 33. f3 Ra7 34. Kf2 Rb7 35. Ke1 Kg7 36. Kd1 Kf8 37. Ke1 Ke7 38. Ra1 Rb3 39. Nxb3 cxb3 40. Rb1 Bg6 41. Rb2 Kd7 *",
+          "winner": "black",
+          "players": {
+            "white": {
+              "username": "Hebert, Jean"
+            },
+            "black": {
+              "username": "Seirawan, Yasser"
+            }
+          }
+        },
+        {
+          "id": "bogoljubow-alekhine-karlsbad-1923",
+          "pgn": "[Event \"?\"]\n[Site \"?\"]\n[Date \"????.??.??\"]\n[Round \"?\"]\n[White \"Bogoljubow, Efim\"]\n[Black \"Alekhine, Alexander\"]\n[Result \"*\"]\n[WhiteElo \"2322\"]\n[BlackElo \"1906\"]\n[Opening \"Sicilian Defense\"]\n\n1. e4 Nf6 2. Nc3 d5 3. e5 Nfd7 4. d4 c5 5. Bb5 Nc6 6. Nf3 a6 7. Bxc6 bxc6 8. e6 fxe6 9. O-O e5 10. dxe5 e6 11. Ng5 Qe7 12. f4 g6 13. Qg4 Nb6 14. b3 c4 15. Be3 c5 16. Bf2 h6 17. Nf3 Qf7 18. Nh4 Rg8 19. a4 cxb3 20. cxb3 Bb7 21. a5 Nd7 22. Bg3 d4 23. Na4 Bd5 24. Rab1 Rb8 25. Qd1 Rb5 26. Be1 Qe7 27. Qd3 g5 28. Ng6 Qf7 29. Nxf8 gxf4 30. Bg3 Qxf8 31. Rxf4 Qg7 32. b4 Qg6 33. Qd1 Rf8 34. Rg4 Qf5 35. Rb2 Rxb4 36. Rxb4 cxb4 37. Nb2 Bb3 38. Qe2 Qb1+ 39. Be1 Rf5 40. Re4 Bd5 41. g4 d3 42. Qd2 Nxe5 43. Rxe5 Rxe5 44. Nxd3 Re4 45. Kf2 Rd4 46. Ke3 Re4+ 47. Kf2 Rd4 48. Ke3 Rxg4 49. Bg3 Qg1+ 50. Qf2 Re4+ 51. Kd2 Qa1 52. Ne5 Rxe5 *",
+          "winner": "black",
+          "players": {
+            "white": {
+              "user": {
+                "name": "Bogoljubow, Efim"
+              }
+            },
+            "black": {
+              "username": "Alekhine, Alexander"
+            }
+          }
+        },
+        {
+          "id": "donchenko-bortnyk-tt-chesscom-2024",
+          "pgn": "[Event \"?\"]\n[Site \"?\"]\n[Date \"????.??.??\"]\n[Round \"?\"]\n[White \"Donchenko, Alexander\"]\n[Black \"Bortnyk, Olexandr\"]\n[Result \"*\"]\n[WhiteElo \"1559\"]\n[BlackElo \"2157\"]\n[ECOUrl \"https://www.chess.com/openings/Italian-Game\"]\n\n1. e4 Nf6 2. Nc3 d5 3. e5 Nfd7 4. d4 c5 5. Nxd5 cxd4 6. Qxd4 Nb6 7. Bb5+ Nc6 8. c4 e6 9. Bg5 Qd7 10. O-O-O exd5 11. Qh4 a6 12. cxd5 axb5 13. e6 fxe6 14. dxc6 Qxc6+ 15. Kb1 e5 16. Nf3 Bf5+ 17. Ka1 Nc4 18. Rd8+ Rxd8 19. Bxd8 Na3 20. Nxe5 Nc2+ 21. Kb1 Ne1+ 22. Ka1 Qc1# *",
+          "winner": "black",
+          "players": {
+            "white": {
+              "username": "Donchenko, Alexander"
+            },
+            "black": {
+              "username": "Bortnyk, Olexandr"
+            }
+          }
+        },
+        {
+          "id": "dovliatov-mamedyarov-baku-2006",
+          "pgn": "[Event \"?\"]\n[Site \"?\"]\n[Date \"????.??.??\"]\n[Round \"?\"]\n[White \"Dovliatov, Sanan\"]\n[Black \"Mamedyarov, Shakhriyar\"]\n[Result \"*\"]\n[WhiteElo \"1696\"]\n[BlackElo \"1408\"]\n[ECO \"C50\"]\n\n1. e4 Nf6 2. e5 Nd5 3. g3 d6 4. exd6 Qxd6 5. Bg2 Nc6 6. Nc3 Nxc3 7. bxc3 g6 8. Nf3 Bg7 9. O-O O-O 10. d4 e5 11. dxe5 Qc5 12. Rb1 Qxc3 13. Bf4 Rd8 14. Qc1 b6 15. Re1 Be6 16. Bh6 Bxa2 17. Bxg7 Kxg7 18. Ra1 Bd5 19. Qg5 Bxf3 20. Qf6+ Kg8 21. Bxf3 Nd4 22. Bxa8 Rxa8 23. Red1 a5 24. Ra4 c5 25. Qxb6 Qxc2 26. Rda1 Re8 27. h4 Nf3+ 28. Kg2 Nxe5 29. R1a2 Qd3 30. Qb7 Nc4 31. Qc6 Re1 32. Rxc4 Qxc4 33. Rb2 Kg7 34. Kh2 a4 35. Qf3 Qe4 *",
+          "winner": "black",
+          "opening": {
+            "name": "Ouverture inconnue"
+          },
+          "players": {
+            "white": {
+              "user": {
+                "name": "Dovliatov, Sanan"
+              }
+            },
+            "black": {
+              "username": "Mamedyarov, Shakhriyar"
+            }
+          }
+        },
+        {
+          "id": "maroczy-spielmann-prague-1908",
+          "pgn": "[Event \"?\"]\n[Site \"?\"]\n[Date \"????.??.??\"]\n[Round \"?\"]\n[White \"Maroczy, Geza\"]\n[Black \"Spielmann, Rudolf\"]\n[Result \"*\"]\n[WhiteElo \"1833\"]\n[BlackElo \"1659\"]\n[Opening \"Sicilian Defense\"]\n\n1. d4 d5 2. Bf4 Nf6 3. e3 Bf5 4. Bd3 Bg6 5. Nf3 e6 6. Ne5 Bd6 7. Nd2 c6 8. h3 Qc7 9. Ndf3 Nbd7 10. Bh2 Be4 11. Nxd7 Nxd7 12. Bxd6 Qxd6 13. Bxe4 dxe4 14. Nd2 f5 15. c3 e5 16. Qb3 exd4 17. cxd4 O-O-O 18. O-O Rde8 19. Rac1 Kb8 20. Rc3 g5 21. Rfc1 Ka8 22. Nc4 Qb8 23. Na5 Nf6 24. Qa4 Qc7 25. Rc5 Qd7 26. Nc4 Kb8 27. Ne5 Rxe5 28. Rxe5 Nd5 29. Rc5 Qf7 30. Qb3 Rc8 31. a4 h5 32. Rcxd5 cxd5 33. Qxd5 *",
+          "winner": "white",
+          "players": {
+            "white": {
+              "username": "Maroczy, Geza"
+            },
+            "black": {
+              "username": "Spielmann, Rudolf"
+            }
+          }
+        },
+        {
+          "id": "evans-walker-1850",
+          "pgn": "[Event \"?\"]\n[Site \"?\"]\n[Date \"????.??.??\"]\n[Round \"?\"]\n[White \"Captain Evans\"]\n[Black \"William Walker\"]\n[Result \"*\"]\n[WhiteElo \"1970\"]\n[BlackElo \"1910\"]\n[ECOUrl \"https://www.chess.com/openings/Italian-Game\"]\n\n1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. b4 Bxb4 5. c3 Ba5 6. d4 *",
+          "winner": "white",
+          "players": {
+            "white": {
+              "user": {
+                "name": "Captain Evans"
+              }
+            },
+            "black": {
+              "username": "William Walker"
+            }
+          }
+        }
+      ],
+      "cases": [
+        {
+          "username": "Paul Morphy",
+          "platformRating": null,
+          "expected": {
+            "stats": {
+              "gameCount": 11,
+              "winRate": 45,
+              "drawRate": 9,
+              "lossRate": 45,
+              "style": "Chaotique",
+              "topOpenings": [
+                {
+                  "name": "Sicilian Defense",
+                  "count": 4
+                },
+                {
+                  "name": "Italian Game",
+                  "count": 4
+                },
+                {
+                  "name": "ECO C50",
+                  "count": 3
+                }
+              ],
+              "avgMoves": 60
+            },
+            "config": {
+              "name": "Bot_Paul Morphy",
+              "elo": 1792,
+              "difficulty": 2,
+              "aggressiveness": 50,
+              "threads": 2,
+              "depth": 9,
+              "timeControl": 600,
+              "favoriteOpening": "Sicilian Defense",
+              "playStyle": "tactique",
+              "openings": {
+                "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1": "e2e4",
+                "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2": "g1f3",
+                "rnbqkbnr/ppp2ppp/3p4/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 0 3": "d2d4",
+                "rn1qkbnr/ppp2ppp/3p4/4p3/3PP1b1/5N2/PPP2PPP/RNBQKB1R w KQkq - 1 4": "d4e5",
+                "rn1qkbnr/ppp2ppp/3p4/4P3/4P3/5b2/PPP2PPP/RNBQKB1R w KQkq - 0 5": "d1f3",
+                "rn1qkbnr/ppp2ppp/8/4p3/4P3/5Q2/PPP2PPP/RNB1KB1R w KQkq - 0 6": "f1c4",
+                "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1": "e7e5",
+                "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2": "b8c6",
+                "r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3": "g8f6",
+                "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/3PP3/5N2/PPP2PPP/RNBQK2R b KQkq - 0 4": "c6d4",
+                "r1bqkb1r/pppp1ppp/5n2/1B2p3/3NP3/8/PPP2PPP/RNBQK2R b KQkq - 0 5": "e5d4",
+                "r1bqkb1r/pppp1ppp/5n2/1B2P3/3p4/8/PPP2PPP/RNBQK2R b KQkq - 0 6": "f6e4",
+                "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQ1RK1 b kq - 5 4": "f6e4",
+                "r1bqkb1r/pppp1ppp/2n5/1B2p3/4n3/5N2/PPPP1PPP/RNBQR1K1 b kq - 1 5": "e4d6",
+                "r1bqkb1r/pppp1ppp/2nn4/1B2N3/8/8/PPPP1PPP/RNBQR1K1 b kq - 0 6": "f8e7",
+                "rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2": "d7d6",
+                "rnbqkbnr/pp2pppp/3p4/2p5/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 3": "c5d4",
+                "rnbqkbnr/pp2pppp/3p4/8/3NP3/8/PPP2PPP/RNBQKB1R b KQkq - 0 4": "g8f6",
+                "rnbqkb1r/pp2pppp/3p1n2/8/3NP3/2N5/PPP2PPP/R1BQKB1R b KQkq - 2 5": "a7a6",
+                "rnbqkbnr/pp1ppppp/8/2p5/2B1P3/8/PPPP1PPP/RNBQK1NR b KQkq - 1 2": "e7e6",
+                "rnbqkbnr/pp1p1ppp/4p3/2p5/2B1P3/2N5/PPPP1PPP/R1BQK1NR b KQkq - 1 3": "a7a6",
+                "rnbqkbnr/1p1p1ppp/p3p3/2p5/P1B1P3/2N5/1PPP1PPP/R1BQK1NR b KQkq - 0 4": "b8c6",
+                "r1bqkbnr/1p1p1ppp/p1n1p3/2p5/P1B1P3/2NP4/1PP2PPP/R1BQK1NR b KQkq - 0 5": "g8f6",
+                "r1bqkb1r/1p1p1ppp/p1n1pn2/2p5/P1B1P3/2NP4/1PPB1PPP/R2QK1NR b KQkq - 2 6": "d7d5",
+                "rnbqkbnr/pppp1ppp/4p3/8/4P3/3P4/PPP2PPP/RNBQKBNR b KQkq - 0 2": "d7d5",
+                "rnbqkbnr/ppp2ppp/4p3/3p4/4P3/3P4/PPPN1PPP/R1BQKBNR b KQkq - 1 3": "g8f6",
+                "rnbqkb1r/ppp2ppp/4pn2/3p4/4P3/3P1N2/PPPN1PPP/R1BQKB1R b KQkq - 3 4": "c7c5",
+                "rnbqkb1r/pp3ppp/4pn2/2pp4/4P3/3P1NP1/PPPN1P1P/R1BQKB1R b KQkq - 0 5": "b7b6",
+                "rnbqkb1r/p4ppp/1p2pn2/2pp4/4P3/2PP1NP1/PP1N1P1P/R1BQKB1R b KQkq - 0 6": "f8e7",
+                "rnbqkb1r/pppppppp/5n2/8/4P3/2N5/PPPP1PPP/R1BQKBNR b KQkq - 2 2": "d7d5",
+                "rnbqkb1r/ppp1pppp/5n2/3pP3/8/2N5/PPPP1PPP/R1BQKBNR b KQkq - 0 3": "f6d7",
+                "rnbqkb1r/pppnpppp/8/3pP3/3P4/2N5/PPP2PPP/R1BQKBNR b KQkq - 0 4": "c7c5",
+                "rnbqkb1r/pp1npppp/8/1BppP3/3P4/2N5/PPP2PPP/R1BQK1NR b KQkq - 1 5": "b8c6",
+                "r1bqkb1r/pp1npppp/2n5/1BppP3/3P4/2N2N2/PPP2PPP/R1BQK2R b KQkq - 3 6": "a7a6",
+                "rnbqkb1r/pp1npppp/8/2pNP3/3P4/8/PPP2PPP/R1BQKBNR b KQkq - 0 5": "c5d4",
+                "rnbqkb1r/pp1npppp/8/3NP3/3Q4/8/PPP2PPP/R1B1KBNR b KQkq - 0 6": "d7b6",
+                "rnbqkb1r/pppppppp/5n2/4P3/8/8/PPPP1PPP/RNBQKBNR b KQkq - 0 2": "f6d5",
+                "rnbqkb1r/pppppppp/8/3nP3/8/6P1/PPPP1P1P/RNBQKBNR b KQkq - 0 3": "d7d6",
+                "rnbqkb1r/ppp1pppp/3P4/3n4/8/6P1/PPPP1P1P/RNBQKBNR b KQkq - 0 4": "d8d6",
+                "rnb1kb1r/ppp1pppp/3q4/3n4/8/6P1/PPPP1PBP/RNBQK1NR b KQkq - 1 5": "b8c6",
+                "r1b1kb1r/ppp1pppp/2nq4/3n4/8/2N3P1/PPPP1PBP/R1BQK1NR b KQkq - 3 6": "d5c3",
+                "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq - 0 1": "d7d5",
+                "rnbqkbnr/ppp1pppp/8/3p4/3P1B2/8/PPP1PPPP/RN1QKBNR b KQkq - 1 2": "g8f6",
+                "rnbqkb1r/ppp1pppp/5n2/3p4/3P1B2/4P3/PPP2PPP/RN1QKBNR b KQkq - 0 3": "c8f5",
+                "rn1qkb1r/ppp1pppp/5n2/3p1b2/3P1B2/3BP3/PPP2PPP/RN1QK1NR b KQkq - 2 4": "f5g6",
+                "rn1qkb1r/ppp1pppp/5nb1/3p4/3P1B2/3BPN2/PPP2PPP/RN1QK2R b KQkq - 4 5": "e7e6",
+                "rn1qkb1r/ppp2ppp/4pnb1/3pN3/3P1B2/3BP3/PPP2PPP/RN1QK2R b KQkq - 1 6": "f8d6",
+                "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3": "f8c5",
+                "r1bqk1nr/pppp1ppp/2n5/2b1p3/1PB1P3/5N2/P1PP1PPP/RNBQK2R b KQkq - 0 4": "c5b4",
+                "r1bqk1nr/pppp1ppp/2n5/4p3/1bB1P3/2P2N2/P2P1PPP/RNBQK2R b KQkq - 0 5": "b4a5"
+              },
+              "humanBlunderInterval": 10
+            }
+          }
+        },
+        {
+          "username": "Paul Morphy",
+          "platformRating": 2150,
+          "expected": {
+            "stats": {
+              "gameCount": 11,
+              "winRate": 45,
+              "drawRate": 9,
+              "lossRate": 45,
+              "style": "Chaotique",
+              "topOpenings": [
+                {
+                  "name": "Sicilian Defense",
+                  "count": 4
+                },
+                {
+                  "name": "Italian Game",
+                  "count": 4
+                },
+                {
+                  "name": "ECO C50",
+                  "count": 3
+                }
+              ],
+              "avgMoves": 60
+            },
+            "config": {
+              "name": "Bot_Paul Morphy",
+              "elo": 2150,
+              "difficulty": 2,
+              "aggressiveness": 50,
+              "threads": 2,
+              "depth": 9,
+              "timeControl": 600,
+              "favoriteOpening": "Sicilian Defense",
+              "playStyle": "tactique",
+              "openings": {
+                "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1": "e2e4",
+                "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2": "g1f3",
+                "rnbqkbnr/ppp2ppp/3p4/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 0 3": "d2d4",
+                "rn1qkbnr/ppp2ppp/3p4/4p3/3PP1b1/5N2/PPP2PPP/RNBQKB1R w KQkq - 1 4": "d4e5",
+                "rn1qkbnr/ppp2ppp/3p4/4P3/4P3/5b2/PPP2PPP/RNBQKB1R w KQkq - 0 5": "d1f3",
+                "rn1qkbnr/ppp2ppp/8/4p3/4P3/5Q2/PPP2PPP/RNB1KB1R w KQkq - 0 6": "f1c4",
+                "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1": "e7e5",
+                "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2": "b8c6",
+                "r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3": "g8f6",
+                "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/3PP3/5N2/PPP2PPP/RNBQK2R b KQkq - 0 4": "c6d4",
+                "r1bqkb1r/pppp1ppp/5n2/1B2p3/3NP3/8/PPP2PPP/RNBQK2R b KQkq - 0 5": "e5d4",
+                "r1bqkb1r/pppp1ppp/5n2/1B2P3/3p4/8/PPP2PPP/RNBQK2R b KQkq - 0 6": "f6e4",
+                "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQ1RK1 b kq - 5 4": "f6e4",
+                "r1bqkb1r/pppp1ppp/2n5/1B2p3/4n3/5N2/PPPP1PPP/RNBQR1K1 b kq - 1 5": "e4d6",
+                "r1bqkb1r/pppp1ppp/2nn4/1B2N3/8/8/PPPP1PPP/RNBQR1K1 b kq - 0 6": "f8e7",
+                "rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2": "d7d6",
+                "rnbqkbnr/pp2pppp/3p4/2p5/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 3": "c5d4",
+                "rnbqkbnr/pp2pppp/3p4/8/3NP3/8/PPP2PPP/RNBQKB1R b KQkq - 0 4": "g8f6",
+                "rnbqkb1r/pp2pppp/3p1n2/8/3NP3/2N5/PPP2PPP/R1BQKB1R b KQkq - 2 5": "a7a6",
+                "rnbqkbnr/pp1ppppp/8/2p5/2B1P3/8/PPPP1PPP/RNBQK1NR b KQkq - 1 2": "e7e6",
+                "rnbqkbnr/pp1p1ppp/4p3/2p5/2B1P3/2N5/PPPP1PPP/R1BQK1NR b KQkq - 1 3": "a7a6",
+                "rnbqkbnr/1p1p1ppp/p3p3/2p5/P1B1P3/2N5/1PPP1PPP/R1BQK1NR b KQkq - 0 4": "b8c6",
+                "r1bqkbnr/1p1p1ppp/p1n1p3/2p5/P1B1P3/2NP4/1PP2PPP/R1BQK1NR b KQkq - 0 5": "g8f6",
+                "r1bqkb1r/1p1p1ppp/p1n1pn2/2p5/P1B1P3/2NP4/1PPB1PPP/R2QK1NR b KQkq - 2 6": "d7d5",
+                "rnbqkbnr/pppp1ppp/4p3/8/4P3/3P4/PPP2PPP/RNBQKBNR b KQkq - 0 2": "d7d5",
+                "rnbqkbnr/ppp2ppp/4p3/3p4/4P3/3P4/PPPN1PPP/R1BQKBNR b KQkq - 1 3": "g8f6",
+                "rnbqkb1r/ppp2ppp/4pn2/3p4/4P3/3P1N2/PPPN1PPP/R1BQKB1R b KQkq - 3 4": "c7c5",
+                "rnbqkb1r/pp3ppp/4pn2/2pp4/4P3/3P1NP1/PPPN1P1P/R1BQKB1R b KQkq - 0 5": "b7b6",
+                "rnbqkb1r/p4ppp/1p2pn2/2pp4/4P3/2PP1NP1/PP1N1P1P/R1BQKB1R b KQkq - 0 6": "f8e7",
+                "rnbqkb1r/pppppppp/5n2/8/4P3/2N5/PPPP1PPP/R1BQKBNR b KQkq - 2 2": "d7d5",
+                "rnbqkb1r/ppp1pppp/5n2/3pP3/8/2N5/PPPP1PPP/R1BQKBNR b KQkq - 0 3": "f6d7",
+                "rnbqkb1r/pppnpppp/8/3pP3/3P4/2N5/PPP2PPP/R1BQKBNR b KQkq - 0 4": "c7c5",
+                "rnbqkb1r/pp1npppp/8/1BppP3/3P4/2N5/PPP2PPP/R1BQK1NR b KQkq - 1 5": "b8c6",
+                "r1bqkb1r/pp1npppp/2n5/1BppP3/3P4/2N2N2/PPP2PPP/R1BQK2R b KQkq - 3 6": "a7a6",
+                "rnbqkb1r/pp1npppp/8/2pNP3/3P4/8/PPP2PPP/R1BQKBNR b KQkq - 0 5": "c5d4",
+                "rnbqkb1r/pp1npppp/8/3NP3/3Q4/8/PPP2PPP/R1B1KBNR b KQkq - 0 6": "d7b6",
+                "rnbqkb1r/pppppppp/5n2/4P3/8/8/PPPP1PPP/RNBQKBNR b KQkq - 0 2": "f6d5",
+                "rnbqkb1r/pppppppp/8/3nP3/8/6P1/PPPP1P1P/RNBQKBNR b KQkq - 0 3": "d7d6",
+                "rnbqkb1r/ppp1pppp/3P4/3n4/8/6P1/PPPP1P1P/RNBQKBNR b KQkq - 0 4": "d8d6",
+                "rnb1kb1r/ppp1pppp/3q4/3n4/8/6P1/PPPP1PBP/RNBQK1NR b KQkq - 1 5": "b8c6",
+                "r1b1kb1r/ppp1pppp/2nq4/3n4/8/2N3P1/PPPP1PBP/R1BQK1NR b KQkq - 3 6": "d5c3",
+                "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq - 0 1": "d7d5",
+                "rnbqkbnr/ppp1pppp/8/3p4/3P1B2/8/PPP1PPPP/RN1QKBNR b KQkq - 1 2": "g8f6",
+                "rnbqkb1r/ppp1pppp/5n2/3p4/3P1B2/4P3/PPP2PPP/RN1QKBNR b KQkq - 0 3": "c8f5",
+                "rn1qkb1r/ppp1pppp/5n2/3p1b2/3P1B2/3BP3/PPP2PPP/RN1QK1NR b KQkq - 2 4": "f5g6",
+                "rn1qkb1r/ppp1pppp/5nb1/3p4/3P1B2/3BPN2/PPP2PPP/RN1QK2R b KQkq - 4 5": "e7e6",
+                "rn1qkb1r/ppp2ppp/4pnb1/3pN3/3P1B2/3BP3/PPP2PPP/RN1QK2R b KQkq - 1 6": "f8d6",
+                "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3": "f8c5",
+                "r1bqk1nr/pppp1ppp/2n5/2b1p3/1PB1P3/5N2/P1PP1PPP/RNBQK2R b KQkq - 0 4": "c5b4",
+                "r1bqk1nr/pppp1ppp/2n5/4p3/1bB1P3/2P2N2/P2P1PPP/RNBQK2R b KQkq - 0 5": "b4a5"
+              },
+              "humanBlunderInterval": 10
+            }
+          }
+        },
+        {
+          "username": "Bird, Henry Edward",
+          "platformRating": null,
+          "expected": {
+            "stats": {
+              "gameCount": 11,
+              "winRate": 45,
+              "drawRate": 9,
+              "lossRate": 45,
+              "style": "Chaotique",
+              "topOpenings": [
+                {
+                  "name": "Sicilian Defense",
+                  "count": 4
+                },
+                {
+                  "name": "Italian Game",
+                  "count": 4
+                },
+                {
+                  "name": "ECO C50",
+                  "count": 3
+                }
+              ],
+              "avgMoves": 60
+            },
+            "config": {
+              "name": "Bot_Bird, Henry Edward",
+              "elo": 1792,
+              "difficulty": 2,
+              "aggressiveness": 50,
+              "threads": 2,
+              "depth": 9,
+              "timeControl": 600,
+              "favoriteOpening": "Sicilian Defense",
+              "playStyle": "tactique",
+              "openings": {
+                "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1": "e7e5",
+                "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2": "b8c6",
+                "rnbqkbnr/ppp2ppp/3p4/4p3/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 3": "c8g4",
+                "rn1qkbnr/ppp2ppp/3p4/4P3/4P1b1/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 4": "g4f3",
+                "rn1qkbnr/ppp2ppp/3p4/4P3/4P3/5Q2/PPP2PPP/RNB1KB1R b KQkq - 0 5": "d6e5",
+                "rn1qkbnr/ppp2ppp/8/4p3/2B1P3/5Q2/PPP2PPP/RNB1K2R b KQkq - 1 6": "g8f6",
+                "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1": "e2e4",
+                "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2": "g1f3",
+                "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3": "f1b5",
+                "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4": "d2d4",
+                "r1bqkb1r/pppp1ppp/5n2/1B2p3/3nP3/5N2/PPP2PPP/RNBQK2R w KQkq - 0 5": "f3d4",
+                "r1bqkb1r/pppp1ppp/5n2/1B6/3pP3/8/PPP2PPP/RNBQK2R w KQkq - 0 6": "e4e5",
+                "r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3": "g8f6",
+                "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQ1RK1 b kq - 5 4": "f6e4",
+                "r1bqkb1r/pppp1ppp/2n5/1B2p3/4n3/5N2/PPPP1PPP/RNBQR1K1 b kq - 1 5": "e4d6",
+                "r1bqkb1r/pppp1ppp/2nn4/1B2N3/8/8/PPPP1PPP/RNBQR1K1 b kq - 0 6": "f8e7",
+                "rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2": "d7d6",
+                "rnbqkbnr/pp2pppp/3p4/2p5/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 3": "c5d4",
+                "rnbqkbnr/pp2pppp/3p4/8/3NP3/8/PPP2PPP/RNBQKB1R b KQkq - 0 4": "g8f6",
+                "rnbqkb1r/pp2pppp/3p1n2/8/3NP3/2N5/PPP2PPP/R1BQKB1R b KQkq - 2 5": "a7a6",
+                "rnbqkbnr/pp1ppppp/8/2p5/2B1P3/8/PPPP1PPP/RNBQK1NR b KQkq - 1 2": "e7e6",
+                "rnbqkbnr/pp1p1ppp/4p3/2p5/2B1P3/2N5/PPPP1PPP/R1BQK1NR b KQkq - 1 3": "a7a6",
+                "rnbqkbnr/1p1p1ppp/p3p3/2p5/P1B1P3/2N5/1PPP1PPP/R1BQK1NR b KQkq - 0 4": "b8c6",
+                "r1bqkbnr/1p1p1ppp/p1n1p3/2p5/P1B1P3/2NP4/1PP2PPP/R1BQK1NR b KQkq - 0 5": "g8f6",
+                "r1bqkb1r/1p1p1ppp/p1n1pn2/2p5/P1B1P3/2NP4/1PPB1PPP/R2QK1NR b KQkq - 2 6": "d7d5",
+                "rnbqkbnr/pppp1ppp/4p3/8/4P3/3P4/PPP2PPP/RNBQKBNR b KQkq - 0 2": "d7d5",
+                "rnbqkbnr/ppp2ppp/4p3/3p4/4P3/3P4/PPPN1PPP/R1BQKBNR b KQkq - 1 3": "g8f6",
+                "rnbqkb1r/ppp2ppp/4pn2/3p4/4P3/3P1N2/PPPN1PPP/R1BQKB1R b KQkq - 3 4": "c7c5",
+                "rnbqkb1r/pp3ppp/4pn2/2pp4/4P3/3P1NP1/PPPN1P1P/R1BQKB1R b KQkq - 0 5": "b7b6",
+                "rnbqkb1r/p4ppp/1p2pn2/2pp4/4P3/2PP1NP1/PP1N1P1P/R1BQKB1R b KQkq - 0 6": "f8e7",
+                "rnbqkb1r/pppppppp/5n2/8/4P3/2N5/PPPP1PPP/R1BQKBNR b KQkq - 2 2": "d7d5",
+                "rnbqkb1r/ppp1pppp/5n2/3pP3/8/2N5/PPPP1PPP/R1BQKBNR b KQkq - 0 3": "f6d7",
+                "rnbqkb1r/pppnpppp/8/3pP3/3P4/2N5/PPP2PPP/R1BQKBNR b KQkq - 0 4": "c7c5",
+                "rnbqkb1r/pp1npppp/8/1BppP3/3P4/2N5/PPP2PPP/R1BQK1NR b KQkq - 1 5": "b8c6",
+                "r1bqkb1r/pp1npppp/2n5/1BppP3/3P4/2N2N2/PPP2PPP/R1BQK2R b KQkq - 3 6": "a7a6",
+                "rnbqkb1r/pp1npppp/8/2pNP3/3P4/8/PPP2PPP/R1BQKBNR b KQkq - 0 5": "c5d4",
+                "rnbqkb1r/pp1npppp/8/3NP3/3Q4/8/PPP2PPP/R1B1KBNR b KQkq - 0 6": "d7b6",
+                "rnbqkb1r/pppppppp/5n2/4P3/8/8/PPPP1PPP/RNBQKBNR b KQkq - 0 2": "f6d5",
+                "rnbqkb1r/pppppppp/8/3nP3/8/6P1/PPPP1P1P/RNBQKBNR b KQkq - 0 3": "d7d6",
+                "rnbqkb1r/ppp1pppp/3P4/3n4/8/6P1/PPPP1P1P/RNBQKBNR b KQkq - 0 4": "d8d6",
+                "rnb1kb1r/ppp1pppp/3q4/3n4/8/6P1/PPPP1PBP/RNBQK1NR b KQkq - 1 5": "b8c6",
+                "r1b1kb1r/ppp1pppp/2nq4/3n4/8/2N3P1/PPPP1PBP/R1BQK1NR b KQkq - 3 6": "d5c3",
+                "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq - 0 1": "d7d5",
+                "rnbqkbnr/ppp1pppp/8/3p4/3P1B2/8/PPP1PPPP/RN1QKBNR b KQkq - 1 2": "g8f6",
+                "rnbqkb1r/ppp1pppp/5n2/3p4/3P1B2/4P3/PPP2PPP/RN1QKBNR b KQkq - 0 3": "c8f5",
+                "rn1qkb1r/ppp1pppp/5n2/3p1b2/3P1B2/3BP3/PPP2PPP/RN1QK1NR b KQkq - 2 4": "f5g6",
+                "rn1qkb1r/ppp1pppp/5nb1/3p4/3P1B2/3BPN2/PPP2PPP/RN1QK2R b KQkq - 4 5": "e7e6",
+                "rn1qkb1r/ppp2ppp/4pnb1/3pN3/3P1B2/3BP3/PPP2PPP/RN1QK2R b KQkq - 1 6": "f8d6",
+                "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3": "f8c5",
+                "r1bqk1nr/pppp1ppp/2n5/2b1p3/1PB1P3/5N2/P1PP1PPP/RNBQK2R b KQkq - 0 4": "c5b4",
+                "r1bqk1nr/pppp1ppp/2n5/4p3/1bB1P3/2P2N2/P2P1PPP/RNBQK2R b KQkq - 0 5": "b4a5"
+              },
+              "humanBlunderInterval": 10
+            }
+          }
+        },
+        {
+          "username": "Bird, Henry Edward",
+          "platformRating": 2150,
+          "expected": {
+            "stats": {
+              "gameCount": 11,
+              "winRate": 45,
+              "drawRate": 9,
+              "lossRate": 45,
+              "style": "Chaotique",
+              "topOpenings": [
+                {
+                  "name": "Sicilian Defense",
+                  "count": 4
+                },
+                {
+                  "name": "Italian Game",
+                  "count": 4
+                },
+                {
+                  "name": "ECO C50",
+                  "count": 3
+                }
+              ],
+              "avgMoves": 60
+            },
+            "config": {
+              "name": "Bot_Bird, Henry Edward",
+              "elo": 2150,
+              "difficulty": 2,
+              "aggressiveness": 50,
+              "threads": 2,
+              "depth": 9,
+              "timeControl": 600,
+              "favoriteOpening": "Sicilian Defense",
+              "playStyle": "tactique",
+              "openings": {
+                "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1": "e7e5",
+                "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2": "b8c6",
+                "rnbqkbnr/ppp2ppp/3p4/4p3/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 3": "c8g4",
+                "rn1qkbnr/ppp2ppp/3p4/4P3/4P1b1/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 4": "g4f3",
+                "rn1qkbnr/ppp2ppp/3p4/4P3/4P3/5Q2/PPP2PPP/RNB1KB1R b KQkq - 0 5": "d6e5",
+                "rn1qkbnr/ppp2ppp/8/4p3/2B1P3/5Q2/PPP2PPP/RNB1K2R b KQkq - 1 6": "g8f6",
+                "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1": "e2e4",
+                "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2": "g1f3",
+                "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3": "f1b5",
+                "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4": "d2d4",
+                "r1bqkb1r/pppp1ppp/5n2/1B2p3/3nP3/5N2/PPP2PPP/RNBQK2R w KQkq - 0 5": "f3d4",
+                "r1bqkb1r/pppp1ppp/5n2/1B6/3pP3/8/PPP2PPP/RNBQK2R w KQkq - 0 6": "e4e5",
+                "r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3": "g8f6",
+                "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQ1RK1 b kq - 5 4": "f6e4",
+                "r1bqkb1r/pppp1ppp/2n5/1B2p3/4n3/5N2/PPPP1PPP/RNBQR1K1 b kq - 1 5": "e4d6",
+                "r1bqkb1r/pppp1ppp/2nn4/1B2N3/8/8/PPPP1PPP/RNBQR1K1 b kq - 0 6": "f8e7",
+                "rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2": "d7d6",
+                "rnbqkbnr/pp2pppp/3p4/2p5/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 3": "c5d4",
+                "rnbqkbnr/pp2pppp/3p4/8/3NP3/8/PPP2PPP/RNBQKB1R b KQkq - 0 4": "g8f6",
+                "rnbqkb1r/pp2pppp/3p1n2/8/3NP3/2N5/PPP2PPP/R1BQKB1R b KQkq - 2 5": "a7a6",
+                "rnbqkbnr/pp1ppppp/8/2p5/2B1P3/8/PPPP1PPP/RNBQK1NR b KQkq - 1 2": "e7e6",
+                "rnbqkbnr/pp1p1ppp/4p3/2p5/2B1P3/2N5/PPPP1PPP/R1BQK1NR b KQkq - 1 3": "a7a6",
+                "rnbqkbnr/1p1p1ppp/p3p3/2p5/P1B1P3/2N5/1PPP1PPP/R1BQK1NR b KQkq - 0 4": "b8c6",
+                "r1bqkbnr/1p1p1ppp/p1n1p3/2p5/P1B1P3/2NP4/1PP2PPP/R1BQK1NR b KQkq - 0 5": "g8f6",
+                "r1bqkb1r/1p1p1ppp/p1n1pn2/2p5/P1B1P3/2NP4/1PPB1PPP/R2QK1NR b KQkq - 2 6": "d7d5",
+                "rnbqkbnr/pppp1ppp/4p3/8/4P3/3P4/PPP2PPP/RNBQKBNR b KQkq - 0 2": "d7d5",
+                "rnbqkbnr/ppp2ppp/4p3/3p4/4P3/3P4/PPPN1PPP/R1BQKBNR b KQkq - 1 3": "g8f6",
+                "rnbqkb1r/ppp2ppp/4pn2/3p4/4P3/3P1N2/PPPN1PPP/R1BQKB1R b KQkq - 3 4": "c7c5",
+                "rnbqkb1r/pp3ppp/4pn2/2pp4/4P3/3P1NP1/PPPN1P1P/R1BQKB1R b KQkq - 0 5": "b7b6",
+                "rnbqkb1r/p4ppp/1p2pn2/2pp4/4P3/2PP1NP1/PP1N1P1P/R1BQKB1R b KQkq - 0 6": "f8e7",
+                "rnbqkb1r/pppppppp/5n2/8/4P3/2N5/PPPP1PPP/R1BQKBNR b KQkq - 2 2": "d7d5",
+                "rnbqkb1r/ppp1pppp/5n2/3pP3/8/2N5/PPPP1PPP/R1BQKBNR b KQkq - 0 3": "f6d7",
+                "rnbqkb1r/pppnpppp/8/3pP3/3P4/2N5/PPP2PPP/R1BQKBNR b KQkq - 0 4": "c7c5",
+                "rnbqkb1r/pp1npppp/8/1BppP3/3P4/2N5/PPP2PPP/R1BQK1NR b KQkq - 1 5": "b8c6",
+                "r1bqkb1r/pp1npppp/2n5/1BppP3/3P4/2N2N2/PPP2PPP/R1BQK2R b KQkq - 3 6": "a7a6",
+                "rnbqkb1r/pp1npppp/8/2pNP3/3P4/8/PPP2PPP/R1BQKBNR b KQkq - 0 5": "c5d4",
+                "rnbqkb1r/pp1npppp/8/3NP3/3Q4/8/PPP2PPP/R1B1KBNR b KQkq - 0 6": "d7b6",
+                "rnbqkb1r/pppppppp/5n2/4P3/8/8/PPPP1PPP/RNBQKBNR b KQkq - 0 2": "f6d5",
+                "rnbqkb1r/pppppppp/8/3nP3/8/6P1/PPPP1P1P/RNBQKBNR b KQkq - 0 3": "d7d6",
+                "rnbqkb1r/ppp1pppp/3P4/3n4/8/6P1/PPPP1P1P/RNBQKBNR b KQkq - 0 4": "d8d6",
+                "rnb1kb1r/ppp1pppp/3q4/3n4/8/6P1/PPPP1PBP/RNBQK1NR b KQkq - 1 5": "b8c6",
+                "r1b1kb1r/ppp1pppp/2nq4/3n4/8/2N3P1/PPPP1PBP/R1BQK1NR b KQkq - 3 6": "d5c3",
+                "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq - 0 1": "d7d5",
+                "rnbqkbnr/ppp1pppp/8/3p4/3P1B2/8/PPP1PPPP/RN1QKBNR b KQkq - 1 2": "g8f6",
+                "rnbqkb1r/ppp1pppp/5n2/3p4/3P1B2/4P3/PPP2PPP/RN1QKBNR b KQkq - 0 3": "c8f5",
+                "rn1qkb1r/ppp1pppp/5n2/3p1b2/3P1B2/3BP3/PPP2PPP/RN1QK1NR b KQkq - 2 4": "f5g6",
+                "rn1qkb1r/ppp1pppp/5nb1/3p4/3P1B2/3BPN2/PPP2PPP/RN1QK2R b KQkq - 4 5": "e7e6",
+                "rn1qkb1r/ppp2ppp/4pnb1/3pN3/3P1B2/3BP3/PPP2PPP/RN1QK2R b KQkq - 1 6": "f8d6",
+                "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3": "f8c5",
+                "r1bqk1nr/pppp1ppp/2n5/2b1p3/1PB1P3/5N2/P1PP1PPP/RNBQK2R b KQkq - 0 4": "c5b4",
+                "r1bqk1nr/pppp1ppp/2n5/4p3/1bB1P3/2P2N2/P2P1PPP/RNBQK2R b KQkq - 0 5": "b4a5"
+              },
+              "humanBlunderInterval": 10
+            }
+          }
+        },
+        {
+          "username": "Steinitz, William",
+          "platformRating": null,
+          "expected": {
+            "stats": {
+              "gameCount": 11,
+              "winRate": 36,
+              "drawRate": 9,
+              "lossRate": 55,
+              "style": "Chaotique",
+              "topOpenings": [
+                {
+                  "name": "Sicilian Defense",
+                  "count": 4
+                },
+                {
+                  "name": "Italian Game",
+                  "count": 4
+                },
+                {
+                  "name": "ECO C50",
+                  "count": 3
+                }
+              ],
+              "avgMoves": 60
+            },
+            "config": {
+              "name": "Bot_Steinitz, William",
+              "elo": 1774,
+              "difficulty": 1,
+              "aggressiveness": 50,
+              "threads": 2,
+              "depth": 6,
+              "timeControl": 750,
+              "favoriteOpening": "Sicilian Defense",
+              "playStyle": "tactique",
+              "openings": {
+                "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1": "e7e5",
+                "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2": "b8c6",
+                "rnbqkbnr/ppp2ppp/3p4/4p3/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 3": "c8g4",
+                "rn1qkbnr/ppp2ppp/3p4/4P3/4P1b1/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 4": "g4f3",
+                "rn1qkbnr/ppp2ppp/3p4/4P3/4P3/5Q2/PPP2PPP/RNB1KB1R b KQkq - 0 5": "d6e5",
+                "rn1qkbnr/ppp2ppp/8/4p3/2B1P3/5Q2/PPP2PPP/RNB1K2R b KQkq - 1 6": "g8f6",
+                "r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3": "g8f6",
+                "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/3PP3/5N2/PPP2PPP/RNBQK2R b KQkq - 0 4": "c6d4",
+                "r1bqkb1r/pppp1ppp/5n2/1B2p3/3NP3/8/PPP2PPP/RNBQK2R b KQkq - 0 5": "e5d4",
+                "r1bqkb1r/pppp1ppp/5n2/1B2P3/3p4/8/PPP2PPP/RNBQK2R b KQkq - 0 6": "f6e4",
+                "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1": "e2e4",
+                "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2": "g1f3",
+                "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3": "f1b5",
+                "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4": "e1g1",
+                "r1bqkb1r/pppp1ppp/2n5/1B2p3/4n3/5N2/PPPP1PPP/RNBQ1RK1 w kq - 0 5": "f1e1",
+                "r1bqkb1r/pppp1ppp/2nn4/1B2p3/8/5N2/PPPP1PPP/RNBQR1K1 w kq - 2 6": "f3e5",
+                "rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2": "d7d6",
+                "rnbqkbnr/pp2pppp/3p4/2p5/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 3": "c5d4",
+                "rnbqkbnr/pp2pppp/3p4/8/3NP3/8/PPP2PPP/RNBQKB1R b KQkq - 0 4": "g8f6",
+                "rnbqkb1r/pp2pppp/3p1n2/8/3NP3/2N5/PPP2PPP/R1BQKB1R b KQkq - 2 5": "a7a6",
+                "rnbqkbnr/pp1ppppp/8/2p5/2B1P3/8/PPPP1PPP/RNBQK1NR b KQkq - 1 2": "e7e6",
+                "rnbqkbnr/pp1p1ppp/4p3/2p5/2B1P3/2N5/PPPP1PPP/R1BQK1NR b KQkq - 1 3": "a7a6",
+                "rnbqkbnr/1p1p1ppp/p3p3/2p5/P1B1P3/2N5/1PPP1PPP/R1BQK1NR b KQkq - 0 4": "b8c6",
+                "r1bqkbnr/1p1p1ppp/p1n1p3/2p5/P1B1P3/2NP4/1PP2PPP/R1BQK1NR b KQkq - 0 5": "g8f6",
+                "r1bqkb1r/1p1p1ppp/p1n1pn2/2p5/P1B1P3/2NP4/1PPB1PPP/R2QK1NR b KQkq - 2 6": "d7d5",
+                "rnbqkbnr/pppp1ppp/4p3/8/4P3/3P4/PPP2PPP/RNBQKBNR b KQkq - 0 2": "d7d5",
+                "rnbqkbnr/ppp2ppp/4p3/3p4/4P3/3P4/PPPN1PPP/R1BQKBNR b KQkq - 1 3": "g8f6",
+                "rnbqkb1r/ppp2ppp/4pn2/3p4/4P3/3P1N2/PPPN1PPP/R1BQKB1R b KQkq - 3 4": "c7c5",
+                "rnbqkb1r/pp3ppp/4pn2/2pp4/4P3/3P1NP1/PPPN1P1P/R1BQKB1R b KQkq - 0 5": "b7b6",
+                "rnbqkb1r/p4ppp/1p2pn2/2pp4/4P3/2PP1NP1/PP1N1P1P/R1BQKB1R b KQkq - 0 6": "f8e7",
+                "rnbqkb1r/pppppppp/5n2/8/4P3/2N5/PPPP1PPP/R1BQKBNR b KQkq - 2 2": "d7d5",
+                "rnbqkb1r/ppp1pppp/5n2/3pP3/8/2N5/PPPP1PPP/R1BQKBNR b KQkq - 0 3": "f6d7",
+                "rnbqkb1r/pppnpppp/8/3pP3/3P4/2N5/PPP2PPP/R1BQKBNR b KQkq - 0 4": "c7c5",
+                "rnbqkb1r/pp1npppp/8/1BppP3/3P4/2N5/PPP2PPP/R1BQK1NR b KQkq - 1 5": "b8c6",
+                "r1bqkb1r/pp1npppp/2n5/1BppP3/3P4/2N2N2/PPP2PPP/R1BQK2R b KQkq - 3 6": "a7a6",
+                "rnbqkb1r/pp1npppp/8/2pNP3/3P4/8/PPP2PPP/R1BQKBNR b KQkq - 0 5": "c5d4",
+                "rnbqkb1r/pp1npppp/8/3NP3/3Q4/8/PPP2PPP/R1B1KBNR b KQkq - 0 6": "d7b6",
+                "rnbqkb1r/pppppppp/5n2/4P3/8/8/PPPP1PPP/RNBQKBNR b KQkq - 0 2": "f6d5",
+                "rnbqkb1r/pppppppp/8/3nP3/8/6P1/PPPP1P1P/RNBQKBNR b KQkq - 0 3": "d7d6",
+                "rnbqkb1r/ppp1pppp/3P4/3n4/8/6P1/PPPP1P1P/RNBQKBNR b KQkq - 0 4": "d8d6",
+                "rnb1kb1r/ppp1pppp/3q4/3n4/8/6P1/PPPP1PBP/RNBQK1NR b KQkq - 1 5": "b8c6",
+                "r1b1kb1r/ppp1pppp/2nq4/3n4/8/2N3P1/PPPP1PBP/R1BQK1NR b KQkq - 3 6": "d5c3",
+                "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq - 0 1": "d7d5",
+                "rnbqkbnr/ppp1pppp/8/3p4/3P1B2/8/PPP1PPPP/RN1QKBNR b KQkq - 1 2": "g8f6",
+                "rnbqkb1r/ppp1pppp/5n2/3p4/3P1B2/4P3/PPP2PPP/RN1QKBNR b KQkq - 0 3": "c8f5",
+                "rn1qkb1r/ppp1pppp/5n2/3p1b2/3P1B2/3BP3/PPP2PPP/RN1QK1NR b KQkq - 2 4": "f5g6",
+                "rn1qkb1r/ppp1pppp/5nb1/3p4/3P1B2/3BPN2/PPP2PPP/RN1QK2R b KQkq - 4 5": "e7e6",
+                "rn1qkb1r/ppp2ppp/4pnb1/3pN3/3P1B2/3BP3/PPP2PPP/RN1QK2R b KQkq - 1 6": "f8d6",
+                "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3": "f8c5",
+                "r1bqk1nr/pppp1ppp/2n5/2b1p3/1PB1P3/5N2/P1PP1PPP/RNBQK2R b KQkq - 0 4": "c5b4",
+                "r1bqk1nr/pppp1ppp/2n5/4p3/1bB1P3/2P2N2/P2P1PPP/RNBQK2R b KQkq - 0 5": "b4a5"
+              },
+              "humanBlunderInterval": 10
+            }
+          }
+        },
+        {
+          "username": "Steinitz, William",
+          "platformRating": 2150,
+          "expected": {
+            "stats": {
+              "gameCount": 11,
+              "winRate": 36,
+              "drawRate": 9,
+              "lossRate": 55,
+              "style": "Chaotique",
+              "topOpenings": [
+                {
+                  "name": "Sicilian Defense",
+                  "count": 4
+                },
+                {
+                  "name": "Italian Game",
+                  "count": 4
+                },
+                {
+                  "name": "ECO C50",
+                  "count": 3
+                }
+              ],
+              "avgMoves": 60
+            },
+            "config": {
+              "name": "Bot_Steinitz, William",
+              "elo": 2150,
+              "difficulty": 1,
+              "aggressiveness": 50,
+              "threads": 2,
+              "depth": 6,
+              "timeControl": 750,
+              "favoriteOpening": "Sicilian Defense",
+              "playStyle": "tactique",
+              "openings": {
+                "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1": "e7e5",
+                "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2": "b8c6",
+                "rnbqkbnr/ppp2ppp/3p4/4p3/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 3": "c8g4",
+                "rn1qkbnr/ppp2ppp/3p4/4P3/4P1b1/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 4": "g4f3",
+                "rn1qkbnr/ppp2ppp/3p4/4P3/4P3/5Q2/PPP2PPP/RNB1KB1R b KQkq - 0 5": "d6e5",
+                "rn1qkbnr/ppp2ppp/8/4p3/2B1P3/5Q2/PPP2PPP/RNB1K2R b KQkq - 1 6": "g8f6",
+                "r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3": "g8f6",
+                "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/3PP3/5N2/PPP2PPP/RNBQK2R b KQkq - 0 4": "c6d4",
+                "r1bqkb1r/pppp1ppp/5n2/1B2p3/3NP3/8/PPP2PPP/RNBQK2R b KQkq - 0 5": "e5d4",
+                "r1bqkb1r/pppp1ppp/5n2/1B2P3/3p4/8/PPP2PPP/RNBQK2R b KQkq - 0 6": "f6e4",
+                "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1": "e2e4",
+                "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2": "g1f3",
+                "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3": "f1b5",
+                "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4": "e1g1",
+                "r1bqkb1r/pppp1ppp/2n5/1B2p3/4n3/5N2/PPPP1PPP/RNBQ1RK1 w kq - 0 5": "f1e1",
+                "r1bqkb1r/pppp1ppp/2nn4/1B2p3/8/5N2/PPPP1PPP/RNBQR1K1 w kq - 2 6": "f3e5",
+                "rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2": "d7d6",
+                "rnbqkbnr/pp2pppp/3p4/2p5/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 3": "c5d4",
+                "rnbqkbnr/pp2pppp/3p4/8/3NP3/8/PPP2PPP/RNBQKB1R b KQkq - 0 4": "g8f6",
+                "rnbqkb1r/pp2pppp/3p1n2/8/3NP3/2N5/PPP2PPP/R1BQKB1R b KQkq - 2 5": "a7a6",
+                "rnbqkbnr/pp1ppppp/8/2p5/2B1P3/8/PPPP1PPP/RNBQK1NR b KQkq - 1 2": "e7e6",
+                "rnbqkbnr/pp1p1ppp/4p3/2p5/2B1P3/2N5/PPPP1PPP/R1BQK1NR b KQkq - 1 3": "a7a6",
+                "rnbqkbnr/1p1p1ppp/p3p3/2p5/P1B1P3/2N5/1PPP1PPP/R1BQK1NR b KQkq - 0 4": "b8c6",
+                "r1bqkbnr/1p1p1ppp/p1n1p3/2p5/P1B1P3/2NP4/1PP2PPP/R1BQK1NR b KQkq - 0 5": "g8f6",
+                "r1bqkb1r/1p1p1ppp/p1n1pn2/2p5/P1B1P3/2NP4/1PPB1PPP/R2QK1NR b KQkq - 2 6": "d7d5",
+                "rnbqkbnr/pppp1ppp/4p3/8/4P3/3P4/PPP2PPP/RNBQKBNR b KQkq - 0 2": "d7d5",
+                "rnbqkbnr/ppp2ppp/4p3/3p4/4P3/3P4/PPPN1PPP/R1BQKBNR b KQkq - 1 3": "g8f6",
+                "rnbqkb1r/ppp2ppp/4pn2/3p4/4P3/3P1N2/PPPN1PPP/R1BQKB1R b KQkq - 3 4": "c7c5",
+                "rnbqkb1r/pp3ppp/4pn2/2pp4/4P3/3P1NP1/PPPN1P1P/R1BQKB1R b KQkq - 0 5": "b7b6",
+                "rnbqkb1r/p4ppp/1p2pn2/2pp4/4P3/2PP1NP1/PP1N1P1P/R1BQKB1R b KQkq - 0 6": "f8e7",
+                "rnbqkb1r/pppppppp/5n2/8/4P3/2N5/PPPP1PPP/R1BQKBNR b KQkq - 2 2": "d7d5",
+                "rnbqkb1r/ppp1pppp/5n2/3pP3/8/2N5/PPPP1PPP/R1BQKBNR b KQkq - 0 3": "f6d7",
+                "rnbqkb1r/pppnpppp/8/3pP3/3P4/2N5/PPP2PPP/R1BQKBNR b KQkq - 0 4": "c7c5",
+                "rnbqkb1r/pp1npppp/8/1BppP3/3P4/2N5/PPP2PPP/R1BQK1NR b KQkq - 1 5": "b8c6",
+                "r1bqkb1r/pp1npppp/2n5/1BppP3/3P4/2N2N2/PPP2PPP/R1BQK2R b KQkq - 3 6": "a7a6",
+                "rnbqkb1r/pp1npppp/8/2pNP3/3P4/8/PPP2PPP/R1BQKBNR b KQkq - 0 5": "c5d4",
+                "rnbqkb1r/pp1npppp/8/3NP3/3Q4/8/PPP2PPP/R1B1KBNR b KQkq - 0 6": "d7b6",
+                "rnbqkb1r/pppppppp/5n2/4P3/8/8/PPPP1PPP/RNBQKBNR b KQkq - 0 2": "f6d5",
+                "rnbqkb1r/pppppppp/8/3nP3/8/6P1/PPPP1P1P/RNBQKBNR b KQkq - 0 3": "d7d6",
+                "rnbqkb1r/ppp1pppp/3P4/3n4/8/6P1/PPPP1P1P/RNBQKBNR b KQkq - 0 4": "d8d6",
+                "rnb1kb1r/ppp1pppp/3q4/3n4/8/6P1/PPPP1PBP/RNBQK1NR b KQkq - 1 5": "b8c6",
+                "r1b1kb1r/ppp1pppp/2nq4/3n4/8/2N3P1/PPPP1PBP/R1BQK1NR b KQkq - 3 6": "d5c3",
+                "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq - 0 1": "d7d5",
+                "rnbqkbnr/ppp1pppp/8/3p4/3P1B2/8/PPP1PPPP/RN1QKBNR b KQkq - 1 2": "g8f6",
+                "rnbqkb1r/ppp1pppp/5n2/3p4/3P1B2/4P3/PPP2PPP/RN1QKBNR b KQkq - 0 3": "c8f5",
+                "rn1qkb1r/ppp1pppp/5n2/3p1b2/3P1B2/3BP3/PPP2PPP/RN1QK1NR b KQkq - 2 4": "f5g6",
+                "rn1qkb1r/ppp1pppp/5nb1/3p4/3P1B2/3BPN2/PPP2PPP/RN1QK2R b KQkq - 4 5": "e7e6",
+                "rn1qkb1r/ppp2ppp/4pnb1/3pN3/3P1B2/3BP3/PPP2PPP/RN1QK2R b KQkq - 1 6": "f8d6",
+                "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3": "f8c5",
+                "r1bqk1nr/pppp1ppp/2n5/2b1p3/1PB1P3/5N2/P1PP1PPP/RNBQK2R b KQkq - 0 4": "c5b4",
+                "r1bqk1nr/pppp1ppp/2n5/4p3/1bB1P3/2P2N2/P2P1PPP/RNBQK2R b KQkq - 0 5": "b4a5"
+              },
+              "humanBlunderInterval": 10
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

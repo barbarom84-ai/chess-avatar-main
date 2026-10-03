@@ -1,0 +1,1157 @@
+[
+  {
+    "id": "italian-game",
+    "name": {
+      "fr": "Partie Italienne",
+      "en": "Italian Game"
+    },
+    "eco": "C50",
+    "color": "white",
+    "difficulty": "beginner",
+    "character": "classical",
+    "tags": [
+      "e4",
+      "classique",
+      "développement",
+      "attaque"
+    ],
+    "guided": true,
+    "hook": {
+      "fr": "Développement logique et combat central — idéal pour comprendre les fondamentaux.",
+      "en": "Sound development and central tension — ideal for learning fundamentals."
+    },
+    "overview": {
+      "fr": "Après 1.e4 e5 2.Cf3 Cc6, le fou en c4 vise f7 et appuie le centre. Les blancs cherchent souvent d3 puis le roc court, parfois c3 et d4 pour ouvrir le centre. Les noirs réagissent par …F6, …d5 tactique, ou défense à deux fianchetti.",
+      "en": "After 1.e4 e5 2.Nf3 Nc6, Bc4 eyes f7 and supports the center. White often plays d3 and short castle, sometimes c3 and d4 to open the center. Black answers with …Bc5, …Nf6, a timely …d5, or double fianchetto systems."
+    },
+    "mainIdeas": [
+      {
+        "fr": "Contrôler le centre et développer sans perdre de temps.",
+        "en": "Control the center and develop without wasting time."
+      },
+      {
+        "fr": "La case f7 (et f2 côté noir) reste une cible tactique classique.",
+        "en": "The f7 square (and f2 for Black) remains a classic tactical target."
+      },
+      {
+        "fr": "Selon la variante, viser d2–d4 ou au contraire garder la tension avec d3.",
+        "en": "Depending on the line, aim for d2–d4 or keep tension with d3."
+      }
+    ],
+    "modelLine": [
+      {
+        "uci": "e2e4",
+        "comment": {
+          "fr": "Ouverture du centre.",
+          "en": "Open the center."
+        }
+      },
+      {
+        "uci": "e7e5",
+        "comment": {
+          "fr": "Réponse symétrique classique.",
+          "en": "Classical symmetrical reply."
+        }
+      },
+      {
+        "uci": "g1f3",
+        "comment": {
+          "fr": "Développement du cavalier vers le centre.",
+          "en": "Develop the knight toward the center."
+        }
+      },
+      {
+        "uci": "b8c6",
+        "comment": {
+          "fr": "Défend e5 et développe.",
+          "en": "Defends e5 and develops."
+        }
+      },
+      {
+        "uci": "f1c4",
+        "comment": {
+          "fr": "Fou actif, pression latente sur f7.",
+          "en": "Active bishop, latent pressure on f7."
+        }
+      },
+      {
+        "uci": "f8c5",
+        "comment": {
+          "fr": "Contre-attaque naturelle sur f2.",
+          "en": "Natural counterplay against f2."
+        }
+      },
+      {
+        "uci": "c2c3",
+        "comment": {
+          "fr": "Prépare d4 avec solidité.",
+          "en": "Prepares d4 on solid footing."
+        }
+      },
+      {
+        "uci": "g8f6",
+        "comment": {
+          "fr": "Développement et attaque sur e4.",
+          "en": "Development and pressure on e4."
+        }
+      }
+    ],
+    "historicalGames": []
+  },
+  {
+    "id": "spanish-opening",
+    "name": {
+      "fr": "Ruy Lopez (Espagnole)",
+      "en": "Ruy Lopez (Spanish)"
+    },
+    "eco": "C60",
+    "color": "white",
+    "difficulty": "intermediate",
+    "character": "classical",
+    "tags": [
+      "e4",
+      "classique",
+      "positionnel",
+      "théorie"
+    ],
+    "guided": true,
+    "hook": {
+      "fr": "La ligne la plus étudiée au monde — structure riche et plans de longue haleine.",
+      "en": "The most analyzed opening in the world — rich structure and long-term plans."
+    },
+    "overview": {
+      "fr": "Le Fb5 épinglette le cavalier c6 et demande aux noirs de montrer leur plan : …a6, défense steinitz, berlinese, ou structures fermées. Les blancs visent souvent le jeu positionnel ou l’attaque des rocs opposés.",
+      "en": "The Ruy Lopez Bb5 pins the Nc6 and asks Black to show their plan: …a6, Steinitz, Berlin, or closed setups. White often aims for positional play or opposite-side castling attacks."
+    },
+    "mainIdeas": [
+      {
+        "fr": "Maintenir la tension centrale plutôt que tout échanger trop tôt.",
+        "en": "Maintain central tension rather than exchanging everything early."
+      },
+      {
+        "fr": "Les noirs peuvent accepter une structure avec pion double pour l’activité.",
+        "en": "Black may accept doubled pawns for piece activity."
+      }
+    ],
+    "modelLine": [
+      {
+        "uci": "e2e4",
+        "comment": {
+          "fr": "Contrôle central.",
+          "en": "Central control."
+        }
+      },
+      {
+        "uci": "e7e5",
+        "comment": {
+          "fr": "Réponse classique.",
+          "en": "Classical reply."
+        }
+      },
+      {
+        "uci": "g1f3",
+        "comment": {
+          "fr": "Développement.",
+          "en": "Development."
+        }
+      },
+      {
+        "uci": "b8c6",
+        "comment": {
+          "fr": "Défense du pion e5.",
+          "en": "Defends the e5 pawn."
+        }
+      },
+      {
+        "uci": "f1b5",
+        "comment": {
+          "fr": "Ruy Lopez : pression sur la structure noire.",
+          "en": "Ruy Lopez: pressure on Black’s structure."
+        }
+      },
+      {
+        "uci": "a7a6",
+        "comment": {
+          "fr": "Morphy : force le fou à décider.",
+          "en": "Morphy: forces the bishop to decide."
+        }
+      },
+      {
+        "uci": "b5a4",
+        "comment": {
+          "fr": "Maintien de l’épinglette latérale.",
+          "en": "Keeps the lateral pin idea."
+        }
+      }
+    ],
+    "historicalGames": []
+  },
+  {
+    "id": "sicilian-defense",
+    "name": {
+      "fr": "Défense Sicilienne",
+      "en": "Sicilian Defense"
+    },
+    "eco": "B20",
+    "color": "black",
+    "difficulty": "advanced",
+    "character": "aggressive",
+    "tags": [
+      "e4",
+      "agressif",
+      "déséquilibré",
+      "populaire"
+    ],
+    "guided": true,
+    "hook": {
+      "fr": "Réponse asymétrique et combative aux blancs — asymétrie = chances des deux côtés.",
+      "en": "Asymmetrical, fighting reply to 1.e4 — imbalance gives both sides chances."
+    },
+    "overview": {
+      "fr": "Après 1.e4 c5, les noirs contrôlent d4 sans verrouiller le centre. Les variantes Najdorf, Dragon, Sveshnikov offrent des profils très différents (tactique, attaque de rois, pions compensés).",
+      "en": "After 1.e4 c5, Black controls d4 without locking the center. Najdorf, Dragon, and Sveshnikov offer very different profiles."
+    },
+    "mainIdeas": [
+      {
+        "fr": "Les noirs acceptent souvent un retard de développement pour une structure de pions dynamique.",
+        "en": "Black often accepts lagging development for a dynamic pawn structure."
+      },
+      {
+        "fr": "Les blancs exploitent souvent l’avance d’espace à l’aile dame.",
+        "en": "White often exploits extra queenside space."
+      }
+    ],
+    "modelLine": [
+      {
+        "uci": "e2e4",
+        "comment": {
+          "fr": "1.e4",
+          "en": "1.e4"
+        }
+      },
+      {
+        "uci": "c7c5",
+        "comment": {
+          "fr": "Sicilienne : asymétrie immédiate.",
+          "en": "Sicilian: immediate imbalance."
+        }
+      },
+      {
+        "uci": "g1f3",
+        "comment": {
+          "fr": "Développement naturel.",
+          "en": "Natural development."
+        }
+      },
+      {
+        "uci": "d7d6",
+        "comment": {
+          "fr": "Variante « ancienne » solide.",
+          "en": "Solid ‘old’ Scheveningen-style setup."
+        }
+      },
+      {
+        "uci": "d2d4",
+        "comment": {
+          "fr": "Les blancs attaquent le centre.",
+          "en": "White strikes at the center."
+        }
+      },
+      {
+        "uci": "c5d4",
+        "comment": {
+          "fr": "Prise en passant structurel.",
+          "en": "Structural capture."
+        }
+      }
+    ],
+    "historicalGames": []
+  },
+  {
+    "id": "french-defense",
+    "name": {
+      "fr": "Défense Française",
+      "en": "French Defense"
+    },
+    "eco": "C00",
+    "color": "black",
+    "difficulty": "intermediate",
+    "character": "positional",
+    "tags": [
+      "e4",
+      "solide",
+      "positionnel",
+      "contre-attaque"
+    ],
+    "guided": true,
+    "hook": {
+      "fr": "Structure e6–d5 solide ; les noirs acceptent un cavalier parfois passif pour un centre compact.",
+      "en": "Solid e6–d5 structure; Black may accept a passive knight for a compact center."
+    },
+    "overview": {
+      "fr": "1.e4 e6 mène souvent à des positions fermées après …d5. Les plans blancs incluent e5, ed, ou Tg1 avec f4. Les noirs cherchent contre-jeu …c5 ou …f6 selon les variantes.",
+      "en": "1.e4 e6 often leads to closed positions after …d5. White plans include e5, exd5, or Rg1 with f4. Black seeks …c5 or …f6 counterplay."
+    },
+    "mainIdeas": [
+      {
+        "fr": "La chaîne de pions d5–e6 peut être solide mais passive ; cherche les ruptures …c5, …f6.",
+        "en": "The d5–e6 chain can be solid but passive; look for …c5, …f6 breaks."
+      }
+    ],
+    "modelLine": [
+      {
+        "uci": "e2e4",
+        "comment": {
+          "fr": "1.e4",
+          "en": "1.e4"
+        }
+      },
+      {
+        "uci": "e7e6",
+        "comment": {
+          "fr": "Française.",
+          "en": "French Defense."
+        }
+      },
+      {
+        "uci": "d2d4",
+        "comment": {
+          "fr": "Prise d’espace.",
+          "en": "Grabs space."
+        }
+      },
+      {
+        "uci": "d7d5",
+        "comment": {
+          "fr": "Challenge central.",
+          "en": "Central challenge."
+        }
+      },
+      {
+        "uci": "e4e5",
+        "comment": {
+          "fr": "Avance : espace mais cases claires pour Cd7.",
+          "en": "Advance: space but holes for Nd7."
+        }
+      },
+      {
+        "uci": "c7c5",
+        "comment": {
+          "fr": "Rupture classique contre la chaîne.",
+          "en": "Classic break vs the chain."
+        }
+      }
+    ],
+    "historicalGames": []
+  },
+  {
+    "id": "alekhine-defense",
+    "name": {
+      "fr": "Défense Alekhine",
+      "en": "Alekhine's Defense"
+    },
+    "eco": "B02",
+    "color": "black",
+    "difficulty": "advanced",
+    "character": "hypermodern",
+    "tags": [
+      "e4",
+      "hypermoderne",
+      "provocateur",
+      "original"
+    ],
+    "guided": true,
+    "hook": {
+      "fr": "Défense hypermoderne : les noirs incitent e4–e5 pour attaquer la chaîne de pions plus tard.",
+      "en": "Hypermodern defense: Black tempts e4–e5 to attack the pawn chain later."
+    },
+    "overview": {
+      "fr": "1.e4 Cf6 provoque 2.e5. Les noirs reculent le cavalier et cherchent des cases d5 et b6 affaiblies. Les blancs peuvent jouer solide (d4, f4) ou tactique.",
+      "en": "1.e4 Nf6 provokes 2.e5. Black retreats the knight and targets weak d5/b6 squares. White can play solidly (d4, f4) or sharply."
+    },
+    "mainIdeas": [
+      {
+        "fr": "Les pions blancs avancés peuvent devenir des cibles après …d6 / …d5.",
+        "en": "White’s advanced pawns can become targets after …d6 / …d5."
+      }
+    ],
+    "modelLine": [
+      {
+        "uci": "e2e4",
+        "comment": {
+          "fr": "1.e4",
+          "en": "1.e4"
+        }
+      },
+      {
+        "uci": "g8f6",
+        "comment": {
+          "fr": "Alekhine : attaque immédiate sur e4.",
+          "en": "Alekhine: immediate hit on e4."
+        }
+      },
+      {
+        "uci": "e4e5",
+        "comment": {
+          "fr": "Gain de temps et d’espace.",
+          "en": "Gains time and space."
+        }
+      },
+      {
+        "uci": "f6d5",
+        "comment": {
+          "fr": "Cavalier central flexible.",
+          "en": "Flexible central knight."
+        }
+      },
+      {
+        "uci": "d2d4",
+        "comment": {
+          "fr": "Soutien de e5 et ouverture lignes.",
+          "en": "Supports e5 and opens lines."
+        }
+      }
+    ],
+    "historicalGames": []
+  },
+  {
+    "id": "london-system",
+    "name": {
+      "fr": "Système de Londres",
+      "en": "London System"
+    },
+    "eco": "D02",
+    "color": "white",
+    "difficulty": "beginner",
+    "character": "positional",
+    "tags": [
+      "d4",
+      "système",
+      "solide",
+      "débutant",
+      "flexible"
+    ],
+    "guided": true,
+    "hook": {
+      "fr": "Structure blanche flexible (d4, Ff4, e3, Cf3) — populaire en blitz et pour éviter la grosse théorie.",
+      "en": "Flexible White setup (d4, Bf4, e3, Nf3) — popular in blitz and to avoid heavy theory."
+    },
+    "overview": {
+      "fr": "Les blancs développent sans engagement précoce en e4. Le fou f4 évite souvent le blocage e3–Ff1. Les noirs peuvent opposer …d5, …e6, ou un fianchetto roi.",
+      "en": "White develops without early e4 commitment. Bf4 often avoids e3–Bf1 blockage. Black can meet with …d5, …e6, or a kingside fianchetto."
+    },
+    "mainIdeas": [
+      {
+        "fr": "Contrôle e5 et cases claires ; parfois c3 puis e4 en milieu de partie.",
+        "en": "Control e5 and light squares; sometimes c3 then e4 later."
+      }
+    ],
+    "modelLine": [
+      {
+        "uci": "d2d4",
+        "comment": {
+          "fr": "Contrôle central.",
+          "en": "Central control."
+        }
+      },
+      {
+        "uci": "d7d5",
+        "comment": {
+          "fr": "Réponse solide.",
+          "en": "Solid reply."
+        }
+      },
+      {
+        "uci": "c1f4",
+        "comment": {
+          "fr": "Londres : fou actif avant e3.",
+          "en": "London: active bishop before e3."
+        }
+      },
+      {
+        "uci": "e7e6",
+        "comment": {
+          "fr": "Structure solide noire.",
+          "en": "Solid Black structure."
+        }
+      },
+      {
+        "uci": "e2e3",
+        "comment": {
+          "fr": "Soutien du centre et Fc1–d3 possible.",
+          "en": "Supports center; Bd3 possible."
+        }
+      },
+      {
+        "uci": "c7c5",
+        "comment": {
+          "fr": "Rupture classique.",
+          "en": "Classic break."
+        }
+      }
+    ],
+    "historicalGames": []
+  },
+  {
+    "id": "queens-gambit",
+    "name": {
+      "fr": "Gambit Dame",
+      "en": "Queen's Gambit"
+    },
+    "eco": "D06",
+    "color": "white",
+    "difficulty": "intermediate",
+    "character": "positional",
+    "tags": [
+      "d4",
+      "classique",
+      "positionnel",
+      "populaire"
+    ],
+    "guided": true,
+    "hook": {
+      "fr": "1.d4 d5 2.c4 : les blancs offrent un pion pour ouvrir lignes et pression.",
+      "en": "1.d4 d5 2.c4: White offers a pawn for lines and pressure."
+    },
+    "overview": {
+      "fr": "Gambit accepté : structure de pions intéressante pour les noirs. Gambit refusé : jeu positionnel classique avec …e6. Les blancs visent souvent e3, Fd3, Cc3.",
+      "en": "Accepted: interesting pawn structures for Black. Declined: classical positional play with …e6. White often aims for e3, Bd3, Nc3."
+    },
+    "mainIdeas": [
+      {
+        "fr": "La tension c4–d5 structure beaucoup de plans de milieu de partie.",
+        "en": "The c4–d5 tension structures many middlegame plans."
+      }
+    ],
+    "modelLine": [
+      {
+        "uci": "d2d4",
+        "comment": {
+          "fr": "1.d4",
+          "en": "1.d4"
+        }
+      },
+      {
+        "uci": "d7d5",
+        "comment": {
+          "fr": "Symétrie centrale.",
+          "en": "Central symmetry."
+        }
+      },
+      {
+        "uci": "c2c4",
+        "comment": {
+          "fr": "Gambit dame.",
+          "en": "Queen’s Gambit."
+        }
+      },
+      {
+        "uci": "e7e6",
+        "comment": {
+          "fr": "Refusée : structure solide.",
+          "en": "Declined: solid structure."
+        }
+      },
+      {
+        "uci": "b1c3",
+        "comment": {
+          "fr": "Développement et pression.",
+          "en": "Development and pressure."
+        }
+      }
+    ],
+    "historicalGames": []
+  },
+  {
+    "id": "kings-indian-defense",
+    "name": {
+      "fr": "Défense Indienne du Roi",
+      "en": "King's Indian Defense"
+    },
+    "eco": "E60",
+    "color": "black",
+    "difficulty": "advanced",
+    "character": "aggressive",
+    "tags": [
+      "d4",
+      "fianchetto",
+      "agressif",
+      "dynamique"
+    ],
+    "guided": true,
+    "hook": {
+      "fr": "Fianchetto roi, …d6, …e5 ou …c5 : explosion tactique fréquente sur l’aile roi.",
+      "en": "Kingside fianchetto, …d6, …e5 or …c5: frequent kingside fireworks."
+    },
+    "overview": {
+      "fr": "Les noirs laissent souvent les blancs former un grand pion central puis attaquent avec …e5 ou …f5. Les blancs peuvent jouer e4 ou fianchetto dame (Fianchetto variation).",
+      "en": "Black often lets White build a big center then strikes with …e5 or …f5. White may play e4 or a Catalan-style fianchetto."
+    },
+    "mainIdeas": [
+      {
+        "fr": "Combat typique : expansion blanche au centre vs assaut noir sur le roi.",
+        "en": "Typical fight: White central expansion vs Black’s kingside assault."
+      }
+    ],
+    "modelLine": [
+      {
+        "uci": "d2d4",
+        "comment": {
+          "fr": "1.d4",
+          "en": "1.d4"
+        }
+      },
+      {
+        "uci": "g8f6",
+        "comment": {
+          "fr": "Développement flexible.",
+          "en": "Flexible development."
+        }
+      },
+      {
+        "uci": "c2c4",
+        "comment": {
+          "fr": "Grande présence dame.",
+          "en": "Big queen’s wing."
+        }
+      },
+      {
+        "uci": "g7g6",
+        "comment": {
+          "fr": "Prépare fianchetto.",
+          "en": "Prepares fianchetto."
+        }
+      },
+      {
+        "uci": "b1c3",
+        "comment": {
+          "fr": "Développement.",
+          "en": "Development."
+        }
+      },
+      {
+        "uci": "f8g7",
+        "comment": {
+          "fr": "Diagonale longue.",
+          "en": "Long diagonal."
+        }
+      }
+    ],
+    "historicalGames": []
+  },
+  {
+    "id": "caro-kann",
+    "name": {
+      "fr": "Défense Caro-Kann",
+      "en": "Caro-Kann Defense"
+    },
+    "eco": "B10",
+    "color": "black",
+    "difficulty": "beginner",
+    "character": "defensive",
+    "tags": [
+      "e4",
+      "solide",
+      "défensif",
+      "stable"
+    ],
+    "guided": true,
+    "hook": {
+      "fr": "Défense solide avec …c6 puis …d5 : moins de tactique brute qu’en Sicilienne, très populaire en club.",
+      "en": "Solid …c6 then …d5: less early fire than the Sicilian, very popular at club level."
+    },
+    "overview": {
+      "fr": "Les noirs repoussent le pion central blanc avec …c6 avant …d5. Variantes classique, avancée, et De Bruycker offrent des profils allant du solide au dynamique.",
+      "en": "Black meets the central pawn with …c6 before …d5. Classical, Advance, and Tartakower-style setups range from solid to dynamic."
+    },
+    "mainIdeas": [
+      {
+        "fr": "Souvent une structure avec pion d5 et pions e6/c6 : compact mais il faut du contre-jeu.",
+        "en": "Often a d5 pawn with e6/c6 support: compact but Black needs counterplay."
+      }
+    ],
+    "modelLine": [
+      {
+        "uci": "e2e4",
+        "comment": {
+          "fr": "1.e4",
+          "en": "1.e4"
+        }
+      },
+      {
+        "uci": "c7c6",
+        "comment": {
+          "fr": "Caro-Kann.",
+          "en": "Caro-Kann Defense."
+        }
+      },
+      {
+        "uci": "d2d4",
+        "comment": {
+          "fr": "Espace central.",
+          "en": "Central space."
+        }
+      },
+      {
+        "uci": "d7d5",
+        "comment": {
+          "fr": "Challenge immédiat.",
+          "en": "Immediate challenge."
+        }
+      },
+      {
+        "uci": "b1c3",
+        "comment": {
+          "fr": "Développement ; évite la prise tôt si tu préfères la classique.",
+          "en": "Development; avoids early exchange if you prefer Classical ideas."
+        }
+      }
+    ],
+    "historicalGames": []
+  },
+  {
+    "id": "nimzo-indian-defense",
+    "name": {
+      "fr": "Défense Nimzo-Indienne",
+      "en": "Nimzo-Indian Defense"
+    },
+    "eco": "E20",
+    "color": "black",
+    "difficulty": "advanced",
+    "character": "positional",
+    "tags": [
+      "d4",
+      "hypermoderne",
+      "positionnel",
+      "contrôle"
+    ],
+    "guided": true,
+    "hook": {
+      "fr": "3.Fb4+ : hypermoderne — les noirs pincent le cavalier tout en contrôlant e4.",
+      "en": "3.Bb4+: hypermodern — Black pins the knight while controlling e4."
+    },
+    "overview": {
+      "fr": "Après 1.d4 Cf6 2.c4 e6 3.Cc3 Fb4, les noirs évitent …d5 immédiat et visent souvent le bloc est-indien ou la variante Rubinstein.",
+      "en": "After 1.d4 Nf6 2.c4 e6 3.Nc3 Bb4, Black avoids immediate …d5 and often heads for KID-style or Rubinstein setups."
+    },
+    "mainIdeas": [
+      {
+        "fr": "Le fou en b4 force les blancs à choisir : a3, e3, ou accepter la structure.",
+        "en": "The Bb4 bishop forces White to choose: a3, e3, or accept the structure."
+      }
+    ],
+    "modelLine": [
+      {
+        "uci": "d2d4",
+        "comment": {
+          "fr": "1.d4",
+          "en": "1.d4"
+        }
+      },
+      {
+        "uci": "g8f6",
+        "comment": {
+          "fr": "1…Cf6",
+          "en": "1…Nf6"
+        }
+      },
+      {
+        "uci": "c2c4",
+        "comment": {
+          "fr": "2.c4",
+          "en": "2.c4"
+        }
+      },
+      {
+        "uci": "e7e6",
+        "comment": {
+          "fr": "2…e6",
+          "en": "2…e6"
+        }
+      },
+      {
+        "uci": "b1c3",
+        "comment": {
+          "fr": "3.Cc3",
+          "en": "3.Nc3"
+        }
+      },
+      {
+        "uci": "f8b4",
+        "comment": {
+          "fr": "3…Fb4+ Nimzo-indienne.",
+          "en": "3…Bb4+ Nimzo-Indian."
+        }
+      }
+    ],
+    "historicalGames": []
+  },
+  {
+    "id": "grunfeld-defense",
+    "name": {
+      "fr": "Défense Grünfeld",
+      "en": "Grünfeld Defense"
+    },
+    "eco": "D70",
+    "color": "black",
+    "difficulty": "expert",
+    "character": "hypermodern",
+    "tags": [
+      "d4",
+      "hypermoderne",
+      "complexe",
+      "théorique"
+    ],
+    "guided": true,
+    "hook": {
+      "fr": "…d5 dynamique contre d4/c4 : les noirs acceptent un centre blanc large pour contre-attaquer.",
+      "en": "Dynamic …d5 vs d4/c4: Black accepts a wide white center to counterattack."
+    },
+    "overview": {
+      "fr": "Après 1.d4 Cf6 2.c4 g6 3.Cc3 d5, les noirs visent …F7 et pression sur d4. Kasparov et nombreux GMI l’ont popularisée.",
+      "en": "After 1.d4 Nf6 2.c4 g6 3.Nc3 d5, Black aims for …Bg7 and pressure on d4. Kasparov and many GMs championed it."
+    },
+    "mainIdeas": [
+      {
+        "fr": "Sacrifices de pion ou contre-jeu sur la colonne c selon les variantes.",
+        "en": "Pawn sacrifices or counterplay on the c-file depending on lines."
+      }
+    ],
+    "modelLine": [
+      {
+        "uci": "d2d4",
+        "comment": {
+          "fr": "1.d4",
+          "en": "1.d4"
+        }
+      },
+      {
+        "uci": "g8f6",
+        "comment": {
+          "fr": "1…Cf6",
+          "en": "1…Nf6"
+        }
+      },
+      {
+        "uci": "c2c4",
+        "comment": {
+          "fr": "2.c4",
+          "en": "2.c4"
+        }
+      },
+      {
+        "uci": "g7g6",
+        "comment": {
+          "fr": "2…g6",
+          "en": "2…g6"
+        }
+      },
+      {
+        "uci": "b1c3",
+        "comment": {
+          "fr": "3.Cc3",
+          "en": "3.Nc3"
+        }
+      },
+      {
+        "uci": "d7d5",
+        "comment": {
+          "fr": "3…d5 Grünfeld.",
+          "en": "3…d5 Grünfeld."
+        }
+      }
+    ],
+    "historicalGames": []
+  },
+  {
+    "id": "english-opening",
+    "name": {
+      "fr": "Ouverture Anglaise",
+      "en": "English Opening"
+    },
+    "eco": "A10",
+    "color": "white",
+    "difficulty": "intermediate",
+    "character": "positional",
+    "tags": [
+      "flexible",
+      "positionnel",
+      "transpositions"
+    ],
+    "guided": true,
+    "hook": {
+      "fr": "1.c4 : contrôle du centre par le flanc — transpositions vers des milliers de plans.",
+      "en": "1.c4: flank central control — transpositions to countless plans."
+    },
+    "overview": {
+      "fr": "L’anglaise peut mener à réti, catalane, sicilienne inversée, ou hedgehog. Flexibilité maximale pour le joueur de blancs.",
+      "en": "The English can lead to Réti, Catalan, reversed Sicilian, or hedgehog. Maximum flexibility for White."
+    },
+    "mainIdeas": [
+      {
+        "fr": "Retarder e4 ou le jouer selon la réponse noire ; souvent g3, Fg2.",
+        "en": "Delay e4 or play it depending on Black; often g3, Bg2."
+      }
+    ],
+    "modelLine": [
+      {
+        "uci": "c2c4",
+        "comment": {
+          "fr": "1.c4",
+          "en": "1.c4"
+        }
+      },
+      {
+        "uci": "e7e5",
+        "comment": {
+          "fr": "1…e5 symétrique possible.",
+          "en": "1…e5 symmetrical possible."
+        }
+      },
+      {
+        "uci": "g1f3",
+        "comment": {
+          "fr": "2.Cf3",
+          "en": "2.Nf3"
+        }
+      },
+      {
+        "uci": "b8c6",
+        "comment": {
+          "fr": "2…Cc6",
+          "en": "2…Nc6"
+        }
+      }
+    ],
+    "historicalGames": []
+  },
+  {
+    "id": "evans-gambit",
+    "name": {
+      "fr": "Gambit Evans",
+      "en": "Evans Gambit"
+    },
+    "eco": "C51",
+    "color": "white",
+    "difficulty": "advanced",
+    "character": "gambit",
+    "tags": [
+      "e4",
+      "gambit",
+      "romantique",
+      "initiative"
+    ],
+    "guided": true,
+    "hook": {
+      "fr": "4.b4 ! : un pion offert pour lignes ouvertes et initiative — romantique mais encore dangereux.",
+      "en": "4.b4!: a pawn for open lines and initiative — romantic but still dangerous."
+    },
+    "overview": {
+      "fr": "Après 1.e4 e5 2.Cf3 Cc6 3.Fc4 Fc5, 4.b4 vise à dévier le fou noir et accélérer l’attaque. Accepté ou refusé, les positions restent vives.",
+      "en": "After 1.e4 e5 2.Nf3 Nc6 3.Bc4 Bc5, 4.b4 aims to divert Black’s bishop and speed up the attack."
+    },
+    "mainIdeas": [
+      {
+        "fr": "Développement rapide, colonnes ouvertes, parfois sacrifice de pièce sur e5 ou f7.",
+        "en": "Fast development, open files, sometimes piece sacrifices on e5 or f7."
+      }
+    ],
+    "modelLine": [
+      {
+        "uci": "e2e4",
+        "comment": {
+          "fr": "1.e4",
+          "en": "1.e4"
+        }
+      },
+      {
+        "uci": "e7e5",
+        "comment": {
+          "fr": "1…e5",
+          "en": "1…e5"
+        }
+      },
+      {
+        "uci": "g1f3",
+        "comment": {
+          "fr": "2.Cf3",
+          "en": "2.Nf3"
+        }
+      },
+      {
+        "uci": "b8c6",
+        "comment": {
+          "fr": "2…Cc6",
+          "en": "2…Nc6"
+        }
+      },
+      {
+        "uci": "f1c4",
+        "comment": {
+          "fr": "3.Fc4",
+          "en": "3.Bc4"
+        }
+      },
+      {
+        "uci": "f8c5",
+        "comment": {
+          "fr": "3…Fc5",
+          "en": "3…Bc5"
+        }
+      },
+      {
+        "uci": "b2b4",
+        "comment": {
+          "fr": "4.b4 Gambit Evans.",
+          "en": "4.b4 Evans Gambit."
+        }
+      }
+    ],
+    "historicalGames": []
+  },
+  {
+    "id": "four-knights-scotch",
+    "name": {
+      "fr": "four-knights-scotch",
+      "en": "four-knights-scotch"
+    },
+    "eco": "",
+    "color": "white",
+    "difficulty": "beginner",
+    "character": "",
+    "tags": [],
+    "guided": true,
+    "hook": {
+      "fr": "Après 1.e4 e5 2.Cf3 Cc6 3.Cc3 Cf6, 4.d4 transpose souvent vers une partie écossaise dynamique.",
+      "en": "After 1.e4 e5 2.Nf3 Nc6 3.Nc3 Nf6, 4.d4 often transposes into a sharp Scotch-type battle."
+    },
+    "overview": {
+      "fr": "La variante écossaise du quatre cavaliers centre le jeu plus vite qu’une ligne purement fermée : la poussée d4 change la nature tactique du milieu de partie.",
+      "en": "The Scotch branch of the Four Knights speeds things up compared with purely closed lines: d4 changes the middlegame character."
+    },
+    "mainIdeas": [
+      {
+        "fr": "Ouvrir le centre avec d4 quand la structure le permet ; surveiller les tactiques sur e5 et les colonnes.",
+        "en": "Open with d4 when the structure allows; watch tactics around e5 and open files."
+      },
+      {
+        "fr": "Les transpositions vers Écossaise ou autres quatre cavaliers sont fréquentes — nomme la structure après 6–8 coups.",
+        "en": "Transpositions to Scotch or other Four Knights schemes are common — name the structure after 6–8 moves."
+      }
+    ],
+    "modelLine": [
+      {
+        "uci": "e2e4",
+        "comment": {
+          "fr": "1.e4",
+          "en": "1.e4"
+        }
+      },
+      {
+        "uci": "e7e5",
+        "comment": {
+          "fr": "1…e5",
+          "en": "1…e5"
+        }
+      },
+      {
+        "uci": "g1f3",
+        "comment": {
+          "fr": "2.Cf3",
+          "en": "2.Nf3"
+        }
+      },
+      {
+        "uci": "b8c6",
+        "comment": {
+          "fr": "2…Cc6",
+          "en": "2…Nc6"
+        }
+      },
+      {
+        "uci": "b1c3",
+        "comment": {
+          "fr": "3.Cc3",
+          "en": "3.Nc3"
+        }
+      },
+      {
+        "uci": "g8f6",
+        "comment": {
+          "fr": "3…Cf6",
+          "en": "3…Nf6"
+        }
+      },
+      {
+        "uci": "d2d4",
+        "comment": {
+          "fr": "4.d4 variante écossaise.",
+          "en": "4.d4 Scotch branch."
+        }
+      }
+    ],
+    "historicalGames": []
+  },
+  {
+    "id": "reti-opening",
+    "name": {
+      "fr": "Ouverture Réti",
+      "en": "Réti Opening"
+    },
+    "eco": "A04",
+    "color": "white",
+    "difficulty": "intermediate",
+    "character": "hypermodern",
+    "tags": [
+      "hypermoderne",
+      "flexible",
+      "contrôle"
+    ],
+    "guided": true,
+    "hook": {
+      "fr": "1.Cf3 : hypermoderne — contrôle central sans pion e4/d4 immédiat, très flexible.",
+      "en": "1.Nf3: hypermodern — central control without an immediate e4/d4, highly flexible."
+    },
+    "overview": {
+      "fr": "Les blancs retardent le choix central. Souvent c4, g3, ou d4 plus tard selon la réponse noire. Idéal pour éviter des masses de théorie sur une seule ligne.",
+      "en": "White delays the central commitment. Often c4, g3, or d4 later depending on Black. Good for avoiding one huge theoretical line."
+    },
+    "mainIdeas": [
+      {
+        "fr": "Flexibilité : la même première série de coups peut mener à des plans très différents.",
+        "en": "Flexibility: the same early moves can lead to very different plans."
+      }
+    ],
+    "modelLine": [
+      {
+        "uci": "g1f3",
+        "comment": {
+          "fr": "Réti / Zukertort.",
+          "en": "Réti / Zukertort."
+        }
+      },
+      {
+        "uci": "d7d5",
+        "comment": {
+          "fr": "Réponse centrale classique.",
+          "en": "Classical central reply."
+        }
+      },
+      {
+        "uci": "c2c4",
+        "comment": {
+          "fr": "Anglaise / catalane possible.",
+          "en": "English / Catalan possible."
+        }
+      },
+      {
+        "uci": "d5c4",
+        "comment": {
+          "fr": "Si les noirs prennent, structure asymétrique.",
+          "en": "If Black captures, asymmetrical structure."
+        }
+      }
+    ],
+    "historicalGames": []
+  }
+]

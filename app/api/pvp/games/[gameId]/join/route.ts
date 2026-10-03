@@ -5,6 +5,7 @@ import type { PvpGameRow } from "@/lib/pvp-chess";
 import { displayNameFromAuthUser } from "@/lib/pvp-display-name";
 import { pvpRateLimitOrResponse } from "@/lib/pvp-api-rate-limit";
 
+import type { PvpJoinResponse } from "@/lib/api-contract";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
 
@@ -74,7 +75,7 @@ export async function POST(
     if (error) return jsonError(error.message ?? "Join failed", 500);
     if (!updated) return jsonError("Cannot join this game", 400);
 
-    return NextResponse.json({ game: updated, role: "white" as const, serverNow: Date.now() });
+    return NextResponse.json({ game: updated, role: "white" as const, serverNow: Date.now() } satisfies PvpJoinResponse);
   }
 
   if (game.black_user_id) {
@@ -121,5 +122,5 @@ export async function POST(
   if (error) return jsonError(error.message ?? "Join failed", 500);
   if (!updated) return jsonError("Cannot join this game", 400);
 
-  return NextResponse.json({ game: updated, role: "black" as const, serverNow: Date.now() });
+  return NextResponse.json({ game: updated, role: "black" as const, serverNow: Date.now() } satisfies PvpJoinResponse);
 }

@@ -19,6 +19,7 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "check:prod-parity": "node scripts/check-prod-parity.mjs",
+    "parity:export": "tsx scripts/parity-export.ts",
     "clean": "node -e \"require('fs').rmSync('.next',{recursive:true,force:true})\"",
     "analyze": "cross-env ANALYZE=true next build --webpack",
     "build:engine": "cd public && pyinstaller --onefile --console --clean --distpath . --workpath ../.engine-build --specpath ../.engine-build --name AvatarEngine AvatarEngine.py",

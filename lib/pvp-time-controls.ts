@@ -1,5 +1,7 @@
 /** Cadences PvP (stockage en base + création de partie). */
 
+import { PARITY } from "@/lib/parity-contract";
+
 export type PvpClockMode = "unlimited" | "timed" | "correspondence";
 
 export interface PvpTimePreset {
@@ -21,20 +23,12 @@ const LEGACY_UNLIMITED_PRESET: PvpTimePreset = {
   incrementSec: 0,
 };
 
-export const PVP_TIME_PRESETS: readonly PvpTimePreset[] = [
-  { id: "correspondence_1d", mode: "correspondence", initialSec: 0, incrementSec: 0, daysPerMove: 1 },
-  { id: "correspondence_3d", mode: "correspondence", initialSec: 0, incrementSec: 0, daysPerMove: 3 },
-  { id: "correspondence_7d", mode: "correspondence", initialSec: 0, incrementSec: 0, daysPerMove: 7 },
-  { id: "bullet_1_0", mode: "timed", initialSec: 60, incrementSec: 0 },
-  { id: "bullet_2_1", mode: "timed", initialSec: 120, incrementSec: 1 },
-  { id: "blitz_3_0", mode: "timed", initialSec: 180, incrementSec: 0 },
-  { id: "blitz_3_2", mode: "timed", initialSec: 180, incrementSec: 2 },
-  { id: "blitz_5_0", mode: "timed", initialSec: 300, incrementSec: 0 },
-  { id: "blitz_5_3", mode: "timed", initialSec: 300, incrementSec: 3 },
-  { id: "blitz_10_0", mode: "timed", initialSec: 600, incrementSec: 0 },
-  { id: "rapid_15_10", mode: "timed", initialSec: 900, incrementSec: 10 },
-  { id: "classical_30_0", mode: "timed", initialSec: 1800, incrementSec: 0 },
-] as const;
+export const PVP_TIME_PRESETS: readonly PvpTimePreset[] = PARITY.pvp.timePresets.map(
+  ({ id, mode, initialSec, incrementSec, daysPerMove }) =>
+    daysPerMove === undefined
+      ? { id, mode, initialSec, incrementSec }
+      : { id, mode, initialSec, incrementSec, daysPerMove }
+);
 
 const PRESET_BY_ID = new Map(PVP_TIME_PRESETS.map((p) => [p.id, p]));
 

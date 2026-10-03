@@ -7,6 +7,7 @@ import { checkTimeoutForTimedGameWithMoves } from "@/lib/pvp-clock-server";
 import { canAccessPvpGameAsSpectator } from "@/lib/pvp-access";
 import { canUserCancelWaitingPvpGame } from "@/lib/pvp-game-cancel";
 
+import type { PvpGameDetailResponse, PvpOkResponse } from "@/lib/api-contract";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
 
@@ -97,7 +98,7 @@ export async function GET(
     canCancelLobby,
     isSpectator,
     serverNow: Date.now(),
-  });
+  } satisfies PvpGameDetailResponse);
 }
 
 /** Annule / supprime un salon encore en attente (hôte blanc uniquement, pas d’adversaire). */
@@ -128,5 +129,5 @@ export async function DELETE(
   const { error: delErr } = await sb.from("pvp_games").delete().eq("id", gameId);
   if (delErr) return jsonError(delErr.message ?? "Delete failed", 500);
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true } satisfies PvpOkResponse);
 }

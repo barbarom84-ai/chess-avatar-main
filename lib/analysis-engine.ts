@@ -14,6 +14,7 @@ import {
   getAnalysisProfile,
   type AnalysisStrictnessId,
 } from "./analysis-profiles";
+import { PARITY } from "./parity-contract";
 
 export type { AnalysisStrictnessId, AnalysisProfile } from "./analysis-profiles";
 
@@ -81,15 +82,18 @@ export interface GameAccuracyResult {
 // Constants (tuning)
 // ---------------------------------------------------------------------------
 
+const R = PARITY.review;
+
 /** Context weight: 1 + k / (1 + |evalBefore|). k chosen so equal positions scale CPL up. */
-const CONTEXT_WEIGHT_K = 1.2;
+const CONTEXT_WEIGHT_K = R.accuracy.contextWeightK;
 
 /** For averaging, cap single-move CPL so one blunder doesn't dominate. */
-const AVG_CPL_CAP = 500;
+const AVG_CPL_CAP = R.accuracy.cplCap;
 
 /** Human curve: target typical raw accuracy (e.g. 50) -> displayed 70%. */
-const TYPICAL_RAW_ACCURACY = 50;
-const TARGET_DISPLAYED_ACCURACY = 70;
+const TYPICAL_RAW_ACCURACY = R.accuracy.typicalRaw;
+const TARGET_DISPLAYED_ACCURACY = R.accuracy.targetDisplayed;
+const RAW_ACCURACY_DECAY = R.accuracy.rawDecay;
 
 /** Quality weights per classification (for potential weighted average; we use exp formula). */
 const QUALITY_WEIGHTS: Record<MoveClassification, number> = {
@@ -105,25 +109,25 @@ const QUALITY_WEIGHTS: Record<MoveClassification, number> = {
 };
 
 /** Logistic slope (per centipawn) mapping engine evaluation to expected points. */
-const WIN_SLOPE = 0.00368208;
+const WIN_SLOPE = R.winSlope;
 
 /** Expected points lost at or below which a move counts as best. */
-const BEST_MAX = 0.001;
+const BEST_MAX = R.bestMax;
 
 /** Brilliant: minimal material offered, safe afterwards, not already completely winning. */
-const BRILLIANT_MIN_SACRIFICE = 2;
-const BRILLIANT_MIN_WIN_AFTER = 0.45;
-const BRILLIANT_MAX_WIN_WITHOUT = 0.9;
+const BRILLIANT_MIN_SACRIFICE = R.brilliant.minSacrifice;
+const BRILLIANT_MIN_WIN_AFTER = R.brilliant.minWinAfter;
+const BRILLIANT_MAX_WIN_WITHOUT = R.brilliant.maxWinWithout;
 
 /** Great: alternatives lose at least this much, and the position is not lost after the move. */
-const GREAT_MIN_GAP = 0.2;
-const GREAT_MIN_WIN_AFTER = 0.35;
+const GREAT_MIN_GAP = R.great.minGap;
+const GREAT_MIN_WIN_AFTER = R.great.minWinAfter;
 
 /** Miss: opponent erred, a winning position was available, and the move let it go. */
-const MISS_MIN_OPPONENT_LOSS = 0.1;
-const MISS_MIN_BEST_WIN = 0.7;
-const MISS_MAX_WIN_AFTER = 0.65;
-const MISS_BLUNDER_FLOOR = 0.2;
+const MISS_MIN_OPPONENT_LOSS = R.miss.minOpponentLoss;
+const MISS_MIN_BEST_WIN = R.miss.minBestWin;
+const MISS_MAX_WIN_AFTER = R.miss.maxWinAfter;
+const MISS_BLUNDER_FLOOR = R.miss.blunderFloor;
 
 // ---------------------------------------------------------------------------
 // Expected points
@@ -270,7 +274,7 @@ export function classifyMove(
 // ---------------------------------------------------------------------------
 
 function rawAccuracy(avgScaledCpl: number): number {
-  return 100 * Math.exp(-0.005 * avgScaledCpl);
+  return 100 * Math.exp(-RAW_ACCURACY_DECAY * avgScaledCpl);
 }
 
 function humanCurve(raw: number): number {

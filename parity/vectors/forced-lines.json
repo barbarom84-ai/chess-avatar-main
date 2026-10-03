@@ -1,0 +1,1981 @@
+{
+  "contractVersion": 1,
+  "cases": [
+    {
+      "config": {
+        "forcedLine": null,
+        "forcedLineWhite": [
+          "e2e4",
+          "g1f3",
+          "f1c4"
+        ],
+        "forcedLineBlack": [
+          "e7e5",
+          "b8c6"
+        ]
+      },
+      "history": [],
+      "botPlaysWhite": true,
+      "expected": {
+        "white": [
+          "e2e4",
+          "g1f3",
+          "f1c4"
+        ],
+        "black": [
+          "e7e5",
+          "b8c6"
+        ],
+        "prefixMatches": true,
+        "nextMove": "e2e4"
+      }
+    },
+    {
+      "config": {
+        "forcedLine": null,
+        "forcedLineWhite": [
+          "e2e4",
+          "g1f3",
+          "f1c4"
+        ],
+        "forcedLineBlack": [
+          "e7e5",
+          "b8c6"
+        ]
+      },
+      "history": [],
+      "botPlaysWhite": false,
+      "expected": {
+        "white": [
+          "e2e4",
+          "g1f3",
+          "f1c4"
+        ],
+        "black": [
+          "e7e5",
+          "b8c6"
+        ],
+        "prefixMatches": true,
+        "nextMove": null
+      }
+    },
+    {
+      "config": {
+        "forcedLine": null,
+        "forcedLineWhite": [
+          "e2e4",
+          "g1f3",
+          "f1c4"
+        ],
+        "forcedLineBlack": [
+          "e7e5",
+          "b8c6"
+        ]
+      },
+      "history": [
+        "e2e4"
+      ],
+      "botPlaysWhite": true,
+      "expected": {
+        "white": [
+          "e2e4",
+          "g1f3",
+          "f1c4"
+        ],
+        "black": [
+          "e7e5",
+          "b8c6"
+        ],
+        "prefixMatches": true,
+        "nextMove": null
+      }
+    },
+    {
+      "config": {
+        "forcedLine": null,
+        "forcedLineWhite": [
+          "e2e4",
+          "g1f3",
+          "f1c4"
+        ],
+        "forcedLineBlack": [
+          "e7e5",
+          "b8c6"
+        ]
+      },
+      "history": [
+        "e2e4"
+      ],
+      "botPlaysWhite": false,
+      "expected": {
+        "white": [
+          "e2e4",
+          "g1f3",
+          "f1c4"
+        ],
+        "black": [
+          "e7e5",
+          "b8c6"
+        ],
+        "prefixMatches": true,
+        "nextMove": "e7e5"
+      }
+    },
+    {
+      "config": {
+        "forcedLine": null,
+        "forcedLineWhite": [
+          "e2e4",
+          "g1f3",
+          "f1c4"
+        ],
+        "forcedLineBlack": [
+          "e7e5",
+          "b8c6"
+        ]
+      },
+      "history": [
+        "e2e4",
+        "e7e5"
+      ],
+      "botPlaysWhite": true,
+      "expected": {
+        "white": [
+          "e2e4",
+          "g1f3",
+          "f1c4"
+        ],
+        "black": [
+          "e7e5",
+          "b8c6"
+        ],
+        "prefixMatches": true,
+        "nextMove": "g1f3"
+      }
+    },
+    {
+      "config": {
+        "forcedLine": null,
+        "forcedLineWhite": [
+          "e2e4",
+          "g1f3",
+          "f1c4"
+        ],
+        "forcedLineBlack": [
+          "e7e5",
+          "b8c6"
+        ]
+      },
+      "history": [
+        "e2e4",
+        "e7e5"
+      ],
+      "botPlaysWhite": false,
+      "expected": {
+        "white": [
+          "e2e4",
+          "g1f3",
+          "f1c4"
+        ],
+        "black": [
+          "e7e5",
+          "b8c6"
+        ],
+        "prefixMatches": true,
+        "nextMove": null
+      }
+    },
+    {
+      "config": {
+        "forcedLine": null,
+        "forcedLineWhite": [
+          "e2e4",
+          "g1f3",
+          "f1c4"
+        ],
+        "forcedLineBlack": [
+          "e7e5",
+          "b8c6"
+        ]
+      },
+      "history": [
+        "e2e4",
+        "c7c5",
+        "g1f3"
+      ],
+      "botPlaysWhite": true,
+      "expected": {
+        "white": [
+          "e2e4",
+          "g1f3",
+          "f1c4"
+        ],
+        "black": [
+          "e7e5",
+          "b8c6"
+        ],
+        "prefixMatches": true,
+        "nextMove": null
+      }
+    },
+    {
+      "config": {
+        "forcedLine": null,
+        "forcedLineWhite": [
+          "e2e4",
+          "g1f3",
+          "f1c4"
+        ],
+        "forcedLineBlack": [
+          "e7e5",
+          "b8c6"
+        ]
+      },
+      "history": [
+        "e2e4",
+        "c7c5",
+        "g1f3"
+      ],
+      "botPlaysWhite": false,
+      "expected": {
+        "white": [
+          "e2e4",
+          "g1f3",
+          "f1c4"
+        ],
+        "black": [
+          "e7e5",
+          "b8c6"
+        ],
+        "prefixMatches": false,
+        "nextMove": "b8c6"
+      }
+    },
+    {
+      "config": {
+        "forcedLine": null,
+        "forcedLineWhite": [
+          "e2e4",
+          "g1f3",
+          "f1c4"
+        ],
+        "forcedLineBlack": [
+          "e7e5",
+          "b8c6"
+        ]
+      },
+      "history": [
+        "d2d4",
+        "e7e5",
+        "g1f3",
+        "b8c6"
+      ],
+      "botPlaysWhite": true,
+      "expected": {
+        "white": [
+          "e2e4",
+          "g1f3",
+          "f1c4"
+        ],
+        "black": [
+          "e7e5",
+          "b8c6"
+        ],
+        "prefixMatches": false,
+        "nextMove": "f1c4"
+      }
+    },
+    {
+      "config": {
+        "forcedLine": null,
+        "forcedLineWhite": [
+          "e2e4",
+          "g1f3",
+          "f1c4"
+        ],
+        "forcedLineBlack": [
+          "e7e5",
+          "b8c6"
+        ]
+      },
+      "history": [
+        "d2d4",
+        "e7e5",
+        "g1f3",
+        "b8c6"
+      ],
+      "botPlaysWhite": false,
+      "expected": {
+        "white": [
+          "e2e4",
+          "g1f3",
+          "f1c4"
+        ],
+        "black": [
+          "e7e5",
+          "b8c6"
+        ],
+        "prefixMatches": true,
+        "nextMove": null
+      }
+    },
+    {
+      "config": {
+        "forcedLine": null,
+        "forcedLineWhite": [
+          "e2e4",
+          "g1f3",
+          "f1c4"
+        ],
+        "forcedLineBlack": [
+          "e7e5",
+          "b8c6"
+        ]
+      },
+      "history": [
+        "e2e4",
+        "e7e5",
+        "g1f3",
+        "b8c6",
+        "f1c4",
+        "g8f6"
+      ],
+      "botPlaysWhite": true,
+      "expected": {
+        "white": [
+          "e2e4",
+          "g1f3",
+          "f1c4"
+        ],
+        "black": [
+          "e7e5",
+          "b8c6"
+        ],
+        "prefixMatches": true,
+        "nextMove": null
+      }
+    },
+    {
+      "config": {
+        "forcedLine": null,
+        "forcedLineWhite": [
+          "e2e4",
+          "g1f3",
+          "f1c4"
+        ],
+        "forcedLineBlack": [
+          "e7e5",
+          "b8c6"
+        ]
+      },
+      "history": [
+        "e2e4",
+        "e7e5",
+        "g1f3",
+        "b8c6",
+        "f1c4",
+        "g8f6"
+      ],
+      "botPlaysWhite": false,
+      "expected": {
+        "white": [
+          "e2e4",
+          "g1f3",
+          "f1c4"
+        ],
+        "black": [
+          "e7e5",
+          "b8c6"
+        ],
+        "prefixMatches": true,
+        "nextMove": null
+      }
+    },
+    {
+      "config": {
+        "forcedLine": null,
+        "forcedLineWhite": [
+          "E2E4",
+          " g1f3 "
+        ],
+        "forcedLineBlack": []
+      },
+      "history": [],
+      "botPlaysWhite": true,
+      "expected": {
+        "white": [
+          "e2e4",
+          "g1f3"
+        ],
+        "black": [],
+        "prefixMatches": true,
+        "nextMove": "e2e4"
+      }
+    },
+    {
+      "config": {
+        "forcedLine": null,
+        "forcedLineWhite": [
+          "E2E4",
+          " g1f3 "
+        ],
+        "forcedLineBlack": []
+      },
+      "history": [],
+      "botPlaysWhite": false,
+      "expected": {
+        "white": [
+          "e2e4",
+          "g1f3"
+        ],
+        "black": [],
+        "prefixMatches": true,
+        "nextMove": null
+      }
+    },
+    {
+      "config": {
+        "forcedLine": null,
+        "forcedLineWhite": [
+          "E2E4",
+          " g1f3 "
+        ],
+        "forcedLineBlack": []
+      },
+      "history": [
+        "e2e4"
+      ],
+      "botPlaysWhite": true,
+      "expected": {
+        "white": [
+          "e2e4",
+          "g1f3"
+        ],
+        "black": [],
+        "prefixMatches": true,
+        "nextMove": null
+      }
+    },
+    {
+      "config": {
+        "forcedLine": null,
+        "forcedLineWhite": [
+          "E2E4",
+          " g1f3 "
+        ],
+        "forcedLineBlack": []
+      },
+      "history": [
+        "e2e4"
+      ],
+      "botPlaysWhite": false,
+      "expected": {
+        "white": [
+          "e2e4",
+          "g1f3"
+        ],
+        "black": [],
+        "prefixMatches": true,
+        "nextMove": null
+      }
+    },
+    {
+      "config": {
+        "forcedLine": null,
+        "forcedLineWhite": [
+          "E2E4",
+          " g1f3 "
+        ],
+        "forcedLineBlack": []
+      },
+      "history": [
+        "e2e4",
+        "e7e5"
+      ],
+      "botPlaysWhite": true,
+      "expected": {
+        "white": [
+          "e2e4",
+          "g1f3"
+        ],
+        "black": [],
+        "prefixMatches": true,
+        "nextMove": "g1f3"
+      }
+    },
+    {
+      "config": {
+        "forcedLine": null,
+        "forcedLineWhite": [
+          "E2E4",
+          " g1f3 "
+        ],
+        "forcedLineBlack": []
+      },
+      "history": [
+        "e2e4",
+        "e7e5"
+      ],
+      "botPlaysWhite": false,
+      "expected": {
+        "white": [
+          "e2e4",
+          "g1f3"
+        ],
+        "black": [],
+        "prefixMatches": true,
+        "nextMove": null
+      }
+    },
+    {
+      "config": {
+        "forcedLine": null,
+        "forcedLineWhite": [
+          "E2E4",
+          " g1f3 "
+        ],
+        "forcedLineBlack": []
+      },
+      "history": [
+        "e2e4",
+        "c7c5",
+        "g1f3"
+      ],
+      "botPlaysWhite": true,
+      "expected": {
+        "white": [
+          "e2e4",
+          "g1f3"
+        ],
+        "black": [],
+        "prefixMatches": true,
+        "nextMove": null
+      }
+    },
+    {
+      "config": {
+        "forcedLine": null,
+        "forcedLineWhite": [
+          "E2E4",
+          " g1f3 "
+        ],
+        "forcedLineBlack": []
+      },
+      "history": [
+        "e2e4",
+        "c7c5",
+        "g1f3"
+      ],
+      "botPlaysWhite": false,
+      "expected": {
+        "white": [
+          "e2e4",
+          "g1f3"
+        ],
+        "black": [],
+        "prefixMatches": true,
+        "nextMove": null
+      }
+    },
+    {
+      "config": {
+        "forcedLine": null,
+        "forcedLineWhite": [
+          "E2E4",
+          " g1f3 "
+        ],
+        "forcedLineBlack": []
+      },
+      "history": [
+        "d2d4",
+        "e7e5",
+        "g1f3",
+        "b8c6"
+      ],
+      "botPlaysWhite": true,
+      "expected": {
+        "white": [
+          "e2e4",
+          "g1f3"
+        ],
+        "black": [],
+        "prefixMatches": false,
+        "nextMove": null
+      }
+    },
+    {
+      "config": {
+        "forcedLine": null,
+        "forcedLineWhite": [
+          "E2E4",
+          " g1f3 "
+        ],
+        "forcedLineBlack": []
+      },
+      "history": [
+        "d2d4",
+        "e7e5",
+        "g1f3",
+        "b8c6"
+      ],
+      "botPlaysWhite": false,
+      "expected": {
+        "white": [
+          "e2e4",
+          "g1f3"
+        ],
+        "black": [],
+        "prefixMatches": true,
+        "nextMove": null
+      }
+    },
+    {
+      "config": {
+        "forcedLine": null,
+        "forcedLineWhite": [
+          "E2E4",
+          " g1f3 "
+        ],
+        "forcedLineBlack": []
+      },
+      "history": [
+        "e2e4",
+        "e7e5",
+        "g1f3",
+        "b8c6",
+        "f1c4",
+        "g8f6"
+      ],
+      "botPlaysWhite": true,
+      "expected": {
+        "white": [
+          "e2e4",
+          "g1f3"
+        ],
+        "black": [],
+        "prefixMatches": true,
+        "nextMove": null
+      }
+    },
+    {
+      "config": {
+        "forcedLine": null,
+        "forcedLineWhite": [
+          "E2E4",
+          " g1f3 "
+        ],
+        "forcedLineBlack": []
+      },
+      "history": [
+        "e2e4",
+        "e7e5",
+        "g1f3",
+        "b8c6",
+        "f1c4",
+        "g8f6"
+      ],
+      "botPlaysWhite": false,
+      "expected": {
+        "white": [
+          "e2e4",
+          "g1f3"
+        ],
+        "black": [],
+        "prefixMatches": true,
+        "nextMove": null
+      }
+    },
+    {
+      "config": {
+        "forcedLine": [
+          "e2e4",
+          "e7e5",
+          "g1f3",
+          "b8c6",
+          "f1c4"
+        ],
+        "forcedLineWhite": null,
+        "forcedLineBlack": null
+      },
+      "history": [],
+      "botPlaysWhite": true,
+      "expected": {
+        "white": [
+          "e2e4",
+          "g1f3",
+          "f1c4"
+        ],
+        "black": [
+          "e7e5",
+          "b8c6"
+        ],
+        "prefixMatches": true,
+        "nextMove": "e2e4"
+      }
+    },
+    {
+      "config": {
+        "forcedLine": [
+          "e2e4",
+          "e7e5",
+          "g1f3",
+          "b8c6",
+          "f1c4"
+        ],
+        "forcedLineWhite": null,
+        "forcedLineBlack": null
+      },
+      "history": [],
+      "botPlaysWhite": false,
+      "expected": {
+        "white": [
+          "e2e4",
+          "g1f3",
+          "f1c4"
+        ],
+        "black": [
+          "e7e5",
+          "b8c6"
+        ],
+        "prefixMatches": true,
+        "nextMove": null
+      }
+    },
+    {
+      "config": {
+        "forcedLine": [
+          "e2e4",
+          "e7e5",
+          "g1f3",
+          "b8c6",
+          "f1c4"
+        ],
+        "forcedLineWhite": null,
+        "forcedLineBlack": null
+      },
+      "history": [
+        "e2e4"
+      ],
+      "botPlaysWhite": true,
+      "expected": {
+        "white": [
+          "e2e4",
+          "g1f3",
+          "f1c4"
+        ],
+        "black": [
+          "e7e5",
+          "b8c6"
+        ],
+        "prefixMatches": true,
+        "nextMove": null
+      }
+    },
+    {
+      "config": {
+        "forcedLine": [
+          "e2e4",
+          "e7e5",
+          "g1f3",
+          "b8c6",
+          "f1c4"
+        ],
+        "forcedLineWhite": null,
+        "forcedLineBlack": null
+      },
+      "history": [
+        "e2e4"
+      ],
+      "botPlaysWhite": false,
+      "expected": {
+        "white": [
+          "e2e4",
+          "g1f3",
+          "f1c4"
+        ],
+        "black": [
+          "e7e5",
+          "b8c6"
+        ],
+        "prefixMatches": true,
+        "nextMove": "e7e5"
+      }
+    },
+    {
+      "config": {
+        "forcedLine": [
+          "e2e4",
+          "e7e5",
+          "g1f3",
+          "b8c6",
+          "f1c4"
+        ],
+        "forcedLineWhite": null,
+        "forcedLineBlack": null
+      },
+      "history": [
+        "e2e4",
+        "e7e5"
+      ],
+      "botPlaysWhite": true,
+      "expected": {
+        "white": [
+          "e2e4",
+          "g1f3",
+          "f1c4"
+        ],
+        "black": [
+          "e7e5",
+          "b8c6"
+        ],
+        "prefixMatches": true,
+        "nextMove": "g1f3"
+      }
+    },
+    {
+      "config": {
+        "forcedLine": [
+          "e2e4",
+          "e7e5",
+          "g1f3",
+          "b8c6",
+          "f1c4"
+        ],
+        "forcedLineWhite": null,
+        "forcedLineBlack": null
+      },
+      "history": [
+        "e2e4",
+        "e7e5"
+      ],
+      "botPlaysWhite": false,
+      "expected": {
+        "white": [
+          "e2e4",
+          "g1f3",
+          "f1c4"
+        ],
+        "black": [
+          "e7e5",
+          "b8c6"
+        ],
+        "prefixMatches": true,
+        "nextMove": null
+      }
+    },
+    {
+      "config": {
+        "forcedLine": [
+          "e2e4",
+          "e7e5",
+          "g1f3",
+          "b8c6",
+          "f1c4"
+        ],
+        "forcedLineWhite": null,
+        "forcedLineBlack": null
+      },
+      "history": [
+        "e2e4",
+        "c7c5",
+        "g1f3"
+      ],
+      "botPlaysWhite": true,
+      "expected": {
+        "white": [
+          "e2e4",
+          "g1f3",
+          "f1c4"
+        ],
+        "black": [
+          "e7e5",
+          "b8c6"
+        ],
+        "prefixMatches": true,
+        "nextMove": null
+      }
+    },
+    {
+      "config": {
+        "forcedLine": [
+          "e2e4",
+          "e7e5",
+          "g1f3",
+          "b8c6",
+          "f1c4"
+        ],
+        "forcedLineWhite": null,
+        "forcedLineBlack": null
+      },
+      "history": [
+        "e2e4",
+        "c7c5",
+        "g1f3"
+      ],
+      "botPlaysWhite": false,
+      "expected": {
+        "white": [
+          "e2e4",
+          "g1f3",
+          "f1c4"
+        ],
+        "black": [
+          "e7e5",
+          "b8c6"
+        ],
+        "prefixMatches": false,
+        "nextMove": "b8c6"
+      }
+    },
+    {
+      "config": {
+        "forcedLine": [
+          "e2e4",
+          "e7e5",
+          "g1f3",
+          "b8c6",
+          "f1c4"
+        ],
+        "forcedLineWhite": null,
+        "forcedLineBlack": null
+      },
+      "history": [
+        "d2d4",
+        "e7e5",
+        "g1f3",
+        "b8c6"
+      ],
+      "botPlaysWhite": true,
+      "expected": {
+        "white": [
+          "e2e4",
+          "g1f3",
+          "f1c4"
+        ],
+        "black": [
+          "e7e5",
+          "b8c6"
+        ],
+        "prefixMatches": false,
+        "nextMove": "f1c4"
+      }
+    },
+    {
+      "config": {
+        "forcedLine": [
+          "e2e4",
+          "e7e5",
+          "g1f3",
+          "b8c6",
+          "f1c4"
+        ],
+        "forcedLineWhite": null,
+        "forcedLineBlack": null
+      },
+      "history": [
+        "d2d4",
+        "e7e5",
+        "g1f3",
+        "b8c6"
+      ],
+      "botPlaysWhite": false,
+      "expected": {
+        "white": [
+          "e2e4",
+          "g1f3",
+          "f1c4"
+        ],
+        "black": [
+          "e7e5",
+          "b8c6"
+        ],
+        "prefixMatches": true,
+        "nextMove": null
+      }
+    },
+    {
+      "config": {
+        "forcedLine": [
+          "e2e4",
+          "e7e5",
+          "g1f3",
+          "b8c6",
+          "f1c4"
+        ],
+        "forcedLineWhite": null,
+        "forcedLineBlack": null
+      },
+      "history": [
+        "e2e4",
+        "e7e5",
+        "g1f3",
+        "b8c6",
+        "f1c4",
+        "g8f6"
+      ],
+      "botPlaysWhite": true,
+      "expected": {
+        "white": [
+          "e2e4",
+          "g1f3",
+          "f1c4"
+        ],
+        "black": [
+          "e7e5",
+          "b8c6"
+        ],
+        "prefixMatches": true,
+        "nextMove": null
+      }
+    },
+    {
+      "config": {
+        "forcedLine": [
+          "e2e4",
+          "e7e5",
+          "g1f3",
+          "b8c6",
+          "f1c4"
+        ],
+        "forcedLineWhite": null,
+        "forcedLineBlack": null
+      },
+      "history": [
+        "e2e4",
+        "e7e5",
+        "g1f3",
+        "b8c6",
+        "f1c4",
+        "g8f6"
+      ],
+      "botPlaysWhite": false,
+      "expected": {
+        "white": [
+          "e2e4",
+          "g1f3",
+          "f1c4"
+        ],
+        "black": [
+          "e7e5",
+          "b8c6"
+        ],
+        "prefixMatches": true,
+        "nextMove": null
+      }
+    },
+    {
+      "config": {
+        "forcedLine": [
+          "e2e4",
+          "c7c5"
+        ],
+        "forcedLineWhite": [],
+        "forcedLineBlack": []
+      },
+      "history": [],
+      "botPlaysWhite": true,
+      "expected": {
+        "white": [
+          "e2e4"
+        ],
+        "black": [
+          "c7c5"
+        ],
+        "prefixMatches": true,
+        "nextMove": "e2e4"
+      }
+    },
+    {
+      "config": {
+        "forcedLine": [
+          "e2e4",
+          "c7c5"
+        ],
+        "forcedLineWhite": [],
+        "forcedLineBlack": []
+      },
+      "history": [],
+      "botPlaysWhite": false,
+      "expected": {
+        "white": [
+          "e2e4"
+        ],
+        "black": [
+          "c7c5"
+        ],
+        "prefixMatches": true,
+        "nextMove": null
+      }
+    },
+    {
+      "config": {
+        "forcedLine": [
+          "e2e4",
+          "c7c5"
+        ],
+        "forcedLineWhite": [],
+        "forcedLineBlack": []
+      },
+      "history": [
+        "e2e4"
+      ],
+      "botPlaysWhite": true,
+      "expected": {
+        "white": [
+          "e2e4"
+        ],
+        "black": [
+          "c7c5"
+        ],
+        "prefixMatches": true,
+        "nextMove": null
+      }
+    },
+    {
+      "config": {
+        "forcedLine": [
+          "e2e4",
+          "c7c5"
+        ],
+        "forcedLineWhite": [],
+        "forcedLineBlack": []
+      },
+      "history": [
+        "e2e4"
+      ],
+      "botPlaysWhite": false,
+      "expected": {
+        "white": [
+          "e2e4"
+        ],
+        "black": [
+          "c7c5"
+        ],
+        "prefixMatches": true,
+        "nextMove": "c7c5"
+      }
+    },
+    {
+      "config": {
+        "forcedLine": [
+          "e2e4",
+          "c7c5"
+        ],
+        "forcedLineWhite": [],
+        "forcedLineBlack": []
+      },
+      "history": [
+        "e2e4",
+        "e7e5"
+      ],
+      "botPlaysWhite": true,
+      "expected": {
+        "white": [
+          "e2e4"
+        ],
+        "black": [
+          "c7c5"
+        ],
+        "prefixMatches": true,
+        "nextMove": null
+      }
+    },
+    {
+      "config": {
+        "forcedLine": [
+          "e2e4",
+          "c7c5"
+        ],
+        "forcedLineWhite": [],
+        "forcedLineBlack": []
+      },
+      "history": [
+        "e2e4",
+        "e7e5"
+      ],
+      "botPlaysWhite": false,
+      "expected": {
+        "white": [
+          "e2e4"
+        ],
+        "black": [
+          "c7c5"
+        ],
+        "prefixMatches": false,
+        "nextMove": null
+      }
+    },
+    {
+      "config": {
+        "forcedLine": [
+          "e2e4",
+          "c7c5"
+        ],
+        "forcedLineWhite": [],
+        "forcedLineBlack": []
+      },
+      "history": [
+        "e2e4",
+        "c7c5",
+        "g1f3"
+      ],
+      "botPlaysWhite": true,
+      "expected": {
+        "white": [
+          "e2e4"
+        ],
+        "black": [
+          "c7c5"
+        ],
+        "prefixMatches": true,
+        "nextMove": null
+      }
+    },
+    {
+      "config": {
+        "forcedLine": [
+          "e2e4",
+          "c7c5"
+        ],
+        "forcedLineWhite": [],
+        "forcedLineBlack": []
+      },
+      "history": [
+        "e2e4",
+        "c7c5",
+        "g1f3"
+      ],
+      "botPlaysWhite": false,
+      "expected": {
+        "white": [
+          "e2e4"
+        ],
+        "black": [
+          "c7c5"
+        ],
+        "prefixMatches": true,
+        "nextMove": null
+      }
+    },
+    {
+      "config": {
+        "forcedLine": [
+          "e2e4",
+          "c7c5"
+        ],
+        "forcedLineWhite": [],
+        "forcedLineBlack": []
+      },
+      "history": [
+        "d2d4",
+        "e7e5",
+        "g1f3",
+        "b8c6"
+      ],
+      "botPlaysWhite": true,
+      "expected": {
+        "white": [
+          "e2e4"
+        ],
+        "black": [
+          "c7c5"
+        ],
+        "prefixMatches": false,
+        "nextMove": null
+      }
+    },
+    {
+      "config": {
+        "forcedLine": [
+          "e2e4",
+          "c7c5"
+        ],
+        "forcedLineWhite": [],
+        "forcedLineBlack": []
+      },
+      "history": [
+        "d2d4",
+        "e7e5",
+        "g1f3",
+        "b8c6"
+      ],
+      "botPlaysWhite": false,
+      "expected": {
+        "white": [
+          "e2e4"
+        ],
+        "black": [
+          "c7c5"
+        ],
+        "prefixMatches": false,
+        "nextMove": null
+      }
+    },
+    {
+      "config": {
+        "forcedLine": [
+          "e2e4",
+          "c7c5"
+        ],
+        "forcedLineWhite": [],
+        "forcedLineBlack": []
+      },
+      "history": [
+        "e2e4",
+        "e7e5",
+        "g1f3",
+        "b8c6",
+        "f1c4",
+        "g8f6"
+      ],
+      "botPlaysWhite": true,
+      "expected": {
+        "white": [
+          "e2e4"
+        ],
+        "black": [
+          "c7c5"
+        ],
+        "prefixMatches": true,
+        "nextMove": null
+      }
+    },
+    {
+      "config": {
+        "forcedLine": [
+          "e2e4",
+          "c7c5"
+        ],
+        "forcedLineWhite": [],
+        "forcedLineBlack": []
+      },
+      "history": [
+        "e2e4",
+        "e7e5",
+        "g1f3",
+        "b8c6",
+        "f1c4",
+        "g8f6"
+      ],
+      "botPlaysWhite": false,
+      "expected": {
+        "white": [
+          "e2e4"
+        ],
+        "black": [
+          "c7c5"
+        ],
+        "prefixMatches": false,
+        "nextMove": null
+      }
+    },
+    {
+      "config": {
+        "forcedLine": null,
+        "forcedLineWhite": null,
+        "forcedLineBlack": null
+      },
+      "history": [],
+      "botPlaysWhite": true,
+      "expected": {
+        "white": [],
+        "black": [],
+        "prefixMatches": true,
+        "nextMove": null
+      }
+    },
+    {
+      "config": {
+        "forcedLine": null,
+        "forcedLineWhite": null,
+        "forcedLineBlack": null
+      },
+      "history": [],
+      "botPlaysWhite": false,
+      "expected": {
+        "white": [],
+        "black": [],
+        "prefixMatches": true,
+        "nextMove": null
+      }
+    },
+    {
+      "config": {
+        "forcedLine": null,
+        "forcedLineWhite": null,
+        "forcedLineBlack": null
+      },
+      "history": [
+        "e2e4"
+      ],
+      "botPlaysWhite": true,
+      "expected": {
+        "white": [],
+        "black": [],
+        "prefixMatches": true,
+        "nextMove": null
+      }
+    },
+    {
+      "config": {
+        "forcedLine": null,
+        "forcedLineWhite": null,
+        "forcedLineBlack": null
+      },
+      "history": [
+        "e2e4"
+      ],
+      "botPlaysWhite": false,
+      "expected": {
+        "white": [],
+        "black": [],
+        "prefixMatches": true,
+        "nextMove": null
+      }
+    },
+    {
+      "config": {
+        "forcedLine": null,
+        "forcedLineWhite": null,
+        "forcedLineBlack": null
+      },
+      "history": [
+        "e2e4",
+        "e7e5"
+      ],
+      "botPlaysWhite": true,
+      "expected": {
+        "white": [],
+        "black": [],
+        "prefixMatches": true,
+        "nextMove": null
+      }
+    },
+    {
+      "config": {
+        "forcedLine": null,
+        "forcedLineWhite": null,
+        "forcedLineBlack": null
+      },
+      "history": [
+        "e2e4",
+        "e7e5"
+      ],
+      "botPlaysWhite": false,
+      "expected": {
+        "white": [],
+        "black": [],
+        "prefixMatches": true,
+        "nextMove": null
+      }
+    },
+    {
+      "config": {
+        "forcedLine": null,
+        "forcedLineWhite": null,
+        "forcedLineBlack": null
+      },
+      "history": [
+        "e2e4",
+        "c7c5",
+        "g1f3"
+      ],
+      "botPlaysWhite": true,
+      "expected": {
+        "white": [],
+        "black": [],
+        "prefixMatches": true,
+        "nextMove": null
+      }
+    },
+    {
+      "config": {
+        "forcedLine": null,
+        "forcedLineWhite": null,
+        "forcedLineBlack": null
+      },
+      "history": [
+        "e2e4",
+        "c7c5",
+        "g1f3"
+      ],
+      "botPlaysWhite": false,
+      "expected": {
+        "white": [],
+        "black": [],
+        "prefixMatches": true,
+        "nextMove": null
+      }
+    },
+    {
+      "config": {
+        "forcedLine": null,
+        "forcedLineWhite": null,
+        "forcedLineBlack": null
+      },
+      "history": [
+        "d2d4",
+        "e7e5",
+        "g1f3",
+        "b8c6"
+      ],
+      "botPlaysWhite": true,
+      "expected": {
+        "white": [],
+        "black": [],
+        "prefixMatches": true,
+        "nextMove": null
+      }
+    },
+    {
+      "config": {
+        "forcedLine": null,
+        "forcedLineWhite": null,
+        "forcedLineBlack": null
+      },
+      "history": [
+        "d2d4",
+        "e7e5",
+        "g1f3",
+        "b8c6"
+      ],
+      "botPlaysWhite": false,
+      "expected": {
+        "white": [],
+        "black": [],
+        "prefixMatches": true,
+        "nextMove": null
+      }
+    },
+    {
+      "config": {
+        "forcedLine": null,
+        "forcedLineWhite": null,
+        "forcedLineBlack": null
+      },
+      "history": [
+        "e2e4",
+        "e7e5",
+        "g1f3",
+        "b8c6",
+        "f1c4",
+        "g8f6"
+      ],
+      "botPlaysWhite": true,
+      "expected": {
+        "white": [],
+        "black": [],
+        "prefixMatches": true,
+        "nextMove": null
+      }
+    },
+    {
+      "config": {
+        "forcedLine": null,
+        "forcedLineWhite": null,
+        "forcedLineBlack": null
+      },
+      "history": [
+        "e2e4",
+        "e7e5",
+        "g1f3",
+        "b8c6",
+        "f1c4",
+        "g8f6"
+      ],
+      "botPlaysWhite": false,
+      "expected": {
+        "white": [],
+        "black": [],
+        "prefixMatches": true,
+        "nextMove": null
+      }
+    }
+  ],
+  "shouldPlayHumanBlunderMove": [
+    {
+      "plies": 0,
+      "botPlaysWhite": true,
+      "interval": 0,
+      "expected": false
+    },
+    {
+      "plies": 0,
+      "botPlaysWhite": true,
+      "interval": 1,
+      "expected": true
+    },
+    {
+      "plies": 0,
+      "botPlaysWhite": true,
+      "interval": 5,
+      "expected": false
+    },
+    {
+      "plies": 0,
+      "botPlaysWhite": true,
+      "interval": 10,
+      "expected": false
+    },
+    {
+      "plies": 0,
+      "botPlaysWhite": false,
+      "interval": 0,
+      "expected": false
+    },
+    {
+      "plies": 0,
+      "botPlaysWhite": false,
+      "interval": 1,
+      "expected": true
+    },
+    {
+      "plies": 0,
+      "botPlaysWhite": false,
+      "interval": 5,
+      "expected": false
+    },
+    {
+      "plies": 0,
+      "botPlaysWhite": false,
+      "interval": 10,
+      "expected": false
+    },
+    {
+      "plies": 1,
+      "botPlaysWhite": true,
+      "interval": 0,
+      "expected": false
+    },
+    {
+      "plies": 1,
+      "botPlaysWhite": true,
+      "interval": 1,
+      "expected": true
+    },
+    {
+      "plies": 1,
+      "botPlaysWhite": true,
+      "interval": 5,
+      "expected": false
+    },
+    {
+      "plies": 1,
+      "botPlaysWhite": true,
+      "interval": 10,
+      "expected": false
+    },
+    {
+      "plies": 1,
+      "botPlaysWhite": false,
+      "interval": 0,
+      "expected": false
+    },
+    {
+      "plies": 1,
+      "botPlaysWhite": false,
+      "interval": 1,
+      "expected": true
+    },
+    {
+      "plies": 1,
+      "botPlaysWhite": false,
+      "interval": 5,
+      "expected": false
+    },
+    {
+      "plies": 1,
+      "botPlaysWhite": false,
+      "interval": 10,
+      "expected": false
+    },
+    {
+      "plies": 5,
+      "botPlaysWhite": true,
+      "interval": 0,
+      "expected": false
+    },
+    {
+      "plies": 5,
+      "botPlaysWhite": true,
+      "interval": 1,
+      "expected": true
+    },
+    {
+      "plies": 5,
+      "botPlaysWhite": true,
+      "interval": 5,
+      "expected": false
+    },
+    {
+      "plies": 5,
+      "botPlaysWhite": true,
+      "interval": 10,
+      "expected": false
+    },
+    {
+      "plies": 5,
+      "botPlaysWhite": false,
+      "interval": 0,
+      "expected": false
+    },
+    {
+      "plies": 5,
+      "botPlaysWhite": false,
+      "interval": 1,
+      "expected": true
+    },
+    {
+      "plies": 5,
+      "botPlaysWhite": false,
+      "interval": 5,
+      "expected": false
+    },
+    {
+      "plies": 5,
+      "botPlaysWhite": false,
+      "interval": 10,
+      "expected": false
+    },
+    {
+      "plies": 8,
+      "botPlaysWhite": true,
+      "interval": 0,
+      "expected": false
+    },
+    {
+      "plies": 8,
+      "botPlaysWhite": true,
+      "interval": 1,
+      "expected": true
+    },
+    {
+      "plies": 8,
+      "botPlaysWhite": true,
+      "interval": 5,
+      "expected": true
+    },
+    {
+      "plies": 8,
+      "botPlaysWhite": true,
+      "interval": 10,
+      "expected": false
+    },
+    {
+      "plies": 8,
+      "botPlaysWhite": false,
+      "interval": 0,
+      "expected": false
+    },
+    {
+      "plies": 8,
+      "botPlaysWhite": false,
+      "interval": 1,
+      "expected": true
+    },
+    {
+      "plies": 8,
+      "botPlaysWhite": false,
+      "interval": 5,
+      "expected": true
+    },
+    {
+      "plies": 8,
+      "botPlaysWhite": false,
+      "interval": 10,
+      "expected": false
+    },
+    {
+      "plies": 9,
+      "botPlaysWhite": true,
+      "interval": 0,
+      "expected": false
+    },
+    {
+      "plies": 9,
+      "botPlaysWhite": true,
+      "interval": 1,
+      "expected": true
+    },
+    {
+      "plies": 9,
+      "botPlaysWhite": true,
+      "interval": 5,
+      "expected": false
+    },
+    {
+      "plies": 9,
+      "botPlaysWhite": true,
+      "interval": 10,
+      "expected": false
+    },
+    {
+      "plies": 9,
+      "botPlaysWhite": false,
+      "interval": 0,
+      "expected": false
+    },
+    {
+      "plies": 9,
+      "botPlaysWhite": false,
+      "interval": 1,
+      "expected": true
+    },
+    {
+      "plies": 9,
+      "botPlaysWhite": false,
+      "interval": 5,
+      "expected": true
+    },
+    {
+      "plies": 9,
+      "botPlaysWhite": false,
+      "interval": 10,
+      "expected": false
+    },
+    {
+      "plies": 18,
+      "botPlaysWhite": true,
+      "interval": 0,
+      "expected": false
+    },
+    {
+      "plies": 18,
+      "botPlaysWhite": true,
+      "interval": 1,
+      "expected": true
+    },
+    {
+      "plies": 18,
+      "botPlaysWhite": true,
+      "interval": 5,
+      "expected": true
+    },
+    {
+      "plies": 18,
+      "botPlaysWhite": true,
+      "interval": 10,
+      "expected": true
+    },
+    {
+      "plies": 18,
+      "botPlaysWhite": false,
+      "interval": 0,
+      "expected": false
+    },
+    {
+      "plies": 18,
+      "botPlaysWhite": false,
+      "interval": 1,
+      "expected": true
+    },
+    {
+      "plies": 18,
+      "botPlaysWhite": false,
+      "interval": 5,
+      "expected": true
+    },
+    {
+      "plies": 18,
+      "botPlaysWhite": false,
+      "interval": 10,
+      "expected": true
+    },
+    {
+      "plies": 19,
+      "botPlaysWhite": true,
+      "interval": 0,
+      "expected": false
+    },
+    {
+      "plies": 19,
+      "botPlaysWhite": true,
+      "interval": 1,
+      "expected": true
+    },
+    {
+      "plies": 19,
+      "botPlaysWhite": true,
+      "interval": 5,
+      "expected": false
+    },
+    {
+      "plies": 19,
+      "botPlaysWhite": true,
+      "interval": 10,
+      "expected": false
+    },
+    {
+      "plies": 19,
+      "botPlaysWhite": false,
+      "interval": 0,
+      "expected": false
+    },
+    {
+      "plies": 19,
+      "botPlaysWhite": false,
+      "interval": 1,
+      "expected": true
+    },
+    {
+      "plies": 19,
+      "botPlaysWhite": false,
+      "interval": 5,
+      "expected": true
+    },
+    {
+      "plies": 19,
+      "botPlaysWhite": false,
+      "interval": 10,
+      "expected": true
+    },
+    {
+      "plies": 20,
+      "botPlaysWhite": true,
+      "interval": 0,
+      "expected": false
+    },
+    {
+      "plies": 20,
+      "botPlaysWhite": true,
+      "interval": 1,
+      "expected": true
+    },
+    {
+      "plies": 20,
+      "botPlaysWhite": true,
+      "interval": 5,
+      "expected": false
+    },
+    {
+      "plies": 20,
+      "botPlaysWhite": true,
+      "interval": 10,
+      "expected": false
+    },
+    {
+      "plies": 20,
+      "botPlaysWhite": false,
+      "interval": 0,
+      "expected": false
+    },
+    {
+      "plies": 20,
+      "botPlaysWhite": false,
+      "interval": 1,
+      "expected": true
+    },
+    {
+      "plies": 20,
+      "botPlaysWhite": false,
+      "interval": 5,
+      "expected": false
+    },
+    {
+      "plies": 20,
+      "botPlaysWhite": false,
+      "interval": 10,
+      "expected": false
+    }
+  ]
+}

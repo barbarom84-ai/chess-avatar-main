@@ -56,5 +56,5 @@ next-env.d.ts
 .vercel
 .env
 
-# script outputs (e.g. scripts/export-personalities-android.ts)
+# script outputs
 /tmp/

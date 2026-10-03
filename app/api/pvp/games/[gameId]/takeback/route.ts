@@ -7,6 +7,7 @@ import { canOfferPvpTakeback } from "@/lib/pvp-takeback";
 import { replayGameFromUcis, type PvpMoveRow } from "@/lib/pvp-chess";
 import { pvpRateLimitOrResponse } from "@/lib/pvp-api-rate-limit";
 
+import type { PvpTakebackResponse } from "@/lib/api-contract";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
 
@@ -88,7 +89,7 @@ export async function POST(
       .eq("id", gameId)
       .eq("status", "playing");
     if (error) return jsonError(error.message ?? "Update failed", 500);
-    return NextResponse.json({ ok: true, takebackOfferedBy: user.id, serverNow: Date.now() });
+    return NextResponse.json({ ok: true, takebackOfferedBy: user.id, serverNow: Date.now() } satisfies PvpTakebackResponse);
   }
 
   if (action === "cancel") {
@@ -98,7 +99,7 @@ export async function POST(
       .update({ takeback_offered_by: null })
       .eq("id", gameId);
     if (error) return jsonError(error.message ?? "Update failed", 500);
-    return NextResponse.json({ ok: true, takebackOfferedBy: null, serverNow: Date.now() });
+    return NextResponse.json({ ok: true, takebackOfferedBy: null, serverNow: Date.now() } satisfies PvpTakebackResponse);
   }
 
   if (action === "decline") {
@@ -110,7 +111,7 @@ export async function POST(
       .update({ takeback_offered_by: null })
       .eq("id", gameId);
     if (error) return jsonError(error.message ?? "Update failed", 500);
-    return NextResponse.json({ ok: true, takebackOfferedBy: null, serverNow: Date.now() });
+    return NextResponse.json({ ok: true, takebackOfferedBy: null, serverNow: Date.now() } satisfies PvpTakebackResponse);
   }
 
   if (!row.takeback_offered_by || row.takeback_offered_by === user.id) {
@@ -125,5 +126,5 @@ export async function POST(
     removedPly: undo.removedPly,
     game: undo.game,
     serverNow: Date.now(),
-  });
+  } satisfies PvpTakebackResponse);
 }
