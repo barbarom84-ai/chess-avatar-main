@@ -5,12 +5,23 @@ type Bucket = { count: number; resetAt: number };
 const buckets = new Map<string, Bucket>();
 const CLEANUP_EVERY = 500;
 
+const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
+
 function clientKey(req: NextRequest): string {
   const forwarded = req.headers.get("x-forwarded-for");
   if (forwarded) {
     return forwarded.split(",")[0]?.trim() || "unknown";
   }
   return req.headers.get("x-real-ip") || "unknown";
+}
+
+/**
+ * Each route gets its own bucket: with a single per-IP bucket, polling a game (max 180)
+ * used up the allowance of game creation / rematch (max 10).
+ */
+function routeKey(req: NextRequest): string {
+  const pathname = new URL(req.url).pathname.replace(UUID_RE, ":id");
+  return `${req.method} ${pathname}`;
 }
 
 /**
@@ -21,7 +32,7 @@ export function rateLimit(
   req: NextRequest,
   options: { windowMs: number; max: number }
 ): { ok: true } | { ok: false; retryAfterSec: number } {
-  const key = clientKey(req);
+  const key = `${routeKey(req)}|${clientKey(req)}`;
   const now = Date.now();
   const windowMs = options.windowMs;
   const max = options.max;
