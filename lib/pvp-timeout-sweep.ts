@@ -47,7 +47,7 @@ export async function sweepPvpTimeouts(
 
       const { data: moveRows, error: mErr } = await sb
         .from("pvp_moves")
-        .select("ply,uci,played_by,created_at")
+        .select("ply,uci,played_by,created_at,time_spent_ms")
         .eq("game_id", id)
         .order("ply", { ascending: true });
 
@@ -58,7 +58,7 @@ export async function sweepPvpTimeouts(
 
       const moves = (moveRows ?? []) as Pick<
         PvpMoveRow,
-        "ply" | "uci" | "played_by" | "created_at"
+        "ply" | "uci" | "played_by" | "created_at" | "time_spent_ms"
       >[];
       const patch = checkTimeoutForTimedGameWithMoves(
         row,

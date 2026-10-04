@@ -42,10 +42,57 @@ describe("pvp clock sync", () => {
         uci: "e2e4",
         played_by: "w",
         created_at: new Date(1_030_000).toISOString(),
+        time_spent_ms: 30_000,
       },
     ];
     expect(isPvpClockBehindMoves(game, moves)).toBe(true);
     expect(chessForPvpClockAuthority(game, moves).turn()).toBe("w");
+  });
+
+  it("trusts a clock written just before a slow move insert", () => {
+    // The move route writes the clock, then inserts the move up to ~700 ms later.
+    const game = timedGame();
+    const moves: PvpMoveRow[] = [
+      {
+        id: 1,
+        game_id: "g1",
+        ply: 1,
+        uci: "e2e4",
+        played_by: "w",
+        created_at: new Date(1_000_681).toISOString(),
+        time_spent_ms: 20_000,
+      },
+    ];
+    expect(isPvpClockBehindMoves(game, moves)).toBe(false);
+    expect(chessForPvpClockAuthority(game, moves).turn()).toBe("b");
+  });
+
+  it("never flags the player who just moved while the opponent thinks", () => {
+    // White moved with 5 s left; Black then thinks 10 s. Only Black's clock may run.
+    const game = timedGame({ white_remaining_ms: 5_000, black_remaining_ms: 60_000 });
+    const moves: PvpMoveRow[] = [
+      {
+        id: 1,
+        game_id: "g1",
+        ply: 1,
+        uci: "e2e4",
+        played_by: "w",
+        created_at: new Date(1_000_500).toISOString(),
+        time_spent_ms: 20_000,
+      },
+    ];
+    expect(checkTimeoutForTimedGameWithMoves(game, moves, 1_010_000)).toBeNull();
+    expect(checkTimeoutForTimedGameWithMoves(game, moves, 1_061_000)?.result).toBe("1-0");
+  });
+
+  it("trusts the clock when the move time is unknown or too short to judge", () => {
+    const game = timedGame();
+    const base = { id: 1, game_id: "g1", ply: 1, uci: "e2e4", played_by: "w" };
+    const late = new Date(1_030_000).toISOString();
+    expect(isPvpClockBehindMoves(game, [{ ...base, created_at: late } as PvpMoveRow])).toBe(false);
+    expect(
+      isPvpClockBehindMoves(game, [{ ...base, created_at: late, time_spent_ms: 400 } as PvpMoveRow])
+    ).toBe(false);
   });
 
   it("does not flag opponent timeout while clock is behind moves", () => {
@@ -59,6 +106,7 @@ describe("pvp clock sync", () => {
         uci: "e2e4",
         played_by: "w",
         created_at: new Date(nowMs).toISOString(),
+        time_spent_ms: 30_000,
       },
     ];
     const chessAfter = new Chess();
