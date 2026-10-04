@@ -33,6 +33,11 @@ function stripPgnNoise(s) {
 }
 
 function parseDataLine(line) {
+  const cols = line.split("\t");
+  if (cols.length >= 3 && /^[A-E]\d{2}$/.test(cols[0])) {
+    const [eco, name, pgn] = cols.map((c) => c.trim());
+    return name && pgn ? { eco, name, pgn } : null;
+  }
   const m = line.match(/^([A-E]\d{2})\s+(.*)$/);
   if (!m) return null;
   const eco = m[1];
@@ -53,7 +58,12 @@ function pgnToUci(pgn) {
   for (const raw of tokens) {
     if (/^\d+\.?$/.test(raw)) continue;
     if (raw === "1-0" || raw === "0-1" || raw === "1/2-1/2" || raw === "*") break;
-    const move = g.move(raw, { sloppy: true });
+    let move;
+    try {
+      move = g.move(raw, { sloppy: true });
+    } catch {
+      return null;
+    }
     if (!move) return null;
     uci.push(move.from + move.to + (move.promotion || ""));
   }
