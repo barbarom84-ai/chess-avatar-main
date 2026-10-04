@@ -29,7 +29,7 @@ export type SiteNotification = {
   onAction?: () => void;
 };
 
-type UpgradeReason = "theme" | "pieces" | "profiles" | "coach" | "review" | "ascension";
+type UpgradeReason = "theme" | "pieces" | "profiles" | "coach" | "review";
 
 type SiteNotificationsContextValue = {
   items: SiteNotification[];

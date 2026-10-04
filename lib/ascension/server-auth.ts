@@ -21,41 +21,7 @@ export function getAscensionSupabaseEnv(): {
   return { supabaseUrl, anonKey, serviceKey };
 }
 
-export async function requireAscensionPremium(
-  request: NextRequest
-): Promise<
-  | { ok: true; ctx: AscensionAuthContext }
-  | { ok: false; status: number; error: string }
-> {
-  const env = getAscensionSupabaseEnv();
-  if (!env) {
-    return { ok: false, status: 503, error: "Supabase not configured" };
-  }
-
-  const user = await getAuthedUserFromRequest(request, env.supabaseUrl, env.anonKey);
-  if (!user) {
-    return { ok: false, status: 401, error: "Authentication required" };
-  }
-
-  const admin = createClient(env.supabaseUrl, env.serviceKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
-
-  const { data: subRow } = await admin
-    .from("subscriptions")
-    .select("plan, status")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  const isPremium = hasActivePremiumAccess(subRow?.plan, subRow?.status);
-  if (!isPremium) {
-    return { ok: false, status: 403, error: "Premium subscription required" };
-  }
-
-  return { ok: true, ctx: { user, admin, isPremium } };
-}
-
-/** Logged-in users (free or premium). Premium flag indicates full track access. */
+/** Logged-in users (free or premium). Ascension access is the same for both plans. */
 export async function requireAscensionAuth(
   request: NextRequest
 ): Promise<
