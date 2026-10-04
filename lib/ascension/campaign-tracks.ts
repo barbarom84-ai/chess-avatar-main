@@ -1,5 +1,4 @@
 import type { DbCampaignPuzzle, LocalizedText } from "@/lib/ascension/types";
-import { ASCENSION_FREE_PUZZLES_PER_TRACK } from "@/lib/ascension/constants";
 import { isMainCampaignComplete } from "@/lib/ascension/campaign-puzzle-utils";
 
 export type CampaignTrackLayout = "main" | "sequential";
@@ -115,9 +114,9 @@ export function computeMainStandardLocked(
   return locked;
 }
 
-export function isPuzzleWithinPlanLimit(sortOrder: number, isPremium: boolean): boolean {
-  if (isPremium) return true;
-  return sortOrder <= ASCENSION_FREE_PUZZLES_PER_TRACK;
+/** Ascension is open to every plan: only progression locks apply. */
+export function isPuzzleWithinPlanLimit(_sortOrder: number, _isPremium: boolean): boolean {
+  return true;
 }
 
 export function normalizeTrackSlug(raw: string): string {

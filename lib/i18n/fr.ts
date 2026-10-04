@@ -273,7 +273,7 @@ export const fr = {
       shortcutPvpDesc: "Salon et parties en ligne",
       subscriptionTitle: "Abonnement",
       subscriptionPremiumDesc: "Votre compte Premium est actif.",
-      subscriptionFreeDesc: "Premium débloque plus de puzzles, thèmes d'échiquier et Ascension.",
+      subscriptionFreeDesc: "Premium débloque plus de puzzles et de thèmes d'échiquier.",
       upgradeCta: "Passer Premium",
       accountSectionTitle: "Sécurité du compte",
       signOutCta: "Se déconnecter",
@@ -422,7 +422,7 @@ export const fr = {
       open: "Ouvrir",
       freePlanTitle: "Version gratuite",
       freePlanBody:
-        "Analyse : profondeur {depth}, {plies} demi-coups max. Ascension : {free} puzzles par piste (Premium : {premium}+).",
+        "Analyse : profondeur {depth}, {plies} demi-coups max. Ascension : accès complet.",
       upgradeCta: "Passer Premium",
       offlineTitle: "Hors ligne",
       pendingTitle: "Synchronisation en attente",

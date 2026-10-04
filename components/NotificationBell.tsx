@@ -39,13 +39,10 @@ export default function NotificationBell() {
         type="button"
         variant="ghost"
         size="sm"
-        onClick={() =>
-          setOpen((v) => {
-            const next = !v;
-            if (next) markAllRead();
-            return next;
-          })
-        }
+        onClick={() => {
+          if (!open) markAllRead();
+          setOpen(!open);
+        }}
         className="relative text-slate-400 hover:text-cyan-300"
         aria-label={t.notifications.title}
         title={t.notifications.title}
