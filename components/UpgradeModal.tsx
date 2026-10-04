@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Crown, Palette, ImageIcon, Users, Loader2, CreditCard, Sparkles, BarChart3, Brain, Trophy } from "lucide-react";
+import { Crown, Palette, ImageIcon, Users, Loader2, CreditCard, Sparkles, BarChart3, Brain } from "lucide-react";
 import { useLanguage } from "@/lib/language-context";
 import { supabase } from "@/lib/supabase";
 import { track } from "@/lib/track";
@@ -125,19 +125,6 @@ export default function UpgradeModal({ open, onOpenChange, userId, email, reason
               <div>
                 <p className="text-sm font-semibold text-slate-200">{t.upgrade.allBoardThemes}</p>
                 <p className="text-xs text-slate-400">{t.upgrade.themesCount}</p>
-              </div>
-              <Badge className="ml-auto bg-amber-500/20 text-amber-300 border-amber-500/30">Premium</Badge>
-            </div>
-
-            <div
-              id="upgrade-benefit-ascension"
-              className={`flex items-center gap-3 p-3 rounded-lg border ${
-              reason === 'ascension' ? 'bg-amber-500/10 border-amber-500/30' : 'bg-slate-800/50 border-slate-700'
-            }`}>
-              <Trophy className="h-5 w-5 text-amber-400 flex-shrink-0" />
-              <div>
-                <p className="text-sm font-semibold text-slate-200">{t.upgrade.ascensionMode}</p>
-                <p className="text-xs text-slate-400">{t.upgrade.ascensionModeDetail}</p>
               </div>
               <Badge className="ml-auto bg-amber-500/20 text-amber-300 border-amber-500/30">Premium</Badge>
             </div>

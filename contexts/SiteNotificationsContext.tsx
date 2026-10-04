@@ -13,11 +13,6 @@ import UpgradeModal from "@/components/UpgradeModal";
 import { useLanguage } from "@/lib/language-context";
 import { usePremium } from "@/hooks/usePremium";
 import { useOfflineSync } from "@/hooks/useOfflineSync";
-import {
-  ASCENSION_FREE_PUZZLES_PER_TRACK,
-  ASCENSION_PREMIUM_PUZZLES_PER_TRACK,
-} from "@/lib/ascension/constants";
-
 const READ_STORAGE_KEY = "chess-avatar.notifications.read";
 const FREE_ENGINE_DEPTH = 12;
 const FREE_MAX_PLIES = 60;
@@ -132,9 +127,7 @@ export function SiteNotificationsProvider({ children }: { children: ReactNode })
         title: t.notifications.freePlanTitle,
         body: t.notifications.freePlanBody
           .replace("{depth}", String(FREE_ENGINE_DEPTH))
-          .replace("{plies}", String(FREE_MAX_PLIES))
-          .replace("{free}", String(ASCENSION_FREE_PUZZLES_PER_TRACK))
-          .replace("{premium}", String(ASCENSION_PREMIUM_PUZZLES_PER_TRACK)),
+          .replace("{plies}", String(FREE_MAX_PLIES)),
         actionLabel: t.notifications.upgradeCta,
         onAction: () => openUpgrade("review"),
       });

@@ -21,7 +21,6 @@
     "check:prod-parity": "node scripts/check-prod-parity.mjs",
     "parity:export": "tsx scripts/parity-export.ts",
     "clean": "node -e \"require('fs').rmSync('.next',{recursive:true,force:true})\"",
-    "analyze": "cross-env ANALYZE=true next build --webpack",
     "build:engine": "cd public && pyinstaller --onefile --console --clean --distpath . --workpath ../.engine-build --specpath ../.engine-build --name AvatarEngine AvatarEngine.py",
     "sync:chessavatar": "node scripts/sync-chessavatar-wasm.mjs",
     "sync:chessavatar-native": "node scripts/sync-chessavatar-native.mjs",
@@ -42,8 +41,6 @@
     "@radix-ui/react-tabs": "^1.1.13",
     "@radix-ui/react-tooltip": "^1.2.8",
     "@sentry/nextjs": "^10.53.1",
-    "@stripe/stripe-js": "^8.7.0",
-    "@supabase/auth-helpers-nextjs": "^0.15.0",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.87.1",
     "@vercel/analytics": "^2.0.1",
@@ -66,7 +63,6 @@
     "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {
-    "@next/bundle-analyzer": "^16.0.10",
     "@playwright/test": "^1.61.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
@@ -74,7 +70,6 @@
     "@types/react-dom": "^18",
     "@vitest/coverage-v8": "^4.1.9",
     "baseline-browser-mapping": "^2.9.19",
-    "cross-env": "^7.0.3",
     "eslint": "^9",
     "eslint-config-next": "^16.0.10",
     "supabase": "^2.101.0",

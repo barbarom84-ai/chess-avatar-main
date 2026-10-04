@@ -273,7 +273,7 @@ export const en = {
       shortcutPvpDesc: "Lobby and online games",
       subscriptionTitle: "Subscription",
       subscriptionPremiumDesc: "Your Premium account is active.",
-      subscriptionFreeDesc: "Premium unlocks more puzzles, board themes, and Ascension.",
+      subscriptionFreeDesc: "Premium unlocks more puzzles and board themes.",
       upgradeCta: "Upgrade to Premium",
       accountSectionTitle: "Account security",
       signOutCta: "Sign out",
@@ -422,7 +422,7 @@ export const en = {
       open: "Open",
       freePlanTitle: "Free plan",
       freePlanBody:
-        "Analysis: depth {depth}, {plies} plies max. Ascension: {free} puzzles per track (Premium: {premium}+).",
+        "Analysis: depth {depth}, {plies} plies max. Ascension: full access.",
       upgradeCta: "Upgrade to Premium",
       offlineTitle: "Offline",
       pendingTitle: "Sync pending",

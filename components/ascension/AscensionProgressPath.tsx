@@ -15,7 +15,7 @@ import {
 import { useLanguage } from "@/lib/language-context";
 import { playerFantasyAbilities, getSkillById, skillIdForAbility } from "@/lib/ascension/skill-tree";
 import type { PieceAbilityId } from "@/lib/ascension/fantasy-chess/types";
-import { TIER_PUZZLE_THRESHOLDS, resolveChampionTierByCount } from "@/lib/ascension/tiers";
+import { TIER_PUZZLE_THRESHOLDS } from "@/lib/ascension/tiers";
 import type { ChampionTier } from "@/lib/ascension/types";
 
 const MAX_VISIBLE_HEIGHT = 680;

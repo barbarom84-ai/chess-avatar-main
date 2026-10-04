@@ -1,4 +1,3 @@
-import { Chess } from "chess.js";
 import { replayGameFromUcis } from "@/lib/pvp-chess";
 
 export function pvpGameStatsFromUcis(ucis: string[]): {

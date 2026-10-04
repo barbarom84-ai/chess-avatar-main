@@ -22,7 +22,7 @@
     {
       "path": "parity/api-fixtures/responses.json",
       "android": "app/src/test/resources/parity/api-fixtures/responses.json",
-      "sha256": "39c97dbde87c40a2059c461c57162435cfb4fa7835a824802229c97f3ea926e2"
+      "sha256": "657ac5c7783eb29bfff87168b6d52355913ab521827c59174f3946c2e8daf13d"
     },
     {
       "path": "parity/constants.json",

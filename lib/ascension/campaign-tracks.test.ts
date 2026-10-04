@@ -26,10 +26,11 @@ const fantasyTrack: DbCampaignTrack = {
 };
 
 describe("isPuzzleWithinPlanLimit", () => {
-  it("allows first 3 levels for free users", () => {
+  it("allows every level for free users", () => {
     expect(isPuzzleWithinPlanLimit(1, false)).toBe(true);
-    expect(isPuzzleWithinPlanLimit(3, false)).toBe(true);
-    expect(isPuzzleWithinPlanLimit(4, false)).toBe(false);
+    expect(isPuzzleWithinPlanLimit(4, false)).toBe(true);
+    expect(isPuzzleWithinPlanLimit(20, false)).toBe(true);
+    expect(isPuzzleWithinPlanLimit(99, false)).toBe(true);
   });
 
   it("allows all levels for premium users", () => {

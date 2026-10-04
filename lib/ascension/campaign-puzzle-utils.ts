@@ -116,8 +116,6 @@ export function isMainCampaignComplete(puzzles: PuzzleWithCompletion[]): boolean
   return mainStandards.every((p) => p.completed);
 }
 
-const FANTASY_TRACK_ELO_GATE = 3000;
-
 /** Recompute sequential + plan lock flags after a local completion update. */
 export function applyPuzzleLocks<
   T extends DbCampaignPuzzle & { completed: boolean; locked: boolean; premiumLocked?: boolean },

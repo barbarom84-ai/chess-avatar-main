@@ -117,6 +117,8 @@ npm run build:engine-pack
 
 `build:engine-pack` = `sync:chessavatar-native` + PyInstaller `AvatarEngine.py` → `public/AvatarEngine.exe`.
 
+`sync:chessavatar-native` copie `ChessAvatar.exe`, `nn-default.nnue` et `engine-native-manifest.json` dans `public/` pour les tests locaux ; ces fichiers ne sont ni versionnés (`.gitignore`) ni déployés (`.vercelignore`).
+
 ### Comportement AvatarEngine
 
 1. Ouvertures / lignes forcées / fallback Fritz noir  

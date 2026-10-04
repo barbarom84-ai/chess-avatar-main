@@ -1815,7 +1815,7 @@
         "mainCampaignComplete": false,
         "fantasyTrackUnlocked": false,
         "premiumPuzzlesPerTrack": 20,
-        "freePuzzlesPerTrack": 3
+        "freePuzzlesPerTrack": 20
       }
     },
     "POST api/ascension/puzzles/complete": {
