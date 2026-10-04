@@ -14,7 +14,7 @@ export default function TermsPage() {
             <FileText className="h-12 w-12 text-cyan-400" />
             <h1 className="text-4xl font-bold neon-cyan">{t.legal.termsTitle}</h1>
           </div>
-          <p className="text-sm text-slate-500">{t.legal.lastUpdated}: 2026-02-14</p>
+          <p className="text-sm text-slate-500">{t.legal.lastUpdated}: 2026-10-04</p>
         </div>
 
         <div className="prose prose-invert prose-cyan max-w-none space-y-6 text-slate-300 text-sm leading-relaxed">
