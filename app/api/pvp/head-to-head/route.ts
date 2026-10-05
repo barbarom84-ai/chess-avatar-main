@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
 
   const { data, error } = await sb
     .from("pvp_games")
-    .select("id, result, white_user_id, black_user_id, status, time_preset")
+    .select("id, result, white_user_id, black_user_id, white_display_name, black_display_name, status, time_preset")
     .eq("status", "finished")
     .not("black_user_id", "is", null)
     .or(
@@ -51,12 +51,15 @@ export async function GET(request: NextRequest) {
   const opponent = summaries.get(opponentId);
 
   const lastGame = games[0];
+  const lastGameName = (
+    lastGame?.white_user_id === opponentId ? lastGame.white_display_name : lastGame?.black_display_name
+  )?.trim();
 
   return NextResponse.json({
     record,
     opponent: {
       userId: opponentId,
-      displayName: opponent?.displayName ?? "Player",
+      displayName: opponent?.displayName ?? (lastGameName || "Player"),
       avatarUrl: opponent?.avatarUrl ?? null,
     },
     lastTimePreset: lastGame?.time_preset ?? null,

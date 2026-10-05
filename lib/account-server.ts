@@ -26,7 +26,8 @@ type FriendRow = {
 };
 
 export type AccountUserSummary = {
-  displayName: string;
+  /** Null when the account has no custom name, so callers can fall back to the name stored on the game. */
+  displayName: string | null;
   avatarUrl: string | null;
 };
 
@@ -62,7 +63,7 @@ export async function fetchAccountSummariesByUserIds(
     avatar_url: string | null;
   }>) {
     map.set(row.user_id, {
-      displayName: resolveAccountDisplayName(row, null),
+      displayName: row.display_name?.trim() ? resolveAccountDisplayName(row, null) : null,
       avatarUrl: row.avatar_url?.trim() ? row.avatar_url.trim() : null,
     });
   }
