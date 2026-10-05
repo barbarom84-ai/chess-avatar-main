@@ -38,6 +38,19 @@ export async function GET(request: NextRequest) {
 
   if (error) return jsonError(error.message ?? "Lookup failed", 500);
   if (!row) {
+    // The opponent's search may have paired us and deleted both queue rows.
+    const recent = await findRecentMatchmakingStarterGame(sb, user.id, null);
+    if (recent) {
+      return NextResponse.json({
+        inQueue: false,
+        matched: true,
+        gameId: recent.game.id,
+        role: recent.role,
+        game: recent.game,
+        serverNow: Date.now(),
+        reused: true,
+      } satisfies PvpMatchmakingResponse);
+    }
     return NextResponse.json({ inQueue: false } satisfies PvpMatchmakingResponse);
   }
 
