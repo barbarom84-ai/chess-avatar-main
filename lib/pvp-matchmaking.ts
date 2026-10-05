@@ -5,7 +5,7 @@ import {
   presetStorageInitialSec,
   resolvePvpTimePreset,
 } from "@/lib/pvp-time-controls";
-import { displayNameFromAuthUser } from "@/lib/pvp-display-name";
+import { fetchPvpPlayerDisplayName } from "@/lib/account-server";
 import { initialClockFieldsForPreset } from "@/lib/pvp-game-lifecycle";
 import type { PvpGameRow } from "@/lib/pvp-chess";
 
@@ -27,7 +27,7 @@ export async function upsertMatchmakingEntry(
   user: Pick<User, "id" | "email" | "user_metadata">,
   timePreset: string
 ): Promise<PvpMatchmakingRow> {
-  const displayName = displayNameFromAuthUser(user);
+  const displayName = await fetchPvpPlayerDisplayName(sb, user);
 
   const { data: existing, error: existingErr } = await sb
     .from("pvp_matchmaking_queue")
