@@ -13,13 +13,17 @@ export function whiteBlackDisplayNames(g: PvpGameRow) {
   return { white, black };
 }
 
-export function opponentFromGame(g: PvpGameRow, myUserId: string | null) {
+/** The game's stored name wins over `profileName`: the public profile API answers "Player" for accounts without a profile row. */
+export function opponentFromGame(
+  g: PvpGameRow,
+  myUserId: string | null,
+  profileName?: string | null
+) {
   if (!myUserId || !g.black_user_id) return null;
   const imWhite = g.white_user_id === myUserId;
   const oppId = imWhite ? g.black_user_id : g.white_user_id;
-  const oppLabel = imWhite
-    ? g.black_display_name?.trim() || fallbackPlayerLabel(oppId)
-    : g.white_display_name?.trim() || fallbackPlayerLabel(oppId);
+  const gameName = imWhite ? g.black_display_name : g.white_display_name;
+  const oppLabel = gameName?.trim() || profileName?.trim() || fallbackPlayerLabel(oppId);
   const oppColor: "white" | "black" = imWhite ? "black" : "white";
   return { oppId, oppLabel, oppColor };
 }

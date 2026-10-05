@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import {
+  Ban,
   Trophy,
   Flag,
   Minus,
@@ -53,7 +54,7 @@ export default function OnlinePvpResultModal({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  result: "win" | "loss" | "draw";
+  result: "win" | "loss" | "draw" | "aborted";
   resultMessage: string;
   totalMoves: number;
   captures: number;
@@ -99,6 +100,13 @@ export default function OnlinePvpResultModal({
       bg: "bg-slate-500/10",
       icon: Minus,
       title: o.titleDraw,
+    },
+    aborted: {
+      color: "text-slate-400",
+      ring: "ring-slate-600/30",
+      bg: "bg-slate-600/10",
+      icon: Ban,
+      title: o.titleAborted,
     },
   };
 
@@ -236,15 +244,17 @@ export default function OnlinePvpResultModal({
                   {opponentBio}
                 </p>
               ) : null}
-              <div className="mt-2 border-t border-slate-800/80 pt-2">
-                {headToHeadLoading ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-500" aria-hidden />
-                ) : h2hLine ? (
-                  <p className="text-[11px] text-slate-400 leading-snug">{h2hLine}</p>
-                ) : (
-                  <p className="text-[11px] text-slate-500">{o.headToHeadEmpty}</p>
-                )}
-              </div>
+              {result !== "aborted" ? (
+                <div className="mt-2 border-t border-slate-800/80 pt-2">
+                  {headToHeadLoading ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-500" aria-hidden />
+                  ) : h2hLine ? (
+                    <p className="text-[11px] text-slate-400 leading-snug">{h2hLine}</p>
+                  ) : (
+                    <p className="text-[11px] text-slate-500">{o.headToHeadEmpty}</p>
+                  )}
+                </div>
+              ) : null}
             </div>
           ) : null}
         </div>
