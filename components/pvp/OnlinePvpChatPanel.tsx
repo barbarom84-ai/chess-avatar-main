@@ -9,9 +9,11 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import AccountAvatar from "@/components/AccountAvatar";
 import { accountProfileInitials } from "@/lib/account-profile";
 import { useLanguage } from "@/lib/language-context";
-import type { PvpChatMessage } from "@/lib/pvp-chat";
+import { pvpChatSenderName, type PvpChatMessage } from "@/lib/pvp-chat";
+import type { PvpGameRow } from "@/lib/pvp-chess";
 
 type OnlinePvpChatPanelProps = {
+  game: PvpGameRow;
   messages: PvpChatMessage[];
   loading: boolean;
   disabled: boolean;
@@ -30,6 +32,7 @@ function formatRelativeTime(iso: string, lang: string) {
 }
 
 export default function OnlinePvpChatPanel({
+  game,
   messages,
   loading,
   disabled,
@@ -76,7 +79,7 @@ export default function OnlinePvpChatPanel({
           <ul className="p-2 space-y-2">
             {messages.map((m) => {
               const mine = m.user_id === userId;
-              const name = m.display_name ?? c.anonymous;
+              const name = pvpChatSenderName(m, game) ?? c.anonymous;
               return (
                 <li
                   key={m.id}

@@ -5,7 +5,7 @@ import { createServiceSupabase } from "@/lib/supabase-service";
 import { fetchAccountSummariesByUserIds } from "@/lib/account-server";
 import type { PvpGameRow } from "@/lib/pvp-chess";
 import type { PvpChatMessage } from "@/lib/pvp-chat";
-import { PVP_CHAT_MAX_BODY_LENGTH } from "@/lib/pvp-chat";
+import { PVP_CHAT_MAX_BODY_LENGTH, pvpChatSenderName } from "@/lib/pvp-chat";
 
 import type { PvpChatListResponse, PvpChatPostResponse } from "@/lib/api-contract";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
@@ -38,13 +38,14 @@ async function assertParticipant(
 
 function enrichMessages(
   rows: PvpChatMessage[],
-  summaries: Awaited<ReturnType<typeof fetchAccountSummariesByUserIds>>
+  summaries: Awaited<ReturnType<typeof fetchAccountSummariesByUserIds>>,
+  game: PvpGameRow
 ): PvpChatMessage[] {
   return rows.map((m) => {
     const s = summaries.get(m.user_id);
     return {
       ...m,
-      display_name: s?.displayName ?? null,
+      display_name: pvpChatSenderName({ user_id: m.user_id, display_name: s?.displayName }, game),
       avatar_url: s?.avatarUrl ?? null,
     };
   });
@@ -85,7 +86,7 @@ export async function GET(
   const userIds = [...new Set(rows.map((r) => r.user_id))];
   const summaries = await fetchAccountSummariesByUserIds(sb, userIds);
 
-  return NextResponse.json({ messages: enrichMessages(rows, summaries) } satisfies PvpChatListResponse);
+  return NextResponse.json({ messages: enrichMessages(rows, summaries, check.game) } satisfies PvpChatListResponse);
 }
 
 export async function POST(
@@ -149,7 +150,7 @@ export async function POST(
   }
 
   const summaries = await fetchAccountSummariesByUserIds(sb, [user.id]);
-  const message = enrichMessages([inserted as PvpChatMessage], summaries)[0];
+  const message = enrichMessages([inserted as PvpChatMessage], summaries, check.game)[0];
 
   return NextResponse.json({ ok: true, message } satisfies PvpChatPostResponse);
 }
