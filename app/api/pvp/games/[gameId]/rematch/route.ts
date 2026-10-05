@@ -68,7 +68,9 @@ export async function POST(
   if (loadErr || !existing) return jsonError("Game not found", 404);
   const game = existing as PvpGameRow;
 
-  if (game.status !== "finished") return jsonError("Game is not finished", 400);
+  if (game.status !== "finished" && game.status !== "aborted") {
+    return jsonError("Game is not finished", 400);
+  }
   if (!game.black_user_id) return jsonError("Invalid finished game", 400);
 
   const isWhite = game.white_user_id === user.id;
