@@ -441,6 +441,7 @@ export default function OnlinePvpSidebar({
 
         <TabsContent value="chat" className="flex-1 m-0 p-3 min-h-[240px]">
           <OnlinePvpChatPanel
+            game={g}
             messages={chatMessages}
             loading={chatLoading}
             disabled={chatDisabled}
