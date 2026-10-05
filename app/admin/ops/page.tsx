@@ -19,9 +19,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSuperUser } from "@/hooks/useSuperUser";
 import { accountProfileInitials } from "@/lib/account-profile";
-import type { AccountUserSummary } from "@/lib/account-server";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import type { PvpGameRow } from "@/lib/pvp-chess";
+
+type OpsUserSummary = { displayName: string; avatarUrl: string | null };
 
 type Snapshot = {
   pvpPlaying: number;
@@ -78,7 +79,7 @@ export default function AdminOpsPage() {
   const { isSuperUser, loading: superLoading } = useSuperUser();
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   const [events, setEvents] = useState<ActivityRow[]>([]);
-  const [userSummaries, setUserSummaries] = useState<Record<string, AccountUserSummary>>({});
+  const [userSummaries, setUserSummaries] = useState<Record<string, OpsUserSummary>>({});
   const [pvpLive, setPvpLive] = useState<PvpGameRow[]>([]);
   const [pvpActionId, setPvpActionId] = useState<string | null>(null);
   const [presenceList, setPresenceList] = useState<PresenceState[]>([]);
@@ -97,7 +98,7 @@ export default function AdminOpsPage() {
         fetchWithAuth("/api/admin/ops/snapshot") as Promise<Snapshot>,
         fetchWithAuth("/api/admin/ops/events?limit=40") as Promise<{
           events: ActivityRow[];
-          userSummaries?: Record<string, AccountUserSummary>;
+          userSummaries?: Record<string, OpsUserSummary>;
         }>,
       ]);
       setSnapshot(snap);
@@ -503,7 +504,7 @@ function OpsUserCell({
   summaries,
 }: {
   userId: string;
-  summaries: Record<string, AccountUserSummary>;
+  summaries: Record<string, OpsUserSummary>;
 }) {
   const summary = summaries[userId];
   if (!summary) {

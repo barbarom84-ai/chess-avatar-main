@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
   const userSummaries: Record<string, { displayName: string; avatarUrl: string | null }> =
     {};
   for (const [id, summary] of summaries) {
-    userSummaries[id] = summary;
+    userSummaries[id] = { ...summary, displayName: summary.displayName ?? "Player" };
   }
 
   return NextResponse.json({ events, userSummaries });
