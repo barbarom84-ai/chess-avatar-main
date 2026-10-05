@@ -645,10 +645,13 @@ export default function OnlinePvpPage() {
       case "fifty_move_rule":
         detail = rm.reasonFifty;
         break;
+      case "no_first_move":
+        detail = rm.reasonNoFirstMove;
+        break;
       default:
         break;
     }
-    return `${r} — ${detail}`;
+    return r === "*" ? detail : `${r} — ${detail}`;
   }, [online.game?.result, online.game?.result_reason, o.resultModal]);
 
   const durationLabelForModal = useMemo(

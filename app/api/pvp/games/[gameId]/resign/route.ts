@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthedUserFromRequest } from "@/lib/supabase-auth-request";
 import { createServiceSupabase } from "@/lib/supabase-service";
-import type { PvpGameRow } from "@/lib/pvp-chess";
+import { replayGameFromUcis, type PvpGameRow, type PvpMoveRow } from "@/lib/pvp-chess";
+import { checkTimeoutForTimedGame, finalClockPatch } from "@/lib/pvp-clock-server";
 import { pvpRateLimitOrResponse } from "@/lib/pvp-api-rate-limit";
 
 import type { PvpResignResponse } from "@/lib/api-contract";
@@ -42,6 +43,20 @@ export async function POST(
   const isBlack = row.black_user_id === user.id;
   if (!isWhite && !isBlack) return jsonError("Forbidden", 403);
 
+  const { data: moveRows, error: mErr } = await sb
+    .from("pvp_moves")
+    .select("ply,uci")
+    .eq("game_id", gameId)
+    .order("ply", { ascending: true });
+  if (mErr) return jsonError("Failed to load moves", 500);
+  const chess = replayGameFromUcis(((moveRows ?? []) as Pick<PvpMoveRow, "uci">[]).map((m) => m.uci));
+  const now = Date.now();
+  const timeout = checkTimeoutForTimedGame(row, chess, now);
+  if (timeout) {
+    await sb.from("pvp_games").update(timeout).eq("id", gameId).eq("status", "playing");
+    return jsonError("Game over (time)", 400);
+  }
+
   const result = isWhite ? "0-1" : "1-0";
   const { error: upErr } = await sb
     .from("pvp_games")
@@ -50,6 +65,7 @@ export async function POST(
       result,
       result_reason: "resignation",
       draw_offered_by: null,
+      ...finalClockPatch(row, chess, now),
     })
     .eq("id", gameId)
     .eq("status", "playing");
