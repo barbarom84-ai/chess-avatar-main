@@ -37,9 +37,9 @@ export function usePvpClockDisplay({
   const showClocks =
     (game.clock_mode === "timed" || game.clock_mode === "correspondence") &&
     game.status === "playing";
-  const stm = chessForPvpClockAuthority(game, moves).turn();
+  const clockChess = chessForPvpClockAuthority(game, moves);
   const display = showClocks
-    ? getPvpClockDisplayMs(game, stm, now)
+    ? getPvpClockDisplayMs(game, clockChess.turn(), now, clockChess.history().length)
     : {
         whiteMs: 0,
         blackMs: 0,

@@ -1151,6 +1151,7 @@ export const en = {
         reasonThreefold: "Threefold repetition",
         reasonInsufficient: "Insufficient material",
         reasonFifty: "Fifty-move rule",
+        reasonNoFirstMove: "Game aborted: first move not played in time",
         opponentTitle: "Opponent",
         opponentProfileLink: "View profile",
         headToHeadTitle: "PvP head-to-head",

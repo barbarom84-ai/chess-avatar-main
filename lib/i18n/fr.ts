@@ -1155,6 +1155,7 @@ export const fr = {
         reasonThreefold: "Triple répétition",
         reasonInsufficient: "Matériel insuffisant",
         reasonFifty: "Règle des cinquante coups",
+        reasonNoFirstMove: "Partie annulée : premier coup non joué à temps",
         opponentTitle: "Adversaire",
         opponentProfileLink: "Voir le profil",
         headToHeadTitle: "Confrontations PvP",

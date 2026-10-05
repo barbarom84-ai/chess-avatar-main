@@ -1,6 +1,7 @@
 import type { Color } from "chess.js";
 import type { PvpGameRow } from "@/lib/pvp-chess";
 import { correspondenceDaysFromGame } from "@/lib/pvp-time-controls";
+import { PVP_CLOCK_START_PLIES, PVP_FIRST_MOVE_ABORT_MS } from "@/lib/pvp-clock-rules";
 
 export type PvpClockDisplay = {
   whiteMs: number;
@@ -10,11 +11,15 @@ export type PvpClockDisplay = {
   daysPerMove: number | null;
 };
 
-/** Temps affiché côté client (Fischer ou délai par coup en différé). */
+/**
+ * Temps affiché côté client (Fischer ou délai par coup en différé).
+ * `pliesPlayed` below [PVP_CLOCK_START_PLIES] keeps a live clock still (it starts with each side's first move).
+ */
 export function getPvpClockDisplayMs(
   game: PvpGameRow,
   sideToMove: Color,
-  nowMs: number
+  nowMs: number,
+  pliesPlayed: number = PVP_CLOCK_START_PLIES
 ): PvpClockDisplay {
   const daysPerMove = correspondenceDaysFromGame(game);
 
@@ -67,7 +72,7 @@ export function getPvpClockDisplayMs(
   if (w == null || b == null || started == null || game.status !== "playing") {
     return { whiteMs: w ?? 0, blackMs: b ?? 0, active: null, correspondence: false, daysPerMove: null };
   }
-  const elapsed = Math.max(0, nowMs - started);
+  const elapsed = pliesPlayed < PVP_CLOCK_START_PLIES ? 0 : Math.max(0, nowMs - started);
   if (sideToMove === "w") {
     return {
       whiteMs: Math.max(0, w - elapsed),
@@ -86,15 +91,23 @@ export function getPvpClockDisplayMs(
   };
 }
 
-/** True when the side to move has no time left (client display / pre-claim). */
+/**
+ * True when the side to move has no time left, or a live game passed its first-move deadline
+ * (client display / pre-claim).
+ */
 export function isPvpSideToMoveTimedOut(
   game: PvpGameRow,
   sideToMove: Color,
-  nowMs: number
+  nowMs: number,
+  pliesPlayed: number = PVP_CLOCK_START_PLIES
 ): boolean {
   if (game.status !== "playing") return false;
   if (game.clock_mode !== "timed" && game.clock_mode !== "correspondence") return false;
-  const display = getPvpClockDisplayMs(game, sideToMove, nowMs);
+  if (game.clock_mode === "timed" && pliesPlayed < PVP_CLOCK_START_PLIES) {
+    const started = game.clock_turn_started_at ? Date.parse(game.clock_turn_started_at) : Number.NaN;
+    return Number.isFinite(started) && nowMs - started >= PVP_FIRST_MOVE_ABORT_MS;
+  }
+  const display = getPvpClockDisplayMs(game, sideToMove, nowMs, pliesPlayed);
   if (!display.active) return false;
   const activeMs = display.active === "w" ? display.whiteMs : display.blackMs;
   return activeMs <= 0;

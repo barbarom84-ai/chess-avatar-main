@@ -5,7 +5,11 @@ import { createServiceSupabase } from "@/lib/supabase-service";
 import type { PvpGameRow, PvpMoveRow } from "@/lib/pvp-chess";
 import { replayGameFromUcis, normalizeUci } from "@/lib/pvp-chess";
 import { applyUciMove } from "@/lib/learn-chess-utils";
-import { applyMoveClockUpdate, checkTimeoutForTimedGame } from "@/lib/pvp-clock-server";
+import {
+  applyMoveClockUpdate,
+  checkTimeoutForTimedGame,
+  lagCompensationMs,
+} from "@/lib/pvp-clock-server";
 import { computeMoveTimeSpentMs } from "@/lib/pvp-move-time";
 import { pvpRateLimitOrResponse } from "@/lib/pvp-api-rate-limit";
 import { notifyCorrespondenceYourTurn } from "@/lib/pvp-correspondence-notify";
@@ -32,7 +36,7 @@ export async function POST(
   if (!sb) return jsonError("Server misconfigured", 503);
 
   const { gameId } = await context.params;
-  const body = (await request.json().catch(() => null)) as { uci?: string } | null;
+  const body = (await request.json().catch(() => null)) as { uci?: string; thinkMs?: unknown } | null;
   const uciRaw = body?.uci;
   const uci = typeof uciRaw === "string" ? normalizeUci(uciRaw) : null;
   if (!uci) return jsonError("Invalid UCI", 400);
@@ -66,22 +70,25 @@ export async function POST(
   const chess = replayGameFromUcis(ucis);
 
   const now = Date.now();
-  const timeoutEarly = checkTimeoutForTimedGame(row, chess, now);
+  const expectWhite = chess.turn() === "w";
+  const isMover = expectWhite ? isWhite : isBlack;
+  const lagMs =
+    isMover && row.clock_mode === "timed"
+      ? lagCompensationMs(computeMoveTimeSpentMs(row.clock_turn_started_at, now), body?.thinkMs)
+      : 0;
+  const timeoutEarly = checkTimeoutForTimedGame(row, chess, now - lagMs);
   if (timeoutEarly) {
     await sb.from("pvp_games").update(timeoutEarly).eq("id", gameId);
-    return jsonError("Game over (time)", 400);
+    return jsonError(timeoutEarly.status === "aborted" ? "Game aborted" : "Game over (time)", 400);
   }
 
   const expectedPly = ucis.length + 1;
-  const stm = chess.turn();
-  const expectWhite = stm === "w";
-  if (expectWhite && !isWhite) return jsonError("Not your turn", 400);
-  if (!expectWhite && !isBlack) return jsonError("Not your turn", 400);
+  if (!isMover) return jsonError("Not your turn", 400);
 
-  const clock = applyMoveClockUpdate(row, chess, now);
+  const clock = applyMoveClockUpdate(row, chess, now, lagMs);
   if (clock.kind === "timeout") {
     await sb.from("pvp_games").update(clock.patch).eq("id", gameId);
-    return jsonError("Time forfeiture", 400);
+    return jsonError(clock.patch.status === "aborted" ? "Game aborted" : "Time forfeiture", 400);
   }
 
   const timeSpentMs =

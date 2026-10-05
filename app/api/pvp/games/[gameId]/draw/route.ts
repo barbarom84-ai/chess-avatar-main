@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthedUserFromRequest } from "@/lib/supabase-auth-request";
 import { createServiceSupabase } from "@/lib/supabase-service";
-import type { PvpGameRow } from "@/lib/pvp-chess";
+import { replayGameFromUcis, type PvpGameRow, type PvpMoveRow } from "@/lib/pvp-chess";
+import { checkTimeoutForTimedGame, finalClockPatch } from "@/lib/pvp-clock-server";
 import { pvpRateLimitOrResponse } from "@/lib/pvp-api-rate-limit";
 import { MAX_PVP_DRAW_OFFERS_PER_PLAYER } from "@/lib/pvp-draw-limits";
 
@@ -99,6 +100,19 @@ export async function POST(
   if (!row.draw_offered_by || row.draw_offered_by === user.id) {
     return jsonError("No draw offer to accept", 400);
   }
+  const { data: moveRows, error: mErr } = await sb
+    .from("pvp_moves")
+    .select("ply,uci")
+    .eq("game_id", gameId)
+    .order("ply", { ascending: true });
+  if (mErr) return jsonError("Failed to load moves", 500);
+  const chess = replayGameFromUcis(((moveRows ?? []) as Pick<PvpMoveRow, "uci">[]).map((m) => m.uci));
+  const now = Date.now();
+  const timeout = checkTimeoutForTimedGame(row, chess, now);
+  if (timeout) {
+    await sb.from("pvp_games").update(timeout).eq("id", gameId).eq("status", "playing");
+    return jsonError("Game over (time)", 400);
+  }
   const { error } = await sb
     .from("pvp_games")
     .update({
@@ -106,6 +120,7 @@ export async function POST(
       result: "1/2-1/2",
       result_reason: "draw_agreed",
       draw_offered_by: null,
+      ...finalClockPatch(row, chess, now),
     })
     .eq("id", gameId)
     .eq("status", "playing");

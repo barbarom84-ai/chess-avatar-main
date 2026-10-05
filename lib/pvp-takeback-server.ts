@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { PvpGameRow, PvpMoveRow } from "@/lib/pvp-chess";
 import { replayGameFromUcis } from "@/lib/pvp-chess";
+import { takebackClockUpdate } from "@/lib/pvp-clock-server";
 
 export type TakebackResult = {
   ok: true;
@@ -31,13 +32,17 @@ export async function undoLastPvpMove(
     .from("pvp_moves")
     .select("uci")
     .eq("game_id", gameId)
-    .lt("ply", ply)
+    .lte("ply", ply)
     .order("ply", { ascending: true });
 
   if (allErr) return { ok: false, error: allErr.message ?? "Load failed" };
 
   const ucis = ((allMoves ?? []) as Pick<PvpMoveRow, "uci">[]).map((m) => m.uci);
-  replayGameFromUcis(ucis);
+  const clock = takebackClockUpdate(row, replayGameFromUcis(ucis), Date.now());
+  if (clock.kind === "timeout") {
+    await sb.from("pvp_games").update(clock.patch).eq("id", gameId).eq("status", "playing");
+    return { ok: false, error: "Game over (time)" };
+  }
 
   const { error: delErr } = await sb
     .from("pvp_moves")
@@ -53,7 +58,7 @@ export async function undoLastPvpMove(
     result_reason: null,
     takeback_offered_by: null,
     draw_offered_by: null,
-    clock_turn_started_at: new Date().toISOString(),
+    ...clock.patch,
   };
 
   const { error: upErr } = await sb.from("pvp_games").update(patch).eq("id", gameId);

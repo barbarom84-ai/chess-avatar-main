@@ -471,6 +471,12 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
     );
   }, [chess, state.game, state.role, pendingUci]);
 
+  /** When this client saw its turn start; the move route refunds network delay from it. */
+  const myTurnSinceRef = useRef<number | null>(null);
+  useEffect(() => {
+    myTurnSinceRef.current = isMyTurn ? performance.now() : null;
+  }, [isMyTurn]);
+
   const usesMoveClock =
     state.game?.status === "playing" &&
     (state.game.clock_mode === "timed" || state.game.clock_mode === "correspondence");
@@ -497,8 +503,13 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
 
   const isSideToMoveTimedOut = useMemo(() => {
     if (!state.game || state.game.status !== "playing") return false;
-    const stm = chessForPvpClockAuthority(state.game, state.moves).turn();
-    return isPvpSideToMoveTimedOut(state.game, stm, syncedClockNow);
+    const clockChess = chessForPvpClockAuthority(state.game, state.moves);
+    return isPvpSideToMoveTimedOut(
+      state.game,
+      clockChess.turn(),
+      syncedClockNow,
+      clockChess.history().length
+    );
   }, [state.game, state.moves, syncedClockNow]);
 
   useEffect(() => {
@@ -607,7 +618,12 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
       if (!role || !game || game.status !== "playing") {
         throw new Error("Game is not active");
       }
-      if (isPvpSideToMoveTimedOut(game, chessForPvpClockAuthority(game, state.moves).turn(), syncedClockNow)) {
+      const turnSince = myTurnSinceRef.current;
+      const thinkMs = turnSince == null ? undefined : Math.round(performance.now() - turnSince);
+      const clockChess = chessForPvpClockAuthority(game, state.moves);
+      if (
+        isPvpSideToMoveTimedOut(game, clockChess.turn(), syncedClockNow, clockChess.history().length)
+      ) {
         void refreshSilent();
         throw new Error("Time expired");
       }
@@ -638,7 +654,7 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
           `/api/pvp/games/${gameId}/move`,
           {
             method: "POST",
-            body: JSON.stringify({ uci: validation.uci }),
+            body: JSON.stringify({ uci: validation.uci, thinkMs }),
           },
           { syncTime: false }
         )) as MovePostResponse;
