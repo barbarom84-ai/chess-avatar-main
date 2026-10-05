@@ -5,7 +5,8 @@ import { createServiceSupabase } from "@/lib/supabase-service";
 import { fetchAccountSummariesByUserIds } from "@/lib/account-server";
 import type { PvpGameRow } from "@/lib/pvp-chess";
 import type { PvpChatMessage } from "@/lib/pvp-chat";
-import { PVP_CHAT_MAX_BODY_LENGTH, pvpChatSenderName } from "@/lib/pvp-chat";
+import { PVP_CHAT_MAX_BODY_LENGTH, pvpChatOpenRemainingMs, pvpChatSenderName } from "@/lib/pvp-chat";
+import { canAccessPvpGameAsSpectator } from "@/lib/pvp-access";
 
 import type { PvpChatListResponse, PvpChatPostResponse } from "@/lib/api-contract";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
@@ -15,10 +16,11 @@ function jsonError(message: string, status: number) {
   return NextResponse.json({ error: message }, { status });
 }
 
-async function assertParticipant(
+async function loadChatGame(
   sb: NonNullable<ReturnType<typeof createServiceSupabase>>,
   gameId: string,
-  userId: string
+  userId: string,
+  access: "read" | "write"
 ): Promise<{ ok: true; game: PvpGameRow } | { ok: false; response: NextResponse }> {
   const { data: game, error } = await sb
     .from("pvp_games")
@@ -31,7 +33,10 @@ async function assertParticipant(
   const row = game as PvpGameRow;
   const isParticipant =
     row.white_user_id === userId || row.black_user_id === userId;
-  if (!isParticipant) return { ok: false, response: jsonError("Forbidden", 403) };
+  const allowed =
+    isParticipant ||
+    (access === "read" && canAccessPvpGameAsSpectator(row.status, false, false));
+  if (!allowed) return { ok: false, response: jsonError("Forbidden", 403) };
 
   return { ok: true, game: row };
 }
@@ -70,7 +75,7 @@ export async function GET(
   if (!sb) return jsonError("Server misconfigured", 503);
 
   const { gameId } = await context.params;
-  const check = await assertParticipant(sb, gameId, user.id);
+  const check = await loadChatGame(sb, gameId, user.id, "read");
   if (!check.ok) return check.response;
 
   const { data, error } = await sb
@@ -108,10 +113,10 @@ export async function POST(
   if (!sb) return jsonError("Server misconfigured", 503);
 
   const { gameId } = await context.params;
-  const check = await assertParticipant(sb, gameId, user.id);
+  const check = await loadChatGame(sb, gameId, user.id, "write");
   if (!check.ok) return check.response;
 
-  if (!["waiting", "playing"].includes(check.game.status)) {
+  if (pvpChatOpenRemainingMs(check.game, Date.now()) <= 0) {
     return jsonError("Chat closed for this game", 400);
   }
 

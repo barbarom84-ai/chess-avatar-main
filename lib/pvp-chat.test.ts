@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { pvpChatSenderName } from "@/lib/pvp-chat";
+import { PVP_CHAT_POST_GAME_WINDOW_MS, pvpChatOpenRemainingMs, pvpChatSenderName } from "@/lib/pvp-chat";
 
 const WHITE = "11111111-1111-1111-1111-111111111111";
 const BLACK = "22222222-2222-2222-2222-222222222222";
@@ -29,5 +29,31 @@ describe("pvpChatSenderName", () => {
   it("returns null when nothing names the sender", () => {
     expect(pvpChatSenderName({ user_id: "someone-else" }, game)).toBeNull();
     expect(pvpChatSenderName({ user_id: WHITE }, null)).toBeNull();
+  });
+});
+
+describe("pvpChatOpenRemainingMs", () => {
+  const endedAt = "2026-10-05T18:00:00.000Z";
+  const ended = Date.parse(endedAt);
+
+  it("stays open while the game is waiting or playing", () => {
+    expect(pvpChatOpenRemainingMs({ status: "playing", updated_at: endedAt }, ended + 86_400_000)).toBe(
+      Number.POSITIVE_INFINITY
+    );
+    expect(pvpChatOpenRemainingMs({ status: "waiting", updated_at: endedAt }, ended)).toBe(Number.POSITIVE_INFINITY);
+  });
+
+  it("stays open for a while after a finished or aborted game", () => {
+    expect(pvpChatOpenRemainingMs({ status: "finished", updated_at: endedAt }, ended + 60_000)).toBe(
+      PVP_CHAT_POST_GAME_WINDOW_MS - 60_000
+    );
+    expect(pvpChatOpenRemainingMs({ status: "aborted", updated_at: endedAt }, ended)).toBe(PVP_CHAT_POST_GAME_WINDOW_MS);
+  });
+
+  it("closes once the post-game window has passed", () => {
+    expect(
+      pvpChatOpenRemainingMs({ status: "finished", updated_at: endedAt }, ended + PVP_CHAT_POST_GAME_WINDOW_MS)
+    ).toBe(0);
+    expect(pvpChatOpenRemainingMs({ status: "finished", updated_at: "not a date" }, ended)).toBe(0);
   });
 });

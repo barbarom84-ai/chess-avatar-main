@@ -17,6 +17,7 @@ type OnlinePvpChatPanelProps = {
   messages: PvpChatMessage[];
   loading: boolean;
   disabled: boolean;
+  readOnly?: boolean;
   userId: string | null;
   onSend: (body: string) => Promise<void>;
 };
@@ -36,6 +37,7 @@ export default function OnlinePvpChatPanel({
   messages,
   loading,
   disabled,
+  readOnly = false,
   userId,
   onSend,
 }: OnlinePvpChatPanelProps) {
@@ -159,7 +161,7 @@ export default function OnlinePvpChatPanel({
         </>
       )}
       {disabled && (
-        <p className="text-xs text-slate-500 text-center py-2">{c.closed}</p>
+        <p className="text-xs text-slate-500 text-center py-2">{readOnly ? c.spectatorReadOnly : c.closed}</p>
       )}
     </div>
   );

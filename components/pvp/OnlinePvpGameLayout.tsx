@@ -23,11 +23,13 @@ import { mapPvpErrorMessage } from "@/lib/pvp-errors";
 import type { PvpGameRow, PvpMoveRow } from "@/lib/pvp-chess";
 import { replayGameFromUcis, uciToLastMoveSquares } from "@/lib/pvp-chess";
 import { whiteBlackDisplayNames } from "@/lib/pvp-utils";
+import { pvpChatOpenRemainingMs } from "@/lib/pvp-chat";
 import type { AccountFriend, AccountProfile } from "@/lib/account-types";
 import type { Language } from "@/lib/i18n";
 
 const PVP_EVAL_BAR_STORAGE_KEY = "chess-avatar.pvp.showEvalBar";
 const LIVE_EVAL_DEPTH = 12;
+const SPECTATOR_CHAT_POLL_MS = 4000;
 
 type OnlinePvpGameLayoutProps = {
   game: PvpGameRow;
@@ -184,13 +186,19 @@ export default function OnlinePvpGameLayout({
 
   const { isReady, getPositionEvaluation } = useStockfish();
 
-  const chatEnabled = Boolean(userId && role);
-  const chat = usePvpChat(gameId, userId, chatEnabled);
-  const chatDisabled =
-    !userId ||
-    !role ||
-    g.status === "finished" ||
-    g.status === "aborted";
+  const [chatOpen, setChatOpen] = useState(true);
+  useEffect(() => {
+    const remaining = pvpChatOpenRemainingMs({ status: g.status, updated_at: g.updated_at }, Date.now());
+    setChatOpen(remaining > 0);
+    if (remaining <= 0 || !Number.isFinite(remaining)) return;
+    const id = window.setTimeout(() => setChatOpen(false), remaining);
+    return () => window.clearTimeout(id);
+  }, [g.status, g.updated_at]);
+
+  const chatReadOnly = !role && isSpectator;
+  const chatEnabled = Boolean(userId && (role || chatReadOnly));
+  const chat = usePvpChat(gameId, userId, chatEnabled, chatReadOnly && chatOpen ? SPECTATOR_CHAT_POLL_MS : null);
+  const chatDisabled = !userId || !role || !chatOpen;
 
   useEffect(() => {
     if (!canShowEvalBar) {
@@ -437,6 +445,7 @@ export default function OnlinePvpGameLayout({
         chatMessages={chat.messages}
         chatLoading={chat.loading}
         chatDisabled={chatDisabled}
+        chatReadOnly={chatReadOnly}
         onSendChat={chat.sendMessage}
         chatUnreadCount={chat.unreadCount}
         onChatTabVisible={chat.markChatVisible}

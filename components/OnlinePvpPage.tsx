@@ -35,6 +35,7 @@ import { fetchPvpHeadToHead } from "@/lib/pvp-head-to-head-client";
 import type { PvpHeadToHeadRecord } from "@/lib/pvp-head-to-head";
 import {
   opponentFromGame,
+  pvpGameDurationSec,
   pvpResultForPlayer,
   whiteBlackDisplayNames,
 } from "@/lib/pvp-utils";
@@ -105,7 +106,6 @@ export default function OnlinePvpPage() {
   const [saving, setSaving] = useState(false);
   const [savedToCloud, setSavedToCloud] = useState(false);
   const [showResultModal, setShowResultModal] = useState(false);
-  const [endedDurationSec, setEndedDurationSec] = useState<number | null>(null);
   const [opponentProfile, setOpponentProfile] = useState<AccountProfile | null>(null);
   const [myProfile, setMyProfile] = useState<AccountProfile | null>(null);
   const [resultHeadToHead, setResultHeadToHead] = useState<PvpHeadToHeadRecord | null>(null);
@@ -114,7 +114,6 @@ export default function OnlinePvpPage() {
   const [acceptingRematchId, setAcceptingRematchId] = useState<string | null>(null);
   const [acceptingInviteId, setAcceptingInviteId] = useState<string | null>(null);
   const [cancellingRematchId, setCancellingRematchId] = useState<string | null>(null);
-  const startMsRef = useRef<number | null>(null);
   const resultModalShownForGameId = useRef<string | null>(null);
   const rematchToastShownRef = useRef<Set<string>>(new Set());
   const inviteToastShownRef = useRef<Set<string>>(new Set());
@@ -246,7 +245,6 @@ export default function OnlinePvpPage() {
   useEffect(() => {
     setSavedToCloud(false);
     setShowResultModal(false);
-    setEndedDurationSec(null);
     resultModalShownForGameId.current = null;
     rematchToastShownRef.current = new Set();
     prevGameSnapRef.current = null;
@@ -271,15 +269,10 @@ export default function OnlinePvpPage() {
     };
   }, [gameId, online.game, o.multiGame.gameStarted]);
 
-  useEffect(() => {
-    if (
-      online.game?.status === "playing" &&
-      online.game.black_user_id &&
-      startMsRef.current === null
-    ) {
-      startMsRef.current = Date.now();
-    }
-  }, [online.game?.status, online.game?.black_user_id]);
+  const gameDurationSec = useMemo(
+    () => (online.game ? pvpGameDurationSec(online.game, online.moves) : null),
+    [online.game, online.moves]
+  );
 
   const inviteUrl =
     typeof window !== "undefined" && gameId
@@ -493,10 +486,7 @@ export default function OnlinePvpPage() {
         pgn,
         finalFen: online.chess.fen(),
         movesCount: online.moves.length,
-        durationSeconds:
-          startMsRef.current != null
-            ? Math.max(0, Math.round((Date.now() - startMsRef.current) / 1000))
-            : undefined,
+        durationSeconds: gameDurationSec ?? undefined,
         gameKind: "pvp_human_vs_human",
       });
       setSavedToCloud(true);
@@ -506,20 +496,7 @@ export default function OnlinePvpPage() {
     } finally {
       setSaving(false);
     }
-  }, [online, userId, o, savedToCloud]);
-
-  useEffect(() => {
-    if (
-      online.game?.status === "finished" &&
-      online.game?.result &&
-      startMsRef.current != null
-    ) {
-      setEndedDurationSec((prev) => {
-        if (prev != null) return prev;
-        return Math.max(0, Math.round((Date.now() - startMsRef.current!) / 1000));
-      });
-    }
-  }, [online.game?.status, online.game?.result]);
+  }, [online, userId, o, savedToCloud, gameDurationSec]);
 
   const resultOpponentUserId = useMemo(() => {
     const g = online.game;
@@ -657,8 +634,8 @@ export default function OnlinePvpPage() {
   }, [online.game?.result, online.game?.result_reason, o.resultModal]);
 
   const durationLabelForModal = useMemo(
-    () => formatDurationSec(endedDurationSec ?? undefined),
-    [endedDurationSec]
+    () => formatDurationSec(gameDurationSec ?? undefined),
+    [gameDurationSec]
   );
 
   const handleDownloadPgn = useCallback(() => {
