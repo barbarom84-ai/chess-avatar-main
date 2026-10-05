@@ -11055,6 +11055,35 @@
     ]
   },
   {
+    "id": "a31-english-opening-symmetrical-variation-anti-benoni-variation-kasparov-gambit",
+    "name": "English Opening: Symmetrical Variation, Anti-Benoni Variation, Kasparov Gambit",
+    "nameEn": "English Opening: Symmetrical Variation, Anti-Benoni Variation, Kasparov Gambit",
+    "eco": "A31",
+    "moves": "1. d4 Nf6 2. c4 c5 3. Nf3 cxd4 4. Nxd4 e5 5. Nb5 d5",
+    "uciMoves": [
+      "d2d4",
+      "g8f6",
+      "c2c4",
+      "c7c5",
+      "g1f3",
+      "c5d4",
+      "f3d4",
+      "e7e5",
+      "d4b5",
+      "d7d5"
+    ],
+    "character": "balanced",
+    "difficulty": 3,
+    "popularity": 3,
+    "color": "both",
+    "description": "Ligne nommée (A31) — base de données Lichess chess-openings.",
+    "descriptionEn": "Named line (A31) — Lichess chess-openings database.",
+    "tags": [
+      "lichess-openings",
+      "A"
+    ]
+  },
+  {
     "id": "a32-english-opening-symmetrical-variation-anti-benoni-variation-spielmann-defens",
     "name": "English Opening: Symmetrical Variation, Anti-Benoni Variation, Spielmann Defense",
     "nameEn": "English Opening: Symmetrical Variation, Anti-Benoni Variation, Spielmann Defense",
@@ -23163,33 +23192,6 @@
       "g8f6",
       "c2c4",
       "e7e6"
-    ],
-    "character": "balanced",
-    "difficulty": 3,
-    "popularity": 3,
-    "color": "both",
-    "description": "Ligne nommée (B01) — base de données Lichess chess-openings.",
-    "descriptionEn": "Named line (B01) — Lichess chess-openings database.",
-    "tags": [
-      "lichess-openings",
-      "B"
-    ]
-  },
-  {
-    "id": "b01-scandinavian-defense-kiel-variation",
-    "name": "Scandinavian Defense: Kiel Variation",
-    "nameEn": "Scandinavian Defense: Kiel Variation",
-    "eco": "B01",
-    "moves": "1. e4 d5 2. exd5 Nf6 3. d4 Nxd5 4. c4 Nb4",
-    "uciMoves": [
-      "e2e4",
-      "d7d5",
-      "e4d5",
-      "g8f6",
-      "d2d4",
-      "f6d5",
-      "c2c4",
-      "d5b4"
     ],
     "character": "balanced",
     "difficulty": 3,
