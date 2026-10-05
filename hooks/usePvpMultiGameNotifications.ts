@@ -15,6 +15,7 @@ type GameSnapshot = {
 export type PvpMultiGameNotificationLabels = {
   opponentMoved: string;
   gameEnded: string;
+  gameAborted: string;
   switch: string;
   anonymousPlayer: string;
 };
@@ -94,7 +95,8 @@ export function usePvpMultiGameNotifications({
         if (!info) return;
         if (info.status !== "finished" && info.status !== "aborted") return;
         const name = info.opponentName ?? snap.opponentName ?? labels.anonymousPlayer;
-        toast.info(labels.gameEnded.replace("{name}", name), {
+        const template = info.status === "aborted" ? labels.gameAborted : labels.gameEnded;
+        toast.info(template.replace("{name}", name), {
           duration: 14_000,
           action: {
             label: labels.switch,

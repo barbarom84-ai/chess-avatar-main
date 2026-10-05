@@ -381,6 +381,7 @@ export default function OnlinePvpGameLayout({
 
         <div className="chessboard-frame chessboard-frame--pvp w-full">
           <OnlineChessboard
+            key={g.id}
             fen={displayChess.fen()}
             orientation={effectiveOrientation}
             lastMove={displayLastMove}

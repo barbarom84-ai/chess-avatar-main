@@ -136,6 +136,7 @@ export default function OnlinePvpPage() {
     () => ({
       opponentMoved: o.multiGame.opponentMoved,
       gameEnded: o.multiGame.gameEnded,
+      gameAborted: o.multiGame.gameAborted,
       switch: o.multiGame.switch,
       anonymousPlayer: o.anonymousPlayer,
     }),
@@ -609,10 +610,11 @@ export default function OnlinePvpPage() {
     [online.moves]
   );
 
-  const outcomeForModal = useMemo((): "win" | "loss" | "draw" => {
+  const outcomeForModal = useMemo((): "win" | "loss" | "draw" | "aborted" => {
+    if (online.game?.status === "aborted" || online.game?.result === "*") return "aborted";
     if (!online.game?.result || !online.role) return "draw";
     return pvpResultForPlayer(online.game.result, online.role);
-  }, [online.game?.result, online.role]);
+  }, [online.game?.status, online.game?.result, online.role]);
 
   const resultLineMessage = useMemo(() => {
     if (!online.game?.result) return "";
@@ -785,7 +787,7 @@ export default function OnlinePvpPage() {
 
   const g = online.game;
   const wb = whiteBlackDisplayNames(g);
-  const oppInfo = opponentFromGame(g, userId);
+  const oppInfo = opponentFromGame(g, userId, opponentProfile?.displayName);
   const waitingOpponent = g.status === "waiting" && !g.black_user_id;
   const canMove =
     g.status === "playing" &&
@@ -890,10 +892,7 @@ export default function OnlinePvpPage() {
         checks={boardStats.checks}
         durationLabel={durationLabelForModal}
         opponentUserId={resultOpponentUserId}
-        opponentDisplayName={
-          opponentProfile?.displayName ??
-          (online.role === "white" ? wb.black : wb.white)
-        }
+        opponentDisplayName={oppInfo?.oppLabel ?? (online.role === "white" ? wb.black : wb.white)}
         opponentAvatarUrl={opponentProfile?.avatarUrl ?? null}
         opponentBio={opponentProfile?.bio ?? null}
         timeControlLabel={

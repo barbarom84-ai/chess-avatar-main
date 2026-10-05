@@ -49,7 +49,7 @@ export default function OnlinePvpOpponentCard({
 }: OnlinePvpOpponentCardProps) {
   const { t } = useLanguage();
   const o = t.playOnline;
-  const displayName = opponentProfile?.displayName ?? oppLabel;
+  const displayName = oppLabel;
   const initials = accountProfileInitials(displayName);
 
   const [expanded, setExpanded] = useState(false);
