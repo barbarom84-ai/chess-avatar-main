@@ -28,19 +28,18 @@ const MATCHMAKING_DEDUP_MS = 20_000;
 
 /**
  * Partie live tout juste créée via matchmaking (0 coup) — évite un second « New game » accidentel.
+ * `timePreset` null = toutes cadences (poll de file dont la ligne a été consommée par l'appariement).
  */
 export async function findRecentMatchmakingStarterGame(
   sb: SupabaseClient,
   userId: string,
-  timePreset: string
+  timePreset: string | null
 ): Promise<{ game: PvpGameRow; role: "white" | "black" } | null> {
   const since = new Date(Date.now() - MATCHMAKING_DEDUP_MS).toISOString();
 
-  const { data: rows, error } = await sb
-    .from("pvp_games")
-    .select("*")
-    .eq("status", "playing")
-    .eq("time_preset", timePreset)
+  let query = sb.from("pvp_games").select("*").eq("status", "playing");
+  if (timePreset) query = query.eq("time_preset", timePreset);
+  const { data: rows, error } = await query
     .is("rematch_source_game_id", null)
     .is("invited_user_id", null)
     .or(`white_user_id.eq.${userId},black_user_id.eq.${userId}`)
