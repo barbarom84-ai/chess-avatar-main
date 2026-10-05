@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Navigation from "@/components/Navigation";
@@ -11,6 +11,7 @@ import { LanguageProvider } from "@/lib/language-context";
 import { SiteNotificationsProvider } from "@/contexts/SiteNotificationsContext";
 import { Toaster } from "sonner";
 import MonitoringProviders from "@/components/MonitoringProviders";
+import PvpActiveGameBanner from "@/components/pvp/PvpActiveGameBanner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -60,6 +61,9 @@ export default function RootLayout({
               <SiteNotificationsProvider>
               <Navigation />
               <NavContentOffset>{children}</NavContentOffset>
+              <Suspense fallback={null}>
+                <PvpActiveGameBanner />
+              </Suspense>
               <SiteMaintenanceOverlay />
               <MonitoringProviders />
             <Toaster

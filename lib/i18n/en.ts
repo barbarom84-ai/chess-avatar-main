@@ -984,6 +984,10 @@ export const en = {
         yourTurn: "Your turn",
         dockTitle: "Active games",
         currentGame: "Current game",
+        bannerTitle: "Live game vs {name}",
+        bannerWaiting: "{name} to move",
+        bannerResume: "Resume",
+        bannerMore: "+{count} more",
       },
       hostShort: "Host",
       anonymousHost: "Player",
@@ -1069,6 +1073,7 @@ export const en = {
         sendFailed: "Could not send message.",
         anonymous: "Player",
         closed: "Chat is closed for this game.",
+        spectatorReadOnly: "Spectating: only the players can write.",
         quickMessages: ["Good luck!", "Good game", "Well played", "Thanks for the game"],
       },
       connection: {

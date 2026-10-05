@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { PvpGameRow } from "@/lib/pvp-chess";
-import { fallbackPlayerLabel, opponentFromGame } from "@/lib/pvp-utils";
+import { fallbackPlayerLabel, opponentFromGame, pvpGameDurationSec } from "@/lib/pvp-utils";
 
 const WHITE = "11111111-1111-1111-1111-111111111111";
 const BLACK = "22222222-2222-2222-2222-222222222222";
@@ -29,5 +29,30 @@ describe("opponentFromGame", () => {
 
   it("returns the opponent's id and color", () => {
     expect(opponentFromGame(game({}), WHITE)).toMatchObject({ oppId: BLACK, oppColor: "black" });
+  });
+});
+
+describe("pvpGameDurationSec", () => {
+  const finished = {
+    status: "finished" as const,
+    created_at: "2026-10-05T17:00:00.000Z",
+    updated_at: "2026-10-05T17:09:48.000Z",
+  };
+  const moves = [
+    { ply: 1, created_at: "2026-10-05T17:02:53.000Z", time_spent_ms: 13_000 },
+    { ply: 2, created_at: "2026-10-05T17:02:57.000Z", time_spent_ms: 3_800 },
+  ];
+
+  it("measures from White's first thinking time to the result, whatever the page saw", () => {
+    expect(pvpGameDurationSec(finished, moves)).toBe(7 * 60 + 8);
+  });
+
+  it("starts at the game's creation when no move was played", () => {
+    expect(pvpGameDurationSec(finished, [])).toBe(9 * 60 + 48);
+  });
+
+  it("is unknown while the game is not finished", () => {
+    expect(pvpGameDurationSec({ ...finished, status: "playing" }, moves)).toBeNull();
+    expect(pvpGameDurationSec({ ...finished, status: "aborted" }, [])).toBeNull();
   });
 });

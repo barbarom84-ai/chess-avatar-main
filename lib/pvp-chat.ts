@@ -12,6 +12,20 @@ export interface PvpChatMessage {
 
 export const PVP_CHAT_MAX_BODY_LENGTH = 500;
 export const PVP_CHAT_RATE_LIMIT_MS = 2000;
+/** How long the players can keep chatting once the game has ended. */
+export const PVP_CHAT_POST_GAME_WINDOW_MS = 30 * 60_000;
+
+/** Milliseconds the players can still post, 0 when the chat is closed. */
+export function pvpChatOpenRemainingMs(
+  game: Pick<PvpGameRow, "status" | "updated_at">,
+  nowMs: number
+): number {
+  if (game.status === "waiting" || game.status === "playing") return Number.POSITIVE_INFINITY;
+  if (game.status !== "finished" && game.status !== "aborted") return 0;
+  const ended = Date.parse(game.updated_at);
+  if (!Number.isFinite(ended)) return 0;
+  return Math.max(0, ended + PVP_CHAT_POST_GAME_WINDOW_MS - nowMs);
+}
 
 type ChatGameNames = Pick<
   PvpGameRow,

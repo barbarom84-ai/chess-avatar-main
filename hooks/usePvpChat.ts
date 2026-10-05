@@ -14,13 +14,24 @@ function mergeMessages(existing: PvpChatMessage[], incoming: PvpChatMessage): Pv
   );
 }
 
-export function usePvpChat(gameId: string | null, userId: string | null, enabled: boolean) {
+/** `pollMs` re-fetches the list; spectators need it because realtime only reaches the players. */
+export function usePvpChat(
+  gameId: string | null,
+  userId: string | null,
+  enabled: boolean,
+  pollMs: number | null = null
+) {
   const [messages, setMessages] = useState<PvpChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const channelRef = useRef<ReturnType<NonNullable<typeof supabase>["channel"]> | null>(null);
   const chatVisibleRef = useRef(false);
+  const messagesRef = useRef<PvpChatMessage[]>([]);
+
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
 
   const markChatVisible = useCallback((visible: boolean) => {
     chatVisibleRef.current = visible;
@@ -78,6 +89,30 @@ export function usePvpChat(gameId: string | null, userId: string | null, enabled
   useEffect(() => {
     void refresh();
   }, [refresh]);
+
+  useEffect(() => {
+    if (!gameId || !userId || !enabled || !pollMs) return;
+    let cancelled = false;
+    const poll = async () => {
+      if (document.visibilityState !== "visible") return;
+      try {
+        const data = await fetchWithAuth(`/api/pvp/games/${gameId}/chat`);
+        if (cancelled || !Array.isArray(data.messages)) return;
+        const list = data.messages as PvpChatMessage[];
+        const known = new Set(messagesRef.current.map((m) => m.id));
+        const fresh = list.filter((m) => !known.has(m.id) && m.user_id !== userId).length;
+        if (fresh > 0 && !chatVisibleRef.current) setUnreadCount((c) => c + fresh);
+        setMessages(list);
+      } catch {
+        /* keep the current list until the next poll */
+      }
+    };
+    const id = window.setInterval(() => void poll(), pollMs);
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, [gameId, userId, enabled, pollMs, fetchWithAuth]);
 
   useEffect(() => {
     if (!isSupabaseConfigured || !supabase || !gameId || !userId || !enabled) return;

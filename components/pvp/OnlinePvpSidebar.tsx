@@ -44,6 +44,7 @@ type OnlinePvpSidebarProps = {
   chatMessages: PvpChatMessage[];
   chatLoading: boolean;
   chatDisabled: boolean;
+  chatReadOnly?: boolean;
   onSendChat: (body: string) => Promise<void>;
   chatUnreadCount: number;
   onChatTabVisible: (visible: boolean) => void;
@@ -88,6 +89,7 @@ export default function OnlinePvpSidebar({
   chatMessages,
   chatLoading,
   chatDisabled,
+  chatReadOnly = false,
   onSendChat,
   chatUnreadCount,
   onChatTabVisible,
@@ -445,6 +447,7 @@ export default function OnlinePvpSidebar({
             messages={chatMessages}
             loading={chatLoading}
             disabled={chatDisabled}
+            readOnly={chatReadOnly}
             userId={userId}
             onSend={onSendChat}
           />

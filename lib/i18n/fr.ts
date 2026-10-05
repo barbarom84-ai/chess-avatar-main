@@ -988,6 +988,10 @@ export const fr = {
         yourTurn: "À vous",
         dockTitle: "Parties en cours",
         currentGame: "Partie actuelle",
+        bannerTitle: "Partie en cours contre {name}",
+        bannerWaiting: "Au tour de {name}",
+        bannerResume: "Reprendre",
+        bannerMore: "+{count} autre(s)",
       },
       hostShort: "Créateur",
       anonymousHost: "Joueur",
@@ -1073,6 +1077,7 @@ export const fr = {
         sendFailed: "Impossible d'envoyer le message.",
         anonymous: "Joueur",
         closed: "Le chat est fermé pour cette partie.",
+        spectatorReadOnly: "Spectateur : seuls les joueurs peuvent écrire.",
         quickMessages: ["Bonne chance !", "Bonne partie", "Bien joué", "Merci pour la partie"],
       },
       connection: {
