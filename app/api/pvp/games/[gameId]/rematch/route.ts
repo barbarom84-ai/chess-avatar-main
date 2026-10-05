@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAuthedUserFromRequest } from "@/lib/supabase-auth-request";
 import { createServiceSupabase } from "@/lib/supabase-service";
 import type { PvpGameRow } from "@/lib/pvp-chess";
-import { displayNameFromAuthUser } from "@/lib/pvp-display-name";
+import { fetchPvpPlayerDisplayName } from "@/lib/account-server";
 import { pvpRematchWantWhite } from "@/lib/pvp-access";
 import { pvpRateLimitOrResponse } from "@/lib/pvp-api-rate-limit";
 import {
@@ -82,7 +82,7 @@ export async function POST(
     isWhite ? game.black_display_name : game.white_display_name
   )?.trim() || "Player";
 
-  const callerName = displayNameFromAuthUser(user);
+  const callerName = await fetchPvpPlayerDisplayName(sb, user);
 
   const existingRematch = await findActiveRematchForSource(sb, gameId);
   if (existingRematch) {

@@ -4,8 +4,7 @@ import { getAuthedUserFromRequest } from "@/lib/supabase-auth-request";
 import { createServiceSupabase } from "@/lib/supabase-service";
 import { isValidPvpTimePresetId, presetStorageInitialSec, resolvePvpTimePreset } from "@/lib/pvp-time-controls";
 import { pvpRateLimitOrResponse } from "@/lib/pvp-api-rate-limit";
-import { displayNameFromAuthUser } from "@/lib/pvp-display-name";
-import { fetchAccountSummariesByUserIds } from "@/lib/account-server";
+import { fetchAccountSummariesByUserIds, fetchPvpPlayerDisplayName } from "@/lib/account-server";
 import { pvpActiveGameIsMyTurn } from "@/lib/pvp-active-games";
 import { findExistingOpenPvpLobby } from "@/lib/pvp-new-game-dedup";
 
@@ -347,7 +346,7 @@ export async function POST(request: NextRequest) {
       created_by: user.id,
       white_user_id: user.id,
       status: "waiting",
-      white_display_name: displayNameFromAuthUser(user),
+      white_display_name: await fetchPvpPlayerDisplayName(sb, user),
       invited_user_id: invitedUserId,
       time_preset: preset.id,
       clock_mode: preset.mode,

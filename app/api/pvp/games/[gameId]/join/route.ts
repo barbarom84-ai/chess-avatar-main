@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAuthedUserFromRequest } from "@/lib/supabase-auth-request";
 import { createServiceSupabase } from "@/lib/supabase-service";
 import type { PvpGameRow } from "@/lib/pvp-chess";
-import { displayNameFromAuthUser } from "@/lib/pvp-display-name";
+import { fetchPvpPlayerDisplayName } from "@/lib/account-server";
 import { pvpRateLimitOrResponse } from "@/lib/pvp-api-rate-limit";
 
 import type { PvpJoinResponse } from "@/lib/api-contract";
@@ -91,7 +91,7 @@ export async function POST(
   const patch: Record<string, unknown> = {
     black_user_id: user.id,
     status: "playing",
-    black_display_name: displayNameFromAuthUser(user),
+    black_display_name: await fetchPvpPlayerDisplayName(sb, user),
   };
 
   if (game.clock_mode === "timed") {

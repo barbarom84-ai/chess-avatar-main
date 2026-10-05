@@ -41,6 +41,19 @@ export function resolveAccountDisplayName(
   return "Player";
 }
 
+/** Name stored on PvP games and queue entries: the custom account name, else the sign-in profile name. */
+export async function fetchPvpPlayerDisplayName(
+  sb: SupabaseClient,
+  user: Pick<User, "id" | "email" | "user_metadata">
+): Promise<string> {
+  const { data } = await sb
+    .from("user_accounts")
+    .select("display_name")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  return resolveAccountDisplayName(data as Pick<AccountRow, "display_name"> | null, user);
+}
+
 /** Batch lookup display names and avatars for PvP lists and Ops. */
 export async function fetchAccountSummariesByUserIds(
   sb: SupabaseClient,
