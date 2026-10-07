@@ -939,7 +939,7 @@ export const fr = {
       youOfferedTakeback: "Reprise demandée — en attente de réponse.",
       moveNavLive: "Direct",
       moveNavHint: "Cliquez sur un coup pour prévisualiser la position.",
-      premoveHint: "Glissez une pièce en attendant — le premove s'exécute à votre tour.",
+      premoveHint: "Glissez ou touchez une pièce en attendant — le premove se joue à votre tour. Touchez l'échiquier pour l'annuler.",
       drawAccept: "Accepter la nulle",
       drawDecline: "Refuser",
       drawCancel: "Retirer la proposition",

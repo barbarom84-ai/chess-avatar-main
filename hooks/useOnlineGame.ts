@@ -558,9 +558,8 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
 
   const canPremove = useMemo(() => {
     if (!state.game || state.game.status !== "playing" || !state.role) return false;
-    if (pendingUci || isMyTurn) return false;
-    return true;
-  }, [state.game, state.role, pendingUci, isMyTurn]);
+    return !isMyTurn;
+  }, [state.game, state.role, isMyTurn]);
 
   const createLobby = useCallback(async (
     timePreset = "correspondence_3d",
@@ -692,6 +691,8 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
         track("pvp_move_played", { game_id: gameId });
       } catch (e) {
         setPendingUci(null);
+        // The premove was queued against the rejected move; replaying it as our move would surprise the player.
+        setPremoveUci(null);
         throw e;
       }
     },
