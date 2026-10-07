@@ -8,6 +8,7 @@ import { LICHESS_ARROW_COLORS } from "@/lib/chess-arrows";
 import {
   isOwnPieceOnSquare,
   premoveArrowFromUci,
+  premoveDestinations,
   premoveUciFromSquares,
 } from "@/lib/pvp-premove";
 
@@ -119,10 +120,7 @@ export default function OnlineChessboard({
         isOwnPieceOnSquare(fen, sourceSquare, playerRole);
 
       if (isPremoveDrop) {
-        if (sourceSquare === targetSquare) {
-          onPremoveChange?.(null);
-          return true;
-        }
+        if (!premoveDestinations(fen, sourceSquare).includes(targetSquare)) return false;
         if (isPromotion) {
           setPending({ from: sourceSquare, to: targetSquare, premove: true });
           setPromotionOpen(true);
@@ -156,11 +154,20 @@ export default function OnlineChessboard({
     ]
   );
 
+  const premoveColor = allowPremove && playerRole && !canMove ? (playerRole === "white" ? "w" : "b") : null;
+
+  // Lichess-style: any tap on the board drops the queued premove; a tap that completes a new one sets it again.
+  const cancelPremove = useCallback(() => {
+    if (premoveUci) onPremoveChange?.(null);
+  }, [premoveUci, onPremoveChange]);
+
   return (
     <>
       <SimpleChessboard
         position={fen}
         onDrop={onDrop}
+        premoveColor={premoveColor}
+        onSquareTap={cancelPremove}
         orientation={orientation}
         lastMove={lastMove}
         arrows={boardArrows}

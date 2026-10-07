@@ -116,7 +116,12 @@ export async function POST(
     draw_offered_by: null,
   };
 
-  const insertRow = wantWhite
+  const insertRow: typeof baseInsert & {
+    white_user_id: string;
+    black_user_id: string | null;
+    white_display_name: string;
+    black_display_name: string | null;
+  } = wantWhite
     ? {
         ...baseInsert,
         white_user_id: user.id,

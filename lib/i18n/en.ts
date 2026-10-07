@@ -935,7 +935,7 @@ export const en = {
       youOfferedTakeback: "Takeback requested — waiting for a response.",
       moveNavLive: "Live",
       moveNavHint: "Click a move to preview the position on the board.",
-      premoveHint: "Drag a piece while waiting — premove runs on your turn.",
+      premoveHint: "Drag or tap a piece while waiting — the premove plays on your turn. Tap the board to cancel it.",
       drawAccept: "Accept draw",
       drawDecline: "Decline",
       drawCancel: "Withdraw offer",

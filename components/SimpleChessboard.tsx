@@ -15,6 +15,7 @@ import {
   isSyntheticClick,
   type PendingSyntheticClick,
 } from "@/lib/board-synthetic-click";
+import { premoveDestinations } from "@/lib/pvp-premove";
 
 const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
 const RANKS = ["8", "7", "6", "5", "4", "3", "2", "1"];
@@ -47,6 +48,10 @@ interface SimpleChessboardProps {
   showCoordinates?: boolean;
   /** Tighter padding so a small board does not eat piece space. */
   compact?: boolean;
+  /** Side whose pieces may also be picked while it is not their turn (premove); targets use premove geometry. */
+  premoveColor?: "w" | "b" | null;
+  /** Every tap or click on a square, before the board handles it. */
+  onSquareTap?: (square: string) => void;
 }
 
 export default function SimpleChessboard({
@@ -61,6 +66,8 @@ export default function SimpleChessboard({
   boardMaxWidth,
   showCoordinates: showCoordinatesProp,
   compact = false,
+  premoveColor = null,
+  onSquareTap,
 }: SimpleChessboardProps) {
   const { settings } = useChessboardSettings();
   const {
@@ -103,8 +110,7 @@ export default function SimpleChessboard({
   }, [position]);
 
   const [draggedSquare, setDraggedSquare] = useState<string | null>(null);
-  const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
-  const [highlightedSquares, setHighlightedSquares] = useState<string[]>([]);
+  const [pickedSquare, setPickedSquare] = useState<string | null>(null);
   const [manualArrows, setManualArrows] = useState<Array<{ from: string; to: string; color?: string }>>([]);
   const [manualCircles, setManualCircles] = useState<Array<{ square: string; color?: string }>>([]);
   const [arrowStart, setArrowStart] = useState<{ square: string; color: string } | null>(null);
@@ -150,6 +156,25 @@ export default function SimpleChessboard({
   const animDur = getAnimationDuration();
   const isBoardDragging = draggedSquare !== null;
 
+  const canPickPiece = useCallback(
+    (piece: { color: string } | null | undefined) =>
+      piece != null && (piece.color === game.turn() || piece.color === premoveColor),
+    [game, premoveColor]
+  );
+
+  // A selection made off-turn stays meaningful after the opponent replies: targets follow the live position.
+  const selectedSquare =
+    pickedSquare && canPickPiece(game.get(pickedSquare as Square)) ? pickedSquare : null;
+  const activeSquare = draggedSquare ?? selectedSquare;
+  const highlightedSquares = useMemo(() => {
+    if (!activeSquare) return [];
+    const piece = game.get(activeSquare as Square);
+    if (!piece) return [];
+    return piece.color === game.turn()
+      ? game.moves({ square: activeSquare as Square, verbose: true }).map((m) => m.to as string)
+      : premoveDestinations(position, activeSquare);
+  }, [game, position, activeSquare]);
+
   const squareLabel = useCallback((square: string, piece: Piece | null | undefined) => {
     const label = square.toUpperCase();
     if (!piece) return `${label}, empty`;
@@ -183,7 +208,6 @@ export default function SimpleChessboard({
     setDragClientPos(null);
     setDragPiece(null);
     setDragGhostSize(null);
-    setHighlightedSquares([]);
     dragMovedRef.current = false;
     dragStartClientRef.current = null;
   };
@@ -194,7 +218,9 @@ export default function SimpleChessboard({
     e: React.PointerEvent
   ) => {
     if (!onDrop || e.button !== 0) return;
-    if (piece.color !== game.turn()) return;
+    if (!canPickPiece(piece)) return;
+    // An own piece can be a premove target (recapture square); let the tap complete the move instead.
+    if (selectedSquare && selectedSquare !== square && highlightedSquares.includes(square)) return;
 
     e.preventDefault();
     e.stopPropagation();
@@ -207,11 +233,6 @@ export default function SimpleChessboard({
     setDragPiece({ type: piece.type, color: piece.color });
     setDragClientPos({ x: e.clientX, y: e.clientY });
     setDragGhostSize({ width: rect.width, height: rect.height });
-
-    if (showLegalMoves) {
-      const moves = game.moves({ square: square as Square, verbose: true });
-      setHighlightedSquares(moves.map((m) => m.to));
-    }
   };
 
   const suppressSyntheticClickAfterPointer = (square: string, eventTimeMs: number) => {
@@ -274,44 +295,27 @@ export default function SimpleChessboard({
     piece: Piece | null | undefined
   ) => {
     if (!onDrop) return;
+    onSquareTap?.(square);
 
     // Si une case est déjà sélectionnée
     if (selectedSquare) {
       // Si on clique sur la même case, on désélectionne
       if (selectedSquare === square) {
-        setSelectedSquare(null);
-        setHighlightedSquares([]);
+        setPickedSquare(null);
         return;
       }
 
       // Si on clique sur une case valide, on fait le coup
       if (highlightedSquares.includes(square)) {
         onDrop(selectedSquare, square);
-        setSelectedSquare(null);
-        setHighlightedSquares([]);
+        setPickedSquare(null);
         return;
       }
 
-      // Sinon, si on clique sur une autre pièce, on la sélectionne
-      if (piece && piece.color === game.turn()) {
-        setSelectedSquare(square);
-        const moves = game.moves({ square: square as Square, verbose: true });
-        const targets = moves.map(m => m.to);
-        setHighlightedSquares(targets);
-        return;
-      }
-
-      // Sinon, on désélectionne
-      setSelectedSquare(null);
-      setHighlightedSquares([]);
-    } else {
-      // Première sélection : si c'est une pièce du joueur actuel
-      if (piece && piece.color === game.turn()) {
-        setSelectedSquare(square);
-        const moves = game.moves({ square: square as Square, verbose: true });
-        const targets = moves.map(m => m.to);
-        setHighlightedSquares(targets);
-      }
+      // Sinon, si on clique sur une autre pièce jouable, on la sélectionne ; sinon on désélectionne
+      setPickedSquare(canPickPiece(piece) ? square : null);
+    } else if (canPickPiece(piece)) {
+      setPickedSquare(square);
     }
   };
 
@@ -345,8 +349,7 @@ export default function SimpleChessboard({
         handleSquareClick(keyboardSquare, piece);
       } else if (e.key === "Escape") {
         e.preventDefault();
-        setSelectedSquare(null);
-        setHighlightedSquares([]);
+        setPickedSquare(null);
       }
     };
 
@@ -431,7 +434,6 @@ export default function SimpleChessboard({
         setDragClientPos(null);
         setDragPiece(null);
         setDragGhostSize(null);
-        setHighlightedSquares([]);
         dragMovedRef.current = false;
         dragStartClientRef.current = null;
       }
