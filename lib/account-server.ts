@@ -6,6 +6,44 @@ import type { AccountFriend, AccountProfile, AccountProfilePatch, AccountPrefere
 export const MAX_ACCOUNT_BIO_LENGTH = 1000;
 export const MAX_ACCOUNT_DISPLAY_NAME_LENGTH = 80;
 export const MAX_FRIEND_LABEL_LENGTH = 80;
+export const ACCOUNT_AVATAR_BUCKET = "account-avatars";
+
+const AVATAR_FILE_NAME = /^[\w.-]+$/;
+
+/** Object path (`<userId>/<file>`) when `url` is a public URL inside the user's own avatar folder. */
+export function ownAccountAvatarPath(url: string, userId: string, supabaseUrl: string): string | null {
+  let parsed: URL;
+  let base: URL;
+  try {
+    parsed = new URL(url);
+    base = new URL(supabaseUrl);
+  } catch {
+    return null;
+  }
+  if (parsed.origin !== base.origin) return null;
+  const prefix = `/storage/v1/object/public/${ACCOUNT_AVATAR_BUCKET}/${userId}/`;
+  if (!parsed.pathname.startsWith(prefix)) return null;
+  const file = parsed.pathname.slice(prefix.length);
+  if (!AVATAR_FILE_NAME.test(file) || file.startsWith(".")) return null;
+  return `${userId}/${file}`;
+}
+
+/** Best effort: removes every file in the user's avatar folder except `keepUrl`. */
+export async function pruneAccountAvatars(
+  sb: SupabaseClient,
+  userId: string,
+  keepUrl: string | null,
+  supabaseUrl: string
+): Promise<void> {
+  const keep = keepUrl ? ownAccountAvatarPath(keepUrl, userId, supabaseUrl) : null;
+  const bucket = sb.storage.from(ACCOUNT_AVATAR_BUCKET);
+  const { data, error } = await bucket.list(userId, { limit: 100 });
+  if (error || !Array.isArray(data)) return;
+  const stale = data
+    .map((entry) => (entry?.name ? `${userId}/${entry.name}` : null))
+    .filter((path): path is string => path !== null && path !== keep);
+  if (stale.length > 0) await bucket.remove(stale);
+}
 
 type AccountRow = {
   user_id: string;

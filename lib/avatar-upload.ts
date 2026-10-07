@@ -123,6 +123,23 @@ export async function validateAvatarSourceDecodable(
   }
 }
 
+/** Keeps the pan inside the image so the circle never shows an empty edge. */
+export function clampAvatarCrop(
+  imgWidth: number,
+  imgHeight: number,
+  size: number,
+  params: AvatarCropParams
+): AvatarCropParams {
+  if (imgWidth < 1 || imgHeight < 1) return params;
+  const scale = (size / Math.min(imgWidth, imgHeight)) * params.scale;
+  const clamp = (value: number, max: number) => (max > 0 ? Math.min(max, Math.max(-max, value)) : 0);
+  return {
+    scale: params.scale,
+    panX: clamp(params.panX, (imgWidth * scale - size) / 2),
+    panY: clamp(params.panY, (imgHeight * scale - size) / 2),
+  };
+}
+
 export function drawCroppedAvatar(
   ctx: CanvasRenderingContext2D,
   img: HTMLImageElement,

@@ -6,6 +6,8 @@ import {
   applyAccountProfilePatch,
   buildOwnAccountProfile,
   normalizeProfilePatch,
+  ownAccountAvatarPath,
+  pruneAccountAvatars,
 } from "@/lib/account-server";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
@@ -60,8 +62,16 @@ export async function PATCH(request: NextRequest) {
     return jsonError("Invalid JSON", 400);
   }
 
+  const patch = normalizeProfilePatch(body);
+  if (patch.avatarUrl && !ownAccountAvatarPath(patch.avatarUrl, user.id, supabaseUrl)) {
+    return jsonError("Invalid avatar URL", 400);
+  }
+
   try {
-    await applyAccountProfilePatch(sb, user, normalizeProfilePatch(body));
+    await applyAccountProfilePatch(sb, user, patch);
+    if (patch.avatarUrl !== undefined) {
+      await pruneAccountAvatars(sb, user.id, patch.avatarUrl, supabaseUrl).catch(() => undefined);
+    }
     const profile = await buildOwnAccountProfile(sb, sb, user);
     return NextResponse.json({ profile });
   } catch (error) {
