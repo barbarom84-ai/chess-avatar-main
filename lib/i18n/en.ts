@@ -1004,7 +1004,7 @@ export const en = {
       playerIdShort: "ID: {id}",
       addFriend: "Add as friend",
       removeFriend: "Remove friend",
-      friendAdded: "Saved to your friends on this device.",
+      friendAdded: "Saved to your friends.",
       friendRemoved: "Removed from friends.",
       friendsTitle: "Friends (invites)",
       friendsHint:
@@ -1275,6 +1275,29 @@ export const en = {
       avatars: "Avatars",
       guide: "Guide",
       boardSettingsTitle: "Board settings"
+    },
+
+    authModal: {
+      title: "Sign in",
+      description: "Sign in to save your profiles",
+      signInTab: "Sign in",
+      signUpTab: "Sign up",
+      email: "Email",
+      emailPlaceholder: "you@email.com",
+      password: "Password",
+      passwordHint: "At least 6 characters",
+      signIn: "Sign in",
+      signingIn: "Signing in...",
+      signUp: "Create account",
+      signingUp: "Creating...",
+      signInSuccess: "Signed in!",
+      signUpSuccess: "Account created! You are signed in.",
+      confirmEmailSent:
+        "Account created! We sent you a confirmation email. Click the link to activate your account, then sign in from the Sign in tab.",
+      notConfigured: "Supabase is not configured",
+      signInError: "Sign-in failed",
+      signUpError: "Sign-up failed",
+      footer: "By signing in, you agree to save your profiles on Supabase",
     },
 
     puzzlesPage: {

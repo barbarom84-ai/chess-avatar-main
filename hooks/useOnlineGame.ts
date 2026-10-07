@@ -22,7 +22,11 @@ import { optimisticGameClockAfterMove } from "@/lib/pvp-clock-client";
 import { chessForPvpClockAuthority } from "@/lib/pvp-clock-sync";
 import { consumePvpGameBootstrap, writePvpGameBootstrap } from "@/lib/pvp-game-bootstrap";
 import { nowFromServerAnchor, syncAnchorFromResponse, type ServerTimeAnchor } from "@/lib/pvp-server-time";
-import { canOfferPvpTakeback, pvpGameJustStarted } from "@/lib/pvp-takeback";
+import {
+  canOfferPvpTakeback,
+  pvpGameJustStarted,
+  pvpTakebackOfferResolved,
+} from "@/lib/pvp-takeback";
 import { canUserCancelWaitingPvpGame } from "@/lib/pvp-game-cancel";
 import { track } from "@/lib/track";
 import { enqueuePendingPvpMove, replayPendingPvpMoves } from "@/lib/pvp-offline-moves";
@@ -386,7 +390,7 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
             if (!s.game) return { ...s, game: row };
             const justStarted = pvpGameJustStarted(s.game, row);
             const nextGame = mergeGameRow(s.game, row);
-            if (justStarted) {
+            if (justStarted || pvpTakebackOfferResolved(s.game, row)) {
               queueMicrotask(() => void refreshSilentRef.current());
             }
             return {

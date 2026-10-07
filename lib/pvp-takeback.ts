@@ -25,6 +25,17 @@ export function canOfferPvpTakeback(
   return true;
 }
 
+/**
+ * Offre de reprise acceptée ou refusée. Supabase Realtime ne filtre pas les DELETE de `pvp_moves`,
+ * donc le demandeur doit recharger la partie pour voir le coup retiré.
+ */
+export function pvpTakebackOfferResolved(
+  prev: { takeback_offered_by?: string | null } | null | undefined,
+  next: { takeback_offered_by?: string | null }
+): boolean {
+  return Boolean(prev?.takeback_offered_by) && !next.takeback_offered_by;
+}
+
 export function pvpGameJustStarted(
   prev: { status?: string; black_user_id?: string | null } | null | undefined,
   next: { status?: string; black_user_id?: string | null }

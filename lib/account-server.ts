@@ -41,6 +41,15 @@ export function resolveAccountDisplayName(
   return "Player";
 }
 
+/** Friend rows have no auth profile at hand: the custom account name, else the name saved when adding them. */
+export function resolveFriendDisplayName(
+  row: Pick<AccountRow, "display_name"> | null | undefined,
+  label: string | null | undefined
+): string {
+  if (row?.display_name?.trim()) return resolveAccountDisplayName(row);
+  return label?.trim() || resolveAccountDisplayName(null);
+}
+
 /** Name stored on PvP games and queue entries: the custom account name, else the sign-in profile name. */
 export async function fetchPvpPlayerDisplayName(
   sb: SupabaseClient,
@@ -292,7 +301,7 @@ export async function listAccountFriends(
       friendUserId: row.friend_user_id,
       label: row.label,
       addedAt: row.created_at,
-      displayName: resolveAccountDisplayName(account ?? null, null),
+      displayName: resolveFriendDisplayName(account, row.label),
       avatarUrl: account?.avatar_url?.trim() ? account.avatar_url.trim() : null,
     };
   });

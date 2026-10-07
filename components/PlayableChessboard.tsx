@@ -53,6 +53,7 @@ import {
   PLAY_THEORY_ARROWS_STORAGE_KEY,
 } from "@/lib/play-opening-hints";
 import { estimatedGameElos, winnerFromPlayerResult } from "@/lib/game-result-elo";
+import { fullMoveCount } from "@/lib/pvp-result-stats";
 
 const REVIEW_EMOJI_CHOICES = ["💡", "🔥", "❓", "!!", "!?", "⭐", "👍", "📌"];
 
@@ -741,7 +742,7 @@ export default function PlayableChessboard({
     const durationStr = `${minutes}m ${seconds}s`;
 
     setGameStats({
-      totalMoves: currentMoveHistory.length,
+      totalMoves: fullMoveCount(currentMoveHistory.length),
       captures,
       checks,
       duration: durationStr,

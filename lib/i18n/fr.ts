@@ -1008,7 +1008,7 @@ export const fr = {
       playerIdShort: "ID : {id}",
       addFriend: "Ajouter aux amis",
       removeFriend: "Retirer des amis",
-      friendAdded: "Ajouté à vos amis (sur cet appareil).",
+      friendAdded: "Ajouté à vos amis.",
       friendRemoved: "Retiré de vos amis.",
       friendsTitle: "Amis (invitations)",
       friendsHint:
@@ -1279,6 +1279,29 @@ export const fr = {
       avatars: "Avatars",
       guide: "Guide",
       boardSettingsTitle: "Paramètres de l'échiquier"
+    },
+
+    authModal: {
+      title: "Authentification",
+      description: "Connectez-vous pour sauvegarder vos profils",
+      signInTab: "Connexion",
+      signUpTab: "Inscription",
+      email: "Email",
+      emailPlaceholder: "votre@email.com",
+      password: "Mot de passe",
+      passwordHint: "Minimum 6 caractères",
+      signIn: "Se connecter",
+      signingIn: "Connexion...",
+      signUp: "Créer un compte",
+      signingUp: "Création...",
+      signInSuccess: "Connexion réussie !",
+      signUpSuccess: "Compte créé ! Connexion réussie.",
+      confirmEmailSent:
+        "Compte créé ! Un email de confirmation vous a été envoyé. Cliquez sur le lien pour activer votre compte, puis connectez-vous depuis l'onglet Connexion.",
+      notConfigured: "Supabase non configuré",
+      signInError: "Erreur lors de la connexion",
+      signUpError: "Erreur lors de l'inscription",
+      footer: "En vous connectant, vous acceptez de sauvegarder vos profils sur Supabase",
     },
 
     puzzlesPage: {

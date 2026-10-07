@@ -13,7 +13,12 @@ export function pvpGameStatsFromUcis(ucis: string[]): {
     if (m.captured) captures += 1;
     if (m.san.includes("+") || m.san.includes("#")) checks += 1;
   }
-  return { totalMoves: hist.length, captures, checks };
+  return { totalMoves: fullMoveCount(hist.length), captures, checks };
+}
+
+/** Moves as players count them: 1.e4 e5 is one move, 1.e4 alone too. */
+export function fullMoveCount(plies: number): number {
+  return Math.ceil(Math.max(0, plies) / 2);
 }
 
 export function formatDurationSec(sec: number | undefined): string | undefined {

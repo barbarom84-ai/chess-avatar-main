@@ -10,6 +10,11 @@ import {
   applyArrowOpacityPercent,
   shortenArrowEndpoints,
 } from "@/lib/chess-arrows";
+import {
+  expectSyntheticClick,
+  isSyntheticClick,
+  type PendingSyntheticClick,
+} from "@/lib/board-synthetic-click";
 
 const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
 const RANKS = ["8", "7", "6", "5", "4", "3", "2", "1"];
@@ -108,7 +113,7 @@ export default function SimpleChessboard({
   const [dragGhostSize, setDragGhostSize] = useState<{ width: number; height: number } | null>(null);
 
   const dragMovedRef = useRef(false);
-  const suppressNextClickRef = useRef(false);
+  const pendingSyntheticClickRef = useRef<PendingSyntheticClick>(null);
   const activeDragSquareRef = useRef<string | null>(null);
   const dragStartClientRef = useRef<{ x: number; y: number } | null>(null);
   const boardRootRef = useRef<HTMLDivElement>(null);
@@ -209,11 +214,8 @@ export default function SimpleChessboard({
     }
   };
 
-  const suppressSyntheticClickAfterPointer = () => {
-    suppressNextClickRef.current = true;
-    requestAnimationFrame(() => {
-      suppressNextClickRef.current = false;
-    });
+  const suppressSyntheticClickAfterPointer = (square: string, eventTimeMs: number) => {
+    pendingSyntheticClickRef.current = expectSyntheticClick(square, eventTimeMs);
   };
 
   const movePiecePointerDrag = (square: string, e: React.PointerEvent) => {
@@ -249,21 +251,21 @@ export default function SimpleChessboard({
     if (!moved && toSquare === fromSquare) {
       const p = game.get(fromSquare as Square);
       handleSquareClick(fromSquare, p);
-      suppressSyntheticClickAfterPointer();
+      suppressSyntheticClickAfterPointer(fromSquare, e.timeStamp);
       return;
     }
 
-    suppressSyntheticClickAfterPointer();
+    suppressSyntheticClickAfterPointer(fromSquare, e.timeStamp);
 
     if (toSquare && toSquare !== fromSquare) {
       onDrop(fromSquare, toSquare);
     }
   };
 
-  const handlePieceLostPointerCapture = (square: string) => {
+  const handlePieceLostPointerCapture = (square: string, e: React.PointerEvent) => {
     if (activeDragSquareRef.current !== square) return;
     resetPointerDrag();
-    suppressSyntheticClickAfterPointer();
+    suppressSyntheticClickAfterPointer(square, e.timeStamp);
   };
 
   // Mode click-to-move
@@ -272,7 +274,6 @@ export default function SimpleChessboard({
     piece: Piece | null | undefined
   ) => {
     if (!onDrop) return;
-    if (suppressNextClickRef.current) return;
 
     // Si une case est déjà sélectionnée
     if (selectedSquare) {
@@ -502,7 +503,13 @@ export default function SimpleChessboard({
                 className={`relative flex items-center justify-center cursor-pointer ${
                   isDragging ? "opacity-50 scale-95" : ""
                 }`}
-                onClick={() => handleSquareClick(square, piece)}
+                onClick={(e) => {
+                  if (isSyntheticClick(pendingSyntheticClickRef.current, square, e.timeStamp)) {
+                    pendingSyntheticClickRef.current = null;
+                    return;
+                  }
+                  handleSquareClick(square, piece);
+                }}
                 onMouseDown={(e) => handleRightClickMouseDown(square, e)}
                 onMouseUp={(e) => handleRightClickMouseUp(square, e)}
                 onContextMenu={(e) => e.preventDefault()}
@@ -557,14 +564,16 @@ export default function SimpleChessboard({
                           ? "cursor-grab active:cursor-grabbing"
                           : ""
                     }`}
-                    style={
-                      isBoardDragging ? undefined : { transitionDuration: animDur }
-                    }
+                    style={{
+                      // Without this, a finger drag scrolls the page and the browser cancels the pointer.
+                      touchAction: onDrop ? "none" : undefined,
+                      transitionDuration: isBoardDragging ? undefined : animDur,
+                    }}
                     draggable={false}
                     onPointerDown={(e) => beginPiecePointerDrag(square, piece, e)}
                     onPointerMove={(e) => movePiecePointerDrag(square, e)}
                     onPointerUp={(e) => endPiecePointerDrag(square, e)}
-                    onLostPointerCapture={() => handlePieceLostPointerCapture(square)}
+                    onLostPointerCapture={(e) => handlePieceLostPointerCapture(square, e)}
                   >
                     <Image
                       src={getPieceImage(piece)}

@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { Chess } from "chess.js";
-import { canOfferPvpTakeback, pvpGameJustStarted } from "@/lib/pvp-takeback";
+import {
+  canOfferPvpTakeback,
+  pvpGameJustStarted,
+  pvpTakebackOfferResolved,
+} from "@/lib/pvp-takeback";
 
 describe("canOfferPvpTakeback", () => {
   const whiteId = "user-white";
@@ -42,5 +46,29 @@ describe("pvpGameJustStarted", () => {
         { status: "playing", black_user_id: "u2" }
       )
     ).toBe(true);
+  });
+});
+
+describe("pvpTakebackOfferResolved", () => {
+  it("detects an offer that was accepted or declined", () => {
+    expect(
+      pvpTakebackOfferResolved({ takeback_offered_by: "u1" }, { takeback_offered_by: null })
+    ).toBe(true);
+  });
+
+  it("ignores rows without a pending offer", () => {
+    expect(
+      pvpTakebackOfferResolved({ takeback_offered_by: null }, { takeback_offered_by: null })
+    ).toBe(false);
+    expect(pvpTakebackOfferResolved(null, { takeback_offered_by: null })).toBe(false);
+  });
+
+  it("ignores a new or still pending offer", () => {
+    expect(
+      pvpTakebackOfferResolved({ takeback_offered_by: null }, { takeback_offered_by: "u1" })
+    ).toBe(false);
+    expect(
+      pvpTakebackOfferResolved({ takeback_offered_by: "u1" }, { takeback_offered_by: "u1" })
+    ).toBe(false);
   });
 });
