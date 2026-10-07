@@ -367,7 +367,7 @@ export default function OnlinePvpGameLayout({
       </OnlinePvpCenterBanners>
 
     <div className="pvp-game-layout grid grid-cols-1 xl:grid-cols-[minmax(0,1.1fr)_minmax(300px,0.9fr)] gap-3 xl:gap-4 items-start max-w-7xl mx-auto">
-      <div className="space-y-1.5 min-w-0">
+      <div className="space-y-1.5 min-w-0 w-full mx-auto [@media(orientation:landscape)]:max-w-[max(18rem,calc(100dvh-14rem))]">
         <OnlinePvpPlayerBar
           side={topSide}
           displayName={topName}

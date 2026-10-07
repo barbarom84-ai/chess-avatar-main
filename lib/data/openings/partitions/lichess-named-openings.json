@@ -11055,9 +11055,9 @@
     ]
   },
   {
-    "id": "a31-english-opening-symmetrical-variation-anti-benoni-variation-kasparov-gambit",
-    "name": "English Opening: Symmetrical Variation, Anti-Benoni Variation, Kasparov Gambit",
-    "nameEn": "English Opening: Symmetrical Variation, Anti-Benoni Variation, Kasparov Gambit",
+    "id": "a31-english-opening-symmetrical-variation-anti-benoni-variation-kasparov-vagania",
+    "name": "English Opening: Symmetrical Variation, Anti-Benoni Variation, Kasparov-Vaganian Gambit",
+    "nameEn": "English Opening: Symmetrical Variation, Anti-Benoni Variation, Kasparov-Vaganian Gambit",
     "eco": "A31",
     "moves": "1. d4 Nf6 2. c4 c5 3. Nf3 cxd4 4. Nxd4 e5 5. Nb5 d5",
     "uciMoves": [
