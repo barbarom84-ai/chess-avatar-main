@@ -106,8 +106,13 @@ export default function NavDock(props: NavCommonProps) {
           expanded ? "w-52" : "w-14"
         )}
         style={{ height: "calc(100vh - 4rem)" }}
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
+        // Mouse only: a tap's emulated hover would widen the dock mid-tap and the release would miss the link.
+        onPointerEnter={(e) => {
+          if (e.pointerType === "mouse") setHovered(true);
+        }}
+        onPointerLeave={(e) => {
+          if (e.pointerType === "mouse") setHovered(false);
+        }}
         aria-label={t.navigation.dock.menuTitle[lang === "fr" ? "fr" : "en"]}
       >
         <div className="flex items-center justify-end border-b border-slate-800 px-2 py-1">
