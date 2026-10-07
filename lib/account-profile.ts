@@ -1,6 +1,6 @@
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { accountApiHeaders, readAccountApiError } from "@/lib/account-api-auth";
-import type { AccountProfile, AccountProfilePatch } from "@/lib/account-types";
+import type { AccountProfile, AccountProfilePatch, AccountStats } from "@/lib/account-types";
 import {
   avatarExtensionForUpload,
   croppedAvatarFile,
@@ -28,6 +28,36 @@ export async function fetchOwnAccountProfile(): Promise<AccountProfile | null> {
   if (!res.ok) return null;
   const data = await parseJson<{ profile?: AccountProfile }>(res);
   return data?.profile ?? null;
+}
+
+function isAccountStats(value: unknown): value is AccountStats {
+  if (!value || typeof value !== "object") return false;
+  const s = value as Partial<AccountStats>;
+  return (
+    !!s.overview &&
+    !!s.bots &&
+    !!s.activity &&
+    Array.isArray(s.activity.days) &&
+    !!s.pvp &&
+    Array.isArray(s.recentGames) &&
+    Array.isArray(s.achievements)
+  );
+}
+
+export async function fetchAccountStats(): Promise<AccountStats | null> {
+  try {
+    const tz = new Date().getTimezoneOffset();
+    const res = await fetch(`/api/account/stats?tz=${tz}`, {
+      cache: "no-store",
+      credentials: "include",
+      headers: await accountApiHeaders(false),
+    });
+    if (!res.ok) return null;
+    const stats = (await parseJson<{ stats?: unknown }>(res))?.stats;
+    return isAccountStats(stats) ? stats : null;
+  } catch {
+    return null;
+  }
 }
 
 export async function fetchPublicAccountProfile(userId: string): Promise<AccountProfile | null> {
@@ -96,7 +126,8 @@ export async function uploadAccountAvatar(
     return { url: null, error: null, code: "not_signed_in" };
   }
 
-  const path = `${userId}/avatar.${avatarExtensionForUpload(file)}`;
+  // A fresh name per upload: cancelling the editor must not replace the photo that is still saved.
+  const path = `${userId}/avatar-${Date.now()}.${avatarExtensionForUpload(file)}`;
   const contentType = avatarContentType(file);
   const { error } = await supabase.storage.from("account-avatars").upload(path, file, {
     upsert: true,
@@ -112,7 +143,7 @@ export async function uploadAccountAvatar(
   if (!baseUrl) {
     return { url: null, error: "Missing public URL", code: "storage_upload_failed" };
   }
-  return { url: `${baseUrl}?v=${Date.now()}`, error: null, code: null };
+  return { url: baseUrl, error: null, code: null };
 }
 
 /** Build a JPEG File from a cropped blob for upload. */

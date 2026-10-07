@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/lib/language-context";
 import {
   AVATAR_CROP_VIEWPORT_PX,
+  clampAvatarCrop,
   drawCroppedAvatar,
   exportCroppedAvatarBlob,
   loadImageFromFile,
@@ -20,6 +21,11 @@ const MAX_ZOOM_PCT = 300;
 
 function zoomPercentToScale(pct: number): number {
   return 1 + ((pct - MIN_ZOOM_PCT) / (MAX_ZOOM_PCT - MIN_ZOOM_PCT)) * 2;
+}
+
+function clampToImage(img: HTMLImageElement | null, params: AvatarCropParams): AvatarCropParams {
+  if (!img) return params;
+  return clampAvatarCrop(img.naturalWidth, img.naturalHeight, AVATAR_CROP_VIEWPORT_PX, params);
 }
 
 function avatarFileKey(file: File): string {
@@ -53,11 +59,16 @@ export default function AccountAvatarCropPanel({
   const [crop, setCrop] = useState<AvatarCropParams>(DEFAULT_CROP);
   const [zoomPercent, setZoomPercent] = useState(MIN_ZOOM_PCT);
   const [imageReady, setImageReady] = useState(false);
+  const [pixelRatio, setPixelRatio] = useState(1);
 
   const fileKey = avatarFileKey(file);
 
   onErrorRef.current = onError;
   cropRef.current = crop;
+
+  useEffect(() => {
+    setPixelRatio(Math.min(3, Math.max(1, window.devicePixelRatio || 1)));
+  }, []);
 
   const paintCanvas = useCallback(() => {
     const canvas = canvasRef.current;
@@ -65,8 +76,10 @@ export default function AccountAvatarCropPanel({
     if (!canvas || !img || !imageReady) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
+    ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+    ctx.imageSmoothingQuality = "high";
     drawCroppedAvatar(ctx, img, AVATAR_CROP_VIEWPORT_PX, cropRef.current);
-  }, [imageReady]);
+  }, [imageReady, pixelRatio]);
 
   useEffect(() => {
     if (loadedFileKeyRef.current === fileKey && imgRef.current) {
@@ -110,11 +123,11 @@ export default function AccountAvatarCropPanel({
     if (!Number.isFinite(pct)) return;
     const clamped = Math.min(MAX_ZOOM_PCT, Math.max(MIN_ZOOM_PCT, Math.round(pct)));
     const scale = zoomPercentToScale(clamped);
-    const next: AvatarCropParams = {
+    const next = clampToImage(imgRef.current, {
       panX: cropRef.current.panX,
       panY: cropRef.current.panY,
       scale,
-    };
+    });
     cropRef.current = next;
     setZoomPercent(clamped);
     setCrop(next);
@@ -127,11 +140,11 @@ export default function AccountAvatarCropPanel({
 
       const onMove = (ev: PointerEvent) => {
         ev.preventDefault();
-        const next: AvatarCropParams = {
+        const next = clampToImage(imgRef.current, {
           panX: origin.panX + (ev.clientX - origin.x),
           panY: origin.panY + (ev.clientY - origin.y),
           scale: cropRef.current.scale,
-        };
+        });
         cropRef.current = next;
         setCrop(next);
       };
@@ -183,8 +196,8 @@ export default function AccountAvatarCropPanel({
         >
           <canvas
             ref={canvasRef}
-            width={AVATAR_CROP_VIEWPORT_PX}
-            height={AVATAR_CROP_VIEWPORT_PX}
+            width={Math.round(AVATAR_CROP_VIEWPORT_PX * pixelRatio)}
+            height={Math.round(AVATAR_CROP_VIEWPORT_PX * pixelRatio)}
             className={`block touch-none select-none ${
               loading ? "invisible" : "cursor-grab active:cursor-grabbing"
             }`}

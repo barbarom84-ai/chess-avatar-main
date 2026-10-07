@@ -52,18 +52,18 @@ export default function AccountProfileEditor({
   const [avatarUrl, setAvatarUrl] = useState(profile.avatarUrl);
   const [saving, setSaving] = useState(false);
   const [cropFile, setCropFile] = useState<File | null>(null);
+  const wasOpenRef = useRef(false);
 
   useEffect(() => {
-    if (!open) {
-      setCropFile(null);
-      return;
-    }
-    setDisplayName(profile.displayName);
-    setBio(profile.bio ?? "");
-    if (!cropFile) {
+    // Only reset on open: the crop step must not discard edits typed before picking a photo.
+    if (open && !wasOpenRef.current) {
+      setDisplayName(profile.displayName);
+      setBio(profile.bio ?? "");
       setAvatarUrl(profile.avatarUrl);
     }
-  }, [open, profile.displayName, profile.bio, profile.avatarUrl, cropFile]);
+    if (!open) setCropFile(null);
+    wasOpenRef.current = open;
+  }, [open, profile.displayName, profile.bio, profile.avatarUrl]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -103,10 +103,11 @@ export default function AccountProfileEditor({
       );
     const description = [detail, err.hint, storageMessage].filter(Boolean).join(" ");
     toast.error(err.title, { description, duration: 8000 });
-  }, [copy.avatarErrors]);
+  }, [copy]);
 
   const handleCropError = useCallback(
     (code: AvatarFileErrorCode, failure?: AvatarValidationFailure) => {
+      if (code === "cannot_decode_image") setCropFile(null);
       showAvatarError(code, failure);
     },
     [showAvatarError]

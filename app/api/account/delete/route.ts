@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { rateLimit } from "@/lib/rate-limit";
 import { getAuthedUserFromRequest } from "@/lib/supabase-auth-request";
 import { createServiceSupabase } from "@/lib/supabase-service";
+import { pruneAccountAvatars } from "@/lib/account-server";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
@@ -65,6 +66,7 @@ export async function POST(request: NextRequest) {
 
   try {
     await scrubUserData(sb, user.id);
+    await pruneAccountAvatars(sb, user.id, null, supabaseUrl).catch(() => undefined);
 
     const { error } = await sb.auth.admin.deleteUser(user.id);
     if (error) {
