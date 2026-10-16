@@ -20,9 +20,18 @@
 # production
 /build
 
-# PyInstaller artifacts (npm run build:engine)
+# PyInstaller artifacts (npm run build:engine / build:setup)
 .engine-build/
+.setup-build/
 public/__pycache__/
+tmp-*-pack/
+tmp_*.py
+@AutomationLog.txt
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
 
 # Native Fritz engine copied for local AvatarEngine tests (npm run sync:chessavatar-native)
 public/ChessAvatar.exe

@@ -1,8 +1,10 @@
-# 🎮 Guide d'Installation Fritz 20 - Complet
+# Guide d'Installation Fritz 20 (obsolète)
 
-## 📋 Vue d'ensemble
+> **Obsolète** — le parcours à jour est la page web **/guide** (pack ZIP + `install_engine.bat`). Ce fichier historique peut mentionner `install_fritz20.bat`, qui n’existe plus.
 
-Ce guide complet permet d'installer et configurer votre moteur d'échecs personnalisé dans Fritz 20.
+## Vue d'ensemble
+
+Ce guide historique décrivait l'installation du moteur personnalisé dans Fritz 20.
 
 ## 📦 Nouveaux Fichiers Créés
 

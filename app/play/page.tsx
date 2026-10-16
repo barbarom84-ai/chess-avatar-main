@@ -1,17 +1,21 @@
 "use client";
 
 import { useEffect, useState, Suspense, useMemo } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
-import { Bot, AlertCircle, Crown, Library, ArrowLeft } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Bot, ArrowLeft } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { EngineConfig } from "@/lib/analysis";
+import BrandLoadingScreen from "@/components/BrandLoadingScreen";
+import FetchErrorState from "@/components/FetchErrorState";
 import PublicProfiles from "@/components/PublicProfiles";
 import PersonalityOpponentPicker from "@/components/PersonalityOpponentPicker";
+import PlayModeRail, {
+  type PlayPickerMode,
+} from "@/components/play/PlayModeRail";
+import PlayMetaPanel from "@/components/play/PlayMetaPanel";
+import type { EngineConfig } from "@/lib/analysis";
 import { useLanguage } from "@/lib/language-context";
 import { getPersonalityOpponent } from "@/lib/personality-opponents";
 import {
@@ -22,15 +26,15 @@ import {
 function PlayBoardLoading() {
   const { t } = useLanguage();
   return (
-    <div className="w-full h-[60dvh] lg:h-[600px] bg-slate-900 rounded-lg animate-pulse flex items-center justify-center text-slate-700">
-      {t.ui.loadingEngine}
+    <div className="w-full min-h-[50dvh] flex items-center justify-center">
+      <BrandLoadingScreen label={t.ui.loadingEngine} />
     </div>
   );
 }
 
 const PlayableChessboard = dynamic(() => import("@/components/PlayableChessboard"), {
   ssr: false,
-  loading: () => <PlayBoardLoading />
+  loading: () => <PlayBoardLoading />,
 });
 
 function PlayContent() {
@@ -38,9 +42,10 @@ function PlayContent() {
   const router = useRouter();
   const { t, lang } = useLanguage();
   const [config, setConfig] = useState<EngineConfig | null>(null);
-  const [playerColor, setPlayerColor] = useState<'white' | 'black'>('white');
-  const [error, setError] = useState("");
+  const [playerColor, setPlayerColor] = useState<"white" | "black">("white");
+  const [configError, setConfigError] = useState(false);
   const [showBotSelection, setShowBotSelection] = useState(false);
+  const [pickerMode, setPickerMode] = useState<PlayPickerMode>("personalities");
 
   const urlConfigResult = useMemo(() => {
     const personality = parsePersonalityQuery(searchParams);
@@ -66,7 +71,7 @@ function PlayContent() {
 
   useEffect(() => {
     if (urlConfigResult.kind === "error") {
-      setError(t.ui.invalidConfig);
+      setConfigError(true);
       setShowBotSelection(false);
       setConfig(null);
       return;
@@ -74,81 +79,110 @@ function PlayContent() {
     if (urlConfigResult.kind === "ok") {
       setConfig(urlConfigResult.config);
       setShowBotSelection(false);
-      setError("");
+      setConfigError(false);
       return;
     }
     setShowBotSelection(true);
     setConfig(null);
-    setError("");
-  }, [urlConfigResult, t.ui.invalidConfig]);
+    setConfigError(false);
+  }, [urlConfigResult]);
 
   const handleColorChange = () => {
-    setPlayerColor(prev => prev === 'white' ? 'black' : 'white');
+    setPlayerColor((prev) => (prev === "white" ? "black" : "white"));
   };
 
-  if (error) {
+  const clearBrokenConfig = () => {
+    router.replace("/play");
+  };
+
+  if (configError) {
     return (
-      <main className="min-h-screen theme-gradient theme-text-primary p-4 md:p-8 flex items-center justify-center">
-        <Card className="max-w-md theme-bg-secondary border-cyan-500/20 backdrop-blur-sm">
-          <CardContent className="pt-6">
-            <Alert variant="destructive" className="bg-red-900/20 border-red-700/50 text-red-200">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>{t.common.error}</AlertTitle>
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          </CardContent>
-        </Card>
+      <main className="min-h-screen theme-gradient theme-text-primary p-3 md:p-6 flex items-center justify-center">
+        <FetchErrorState
+          title={t.common.error}
+          message={t.ui.invalidConfig}
+          retryLabel={t.play.retryOpponent}
+          onRetry={clearBrokenConfig}
+          secondaryHref="/"
+          secondaryLabel={t.backToHome}
+        />
       </main>
     );
   }
 
   if (showBotSelection) {
     return (
-      <main className="min-h-screen theme-gradient theme-text-primary p-4 md:p-8">
-        <div className="max-w-6xl mx-auto space-y-6">
-          <div className="text-center mb-4">
-            <h1 className="text-4xl font-bold text-cyan-400 mb-2 flex items-center justify-center gap-3">
-              <span
-                aria-hidden
-                className="inline-block h-9 w-9 bg-cyan-400 shrink-0 drop-shadow-[0_0_8px_rgba(34,211,238,0.55)]"
-                style={{
-                  WebkitMaskImage: "url('/pieces/alpha/bP.svg')",
-                  maskImage: "url('/pieces/alpha/bP.svg')",
-                  WebkitMaskSize: "contain",
-                  maskSize: "contain",
-                  WebkitMaskRepeat: "no-repeat",
-                  maskRepeat: "no-repeat",
-                  WebkitMaskPosition: "center",
-                  maskPosition: "center",
-                }}
-              />
+      <main className="min-h-screen theme-gradient theme-text-primary p-3 md:p-6">
+        <div className="max-w-[1400px] mx-auto space-y-4">
+          <header>
+            <h1 className="text-xl md:text-2xl font-bold text-slate-100">
               {t.play.selectOpponent}
             </h1>
-            <p className="theme-text-secondary">
-              {t.play.personalities.subtitle}
-            </p>
+            <p className="text-slate-500 text-xs">{t.play.personalities.subtitle}</p>
+          </header>
+
+          <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_220px] xl:grid-cols-[300px_1fr_240px] gap-4">
+            <div className="order-1 space-y-3">
+              <PlayModeRail
+                mode={pickerMode}
+                onModeChange={setPickerMode}
+                labels={{
+                  personalities: t.play.personalities.personalitiesTab,
+                  library: t.play.personalities.libraryTab,
+                  online: t.play.modeOnline,
+                  personalitiesHint: t.play.railPersonalitiesHint,
+                  libraryHint: t.play.railLibraryHint,
+                  onlineHint: t.play.railOnlineHint,
+                  onlineCta: t.play.modeOnlineCta,
+                }}
+              />
+            </div>
+
+            <div className="order-2 min-w-0" data-testid="play-picker-center">
+              {pickerMode === "personalities" && (
+                <PersonalityOpponentPicker onPlay={(href) => router.push(href)} />
+              )}
+              {pickerMode === "library" && (
+                <div className="space-y-2">
+                  <p className="text-sm text-slate-400">
+                    {t.play.selectBotDescription}
+                  </p>
+                  <PublicProfiles />
+                </div>
+              )}
+              {pickerMode === "online" && (
+                <div
+                  className="rounded-xl border border-cyan-500/20 bg-slate-950/60 p-6 text-center space-y-3"
+                  data-testid="play-online-panel"
+                >
+                  <h2 className="text-base font-semibold text-slate-100">
+                    {t.play.modeOnline}
+                  </h2>
+                  <p className="text-sm text-slate-400 max-w-md mx-auto leading-relaxed">
+                    {t.play.railOnlineHint}
+                  </p>
+                  <Button asChild className="bg-cyan-700 hover:bg-cyan-600">
+                    <Link href="/online" data-testid="play-online-panel-cta">
+                      {t.play.modeOnlineCta}
+                    </Link>
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            <div className="order-3 hidden lg:block">
+              <PlayMetaPanel
+                variant={pickerMode}
+                labels={{
+                  title: t.play.metaTitle,
+                  tipPersonalities: t.play.metaTipPersonalities,
+                  tipLibrary: t.play.metaTipLibrary,
+                  tipOnline: t.play.metaTipOnline,
+                  tipGame: t.play.metaTipGame,
+                }}
+              />
+            </div>
           </div>
-          <Tabs defaultValue="personalities" className="w-full">
-            <TabsList className="bg-slate-900 border border-slate-700 w-full sm:w-auto">
-              <TabsTrigger value="personalities" className="flex-1 sm:flex-none">
-                <Crown className="h-4 w-4" />
-                {t.play.personalities.personalitiesTab}
-              </TabsTrigger>
-              <TabsTrigger value="library" className="flex-1 sm:flex-none">
-                <Library className="h-4 w-4" />
-                {t.play.personalities.libraryTab}
-              </TabsTrigger>
-            </TabsList>
-            <TabsContent value="personalities" className="mt-4">
-              <PersonalityOpponentPicker onPlay={(href) => router.push(href)} />
-            </TabsContent>
-            <TabsContent value="library" className="mt-4">
-              <p className="text-sm text-slate-400 mb-4">
-                {t.play.selectBotDescription}
-              </p>
-              <PublicProfiles />
-            </TabsContent>
-          </Tabs>
         </div>
       </main>
     );
@@ -156,11 +190,8 @@ function PlayContent() {
 
   if (!config) {
     return (
-      <main className="min-h-screen theme-gradient theme-text-primary flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-cyan-500 mx-auto mb-4"></div>
-          <p className="text-cyan-400/70">{t.play.loading}</p>
-        </div>
+      <main className="min-h-screen theme-gradient theme-text-primary flex items-center justify-center p-6">
+        <BrandLoadingScreen label={t.play.loading} />
       </main>
     );
   }
@@ -168,11 +199,8 @@ function PlayContent() {
   return (
     <main className="min-h-screen theme-gradient theme-text-primary">
       <div className="max-w-[1600px] mx-auto">
-        
-        {/* Barre de contrôle compacte en haut - Position fixe */}
         <div className="lg:sticky lg:top-0 z-50 bg-gradient-to-b from-slate-950 to-slate-950/95 backdrop-blur-sm border-b theme-border px-2 md:px-4 py-2 space-y-1.5">
           <div className="flex items-center justify-between gap-2">
-            {/* Gauche: Info Bot */}
             <div className="flex items-center gap-1.5 min-w-0">
               <Button
                 type="button"
@@ -188,6 +216,7 @@ function PlayContent() {
                 </span>
               </Button>
               {config.avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={config.avatarUrl}
                   alt=""
@@ -196,18 +225,25 @@ function PlayContent() {
               ) : (
                 <Bot className="h-4 w-4 text-cyan-400 shrink-0" />
               )}
-              <span className="text-sm font-semibold text-cyan-100 truncate">{config.name}</span>
+              <span className="text-sm font-semibold text-cyan-100 truncate">
+                {config.name}
+              </span>
               {config.personalityId ? (
-                <Badge variant="outline" className="text-[10px] h-4 px-1.5 border-amber-400/50 text-amber-200 hidden sm:inline-flex shrink-0">
+                <Badge
+                  variant="outline"
+                  className="text-[10px] h-4 px-1.5 border-amber-400/50 text-amber-200 hidden sm:inline-flex shrink-0"
+                >
                   {t.play.personalities.badge}
                 </Badge>
               ) : null}
-              <Badge variant="outline" className="text-[10px] h-4 px-1.5 border-cyan-400/50 hidden sm:inline-flex shrink-0">
+              <Badge
+                variant="outline"
+                className="text-[10px] h-4 px-1.5 border-cyan-400/50 hidden sm:inline-flex shrink-0"
+              >
                 Niv {config.difficulty}
               </Badge>
             </div>
 
-            {/* Centre: Sélection couleur */}
             <div
               className="flex items-center gap-1 shrink-0"
               role="group"
@@ -225,7 +261,10 @@ function PlayContent() {
                 aria-pressed={playerColor === "white"}
                 aria-label={t.play.playAsWhite}
               >
-                <span aria-hidden>⚪</span>
+                <span
+                  className="inline-block h-2.5 w-2.5 rounded-full bg-slate-100 border border-slate-400"
+                  aria-hidden
+                />
                 <span className="hidden sm:inline">{t.play.whiteSide}</span>
               </button>
               <button
@@ -240,44 +279,54 @@ function PlayContent() {
                 aria-pressed={playerColor === "black"}
                 aria-label={t.play.playAsBlack}
               >
-                <span aria-hidden>⚫</span>
+                <span
+                  className="inline-block h-2.5 w-2.5 rounded-full bg-slate-900 border border-slate-500"
+                  aria-hidden
+                />
                 <span className="hidden sm:inline">{t.play.blackSide}</span>
               </button>
             </div>
           </div>
           <p className="text-[10px] text-slate-500 px-0.5 leading-tight hidden sm:block">
-            <span className="text-cyan-500/70 mr-1" aria-hidden>
-              ℹ️
-            </span>
             {t.play.playPageToolbarHint}
           </p>
         </div>
 
-        {/* Zone de jeu - Échiquier commence immédiatement après la barre */}
-        <div className="p-2 md:p-4">
-          <PlayableChessboard 
-            config={config} 
+        <div className="p-2 md:p-4 grid grid-cols-1 lg:grid-cols-[1fr_220px] xl:grid-cols-[1fr_240px] gap-4">
+          <PlayableChessboard
+            config={config}
             playerColor={playerColor}
             onConfigChange={setConfig}
             onColorChange={handleColorChange}
           />
+          <div className="hidden lg:block">
+            <PlayMetaPanel
+              variant="game"
+              labels={{
+                title: t.play.metaTitle,
+                tipPersonalities: t.play.metaTipPersonalities,
+                tipLibrary: t.play.metaTipLibrary,
+                tipOnline: t.play.metaTipOnline,
+                tipGame: t.play.metaTipGame,
+              }}
+            />
+          </div>
         </div>
-
       </div>
     </main>
   );
 }
 
 export default function PlayPage() {
+  const { t } = useLanguage();
   return (
-    <Suspense fallback={
-      <main className="min-h-screen theme-gradient theme-text-primary flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-cyan-500 mx-auto mb-4"></div>
-          <p className="text-cyan-400/70">Chargement...</p>
-        </div>
-      </main>
-    }>
+    <Suspense
+      fallback={
+        <main className="min-h-screen theme-gradient theme-text-primary flex items-center justify-center p-6">
+          <BrandLoadingScreen label={t.play.loading} />
+        </main>
+      }
+    >
       <PlayContent />
     </Suspense>
   );

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import BrandLoadingScreen from "@/components/BrandLoadingScreen";
+import FetchErrorState from "@/components/FetchErrorState";
 import LichessPuzzlePlayer from "@/components/LichessPuzzlePlayer";
 import MoveChallengeCard from "@/components/learn/MoveChallengeCard";
 import PuzzleBoardSkeleton from "@/components/puzzles/PuzzleBoardSkeleton";
@@ -14,6 +15,11 @@ import type { NormalizedLichessPuzzle } from "@/lib/lichess-puzzle";
 import type { HistoricalGame } from "@/lib/opening-lessons";
 import type { CloudPuzzlePayload } from "@/lib/cloud-puzzle";
 import { fenAfterUciMoves, verboseMovesFromUciLine } from "@/lib/learn-chess-utils";
+import {
+  classifyFetchFailure,
+  fetchErrorCopy,
+  withTimeout,
+} from "@/lib/fetch-errors";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase";
 import { useSuperUser } from "@/hooks/useSuperUser";
 
@@ -83,25 +89,45 @@ export default function PuzzlesPageClient({
     return moves.length > 0 ? moves : undefined;
   }, [cloudPuzzle]);
 
+  const puzzleFailCopy = useMemo(
+    () => ({
+      offline: p.offlineError,
+      timeout: p.timeoutError,
+      network: p.networkError,
+      generic: p.dailyError,
+    }),
+    [p.dailyError, p.networkError, p.offlineError, p.timeoutError]
+  );
+
   const loadDaily = useCallback(async () => {
     setDailyLoading(true);
     setDailyError(null);
     try {
-      const res = await fetch("/api/puzzles/daily");
+      const res = await withTimeout(fetch("/api/puzzles/daily"), 15_000);
       if (!res.ok) {
-        setDailyError(p.dailyError);
+        setDailyError(
+          fetchErrorCopy(classifyFetchFailure(null, res.status).kind, {
+            ...puzzleFailCopy,
+            generic: p.dailyError,
+          })
+        );
         setDaily(null);
         return;
       }
       const data: unknown = await res.json();
       setDaily(data as NormalizedLichessPuzzle);
-    } catch {
-      setDailyError(p.dailyError);
+    } catch (err) {
+      setDailyError(
+        fetchErrorCopy(classifyFetchFailure(err).kind, {
+          ...puzzleFailCopy,
+          generic: p.dailyError,
+        })
+      );
       setDaily(null);
     } finally {
       setDailyLoading(false);
     }
-  }, [p.dailyError]);
+  }, [p.dailyError, puzzleFailCopy]);
 
   useEffect(() => {
     loadDaily();
@@ -112,6 +138,9 @@ export default function PuzzlesPageClient({
       const tmr = window.setTimeout(() => setBooting(false), 280);
       return () => window.clearTimeout(tmr);
     }
+    // Escape hatch: never leave the branded loader forever
+    const escape = window.setTimeout(() => setBooting(false), 16_000);
+    return () => window.clearTimeout(escape);
   }, [dailyLoading]);
 
   useEffect(() => {
@@ -161,53 +190,69 @@ export default function PuzzlesPageClient({
       if (session?.access_token) {
         headers.Authorization = `Bearer ${session.access_token}`;
       }
-      const res = await fetch("/api/puzzles/cloud-random", { headers, cache: "no-store" });
+      const res = await withTimeout(
+        fetch("/api/puzzles/cloud-random", { headers, cache: "no-store" }),
+        15_000
+      );
       if (res.status === 401) {
         setCloudError(p.cloudPuzzleAuth);
         setCloudPuzzle(null);
         return;
       }
       if (!res.ok) {
-        let msg = p.cloudPuzzleError;
-        try {
-          const j = (await res.json()) as { error?: string };
-          if (typeof j.error === "string") msg = j.error;
-        } catch {
-          /* keep default */
-        }
-        setCloudError(msg);
+        setCloudError(
+          fetchErrorCopy(classifyFetchFailure(null, res.status).kind, {
+            ...puzzleFailCopy,
+            generic: p.cloudPuzzleError,
+          })
+        );
         setCloudPuzzle(null);
         return;
       }
       const data: unknown = await res.json();
       setCloudPuzzle(data as CloudPuzzlePayload);
-    } catch {
-      setCloudError(p.cloudPuzzleError);
+    } catch (err) {
+      setCloudError(
+        fetchErrorCopy(classifyFetchFailure(err).kind, {
+          ...puzzleFailCopy,
+          generic: p.cloudPuzzleError,
+        })
+      );
       setCloudPuzzle(null);
     } finally {
       setCloudLoading(false);
     }
-  }, [p.cloudPuzzleAuth, p.cloudPuzzleError]);
+  }, [p.cloudPuzzleAuth, p.cloudPuzzleError, puzzleFailCopy]);
 
   const fetchRandom = useCallback(async () => {
     setRandomLoading(true);
     setRandomError(null);
     try {
-      const res = await fetch("/api/puzzles/random");
+      const res = await withTimeout(fetch("/api/puzzles/random"), 15_000);
       if (!res.ok) {
-        setRandomError(p.randomError);
+        setRandomError(
+          fetchErrorCopy(classifyFetchFailure(null, res.status).kind, {
+            ...puzzleFailCopy,
+            generic: p.randomError,
+          })
+        );
         setRandom(null);
         return;
       }
       const data: unknown = await res.json();
       setRandom(data as NormalizedLichessPuzzle);
-    } catch {
-      setRandomError(p.randomError);
+    } catch (err) {
+      setRandomError(
+        fetchErrorCopy(classifyFetchFailure(err).kind, {
+          ...puzzleFailCopy,
+          generic: p.randomError,
+        })
+      );
       setRandom(null);
     } finally {
       setRandomLoading(false);
     }
-  }, [p.randomError]);
+  }, [p.randomError, puzzleFailCopy]);
 
   const challengeLabels = {
     hint: t.learn.challenge.hint,
@@ -334,12 +379,13 @@ export default function PuzzlesPageClient({
                 {centerBusy && <PuzzleBoardSkeleton message={loadingMessage} />}
 
                 {!centerBusy && mode === "daily" && dailyError && (
-                  <div className="flex flex-col items-center gap-3 py-8">
-                    <p className="text-sm text-rose-300">{dailyError}</p>
-                    <Button type="button" variant="outline" size="sm" onClick={loadDaily}>
-                      {p.retry}
-                    </Button>
-                  </div>
+                  <FetchErrorState
+                    title={p.dailyTitle}
+                    message={dailyError}
+                    offline={/offline|hors ligne/i.test(dailyError)}
+                    retryLabel={p.retry}
+                    onRetry={() => void loadDaily()}
+                  />
                 )}
 
                 {!centerBusy && mode === "daily" && daily && (
@@ -352,7 +398,13 @@ export default function PuzzlesPageClient({
                 )}
 
                 {!centerBusy && mode === "random" && randomError && (
-                  <p className="text-sm text-rose-300 text-center py-4">{randomError}</p>
+                  <FetchErrorState
+                    title={p.randomTitle}
+                    message={randomError}
+                    offline={/offline|hors ligne/i.test(randomError)}
+                    retryLabel={p.retry}
+                    onRetry={() => void fetchRandom()}
+                  />
                 )}
 
                 {!centerBusy && mode === "random" && !random && !randomError && (
@@ -388,7 +440,17 @@ export default function PuzzlesPageClient({
                 )}
 
                 {!centerBusy && mode === "community" && cloudError && (
-                  <p className="text-sm text-rose-300/95 text-center py-4">{cloudError}</p>
+                  <FetchErrorState
+                    title={p.cloudPuzzleTitle}
+                    message={cloudError}
+                    offline={/offline|hors ligne/i.test(cloudError)}
+                    retryLabel={p.retry}
+                    onRetry={
+                      cloudError === p.cloudPuzzleAuth
+                        ? undefined
+                        : () => void fetchCloudPuzzle()
+                    }
+                  />
                 )}
 
                 {!centerBusy &&

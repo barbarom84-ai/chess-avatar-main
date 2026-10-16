@@ -1,207 +1,241 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
+import { ArrowRight, Download, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Download, BookOpen, Sparkles, ArrowRight } from "lucide-react";
+import GuideModeRail, {
+  type GuideMode,
+} from "@/components/guide/GuideModeRail";
+import GuideMetaPanel from "@/components/guide/GuideMetaPanel";
 import { useLanguage } from "@/lib/language-context";
 
 export default function GuidePage() {
   const { t } = useLanguage();
+  const g = t.guide;
+  const [mode, setMode] = useState<GuideMode>("fritz");
 
   return (
-    <main className="min-h-screen theme-gradient theme-text-primary p-8 flex flex-col items-center">
-      <div className="max-w-4xl w-full space-y-8">
-
-        <div className="text-center space-y-4">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <BookOpen className="h-12 w-12 text-cyan-400" />
-            <h1 className="text-4xl font-bold neon-cyan">{t.guide.title}</h1>
+    <main className="min-h-screen theme-gradient theme-text-primary p-3 md:p-6">
+      <div className="max-w-[1400px] mx-auto space-y-4">
+        <header className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h1 className="text-xl md:text-2xl font-bold text-slate-100">
+              {g.title}
+            </h1>
+            <p className="text-slate-500 text-xs max-w-2xl">{g.subtitle}</p>
           </div>
-          <p className="text-cyan-400/70">{t.guide.subtitle}</p>
-
-          <div className="flex justify-center mt-6">
-            <Link href="/analyze">
-              <Button className="bg-cyan-600 hover:bg-cyan-700 text-white shadow-lg glow-cyan text-lg px-8 py-6">
-                <Sparkles className="mr-2 h-5 w-5" />
-                {t.guide.ctaGeneratePack}
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
+          <Button asChild size="sm" className="bg-cyan-700 hover:bg-cyan-600 shrink-0">
+            <Link href="/analyze" data-testid="guide-header-cta">
+              <Sparkles className="mr-1.5 h-3.5 w-3.5" />
+              {g.ctaGeneratePack}
+              <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
             </Link>
-          </div>
+          </Button>
+        </header>
+
+        <div className="rounded-lg border border-emerald-700/40 bg-emerald-950/20 px-3 py-2.5">
+          <p className="text-sm font-medium text-emerald-200">{g.banner.title}</p>
+          <p className="text-xs text-emerald-200/70 mt-0.5 leading-relaxed">
+            {g.banner.text}
+          </p>
         </div>
 
-        <Card className="theme-bg-secondary theme-border bg-green-900/10 border-green-700/40">
-          <CardContent className="p-4 text-green-200">
-            <p className="font-semibold text-green-300 mb-1">
-              {t.guide.banner.title}
-            </p>
-            <p className="text-sm">{t.guide.banner.text}</p>
-          </CardContent>
-        </Card>
+        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_220px] xl:grid-cols-[300px_1fr_240px] gap-4">
+          <div className="order-1 space-y-3">
+            <GuideModeRail
+              mode={mode}
+              onModeChange={setMode}
+              labels={{
+                fritz: g.modes.fritz,
+                pack: g.modes.pack,
+                swap: g.modes.swap,
+                help: g.modes.help,
+                advanced: g.modes.advanced,
+                fritzHint: g.modes.fritzHint,
+                packHint: g.modes.packHint,
+                swapHint: g.modes.swapHint,
+                helpHint: g.modes.helpHint,
+                advancedHint: g.modes.advancedHint,
+              }}
+            />
+          </div>
 
-        <div className="grid gap-6">
+          <div className="order-2 min-w-0" data-testid="guide-center">
+            {mode === "fritz" && (
+              <Card className="theme-bg-secondary border-cyan-500/20">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base text-slate-100">
+                    {g.fritz.title}
+                  </CardTitle>
+                  <p className="text-xs text-slate-500 leading-relaxed">
+                    {g.fritz.intro}
+                  </p>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="rounded-md border border-amber-700/40 bg-amber-950/20 px-3 py-2 text-xs text-amber-100/90 leading-relaxed">
+                    {g.fritz.adminNote}
+                  </div>
+                  <div className="rounded-md border border-yellow-700/30 bg-yellow-950/15 px-3 py-2 text-xs text-yellow-100/80 leading-relaxed">
+                    {g.fritz.smartScreenNote}
+                  </div>
+                  <ol className="space-y-3">
+                    {g.fritz.steps.map((step, idx) => (
+                      <li
+                        key={step.title}
+                        className="rounded-md border border-slate-800 bg-slate-950/50 px-3 py-2.5"
+                      >
+                        <div className="flex items-start gap-2.5">
+                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-cyan-700 text-[11px] font-semibold text-white">
+                            {idx + 1}
+                          </span>
+                          <div className="min-w-0 space-y-1">
+                            <p className="text-sm font-medium text-slate-100">
+                              {step.title}
+                            </p>
+                            <p className="text-xs text-slate-400 leading-relaxed">
+                              {step.body}
+                            </p>
+                          </div>
+                        </div>
+                      </li>
+                    ))}
+                  </ol>
+                </CardContent>
+              </Card>
+            )}
 
-          <Card className="theme-bg-secondary theme-border backdrop-blur-sm">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-3 text-xl">
-                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-cyan-600 text-white text-sm font-bold glow-cyan">1</span>
-                {t.guide.step1.title}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 theme-text-secondary">
-              <p>{t.guide.step1.description}</p>
-              <ol className="list-decimal list-inside space-y-2 ml-4 theme-text-primary">
-                {t.guide.step1.steps.map((step: string, idx: number) => (
-                  <li key={idx}>{step}</li>
-                ))}
-              </ol>
+            {mode === "pack" && (
+              <Card className="theme-bg-secondary border-cyan-500/20">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base text-slate-100">
+                    {g.pack.title}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm text-slate-300">
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    {g.pack.description}
+                  </p>
+                  <ol className="list-decimal list-inside space-y-1.5 text-xs text-slate-300">
+                    {g.pack.steps.map((step) => (
+                      <li key={step}>{step}</li>
+                    ))}
+                  </ol>
+                  <p className="text-xs text-cyan-200/80 border border-cyan-800/40 rounded-md px-3 py-2 bg-cyan-950/20 leading-relaxed">
+                    {g.pack.contents}
+                  </p>
+                  <Button asChild size="sm" className="bg-cyan-700 hover:bg-cyan-600">
+                    <Link href="/analyze">{g.ctaGeneratePack}</Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
 
-              <div className="bg-cyan-900/20 border border-cyan-700 p-3 rounded mt-4">
-                <p className="text-cyan-200 text-sm">
-                  {t.guide.step1.contents}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+            {mode === "swap" && (
+              <Card className="theme-bg-secondary border-cyan-500/20">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base text-slate-100">
+                    {g.swap.title}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    {g.swap.description}
+                  </p>
+                  <ol className="list-decimal list-inside space-y-1.5 text-xs text-slate-300">
+                    {g.swap.steps.map((step) => (
+                      <li key={step}>{step}</li>
+                    ))}
+                  </ol>
+                </CardContent>
+              </Card>
+            )}
 
-          <Card className="theme-bg-secondary theme-border">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-3 text-xl">
-                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-cyan-600 text-white text-sm font-bold">2</span>
-                {t.guide.step2.title}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 theme-text-secondary">
-              <p>{t.guide.step2.description}</p>
-
-              <div className="bg-red-900/30 border-2 border-red-500 p-4 rounded-lg shadow-lg shadow-red-900/30">
-                <p className="text-red-100 text-sm font-semibold leading-relaxed">
-                  {t.guide.step2.adminNote}
-                </p>
-              </div>
-
-              <ol className="list-decimal list-inside space-y-2 ml-4 theme-text-primary">
-                {t.guide.step2.steps.map((step: string, idx: number) => (
-                  <li key={idx}>{step}</li>
-                ))}
-              </ol>
-              <div className="bg-yellow-900/20 border border-yellow-700 p-3 rounded mt-2">
-                <p className="text-yellow-200 text-sm">
-                  {t.guide.step2.smartScreenNote}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="theme-bg-secondary theme-border">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-3 text-xl">
-                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-cyan-600 text-white text-sm font-bold">3</span>
-                {t.guide.step3.title}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 theme-text-secondary">
-              <div className="border border-cyan-500/30 rounded p-4">
-                <p className="font-semibold text-cyan-300 mb-3">{t.guide.step3.fritzTitle}</p>
-                <ol className="list-decimal list-inside space-y-2 ml-4">
-                  {t.guide.step3.fritzSteps.map((step: string, idx: number) => (
-                    <li key={idx}>{step}</li>
+            {mode === "help" && (
+              <Card className="theme-bg-secondary border-cyan-500/20">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base text-slate-100">
+                    {g.help.title}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {g.help.problems.map((p) => (
+                    <div
+                      key={p.title}
+                      className="rounded-md border border-slate-800 bg-slate-950/50 px-3 py-2.5"
+                    >
+                      <p className="text-sm font-medium text-slate-100">
+                        {p.title}
+                      </p>
+                      <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                        {p.body}
+                      </p>
+                    </div>
                   ))}
-                </ol>
-              </div>
+                  <p className="text-xs text-slate-500 leading-relaxed border-t border-slate-800 pt-3">
+                    {g.help.arenaNote}
+                  </p>
+                </CardContent>
+              </Card>
+            )}
 
-              <div className="border border-blue-500/30 rounded p-4">
-                <p className="font-semibold text-blue-300 mb-3">{t.guide.step3.arenaTitle}</p>
-                <ol className="list-decimal list-inside space-y-2 ml-4">
-                  {t.guide.step3.arenaSteps.map((step: string, idx: number) => (
-                    <li key={idx}>{step}</li>
-                  ))}
-                </ol>
-              </div>
-            </CardContent>
-          </Card>
+            {mode === "advanced" && (
+              <Card className="theme-bg-secondary border-cyan-500/20">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base text-slate-100">
+                    {g.advanced.title}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    {g.advanced.description}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {(
+                      [
+                        "/ChessAvatarSetup.exe",
+                        "/AvatarEngine.exe",
+                        "/install_engine.bat",
+                        "/swap_profile.bat",
+                        "/AvatarEngine.py",
+                      ] as const
+                    ).map((href) => (
+                      <a key={href} href={href} download>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="border-cyan-500/40 text-cyan-300/80 hover:bg-cyan-500/10 text-xs"
+                        >
+                          <Download className="mr-2 h-3 w-3" />
+                          {href.slice(1)}
+                        </Button>
+                      </a>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
 
-          <Card className="theme-bg-secondary theme-border bg-purple-900/10 border-purple-700/40">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-3 text-xl">
-                <span className="text-xl">🔄</span>
-                {t.guide.swap.title}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 theme-text-secondary">
-              <p>{t.guide.swap.description}</p>
-              <ol className="list-decimal list-inside space-y-2 ml-4 theme-text-primary">
-                {t.guide.swap.steps.map((step: string, idx: number) => (
-                  <li key={idx}>{step}</li>
-                ))}
-              </ol>
-            </CardContent>
-          </Card>
-
-          <Card className="theme-bg-secondary theme-border">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-3 text-xl">
-                <span className="text-xl">⚠️</span>
-                {t.guide.troubleshooting}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 theme-text-secondary">
-              <div className="theme-bg-primary p-3 rounded">
-                <p className="font-semibold text-yellow-400">{t.guide.problems.windowsBlocking}</p>
-                <p className="text-sm">{t.guide.problems.windowsBlockingSolution}</p>
-              </div>
-
-              <div className="theme-bg-primary p-3 rounded">
-                <p className="font-semibold text-cyan-400">{t.guide.problems.stockfishDownload}</p>
-                <p className="text-sm">{t.guide.problems.stockfishDownloadSolution}</p>
-              </div>
-
-              <div className="theme-bg-primary p-3 rounded">
-                <p className="font-semibold text-red-400">{t.guide.problems.engineNotWorking}</p>
-                <p className="text-sm">{t.guide.problems.engineNotWorkingSolution}</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="theme-bg-secondary theme-border opacity-80">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-3 text-base">
-                <span className="text-base">🛠️</span>
-                {t.guide.advanced.title}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 theme-text-secondary text-sm">
-              <p>{t.guide.advanced.description}</p>
-              <div className="flex flex-wrap gap-2">
-                <a href="/install_engine.bat" download>
-                  <Button variant="outline" size="sm" className="border-cyan-500/40 text-cyan-300/80 hover:bg-cyan-500/10 text-xs">
-                    <Download className="mr-2 h-3 w-3" />
-                    install_engine.bat
-                  </Button>
-                </a>
-                <a href="/swap_profile.bat" download>
-                  <Button variant="outline" size="sm" className="border-cyan-500/40 text-cyan-300/80 hover:bg-cyan-500/10 text-xs">
-                    <Download className="mr-2 h-3 w-3" />
-                    swap_profile.bat
-                  </Button>
-                </a>
-                <a href="/AvatarEngine.exe" download>
-                  <Button variant="outline" size="sm" className="border-cyan-500/40 text-cyan-300/80 hover:bg-cyan-500/10 text-xs">
-                    <Download className="mr-2 h-3 w-3" />
-                    AvatarEngine.exe
-                  </Button>
-                </a>
-                <a href="/AvatarEngine.py" download>
-                  <Button variant="outline" size="sm" className="border-cyan-500/40 text-cyan-300/80 hover:bg-cyan-500/10 text-xs">
-                    <Download className="mr-2 h-3 w-3" />
-                    AvatarEngine.py
-                  </Button>
-                </a>
-              </div>
-            </CardContent>
-          </Card>
-
+          <div className="order-3 hidden lg:block">
+            <GuideMetaPanel
+              variant={mode}
+              labels={{
+                title: g.meta.title,
+                pathLabel: g.meta.pathLabel,
+                pathValue: g.meta.pathValue,
+                filesLabel: g.meta.filesLabel,
+                files: g.meta.files,
+                cta: g.ctaGeneratePack,
+                tipFritz: g.meta.tipFritz,
+                tipPack: g.meta.tipPack,
+                tipSwap: g.meta.tipSwap,
+                tipHelp: g.meta.tipHelp,
+                tipAdvanced: g.meta.tipAdvanced,
+              }}
+            />
+          </div>
         </div>
       </div>
     </main>

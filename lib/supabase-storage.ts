@@ -477,6 +477,8 @@ export interface GetFilteredProfilesOptions {
    * Demande un échantillon plus large côté API puis réduit en mémoire.
    */
   dedupeByUsernamePlatform?: boolean;
+  /** When true, surface fetch failures instead of returning []. */
+  throwOnError?: boolean;
 }
 
 /**
@@ -574,6 +576,7 @@ export async function getFilteredProfiles(
     return rows;
   } catch (error) {
     console.error('Erreur lors de la récupération filtrée:', error);
+    if (options?.throwOnError) throw error;
     return [];
   }
 }

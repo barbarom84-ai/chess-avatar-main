@@ -388,13 +388,23 @@ class AvatarEngine:
         try:
             print(f"info string Starting Stockfish: {self.engine_path}", file=sys.stderr)
             
+            popen_kwargs = {
+                "stdin": subprocess.PIPE,
+                "stdout": subprocess.PIPE,
+                "stderr": subprocess.PIPE,
+                "text": True,
+                "bufsize": 1,
+            }
+            if sys.platform == "win32":
+                # Hide Stockfish console when Fritz launches AvatarEngine (no CMD flash).
+                popen_kwargs["creationflags"] = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+                startupinfo = subprocess.STARTUPINFO()
+                startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+                startupinfo.wShowWindow = subprocess.SW_HIDE
+                popen_kwargs["startupinfo"] = startupinfo
             self.engine_process = subprocess.Popen(
                 [self.engine_path],
-                stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                bufsize=1
+                **popen_kwargs,
             )
             
             # Start thread to read engine output

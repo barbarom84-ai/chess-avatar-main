@@ -7,6 +7,8 @@ import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import BrandLoadingScreen from "@/components/BrandLoadingScreen";
+import FetchErrorState from "@/components/FetchErrorState";
 import { useLanguage } from "@/lib/language-context";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { useSuperUser } from "@/hooks/useSuperUser";
@@ -40,6 +42,7 @@ import {
   whiteBlackDisplayNames,
 } from "@/lib/pvp-utils";
 import { mapPvpErrorMessage, pvpErrorFromUnknown } from "@/lib/pvp-errors";
+import { isBrowserOnline } from "@/lib/offline-sync";
 
 export default function OnlinePvpPage() {
   const { t, lang } = useLanguage();
@@ -739,25 +742,28 @@ export default function OnlinePvpPage() {
 
   if (online.loading && !online.game) {
     return (
-      <main className="min-h-screen theme-gradient theme-text-primary flex items-center justify-center">
-        <Loader2 className="h-10 w-10 animate-spin text-cyan-400" aria-hidden />
+      <main className="min-h-screen theme-gradient theme-text-primary flex items-center justify-center p-6">
+        <BrandLoadingScreen label={o.loadingGame} />
       </main>
     );
   }
 
   if (online.error || !online.game) {
+    const message = mapPvpErrorMessage(
+      online.error ?? o.gameNotFound,
+      errorLabels
+    );
     return (
       <main className="min-h-screen theme-gradient theme-text-primary p-4 md:p-8 flex items-center justify-center">
-        <Card className="max-w-md theme-bg-secondary border-red-500/30">
-          <CardContent className="pt-6 space-y-4">
-            <p className="text-red-200">
-              {mapPvpErrorMessage(online.error ?? o.gameNotFound, errorLabels)}
-            </p>
-            <Button variant="outline" asChild>
-              <Link href="/online">{o.backLobby}</Link>
-            </Button>
-          </CardContent>
-        </Card>
+        <FetchErrorState
+          title={o.title}
+          message={message}
+          offline={!isBrowserOnline()}
+          retryLabel={o.retryGame}
+          onRetry={() => void online.refresh()}
+          secondaryHref="/online"
+          secondaryLabel={o.backLobby}
+        />
       </main>
     );
   }

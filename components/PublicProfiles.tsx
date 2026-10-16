@@ -31,11 +31,17 @@ import {
   type ProfilePlatformFilter,
   type ProfileSort,
 } from "@/lib/supabase-storage";
+import {
+  classifyFetchFailure,
+  fetchErrorCopy,
+  withTimeout,
+} from "@/lib/fetch-errors";
 import { isSupabaseConfigured, supabase, type DbProfile } from "@/lib/supabase";
 import { prepareConfigForExport } from "@/lib/forced-line-utils";
 import { OPENINGS_DATABASE } from "@/lib/openings-library";
 import { useRouter } from "next/navigation";
 import ProfileDetailsModal from "./ProfileDetailsModal";
+import FetchErrorState from "@/components/FetchErrorState";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -50,6 +56,7 @@ export default function PublicProfiles() {
   const router = useRouter();
   const [profiles, setProfiles] = useState<DbProfile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filter, setFilter] = useState<ProfileFilter>('all');
   const [sort, setSort] = useState<ProfileSort>('date');
@@ -105,19 +112,48 @@ export default function PublicProfiles() {
 
   const loadProfiles = useCallback(async () => {
     setLoading(true);
-    const data = await getFilteredProfiles(
-      filter,
-      sort,
-      pageLimit,
-      searchQueryRef.current,
-      {
-        platform: platformFilter,
-        dedupeByUsernamePlatform: dedupeByIdentity,
-      }
-    );
-    setProfiles(data);
-    setLoading(false);
-  }, [filter, sort, pageLimit, platformFilter, dedupeByIdentity]);
+    setLoadError(null);
+    try {
+      const data = await withTimeout(
+        getFilteredProfiles(
+          filter,
+          sort,
+          pageLimit,
+          searchQueryRef.current,
+          {
+            platform: platformFilter,
+            dedupeByUsernamePlatform: dedupeByIdentity,
+            throwOnError: true,
+          }
+        ),
+        15_000,
+        "Library request timed out"
+      );
+      setProfiles(data);
+    } catch (err) {
+      setProfiles([]);
+      setLoadError(
+        fetchErrorCopy(classifyFetchFailure(err).kind, {
+          offline: t.library.offlineError,
+          timeout: t.library.timeoutError,
+          network: t.library.networkError,
+          generic: t.library.loadError,
+        })
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [
+    filter,
+    sort,
+    pageLimit,
+    platformFilter,
+    dedupeByIdentity,
+    t.library.offlineError,
+    t.library.timeoutError,
+    t.library.networkError,
+    t.library.loadError,
+  ]);
 
   useEffect(() => {
     if (isSupabaseConfigured && supabase) {
@@ -443,6 +479,15 @@ export default function PublicProfiles() {
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
           </div>
+        ) : loadError ? (
+          <FetchErrorState
+            title={t.library.title}
+            message={loadError}
+            offline={/offline|hors ligne/i.test(loadError)}
+            retryLabel={t.library.retry}
+            onRetry={() => void loadProfiles()}
+            compact
+          />
         ) : profiles.length === 0 ? (
           <Alert className="bg-slate-950 border-slate-800">
             <AlertDescription className="text-slate-400 text-sm">

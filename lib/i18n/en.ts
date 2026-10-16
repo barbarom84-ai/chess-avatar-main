@@ -68,8 +68,8 @@ export const en = {
       },
       guide: {
         nav: "Guide",
-        title: "Install your engine on desktop",
-        metaTitle: "Installation guide",
+        title: "Install your engine in Fritz 20",
+        metaTitle: "Fritz 20 UCI guide",
       },
       ascension: {
         nav: "Ascension",
@@ -675,77 +675,126 @@ export const en = {
     
     // Guide Page (UCI creator guide)
     guide: {
-      title: "Installer votre moteur sur PC",
-      subtitle: "Create your UCI engine and play against your clone in Fritz, ChessBase or Arena.",
+      title: "Install your engine in Fritz 20",
+      subtitle:
+        "Create a personal UCI engine pack, install it, and play a test game against your clone in Fritz 20.",
       download: "Download",
       ctaGeneratePack: "Generate my engine pack",
-      banner: {
-        title: "✨ 100% automatic install — no Python required",
-        text: "AvatarEngine.exe is shipped pre-compiled inside the ZIP pack. The script even auto-downloads Stockfish if you don't have it. No dependencies, no admin rights, just a double-click."
+      modes: {
+        fritz: "Fritz 20",
+        pack: "Pack",
+        swap: "Swap",
+        help: "Help",
+        advanced: "Advanced",
+        fritzHint:
+          "End-to-end path: pack ZIP → ChessAvatarSetup.exe → Fritz test game.",
+        packHint: "What the ZIP contains and how to download it from Build.",
+        swapHint: "Install a second pack, or replace the profile JSON in the Engines folder.",
+        helpHint: "SmartScreen, Stockfish download, silent engine, Arena tip.",
+        advancedHint: "Legacy .bat scripts and individual files for developers.",
       },
-      step1: {
-        title: "Generate your engine pack",
-        description: "From Build (/analyze), analyze your profile then download your personalized pack.",
+      meta: {
+        title: "Checklist",
+        pathLabel: "Install folder",
+        pathValue: "Documents\\ChessBase\\Engines\\<YourName>_Avatar\\",
+        filesLabel: "Expected files",
+        files: [
+          "AvatarEngine.exe",
+          "AvatarEngine.bmp",
+          "stockfish.exe",
+          "Bot_<YourName>.profile.json",
+          "engine.ini",
+        ],
+        tipFritz:
+          "After Setup, start a game vs your engine and confirm it plays a move. The BMP logo appears when Fritz shows engine pictures.",
+        tipPack:
+          "The ZIP includes ChessAvatarSetup.exe — double-click it after extract. No .bat required.",
+        tipSwap:
+          "Easiest: download another Engine pack and run Setup again (new folder). Or replace the JSON and restart Fritz.",
+        tipHelp:
+          "If Fritz shows a silent engine, verify stockfish.exe and engine.ini sit next to AvatarEngine.exe.",
+        tipAdvanced:
+          "Legacy .bat downloads are optional. ChessAvatarSetup.exe is the supported path.",
+      },
+      banner: {
+        title: "One-click installer — no Python, no scripts",
+        text: "Double-click ChessAvatarSetup.exe in the ZIP. Windows may ask for UAC once (Stockfish download + ChessBase Engines folder). No CMD windows to leave open.",
+      },
+      fritz: {
+        title: "Test your UCI engine in Fritz 20",
+        intro:
+          "Four steps on Windows. The graphical installer copies files, registers the engine, and adds a Fritz logo when your avatar has a picture.",
+        steps: [
+          {
+            title: "Generate the pack",
+            body: "On Build (/analyze), analyze your Lichess or Chess.com username, then click Engine pack on the avatar card. Save ChessAvatar_<YourName>_Pack.zip.",
+          },
+          {
+            title: "Run ChessAvatarSetup.exe",
+            body: "Extract the ZIP, double-click ChessAvatarSetup.exe, click Install engine, accept UAC once. If SmartScreen appears: More info → Run anyway. Stockfish downloads automatically if needed (~30 MB).",
+          },
+          {
+            title: "Open Fritz 20",
+            body: "Use Open Fritz 20 in the installer, or start Fritz yourself. Your engine should already appear in the module list (registered under Engines.uci). Logo shows when Fritz displays engine pictures.",
+          },
+          {
+            title: "Play a test game",
+            body: "Start a game against that engine. Confirm the name, specialties (openings/style), and that it answers your move.",
+          },
+        ],
+        adminNote:
+          "UAC appears once when Setup needs elevation. You do not run .bat files or leave CMD windows open.",
+        smartScreenNote:
+          "Windows SmartScreen may warn on ChessAvatarSetup.exe from the ZIP. Choose More info → Run anyway.",
+      },
+      pack: {
+        title: "Engine pack contents",
+        description:
+          "From Build, download your personalized pack. Double-click ChessAvatarSetup.exe after extract.",
         steps: [
           "Go to Build and analyze your Lichess or Chess.com username",
-          "On your avatar card, click \"Engine pack\"",
-          "A ChessAvatar_<YourName>_Pack.zip file downloads to your Downloads folder"
+          "On your avatar card, click Engine pack",
+          "Extract ChessAvatar_<YourName>_Pack.zip anywhere",
+          "Double-click ChessAvatarSetup.exe → Install engine",
         ],
-        contents: "The pack contains: AvatarEngine.exe (pre-compiled engine), install_engine.bat (auto installer), swap_profile.bat (avatar swap tool), your JSON profile and a README."
-      },
-      step2: {
-        title: "Run the automatic installer",
-        description: "Extract the ZIP anywhere, then run install_engine.bat as administrator.",
-        steps: [
-          "Right-click the ZIP → \"Extract All...\" into a folder of your choice",
-          "Right-click install_engine.bat → \"Run as administrator\"",
-          "Accept the UAC prompt (needed to download Stockfish and write into Documents\\ChessBase)",
-          "The script auto-downloads Stockfish if needed (~30 MB)",
-          "Everything is copied to Documents\\ChessBase\\Engines\\<YourName>_Avatar\\"
-        ],
-        adminNote: "⚠️ IMPORTANT: The script must be launched as administrator. A plain double-click is not enough — right-click then \"Run as administrator\". Otherwise the automatic Stockfish download or the file copy may fail depending on your Windows setup.",
-        smartScreenNote: "⚠️ Windows may also show a SmartScreen warning on the downloaded .bat. Click \"More info\" then \"Run anyway\". The source code is readable inside the file."
-      },
-      step3: {
-        title: "Configure your chess software",
-        fritzTitle: "In Fritz 20 / ChessBase",
-        fritzSteps: [
-          "Open Fritz / ChessBase",
-          "Module tab → UCI Module → \"...\" button to browse",
-          "Select AvatarEngine.exe in Documents\\ChessBase\\Engines\\<YourName>_Avatar\\",
-          "Your bot appears with its custom name!"
-        ],
-        arenaTitle: "In Arena / Cutechess",
-        arenaSteps: [
-          "Engines menu → Install New Engine",
-          "Select AvatarEngine.exe in the folder above",
-          "Your bot appears in the list"
-        ]
+        contents:
+          "Includes ChessAvatarSetup.exe, AvatarEngine.exe, your JSON profile, avatar image when available, and a README.",
       },
       swap: {
-        title: "Switch avatars later (without reinstalling)",
-        description: "The engine reloads its profile every startup. You can hot-swap avatars:",
+        title: "Switch avatars later",
+        description:
+          "Recommended: download a new Engine pack and run Setup again (creates another Engines folder). Advanced hot-swap:",
         steps: [
-          "Download just the new JSON profile from the site (\"JSON only\" button on the avatar card)",
-          "Go to Documents\\ChessBase\\Engines\\<YourName>_Avatar\\",
-          "Double-click swap_profile.bat (administrator window)",
-          "Choose 1 to paste the full path (Shift + right-click the file → \"Copy as path\", then Ctrl+V) or 2 to browse with a file dialog — recommended when admin, because drag-and-drop into an elevated console is often blocked by Windows",
-          "Restart Fritz / Arena: your engine plays with the new profile"
-        ]
+          "Download the new JSON from the site (JSON only on the avatar card)",
+          "Open Documents\\ChessBase\\Engines\\<YourName>_Avatar\\",
+          "Replace Bot_*.profile.json (keep the same filename or update engine.ini Profile=)",
+          "Restart Fritz so the new profile loads",
+        ],
       },
-      troubleshooting: "Common Issues",
-      problems: {
-        windowsBlocking: "Windows blocks the .bat file (SmartScreen)",
-        windowsBlockingSolution: "Right-click → Properties → check \"Unblock\" → OK. Or \"More info\" → \"Run anyway\" in the SmartScreen dialog.",
-        stockfishDownload: "Stockfish couldn't be downloaded",
-        stockfishDownloadSolution: "Check your Internet connection, or manually download Stockfish from stockfishchess.org and place stockfish.exe in the ZIP folder before re-running install_engine.bat.",
-        engineNotWorking: "Engine not responding in Fritz",
-        engineNotWorkingSolution: "Check that stockfish.exe, the .json file and engine.ini are all inside Documents\\ChessBase\\Engines\\<YourName>_Avatar\\ next to AvatarEngine.exe."
+      help: {
+        title: "Common issues",
+        problems: [
+          {
+            title: "Windows blocks ChessAvatarSetup.exe (SmartScreen)",
+            body: "More info → Run anyway in SmartScreen, or right-click → Properties → Unblock → OK.",
+          },
+          {
+            title: "Stockfish could not download",
+            body: "Check your connection, or download Stockfish from stockfishchess.org and place stockfish.exe next to ChessAvatarSetup.exe, then run Install again.",
+          },
+          {
+            title: "Engine silent in Fritz",
+            body: "Confirm stockfish.exe, the .json profile, and engine.ini sit next to AvatarEngine.exe in the Engines folder.",
+          },
+        ],
+        arenaNote:
+          "Other GUIs: in Arena / Cutechess use Engines → Install New Engine and select the same AvatarEngine.exe.",
       },
       advanced: {
-        title: "Advanced downloads (developers)",
-        description: "To recompile AvatarEngine.exe yourself or customize the install script, individual files are available here:"
-      }
+        title: "Advanced / legacy downloads",
+        description:
+          "Optional files for developers or the old .bat flow. Preferred path: ChessAvatarSetup.exe inside the ZIP pack.",
+      },
     },
 
     learn: {
@@ -843,6 +892,20 @@ export const en = {
       },
       eco: "ECO",
       loadingCatalog: "Loading catalog (including cloud-published lessons)…",
+      errors: {
+        title: "Couldn’t refresh lessons",
+        offline: "You’re offline. Showing built-in lessons — connect to load cloud lessons.",
+        timeout: "The catalog took too long to respond. Showing built-in lessons.",
+        network: "Network problem. Showing built-in lessons for now.",
+        generic: "Couldn’t refresh cloud lessons. Showing the built-in catalog.",
+        retry: "Retry",
+        lessonLoadTitle: "Lesson unavailable",
+        lessonLoadOffline:
+          "You’re offline and this lesson couldn’t be loaded. Check your connection and try again.",
+        lessonLoadGeneric:
+          "This lesson couldn’t be loaded. Check your connection and try again.",
+        bannerDegraded: "Cloud lessons unavailable — showing built-in catalog.",
+      },
       admin: {
         hubLink: "Learn admin",
         title: "Admin — Learn",
@@ -1039,6 +1102,24 @@ export const en = {
         black: "Black",
         badge: "Personality",
       },
+      modeOnline: "Online PvP",
+      modeOnlineCta: "Open lobby",
+      railPersonalitiesHint:
+        "Named opponents with opening bias and style — pick one and tweak the sliders.",
+      railLibraryHint:
+        "Public avatars synced from Lichess and Chess.com. Search, filter, then play.",
+      railOnlineHint:
+        "Create or join a live game against a friend. Clocks, chat, and rematch included.",
+      metaTitle: "Tips",
+      metaTipPersonalities:
+        "Personalities are local — no network needed. Style sliders only affect this game.",
+      metaTipLibrary:
+        "The catalog needs a connection. If it fails, use Retry or switch to Personalities.",
+      metaTipOnline:
+        "Online play uses your account. Share the invite link so a friend can join as Black.",
+      metaTipGame:
+        "Use the toolbar to switch color or change opponent. Bot profile controls are below the board.",
+      retryOpponent: "Choose another opponent",
     },
 
     playOnline: {
@@ -1101,6 +1182,8 @@ export const en = {
       saveFailed: "Save failed.",
       opponentName: "Online opponent",
       gameNotFound: "Game not found or access denied.",
+      loadingGame: "Loading game…",
+      retryGame: "Retry",
       backLobby: "Back to online mode",
       newLobby: "New game",
       statusWaiting: "Waiting",
@@ -1342,6 +1425,11 @@ export const en = {
       profiles: "profiles",
       noProfiles: "No profiles found",
       noPublicProfiles: "No public profiles available",
+      loadError: "Could not load the avatar library.",
+      offlineError: "You’re offline. Connect to load the library.",
+      timeoutError: "The library took too long to load. Try again.",
+      networkError: "Network problem. Check your connection and try again.",
+      retry: "Retry",
       playAgainst: "Play",
       viewDetails: "Details",
       exportJson: "Export",
@@ -1566,6 +1654,9 @@ export const en = {
       dailyLoading: "Loading daily puzzle…",
       dailyError: "Could not load the daily puzzle. Try again later.",
       retry: "Retry",
+      offlineError: "You’re offline. Connect to load this puzzle.",
+      timeoutError: "The puzzle took too long to load. Try again.",
+      networkError: "Network problem. Check your connection and try again.",
       randomTitle: "Random puzzle",
       randomDesc: "A random puzzle from the Lichess database.",
       newRandom: "New puzzle",
@@ -2639,7 +2730,7 @@ export const en = {
         profile: "Account settings and subscription",
         avatars: "Your saved bot library",
         games: "Cloud archive, stats, and reviews",
-        guide: "Install your engine on desktop",
+        guide: "Install your UCI engine in Fritz 20",
       },
       dock: {
         pin: { fr: "Épingler le dock", en: "Pin dock" },

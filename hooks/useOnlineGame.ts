@@ -28,6 +28,7 @@ import {
   pvpTakebackOfferResolved,
 } from "@/lib/pvp-takeback";
 import { canUserCancelWaitingPvpGame } from "@/lib/pvp-game-cancel";
+import { withTimeout } from "@/lib/fetch-errors";
 import { track } from "@/lib/track";
 import { enqueuePendingPvpMove, replayPendingPvpMoves } from "@/lib/pvp-offline-moves";
 import { useChessboardSettings } from "@/contexts/ChessboardSettingsContext";
@@ -178,7 +179,11 @@ export function useOnlineGame(gameId: string | null, userId: string | null) {
       headers.set("Content-Type", "application/json");
     }
     const requestStartedAtMs = Date.now();
-    const res = await fetch(path, { ...init, headers });
+    const res = await withTimeout(
+      fetch(path, { ...init, headers }),
+      15_000,
+      "PvP request timed out"
+    );
     const responseReceivedAtMs = Date.now();
     const json: unknown = await res.json().catch(() => ({}));
     if (!res.ok) {

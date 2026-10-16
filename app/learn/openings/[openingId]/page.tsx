@@ -7,6 +7,7 @@ import { ArrowLeft, Shield } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import BrandLoadingScreen from "@/components/BrandLoadingScreen";
+import FetchErrorState from "@/components/FetchErrorState";
 import LessonChessboard from "@/components/learn/LessonChessboard";
 import LearnModeRail, { type LearnMode } from "@/components/learn/LearnModeRail";
 import LearnMetaPanel from "@/components/learn/LearnMetaPanel";
@@ -21,13 +22,20 @@ export default function OpeningLessonPage() {
   const params = useParams();
   const openingId = params.openingId as string;
   const { lang, t } = useLanguage();
-  const { catalog, loading: catalogLoading } = useLearnCatalog();
+  const {
+    catalog,
+    loading: catalogLoading,
+    error: catalogError,
+    cloudDegraded,
+    refetch,
+  } = useLearnCatalog();
   const isRepertoireAuto = catalog.syntheticOpeningIds.has(openingId);
   const { isSuperUser, loading: superLoading } = useSuperUser();
   const lesson = useMemo(
     () => catalog.lessons.find((l) => l.openingId === openingId),
     [catalog.lessons, openingId]
   );
+  const errCopy = t.learn.errors;
 
   const { opening, title } = useMemo(() => {
     if (!lesson) return { opening: undefined, title: "" };
@@ -135,12 +143,31 @@ export default function OpeningLessonPage() {
   }
 
   if (!lesson || !opening) {
+    const loadFailed = cloudDegraded && !!catalogError;
     return (
       <main className="min-h-screen theme-gradient theme-text-primary p-8 flex flex-col items-center justify-center gap-4">
-        <p className="text-slate-400">{d.notFound}</p>
-        <Button asChild variant="outline">
-          <Link href="/learn">{d.backToHub}</Link>
-        </Button>
+        {loadFailed ? (
+          <FetchErrorState
+            offline={catalogError.kind === "offline"}
+            title={errCopy.lessonLoadTitle}
+            message={
+              catalogError.kind === "offline"
+                ? errCopy.lessonLoadOffline
+                : errCopy.lessonLoadGeneric
+            }
+            retryLabel={errCopy.retry}
+            onRetry={() => void refetch()}
+            secondaryHref="/learn"
+            secondaryLabel={d.backToHub}
+          />
+        ) : (
+          <>
+            <p className="text-slate-400">{d.notFound}</p>
+            <Button asChild variant="outline">
+              <Link href="/learn">{d.backToHub}</Link>
+            </Button>
+          </>
+        )}
       </main>
     );
   }

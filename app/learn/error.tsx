@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect } from "react";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import FetchErrorState from "@/components/FetchErrorState";
+import { useLanguage } from "@/lib/language-context";
 
 export default function LearnError({
   error,
@@ -11,24 +11,23 @@ export default function LearnError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const { t } = useLanguage();
+  const errCopy = t.learn.errors;
+
   useEffect(() => {
     console.error("Learn page error:", error);
   }, [error]);
 
   return (
-    <main className="min-h-screen theme-gradient theme-text-primary p-8 flex flex-col items-center justify-center gap-4 text-center">
-      <h1 className="text-xl font-semibold text-cyan-300">Ouvertures indisponibles</h1>
-      <p className="text-slate-400 text-sm max-w-md">
-        Le catalogue n&apos;a pas pu s&apos;afficher. Réessaie, ou reviens à l&apos;accueil.
-      </p>
-      <div className="flex gap-3">
-        <Button type="button" onClick={() => reset()} className="bg-cyan-700 hover:bg-cyan-600">
-          Réessayer
-        </Button>
-        <Button asChild variant="outline">
-          <Link href="/">Accueil</Link>
-        </Button>
-      </div>
+    <main className="min-h-screen theme-gradient theme-text-primary p-8 flex flex-col items-center justify-center">
+      <FetchErrorState
+        title={errCopy.title}
+        message={errCopy.generic}
+        retryLabel={errCopy.retry}
+        onRetry={() => reset()}
+        secondaryHref="/"
+        secondaryLabel={t.backToHome}
+      />
     </main>
   );
 }

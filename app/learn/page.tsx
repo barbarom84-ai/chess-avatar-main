@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import BrandLoadingScreen from "@/components/BrandLoadingScreen";
+import FetchErrorState from "@/components/FetchErrorState";
 import OpeningLevelBadge from "@/components/learn/OpeningLevelBadge";
 import { useLanguage } from "@/lib/language-context";
 import { pickLocalized } from "@/lib/opening-lessons";
@@ -15,6 +16,7 @@ import { useLearnCatalog } from "@/hooks/useLearnCatalog";
 import { useSuperUser } from "@/hooks/useSuperUser";
 import { getAggregatedOpenings } from "@/lib/openings-registry";
 import { getOpeningName, type Opening } from "@/lib/openings-library";
+import { fetchErrorCopy } from "@/lib/fetch-errors";
 
 type ColorFilter = "all" | "white" | "black" | "both";
 type LevelFilter = "all" | "1" | "2" | "3" | "4" | "5";
@@ -32,8 +34,15 @@ function dedupeOpeningsByFirstId(openings: Opening[]): Opening[] {
 
 export default function LearnHubPage() {
   const { lang, t } = useLanguage();
-  const { catalog, loading: catalogLoading } = useLearnCatalog();
+  const {
+    catalog,
+    loading: catalogLoading,
+    error: catalogError,
+    cloudDegraded,
+    refetch,
+  } = useLearnCatalog();
   const { isSuperUser, loading: superLoading } = useSuperUser();
+  const errCopy = t.learn.errors;
   const [search, setSearch] = useState("");
   const [catalogSearch, setCatalogSearch] = useState("");
   const [color, setColor] = useState<ColorFilter>("all");
@@ -149,6 +158,24 @@ export default function LearnHubPage() {
             </Button>
           )}
         </header>
+
+        {cloudDegraded && catalogError && (
+          <div className="rounded-xl border border-amber-700/40 bg-amber-950/25 px-3 py-2">
+            <FetchErrorState
+              compact
+              offline={catalogError.kind === "offline"}
+              title={errCopy.title}
+              message={fetchErrorCopy(catalogError.kind, {
+                offline: errCopy.offline,
+                timeout: errCopy.timeout,
+                network: errCopy.network,
+                generic: errCopy.generic,
+              })}
+              retryLabel={errCopy.retry}
+              onRetry={() => void refetch()}
+            />
+          </div>
+        )}
 
         <Tabs defaultValue="lessons" className="gap-4">
           <TabsList className="w-full sm:w-auto flex-wrap h-auto justify-start gap-1 p-1 bg-slate-950/80 border border-slate-800">
