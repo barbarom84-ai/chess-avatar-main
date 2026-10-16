@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Layers } from "lucide-react";
 import AvatarTradingCard from "@/components/AvatarTradingCard";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,8 @@ import {
 import { getAvatarCardLabels } from "@/lib/avatar-card-labels";
 
 export const PLAYOFF_DRAG_KEY = "application/x-chess-avatar-playoff";
+
+const ROSTER_PAGE = 24;
 
 function buildCardModelFromOption(
   option: ProfileOption,
@@ -59,14 +61,23 @@ export default function ArenaPlayoffRosterDeck({
 }: ArenaPlayoffRosterDeckProps) {
   const { t, lang } = useLanguage();
   const labels = useMemo(() => getAvatarCardLabels(t), [t]);
+  const [pageState, setPageState] = useState({ filter: rosterFilter, limit: ROSTER_PAGE });
+  const limit = pageState.filter === rosterFilter ? pageState.limit : ROSTER_PAGE;
 
-  const rosterVisible = useMemo(() => {
+  const models = useMemo(
+    () => new Map(pool.map((o) => [o.key, buildCardModelFromOption(o, labels, lang)])),
+    [pool, labels, lang]
+  );
+
+  const rosterMatches = useMemo(() => {
     const q = rosterFilter.trim().toLowerCase();
     if (!q) return pool;
     return pool.filter((o) =>
       (o.config.name || o.label).toLowerCase().includes(q)
     );
   }, [pool, rosterFilter]);
+  const rosterVisible = rosterMatches.slice(0, limit);
+  const hiddenCount = rosterMatches.length - rosterVisible.length;
 
   return (
     <div className="rounded-lg border border-amber-500/25 bg-slate-900/70 overflow-hidden">
@@ -78,7 +89,7 @@ export default function ArenaPlayoffRosterDeck({
           </span>
         </div>
         <span className="text-[10px] text-slate-500 shrink-0 tabular-nums">
-          {rosterVisible.length}
+          {rosterMatches.length}
         </span>
       </div>
 
@@ -102,7 +113,7 @@ export default function ArenaPlayoffRosterDeck({
             const picked = tapPickKey === opt.key;
             const placed = placedKeys.has(opt.key);
             const dragging = dragOptionKey === opt.key;
-            const model = buildCardModelFromOption(opt, labels, lang);
+            const model = models.get(opt.key) ?? buildCardModelFromOption(opt, labels, lang);
 
             return (
               <div
@@ -144,9 +155,24 @@ export default function ArenaPlayoffRosterDeck({
                           : ""
                   }`}
                 />
+                {opt.human && (
+                  <span className="arena-roster-human-tag" aria-hidden>
+                    {t.arenaPage.platformHumanShort}
+                  </span>
+                )}
               </div>
             );
           })
+        )}
+        {hiddenCount > 0 && (
+          <button
+            type="button"
+            className="arena-icon-btn col-span-full w-full"
+            onClick={() => setPageState({ filter: rosterFilter, limit: limit + ROSTER_PAGE })}
+            data-testid="playoff-roster-more"
+          >
+            {t.arenaPage.showMore.replace("{n}", String(hiddenCount))}
+          </button>
         )}
       </div>
 

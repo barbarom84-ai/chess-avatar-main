@@ -50,6 +50,54 @@ export function playClockLowTimeWarning(): void {
   }
 }
 
+function playTones(
+  type: OscillatorType,
+  tones: { freq: number; at: number; duration: number; volume: number }[]
+): void {
+  if (typeof window === "undefined") return;
+  try {
+    const Ctx =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!Ctx) return;
+    const ctx = new Ctx();
+    const t0 = ctx.currentTime;
+    let end = 0;
+    for (const tone of tones) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = type;
+      osc.frequency.value = tone.freq;
+      gain.gain.value = tone.volume;
+      osc.start(t0 + tone.at);
+      osc.stop(t0 + tone.at + tone.duration);
+      end = Math.max(end, tone.at + tone.duration);
+    }
+    window.setTimeout(() => void ctx.close(), Math.ceil(end * 1000) + 80);
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Coup donnant échec : deux notes montantes brèves. */
+export function playChessCheckSound(): void {
+  playTones("sine", [
+    { freq: 620, at: 0, duration: 0.05, volume: 0.04 },
+    { freq: 830, at: 0.06, duration: 0.06, volume: 0.04 },
+  ]);
+}
+
+/** Fin de partie : petit accord descendant. */
+export function playChessGameEndSound(): void {
+  playTones("triangle", [
+    { freq: 784, at: 0, duration: 0.12, volume: 0.05 },
+    { freq: 659, at: 0.13, duration: 0.12, volume: 0.05 },
+    { freq: 523, at: 0.26, duration: 0.22, volume: 0.05 },
+  ]);
+}
+
 /** Signal discret pour une demande adversaire (nulle / reprise). */
 export function playPvpRequestSound(): void {
   if (typeof window === "undefined") return;

@@ -8,7 +8,40 @@ import { isSupabaseConfigured, supabase } from "@/lib/supabase";
 import { personalityToArenaOption } from "@/lib/personality-to-engine";
 import { listPersonalityOpponents } from "@/lib/personality-opponents";
 
-export type ProfilePlatformFilter = "all" | "lichess" | "chesscom";
+export type ProfilePlatformFilter = "all" | "lichess" | "chesscom" | "human";
+
+const POOL_SOURCE_TTL_MS = 5 * 60_000;
+const poolSourceCache = new Map<string, { at: number; promise: Promise<ProfileOption[]> }>();
+
+/**
+ * Shares one in-flight request per source and keeps non-empty results for a few
+ * minutes (tab switches, remounts). Empty results are never kept: they usually
+ * mean a transient failure such as a 429.
+ */
+export function cachedPoolSource(
+  key: string,
+  load: () => Promise<ProfileOption[]>,
+  { force = false, now = Date.now() }: { force?: boolean; now?: number } = {}
+): Promise<ProfileOption[]> {
+  const hit = poolSourceCache.get(key);
+  if (!force && hit && now - hit.at < POOL_SOURCE_TTL_MS) return hit.promise;
+  const promise = load().then(
+    (rows) => {
+      if (!Array.isArray(rows) || rows.length === 0) poolSourceCache.delete(key);
+      return Array.isArray(rows) ? rows : [];
+    },
+    () => {
+      poolSourceCache.delete(key);
+      return [];
+    }
+  );
+  poolSourceCache.set(key, { at: now, promise });
+  return promise;
+}
+
+export function clearArenaPoolCache(): void {
+  poolSourceCache.clear();
+}
 
 export function profileIdentityKey(config: EngineConfig): string {
   const name = (config.name || "").trim().toLowerCase();
@@ -56,7 +89,8 @@ export async function fetchCloudArenaProfileOptions(
       platform: "all",
       dedupeByUsernamePlatform: true,
     });
-    return rows.map((p) => ({
+    if (!Array.isArray(rows)) return [];
+    return rows.filter((p) => p?.config).map((p) => ({
       key: `cloud:${p.id}`,
       label: `${p.username} (${cloudLabel})`,
       config: { ...p.config, platform: p.platform },
@@ -139,8 +173,11 @@ export async function fetchArenaChampionsFromDatabase(): Promise<
         stats: PersonaStats;
         savedAt: number;
       }[];
-    };
-    return (data.options ?? []).map(arenaOptionFromFeaturedApi);
+    } | null;
+    if (!data || !Array.isArray(data.options)) return [];
+    return data.options
+      .filter((o) => o?.key && o.config)
+      .map(arenaOptionFromFeaturedApi);
   } catch {
     return [];
   }
@@ -164,14 +201,19 @@ export async function loadArenaProfilePool(
     cloudLibrary: string;
     featuredChampions: string;
   },
-  lang: string = "en"
+  lang: string = "en",
+  { force = false }: { force?: boolean } = {}
 ): Promise<ProfileOption[]> {
   const [local, cloud, dbChampions] = await Promise.all([
     Promise.resolve(
       buildRawOptions(labels.savedProfiles, labels.recentProfiles)
     ),
-    fetchCloudArenaProfileOptions(labels.cloudLibrary),
-    fetchArenaChampionsFromDatabase(),
+    cachedPoolSource(
+      `cloud:${labels.cloudLibrary}`,
+      () => fetchCloudArenaProfileOptions(labels.cloudLibrary),
+      { force }
+    ),
+    cachedPoolSource("champions", fetchArenaChampionsFromDatabase, { force }),
   ]);
 
   const champions =
@@ -189,19 +231,36 @@ export function filterByPlatform(
   platform: ProfilePlatformFilter
 ): ProfileOption[] {
   if (platform === "all") return options;
+  if (platform === "human") return options.filter((o) => o.human);
+  // Lichess / Chess.com filters keep local humans so mixed matchups stay easy to pick.
   return options.filter(
-    (o) => normalizeEnginePlatform(o.config) === platform
+    (o) => o.human || normalizeEnginePlatform(o.config) === platform
   );
 }
 
+/** One option per avatar identity (most recent wins); human players come first, untouched. */
 export function dedupeByIdentity(options: ProfileOption[]): ProfileOption[] {
+  const humans = options.filter((o) => o.human);
   const map = new Map<string, ProfileOption>();
   for (const o of options) {
+    if (o.human) continue;
     const key = profileIdentityKey(o.config);
     const prev = map.get(key);
     if (!prev || o.savedAt >= prev.savedAt) map.set(key, o);
   }
-  return Array.from(map.values()).sort((a, b) => b.savedAt - a.savedAt);
+  return [...humans, ...Array.from(map.values()).sort((a, b) => b.savedAt - a.savedAt)];
+}
+
+/** Two distinct random option keys, or `null` when the pool is too small. */
+export function pickRandomPair(
+  options: ProfileOption[],
+  rng: () => number = Math.random
+): [string, string] | null {
+  if (options.length < 2) return null;
+  const i = Math.floor(rng() * options.length) % options.length;
+  let j = Math.floor(rng() * (options.length - 1)) % (options.length - 1);
+  if (j >= i) j += 1;
+  return [options[i].key, options[j].key];
 }
 
 export function filterBySearch(options: ProfileOption[], q: string): ProfileOption[] {

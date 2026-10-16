@@ -1,91 +1,144 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Chess } from "chess.js";
-import SimpleChessboard from "@/components/SimpleChessboard";
-import ArenaBotClockBar from "@/components/ArenaBotClockBar";
-import ArenaPlayoffBracket from "@/components/ArenaPlayoffBracket";
-import ArenaPlayoffRosterDeck from "@/components/ArenaPlayoffRosterDeck";
-import EvaluationBar from "@/components/EvaluationBar";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { useStockfish } from "@/hooks/useStockfish";
-import BotEngineSelector from "@/components/BotEngineSelector";
-import { usePremium } from "@/hooks/usePremium";
-import { useLanguage } from "@/lib/language-context";
-import {
-  playoffOutcomeForSave,
-  saveArenaMatchToCloud,
-} from "@/lib/arena-cloud-save";
-import { isSupabaseConfigured } from "@/lib/supabase";
-import { toast } from "sonner";
-import {
-  classifyArenaOutcome,
-  replayUci,
-  stmEvalToWhitePov,
-} from "@/lib/arena-chess";
-import { ARENA_MOVE_LIMIT_EVAL_DEPTH, classifyArenaCrushing, whitePovEvalOrNull } from "@/lib/arena-move-limit";
-import { prepareArenaEngineConfig } from "@/lib/arena-forced-opening";
-import {
-  getArenaThinkBudgetMs,
-  getCadenceDepthCap,
-  getSingleLegalMoveUci,
-  isArenaTheoreticalOpening,
-  sleepArenaThinkRemainder,
-} from "@/lib/arena-move-timing";
-import {
-  cadenceFromPreset,
-  resolveArenaTimePreset,
-} from "@/lib/arena-time-controls";
-import type { PlayoffBracketSize } from "@/lib/arena-playoff-bracket";
-import {
-  createPlayoffBracket,
-  getNextReadyMatch,
-  getOptionByKey,
-  recordMatchResult,
-  resolveMatchSideKeys,
-  setSeed,
-} from "@/lib/arena-playoff-bracket";
-import type { PlayoffBracketState } from "@/lib/arena-playoff-bracket";
-import {
-  commitPlayoffClockTurn,
-  createPlayoffClock,
-  getPlayoffClockDisplay,
-  switchPlayoffClockTurn,
-  tickPlayoffClock,
-} from "@/lib/arena-playoff-clock";
-import type { PlayoffClockState } from "@/lib/arena-playoff-clock";
-import {
-  dedupeByIdentity,
-  filterByPlatform,
-  loadArenaProfilePool,
-  type ProfilePlatformFilter,
-} from "@/lib/arena-profile-pool";
 import {
   ChevronDown,
   ChevronUp,
+  ImageDown,
   Loader2,
-  Play,
   Pause,
+  Play,
   RotateCcw,
+  Shuffle,
   Swords,
+  Trophy,
 } from "lucide-react";
+import { toast } from "sonner";
+import ArenaPlayoffBracket from "@/components/ArenaPlayoffBracket";
+import ArenaPlayoffRosterDeck from "@/components/ArenaPlayoffRosterDeck";
+import ArenaBoardPanel, { type ArenaStatusTone } from "@/components/arena/ArenaBoardPanel";
+import BotEngineSelector from "@/components/BotEngineSelector";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { useArenaMatch } from "@/hooks/useArenaMatch";
+import type { ArenaEngine } from "@/hooks/useArenaEngine";
+import { arenaEntrant } from "@/hooks/useArenaRatings";
+import { recordArenaRatedGame } from "@/lib/arena-rating";
+import type { ArenaProfilePool } from "@/hooks/useArenaProfilePool";
+import { useArenaShortcuts } from "@/hooks/useArenaShortcuts";
+import { usePremium } from "@/hooks/usePremium";
+import { arenaResignOutcome } from "@/lib/arena-chess";
+import { playoffOutcomeForSave, saveArenaMatchToCloud } from "@/lib/arena-cloud-save";
+import { getCadenceDepthCap, type ArenaSpeed } from "@/lib/arena-move-timing";
+import { pgnTimeControl } from "@/lib/arena-pgn";
+import { shareElementAsImage } from "@/lib/share-image";
+import {
+  PLAYOFF_SERIES_MAX_GAMES,
+  bracketFromSeedKeys,
+  createPlayoffBracket,
+  getNextReadyMatch,
+  getOptionByKey,
+  parseStoredBracket,
+  recordMatchResult,
+  resolveMatchSideKeys,
+  roundLabel,
+  runPlayoffSeries,
+  seedKeysByElo,
+  seedKeysRandom,
+  serializeBracket,
+  setSeed,
+  type PlayoffBracketSize,
+  type PlayoffBracketState,
+  type PlayoffGameWinner,
+  type PlayoffMatch,
+  type PlayoffSeriesGame,
+  type PlayoffSeriesResult,
+} from "@/lib/arena-playoff-bracket";
+import {
+  createLeague,
+  currentLeagueRound,
+  hasLeagueResults,
+  isLeagueFinished,
+  leagueGameCount,
+  leagueWinner,
+  nextLeagueGame,
+  parseStoredLeague,
+  recordLeagueGame,
+  type ArenaLeagueFormat,
+  type ArenaLeagueState,
+} from "@/lib/arena-league";
+import {
+  dedupeByIdentity,
+  filterByPlatform,
+  type ProfilePlatformFilter,
+} from "@/lib/arena-profile-pool";
+import ArenaLeagueTable from "@/components/arena/ArenaLeagueTable";
+import { seedCandidates } from "@/lib/arena-humans";
+import { ARENA_TOURNAMENT_STORAGE } from "@/lib/arena-tournament-storage";
+import { cadenceFromPreset, resolveArenaTimePreset } from "@/lib/arena-time-controls";
+import { useLanguage } from "@/lib/language-context";
+import { isSupabaseConfigured } from "@/lib/supabase";
 
 const PLAYOFF_DEPTH_CAP = 14;
 const PLAYOFF_MAX_PLIES = 200;
-const PLAYOFF_DRAW_REMATCH_LIMIT = 3;
+const BETWEEN_GAMES_PAUSE_MS = 900;
 const ARENA_PLAYOFF_SAVE_CLOUD = "chess-arena.playoff.saveCloud";
+const HUMANS_MIN_PLAYERS = 4;
+
+type PlayoffFormat = "knockout" | ArenaLeagueFormat;
+
+const PLAYOFF_FORMATS: readonly PlayoffFormat[] = ["knockout", "roundrobin", "swiss"];
+
+/** Round-robin above 8 players or a 4-player Swiss make little sense. */
+const FORMAT_SIZES: Record<PlayoffFormat, readonly PlayoffBracketSize[]> = {
+  knockout: [4, 8, 16],
+  roundrobin: [4, 8],
+  swiss: [8, 16],
+};
+
+function isPlayoffFormat(value: unknown): value is PlayoffFormat {
+  return PLAYOFF_FORMATS.includes(value as PlayoffFormat);
+}
+
+function leagueResult(winner: PlayoffGameWinner): "1-0" | "0-1" | "1/2-1/2" {
+  return winner === "white" ? "1-0" : winner === "black" ? "0-1" : "1/2-1/2";
+}
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+function writeStorage(key: string, value: string) {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    /* ignore */
+  }
+}
+
+type EngineRecoveryChoice = "retry" | "forfeit" | "abort";
 
 export default function ArenaPlayoffMode({
+  pool,
+  engine,
   forcedOpeningId = null,
   timePresetId,
+  speed,
+  onBusyChange,
+  humansOnly = false,
 }: {
+  pool: ArenaProfilePool;
+  engine: ArenaEngine;
   forcedOpeningId?: string | null;
   timePresetId: string;
+  speed: ArenaSpeed;
+  onBusyChange?: (busy: boolean) => void;
+  /** Tournament between local human players only (separate saved tournament). */
+  humansOnly?: boolean;
 }) {
+  const storage = ARENA_TOURNAMENT_STORAGE[humansOnly ? "humans" : "avatars"];
   const { t, lang } = useLanguage();
+  const ap = t.arenaPage;
+  const tp = t.arenaPlayoff;
   const { userId } = usePremium();
   const {
     isReady,
@@ -98,645 +151,900 @@ export default function ArenaPlayoffMode({
     getBestMove,
     stopThinking,
     getPositionEvaluation,
-  } = useStockfish();
+  } = engine;
+  const { view, run, pause, reset, submitHumanMove, resignHuman, offerDrawHuman } = useArenaMatch({
+    getBestMove,
+    getPositionEvaluation,
+    stopThinking,
+  });
 
-  const [rawOptions, setRawOptions] = useState<
-    import("@/lib/arena-types").ProfileOption[]
-  >([]);
-  const [listLoading, setListLoading] = useState(true);
-  const [platformFilter] = useState<ProfilePlatformFilter>("all");
-  const [bracketSize, setBracketSize] = useState<PlayoffBracketSize>(8);
-  const [bracket, setBracket] = useState<PlayoffBracketState>(() =>
-    createPlayoffBracket(8)
-  );
+  const [platformFilter, setPlatformFilter] = useState<ProfilePlatformFilter>("all");
+  const [bracket, setBracket] = useState<PlayoffBracketState>(() => createPlayoffBracket(8));
   const [activeMatchId, setActiveMatchId] = useState<string | null>(null);
+  const [liveMatchId, setLiveMatchId] = useState<string | null>(null);
+  const [tournamentRunning, setTournamentRunning] = useState(false);
+  const [series, setSeries] = useState<PlayoffSeriesGame | null>(null);
+  const [statusNote, setStatusNote] = useState<string | null>(null);
+  const [lastResult, setLastResult] = useState<string | null>(null);
   const [dragOptionKey, setDragOptionKey] = useState<string | null>(null);
   const [tapPickKey, setTapPickKey] = useState<string | null>(null);
   const [rosterFilter, setRosterFilter] = useState("");
-  const [setupOpen, setSetupOpen] = useState(true);
-  const [fen, setFen] = useState(() => new Chess().fen());
-  const [lastMove, setLastMove] = useState<{ from: string; to: string } | null>(
-    null
-  );
-  const [moveCount, setMoveCount] = useState(0);
-  const [statusNote, setStatusNote] = useState<string | null>(null);
-  const [clock, setClock] = useState<PlayoffClockState | null>(null);
-  const [matchRunning, setMatchRunning] = useState(false);
-  const [tournamentRunning, setTournamentRunning] = useState(false);
-  const [barEval, setBarEval] = useState<number | null>(null);
+  const [bracketOpen, setBracketOpen] = useState(true);
   const [saveCloudGames, setSaveCloudGames] = useState(false);
+  const [orientation, setOrientation] = useState<"white" | "black">("white");
+  const [restored, setRestored] = useState(false);
+  const [format, setFormat] = useState<PlayoffFormat>("knockout");
+  const [league, setLeague] = useState<ArenaLeagueState | null>(null);
+  const [engineRecovery, setEngineRecovery] = useState(false);
+  const [progressLabel, setProgressLabel] = useState<string | null>(null);
+  const stopRef = useRef(false);
+  const recoveryRef = useRef<{ resolve: (c: EngineRecoveryChoice) => void } | null>(null);
+  const isLeague = format !== "knockout";
 
-  const timePreset = useMemo(
-    () => resolveArenaTimePreset(timePresetId),
-    [timePresetId]
-  );
+  const timePreset = useMemo(() => resolveArenaTimePreset(timePresetId), [timePresetId]);
   const cadence = useMemo(() => cadenceFromPreset(timePreset), [timePreset]);
-  const playoffDepthCap = useMemo(
-    () => getCadenceDepthCap(cadence, PLAYOFF_DEPTH_CAP),
-    [cadence]
-  );
+  const depthCap = useMemo(() => getCadenceDepthCap(cadence, PLAYOFF_DEPTH_CAP), [cadence]);
   const presetLabels = t.playOnline.presets as Record<string, string>;
   const timeControlLabel = presetLabels[timePreset.id] ?? timePreset.id;
 
-  const historyRef = useRef<string[]>([]);
-  const runningRef = useRef(false);
-  const evalSeqRef = useRef(0);
-
-  const loadOptions = useCallback(async () => {
-    setListLoading(true);
-    try {
-      const merged = await loadArenaProfilePool({
-        savedProfiles: t.arenaPage.savedProfiles,
-        recentProfiles: t.arenaPage.recentProfiles,
-        cloudLibrary: t.arenaPage.cloudLibrary,
-        featuredChampions: t.arenaPage.featuredChampions,
-      }, lang);
-      setRawOptions(merged);
-    } finally {
-      setListLoading(false);
-    }
-  }, [
-    t.arenaPage.savedProfiles,
-    t.arenaPage.recentProfiles,
-    t.arenaPage.cloudLibrary,
-    t.arenaPage.featuredChampions,
-    lang,
-  ]);
-
-  useEffect(() => {
-    void loadOptions();
-  }, [loadOptions]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      const sc = localStorage.getItem(ARENA_PLAYOFF_SAVE_CLOUD);
-      if (sc === "1") setSaveCloudGames(true);
-    } catch {
-      /* ignore */
-    }
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      localStorage.setItem(
-        ARENA_PLAYOFF_SAVE_CLOUD,
-        saveCloudGames ? "1" : "0"
-      );
-    } catch {
-      /* ignore */
-    }
-  }, [saveCloudGames]);
-
-  const poolOptions = useMemo(() => {
-    let rows = filterByPlatform(rawOptions, platformFilter);
-    rows = dedupeByIdentity(rows);
-    return rows;
-  }, [rawOptions, platformFilter]);
-
-  useEffect(() => {
-    setBracket(createPlayoffBracket(bracketSize));
-    setActiveMatchId(null);
-    runningRef.current = false;
-    setMatchRunning(false);
-    setTournamentRunning(false);
-    historyRef.current = [];
-    setMoveCount(0);
-    setLastMove(null);
-    setFen(new Chess().fen());
-    setStatusNote(null);
-    setClock(null);
-  }, [bracketSize]);
-
-  const resetBoard = useCallback(() => {
-    runningRef.current = false;
-    setMatchRunning(false);
-    stopThinking();
-    historyRef.current = [];
-    setMoveCount(0);
-    setLastMove(null);
-    setFen(new Chess().fen());
-    setStatusNote(null);
-    setClock(null);
-  }, [stopThinking]);
-
-  useEffect(() => {
-    if (!isReady || matchRunning) return;
-    const seq = ++evalSeqRef.current;
-    let cancelled = false;
-    void (async () => {
-      try {
-        const raw = await getPositionEvaluation(fen, playoffDepthCap);
-        if (cancelled || seq !== evalSeqRef.current) return;
-        setBarEval(stmEvalToWhitePov(fen, raw));
-      } catch {
-        if (!cancelled && seq === evalSeqRef.current) setBarEval(null);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [fen, isReady, getPositionEvaluation, clock, matchRunning, playoffDepthCap]);
-
-  const activeMatch = useMemo(
-    () => bracket.matches.find((m) => m.id === activeMatchId) ?? null,
-    [bracket, activeMatchId]
+  const allOptions = useMemo(() => dedupeByIdentity(pool.options), [pool.options]);
+  const rosterOptions = useMemo(
+    () => (humansOnly ? allOptions : filterByPlatform(allOptions, platformFilter)),
+    [allOptions, platformFilter, humansOnly]
   );
 
-  const activeSides = useMemo(() => {
-    if (!activeMatch) return { white: undefined, black: undefined };
-    const { keyA, keyB } = resolveMatchSideKeys(activeMatch, bracket);
-    return {
-      white: getOptionByKey(poolOptions, keyA),
-      black: getOptionByKey(poolOptions, keyB),
-    };
-  }, [activeMatch, bracket, poolOptions]);
+  useEffect(() => {
+    try {
+      if (localStorage.getItem(ARENA_PLAYOFF_SAVE_CLOUD) === "1") setSaveCloudGames(true);
+      const storedFormat = localStorage.getItem(storage.format);
+      if (isPlayoffFormat(storedFormat)) setFormat(storedFormat);
+    } catch {
+      /* ignore */
+    }
+  }, [storage]);
+
+  // Restore the last bracket once the pool is known (unknown players invalidate it).
+  useEffect(() => {
+    if (restored || pool.loading || allOptions.length === 0) return;
+    let raw: string | null = null;
+    let rawLeague: string | null = null;
+    try {
+      raw = localStorage.getItem(storage.bracket);
+      rawLeague = localStorage.getItem(storage.league);
+    } catch {
+      /* ignore */
+    }
+    const validKeys = new Set(allOptions.map((o) => o.key));
+    const stored = parseStoredBracket(raw, validKeys);
+    if (stored) setBracket(stored);
+    const storedLeague = parseStoredLeague(rawLeague, validKeys);
+    if (storedLeague) {
+      setLeague(storedLeague);
+      setFormat(storedLeague.format);
+    }
+    setRestored(true);
+  }, [restored, pool.loading, allOptions, storage]);
+
+  useEffect(() => {
+    if (!restored) return;
+    writeStorage(storage.bracket, serializeBracket(bracket));
+  }, [restored, bracket, storage]);
+
+  useEffect(() => {
+    if (!restored) return;
+    writeStorage(storage.format, format);
+    try {
+      if (league) localStorage.setItem(storage.league, JSON.stringify(league));
+      else localStorage.removeItem(storage.league);
+    } catch {
+      /* ignore */
+    }
+  }, [restored, format, league, storage]);
+
+  useEffect(() => {
+    writeStorage(ARENA_PLAYOFF_SAVE_CLOUD, saveCloudGames ? "1" : "0");
+  }, [saveCloudGames]);
+
+  const busy = tournamentRunning || liveMatchId != null;
+  useEffect(() => {
+    onBusyChange?.(busy);
+  }, [busy, onBusyChange]);
 
   const filledSeeds = bracket.seeds.filter(Boolean).length;
-  const rosterComplete = filledSeeds >= bracketSize;
-  const showBoard =
-    rosterComplete && (matchRunning || tournamentRunning);
+  const rosterComplete = filledSeeds >= bracket.size;
+  const anyDone = isLeague
+    ? hasLeagueResults(league)
+    : bracket.matches.some((m) => m.status === "done");
+  const seedsLocked = busy || anyDone;
+  const nextReady = getNextReadyMatch(bracket);
+  const canContinue = isLeague ? !(league && isLeagueFinished(league)) : nextReady != null;
+  const canRun = rosterComplete && !busy && canContinue && isReady;
+  const showBoard = busy || anyDone || view.history.length > 0;
   const placedKeys = useMemo(
     () => new Set(bracket.seeds.filter(Boolean) as string[]),
     [bracket.seeds]
   );
-  const canStartTournament =
-    filledSeeds >= bracketSize && !tournamentRunning && !matchRunning;
+  const activeMatch = bracket.matches.find((m) => m.id === activeMatchId) ?? null;
+  const roundLabels = {
+    final: tp.roundFinal,
+    semi: tp.roundSemi,
+    quarter: tp.roundQuarter,
+    round16: tp.roundOf16,
+  };
 
-  const handleTapPickKey = useCallback((key: string) => {
-    setTapPickKey((prev) => (prev === key ? null : key));
-  }, []);
+  const changeSize = (size: PlayoffBracketSize) => {
+    if (size === bracket.size) return;
+    setBracket(createPlayoffBracket(size));
+    setLeague(null);
+    setActiveMatchId(null);
+    setLastResult(null);
+    reset();
+  };
+
+  const changeFormat = (next: PlayoffFormat) => {
+    if (next === format) return;
+    setFormat(next);
+    setLeague(null);
+    setActiveMatchId(null);
+    setLastResult(null);
+    setSeries(null);
+    reset();
+    const sizes = FORMAT_SIZES[next];
+    if (!sizes.includes(bracket.size)) {
+      setBracket(createPlayoffBracket(sizes.includes(8) ? 8 : sizes[0]));
+    } else if (bracket.matches.some((m) => m.status === "done")) {
+      // Keep the players but drop knockout results.
+      setBracket(bracketFromSeedKeys(bracket.size, bracket.seeds.filter(Boolean) as string[]));
+    }
+  };
+
+  const autoSeed = (order: "elo" | "random") => {
+    const candidates = seedCandidates(rosterOptions, placedKeys, bracket.size, order, humansOnly);
+    seedWith(
+      order === "elo"
+        ? seedKeysByElo(candidates, bracket.size)
+        : seedKeysRandom(candidates, bracket.size)
+    );
+  };
+
+  const seedWith = (keys: string[] | null) => {
+    if (!keys) {
+      toast.error(
+        (humansOnly ? tp.notEnoughHumans : tp.notEnoughProfiles).replace("{n}", String(bracket.size))
+      );
+      return;
+    }
+    setBracket(bracketFromSeedKeys(bracket.size, keys));
+    setLeague(null);
+    setTapPickKey(null);
+  };
+
+  const newTournament = () => {
+    setBracket(createPlayoffBracket(bracket.size));
+    setLeague(null);
+    setActiveMatchId(null);
+    setLastResult(null);
+    setStatusNote(null);
+    setSeries(null);
+    reset();
+  };
 
   const handleDropSeed = useCallback((slot: number, key: string | null) => {
     setBracket((prev) => setSeed(prev, slot, key));
+    setLeague(null);
     setTapPickKey(null);
   }, []);
 
-  const handleAutoSeed = useCallback(() => {
-    const keys = poolOptions.slice(0, bracketSize).map((o) => o.key);
-    let next = createPlayoffBracket(bracketSize);
-    keys.forEach((k, i) => {
-      next = setSeed(next, i, k);
+  const askEngineRecovery = useCallback((): Promise<EngineRecoveryChoice> => {
+    return new Promise((resolve) => {
+      recoveryRef.current?.resolve("abort");
+      recoveryRef.current = { resolve };
+      setEngineRecovery(true);
+      setStatusNote(tp.engineRecoveryHint);
+      toast.error(ap.engineError);
     });
-    setBracket(next);
-  }, [poolOptions, bracketSize]);
+  }, [tp.engineRecoveryHint, ap.engineError]);
 
-  const runSingleMatch = useCallback(
-    async (
-      matchId: string,
-      whiteOpt: NonNullable<typeof activeSides.white>,
-      blackOpt: NonNullable<typeof activeSides.black>
-    ): Promise<{ winnerKey: string | null; note: string }> => {
-      const whiteConfig = whiteOpt.config;
-      const blackConfig = blackOpt.config;
-      const whiteKey = whiteOpt.key;
-      const blackKey = blackOpt.key;
+  const resolveEngineRecovery = useCallback((choice: EngineRecoveryChoice) => {
+    recoveryRef.current?.resolve(choice);
+    recoveryRef.current = null;
+    setEngineRecovery(false);
+  }, []);
 
-      historyRef.current = [];
-      let liveClock = createPlayoffClock(timePreset);
-      setClock(liveClock);
-      setFen(new Chess().fen());
-      setLastMove(null);
-      setMoveCount(0);
-      setStatusNote(t.arenaPlayoff.matchLive);
-      const matchStartedAt = Date.now();
-
-      const complete = async (
-        winnerKey: string | null,
-        note: string,
-        uciHist: string[],
-        maxMovesReached = false,
-        evalWhitePov: number | null = null,
-        shouldSave = winnerKey != null
-      ): Promise<{ winnerKey: string | null; note: string }> => {
-        setStatusNote(note);
-        if (shouldSave && saveCloudGames && userId && uciHist.length > 0) {
-          const game = replayUci(uciHist);
-          const base = classifyArenaOutcome(
-            game,
-            maxMovesReached,
-            lang,
-            undefined,
-            evalWhitePov
-          );
-          const outcome = playoffOutcomeForSave(
-            winnerKey,
-            whiteKey,
-            blackKey,
-            note,
-            base
-          );
-          const durationSeconds = Math.max(
-            0,
-            Math.round((Date.now() - matchStartedAt) / 1000)
-          );
-          try {
-            await saveArenaMatchToCloud({
-              whiteConfig,
-              blackConfig,
-              uciHist,
-              outcome,
-              durationSeconds,
-              event: "Chess Avatar Arena Playoff",
-              round: matchId,
-            });
-            toast.success(t.arenaPage.cloudSavedToast);
-          } catch (e) {
-            console.error(e);
-            toast.error(t.arenaPage.cloudSaveErrorToast);
-          }
-        }
-        return { winnerKey, note };
-      };
-
-      while (runningRef.current) {
-        const hist = historyRef.current;
-        const replay = replayUci(hist);
-        const stm = replay.turn();
-
-        const tick = tickPlayoffClock(liveClock, stm);
-        if (tick.kind === "timeout") {
-          liveClock = tick.clock;
-          setClock(liveClock);
-          const outcome = classifyArenaOutcome(
-            replay,
-            false,
-            lang,
-            tick.winner
-          );
-          const winnerKey =
-            tick.winner === "white" ? whiteKey : blackKey;
-          return complete(winnerKey, outcome.resultMessage, hist);
-        }
-        liveClock = tick.clock;
-        setClock(liveClock);
-
-        const clockView = getPlayoffClockDisplay(liveClock, stm);
-        const sideClockMs =
-          stm === "w" ? clockView.whiteMs : clockView.blackMs;
-
-        const base = stm === "w" ? whiteConfig : blackConfig;
-        const cfg = prepareArenaEngineConfig(base, {
-          depthCap: playoffDepthCap,
-          ply: hist.length,
-          game: replay,
-          forcedOpeningId,
-          cadence,
-          historyUci: hist,
-          sideClockMs,
-        });
-        const thinkBudgetMs = getArenaThinkBudgetMs(
-          isArenaTheoreticalOpening(cfg, hist.length, hist),
-          sideClockMs
-        );
-        const singleUci = getSingleLegalMoveUci(replay);
-        let uci: string | null;
-
-        if (singleUci) {
-          uci = singleUci;
-        } else {
-          const thinkStartedAt = Date.now();
-          uci = await new Promise<string | null>((resolve) => {
-            getBestMove(replay.fen(), cfg, (move) => resolve(move), {
-              moveHistoryUci: hist,
-              playerColor: stm === "w" ? "black" : "white",
-            });
-          });
-          await sleepArenaThinkRemainder(thinkStartedAt, thinkBudgetMs);
-        }
-
-        if (!runningRef.current) break;
-
-        if (!uci || uci.length < 4) {
-          return complete(
-            stm === "w" ? blackKey : whiteKey,
-            t.arenaPage.gameOver,
-            hist
-          );
-        }
-
-        liveClock = commitPlayoffClockTurn(liveClock, stm);
-        liveClock = switchPlayoffClockTurn(liveClock);
-        setClock(liveClock);
-
-        const from = uci.slice(0, 2);
-        const to = uci.slice(2, 4);
-        const promotion =
-          uci.length > 4 ? (uci[4] as "q" | "r" | "b" | "n") : undefined;
-        const next = replayUci(hist);
-        const ok = next.move(
-          promotion ? { from, to, promotion } : { from, to }
-        );
-        if (!ok) {
-          return complete(
-            stm === "w" ? blackKey : whiteKey,
-            t.arenaPage.gameOver,
-            hist
-          );
-        }
-
-        historyRef.current = [...hist, uci];
-        setFen(next.fen());
-        setLastMove({ from, to });
-        setMoveCount(historyRef.current.length);
-
-        if (next.isGameOver()) {
-          const outcome = classifyArenaOutcome(next, false, lang);
-          let winnerKey: string | null = null;
-          let note: string;
-          if (outcome.winner === "white") {
-            winnerKey = whiteKey;
-            note = outcome.resultMessage;
-          } else if (outcome.winner === "black") {
-            winnerKey = blackKey;
-            note = outcome.resultMessage;
-          } else {
-            winnerKey = null;
-            note = outcome.resultMessage;
-          }
-          return complete(
-            winnerKey,
-            note,
-            historyRef.current,
-            false,
-            null,
-            true
-          );
-        }
-
-        const evalWhitePov = await whitePovEvalOrNull(
-          next.fen(),
-          getPositionEvaluation,
-          stmEvalToWhitePov,
-          ARENA_MOVE_LIMIT_EVAL_DEPTH
-        );
-        setBarEval(evalWhitePov);
-
-        const crush = classifyArenaCrushing(lang, evalWhitePov);
-        if (crush) {
-          const winnerKey =
-            crush.winner === "white" ? whiteKey : blackKey;
-          return complete(
-            winnerKey,
-            crush.resultMessage,
-            historyRef.current,
-            false,
-            evalWhitePov,
-            true
-          );
-        }
-
-        if (historyRef.current.length >= PLAYOFF_MAX_PLIES) {
-          const outcome = classifyArenaOutcome(
-            next,
-            true,
-            lang,
-            undefined,
-            evalWhitePov
-          );
-          let winnerKey: string | null = null;
-          if (outcome.winner === "white") winnerKey = whiteKey;
-          else if (outcome.winner === "black") winnerKey = blackKey;
-          return complete(
-            winnerKey,
-            outcome.resultMessage,
-            historyRef.current,
-            true,
-            evalWhitePov,
-            true
-          );
-        }
+  const playSeriesGame = useCallback(
+    async (game: PlayoffSeriesGame, matchId: string) => {
+      if (game.index > 0) {
+        setStatusNote(game.armageddon ? tp.armageddonStart : tp.rematchSwap);
+        await sleep(BETWEEN_GAMES_PAUSE_MS);
+        if (stopRef.current) return null;
       }
+      const whiteOpt = getOptionByKey(allOptions, game.whiteKey);
+      const blackOpt = getOptionByKey(allOptions, game.blackKey);
+      if (!whiteOpt || !blackOpt) return null;
+      setSeries(game);
+      setStatusNote(null);
 
-      return complete(null, t.arenaPlayoff.matchPaused, historyRef.current);
+      const hasHuman = Boolean(whiteOpt.human || blackOpt.human);
+      for (;;) {
+        const startedAt = Date.now();
+        const res = await run(
+          {
+            white: whiteOpt.config,
+            black: blackOpt.config,
+            depthCap,
+            cadence,
+            forcedOpeningId,
+            speed,
+            maxPlies: PLAYOFF_MAX_PLIES,
+            lang,
+            humanSides: { w: Boolean(whiteOpt.human), b: Boolean(blackOpt.human) },
+          },
+          "auto",
+          { fresh: true, clockPreset: timePreset }
+        );
+        if (stopRef.current) return null;
+
+        if (res?.status === "finished" && res.outcome) {
+          const winner = res.outcome.winner;
+          recordArenaRatedGame(arenaEntrant(whiteOpt), arenaEntrant(blackOpt), winner);
+          const note =
+            game.armageddon && winner === "draw"
+              ? tp.armageddonDrawNote.replace("{name}", blackOpt.config.name)
+              : res.outcome.resultMessage;
+
+          if (saveCloudGames && userId && res.history.length > 0 && !hasHuman) {
+            const winnerKey =
+              winner === "white"
+                ? game.whiteKey
+                : winner === "black" || game.armageddon
+                  ? game.blackKey
+                  : null;
+            try {
+              await saveArenaMatchToCloud({
+                whiteConfig: whiteOpt.config,
+                blackConfig: blackOpt.config,
+                uciHist: res.history,
+                outcome: playoffOutcomeForSave(
+                  winnerKey,
+                  game.whiteKey,
+                  game.blackKey,
+                  note,
+                  res.outcome
+                ),
+                durationSeconds: Math.max(0, Math.round((Date.now() - startedAt) / 1000)),
+                event: humansOnly ? "Chess Avatar Arena Humans" : "Chess Avatar Arena Playoff",
+                round: `${matchId}.${game.index + 1}`,
+              });
+              toast.success(ap.cloudSavedToast);
+            } catch (e) {
+              console.error(e);
+              toast.error(ap.cloudSaveErrorToast);
+            }
+          }
+          return { winner, note };
+        }
+
+        if (res?.error === "engine") {
+          const choice = await askEngineRecovery();
+          if (choice === "retry") continue;
+          if (choice === "forfeit") {
+            const stmLose = (res.history.length % 2 === 0 ? "white" : "black") as "white" | "black";
+            const outcome = arenaResignOutcome(stmLose, lang);
+            const note = `${tp.engineForfeitNote} — ${outcome.resultMessage}`;
+            recordArenaRatedGame(arenaEntrant(whiteOpt), arenaEntrant(blackOpt), outcome.winner);
+            return { winner: outcome.winner, note };
+          }
+          return null;
+        }
+        return null;
+      }
     },
     [
-      getBestMove,
-      getPositionEvaluation,
+      allOptions,
+      run,
+      depthCap,
+      cadence,
+      forcedOpeningId,
+      speed,
       lang,
+      timePreset,
       saveCloudGames,
       userId,
-      forcedOpeningId,
-      cadence,
-      playoffDepthCap,
-      timePreset,
-      t.arenaPage,
-      t.arenaPlayoff,
+      humansOnly,
+      askEngineRecovery,
+      tp.armageddonStart,
+      tp.rematchSwap,
+      tp.armageddonDrawNote,
+      tp.engineForfeitNote,
+      ap.cloudSavedToast,
+      ap.cloudSaveErrorToast,
     ]
   );
 
-  const playMatchById = useCallback(
-    async (matchId: string) => {
-      const match = bracket.matches.find((m) => m.id === matchId);
-      if (!match || match.status !== "ready") return;
-
-      const { keyA, keyB } = resolveMatchSideKeys(match, bracket);
-      const whiteOpt = getOptionByKey(poolOptions, keyA);
-      const blackOpt = getOptionByKey(poolOptions, keyB);
-      if (!whiteOpt || !blackOpt) return;
-
-      setActiveMatchId(matchId);
-      runningRef.current = true;
-      setMatchRunning(true);
-
+  const playMatch = useCallback(
+    async (match: PlayoffMatch, state: PlayoffBracketState): Promise<PlayoffSeriesResult | null> => {
+      const { keyA, keyB } = resolveMatchSideKeys(match, state);
+      if (!keyA || !keyB) return null;
+      setActiveMatchId(match.id);
+      setLiveMatchId(match.id);
       try {
-        const { winnerKey, note } = await runSingleMatch(
-          matchId,
-          whiteOpt,
-          blackOpt
+        const result = await runPlayoffSeries(keyA, keyB, (game) =>
+          playSeriesGame(game, match.id)
         );
-        if (winnerKey) {
-          setBracket((prev) =>
-            recordMatchResult(prev, matchId, winnerKey, note)
-          );
+        if (result) {
+          const winnerName = getOptionByKey(allOptions, result.winnerKey)?.config.name ?? "";
+          setLastResult(`${winnerName} — ${result.note}`);
         }
+        return result;
       } finally {
-        runningRef.current = false;
-        setMatchRunning(false);
-        setClock(null);
+        setLiveMatchId(null);
       }
     },
-    [bracket, poolOptions, runSingleMatch]
+    [playSeriesGame, allOptions]
   );
 
-  const handleRunTournament = async () => {
-    if (!canStartTournament || !isReady) return;
+  const runLeague = useCallback(async () => {
+    if (!canRun || !isLeague) return;
+    stopRef.current = false;
     setTournamentRunning(true);
-    resetBoard();
+    setBracketOpen(false);
+    let state = league;
+    if (!state) {
+      const ranked = (bracket.seeds.filter(Boolean) as string[])
+        .map((key) => ({ key, elo: getOptionByKey(allOptions, key)?.config.elo ?? 0 }))
+        .sort((a, b) => b.elo - a.elo)
+        .map((p) => p.key);
+      state = createLeague(format, ranked);
+      setLeague(state);
+    }
     try {
-      let state = bracket;
       for (;;) {
+        const done = state.games.filter((g) => g.result != null).length;
+        const total = state.games.length;
+        setProgressLabel(
+          tp.tournamentProgress
+            .replace("{done}", String(done + 1))
+            .replace("{total}", String(total))
+        );
+        const game = nextLeagueGame(state);
+        if (!game?.blackKey) break;
+        setLiveMatchId(game.id);
+        const played = await playSeriesGame(
+          { index: 0, whiteKey: game.whiteKey, blackKey: game.blackKey, armageddon: false },
+          game.id
+        );
+        setLiveMatchId(null);
+        if (!played) break;
+        const result = leagueResult(played.winner);
+        state = recordLeagueGame(state, game.id, result, played.note);
+        setLeague(state);
+        const w = getOptionByKey(allOptions, game.whiteKey)?.config.name ?? "";
+        const b = getOptionByKey(allOptions, game.blackKey)?.config.name ?? "";
+        setLastResult(`${w} ${result === "1/2-1/2" ? "½-½" : result} ${b} — ${played.note}`);
+        if (stopRef.current) break;
+        await sleep(BETWEEN_GAMES_PAUSE_MS);
+        if (stopRef.current) break;
+      }
+    } finally {
+      setLiveMatchId(null);
+      setTournamentRunning(false);
+      setStatusNote(null);
+      setProgressLabel(null);
+    }
+  }, [canRun, isLeague, league, bracket.seeds, allOptions, format, playSeriesGame, tp.tournamentProgress]);
+
+  const runTournament = useCallback(async () => {
+    if (!canRun) return;
+    if (isLeague) {
+      await runLeague();
+      return;
+    }
+    stopRef.current = false;
+    setTournamentRunning(true);
+    setBracketOpen(false);
+    let state = bracket;
+    const totalMatches = state.size - 1;
+    try {
+      for (;;) {
+        const done = state.matches.filter((m) => m.status === "done").length;
+        setProgressLabel(
+          tp.tournamentProgress
+            .replace("{done}", String(done + 1))
+            .replace("{total}", String(totalMatches))
+        );
         const next = getNextReadyMatch(state);
         if (!next) break;
-        setActiveMatchId(next.id);
-        const { keyA, keyB } = resolveMatchSideKeys(next, state);
-        const whiteOpt = getOptionByKey(poolOptions, keyA);
-        const blackOpt = getOptionByKey(poolOptions, keyB);
-        if (!whiteOpt || !blackOpt) break;
-
-        runningRef.current = true;
-        setMatchRunning(true);
-        let winnerKey: string | null = null;
-        let note = "";
-        for (let attempt = 0; attempt < PLAYOFF_DRAW_REMATCH_LIMIT; attempt++) {
-          const result = await runSingleMatch(next.id, whiteOpt, blackOpt);
-          winnerKey = result.winnerKey;
-          note = result.note;
-          if (winnerKey || !runningRef.current) break;
-          if (attempt < PLAYOFF_DRAW_REMATCH_LIMIT - 1) {
-            setStatusNote(t.arenaPlayoff.drawRematch);
-            await new Promise((r) => setTimeout(r, 600));
-          }
-        }
-        runningRef.current = false;
-        setMatchRunning(false);
-        if (!winnerKey) break;
-        state = recordMatchResult(state, next.id, winnerKey, note);
+        const result = await playMatch(next, state);
+        if (!result) break;
+        state = recordMatchResult(state, next.id, result.winnerKey, result.note);
         setBracket(state);
-        setClock(null);
-        await new Promise((r) => setTimeout(r, 600));
+        if (stopRef.current) break;
+        await sleep(BETWEEN_GAMES_PAUSE_MS);
+        if (stopRef.current) break;
       }
     } finally {
       setTournamentRunning(false);
-      runningRef.current = false;
-      setMatchRunning(false);
+      setStatusNote(null);
+      setProgressLabel(null);
     }
-  };
+  }, [canRun, isLeague, runLeague, bracket, playMatch, tp.tournamentProgress]);
 
-  const handlePause = () => {
-    runningRef.current = false;
-    setMatchRunning(false);
-    setTournamentRunning(false);
-    stopThinking();
-  };
+  const playSelected = useCallback(async () => {
+    if (!activeMatch || activeMatch.status !== "ready" || busy || !isReady) return;
+    stopRef.current = false;
+    const result = await playMatch(activeMatch, bracket);
+    setStatusNote(null);
+    if (result) {
+      setBracket((prev) =>
+        recordMatchResult(prev, activeMatch.id, result.winnerKey, result.note)
+      );
+    }
+  }, [activeMatch, busy, isReady, playMatch, bracket]);
 
-  const stm = useMemo(() => {
+  const handlePause = useCallback(() => {
+    stopRef.current = true;
+    if (engineRecovery) resolveEngineRecovery("abort");
+    pause();
+  }, [pause, engineRecovery, resolveEngineRecovery]);
+
+  const bracketRef = useRef<HTMLDivElement>(null);
+  const [sharing, setSharing] = useState(false);
+  const shareBracket = async () => {
+    const el = bracketRef.current;
+    if (!el || sharing) return;
+    setSharing(true);
     try {
-      return new Chess(fen).turn();
-    } catch {
-      return "w" as const;
+      const res = await shareElementAsImage(
+        el,
+        `chess-avatar-arena-${format}.png`,
+        `Chess Avatar Arena — ${isLeague ? tp.standingsTitle : tp.bracketTitle}`
+      );
+      if (res === "downloaded") toast.success(ap.imageSaved);
+    } catch (e) {
+      console.error(e);
+      toast.error(ap.imageError);
+    } finally {
+      setSharing(false);
     }
-  }, [fen]);
+  };
 
-  if (listLoading && rawOptions.length === 0) {
+  const flip = () => setOrientation((o) => (o === "white" ? "black" : "white"));
+
+  useArenaShortcuts({
+    onToggle: () => (busy ? handlePause() : void runTournament()),
+    onFlip: flip,
+  });
+
+  if (pool.loading && pool.options.length === 0) {
     return (
       <div className="flex flex-col items-center py-12 text-slate-400 gap-3">
         <Loader2 className="h-8 w-8 animate-spin text-cyan-500" />
-        <span className="text-sm">{t.arenaPage.loadingProfiles}</span>
+        <span className="text-sm">{ap.loadingProfiles}</span>
       </div>
     );
   }
 
+  if (humansOnly && allOptions.length < HUMANS_MIN_PLAYERS && !anyDone) {
+    return (
+      <div className="arena-panel arena-empty-hint" data-testid="humans-need-players">
+        <Swords className="h-6 w-6 text-amber-400" aria-hidden />
+        <p className="text-sm text-slate-200">
+          {tp.humansNeedPlayers.replace("{n}", String(HUMANS_MIN_PLAYERS))}
+        </p>
+        <p className="text-xs text-slate-500">{tp.humansNeedPlayersHint}</p>
+      </div>
+    );
+  }
+
+  const whiteOpt = series ? getOptionByKey(allOptions, series.whiteKey) : undefined;
+  const blackOpt = series ? getOptionByKey(allOptions, series.blackKey) : undefined;
+  const champion = getOptionByKey(
+    allOptions,
+    isLeague ? (league ? leagueWinner(league) : null) : bracket.championKey
+  );
+
+  let statusText: string = tp.selectMatch;
+  let statusTone: ArenaStatusTone = "idle";
+  if (!isReady) {
+    statusText = ap.needEngine;
+    statusTone = "warn";
+  } else if (view.error) {
+    statusText = ap.engineError;
+    statusTone = "warn";
+  } else if (statusNote) {
+    statusText = statusNote;
+    statusTone = "warn";
+  } else if (view.awaitingHuman) {
+    const mover = view.awaitingHuman === "w" ? whiteOpt : blackOpt;
+    statusText = ap.statusHumanTurn.replace("{name}", mover?.config.name || "");
+    statusTone = "live";
+  } else if (view.running || view.thinking) {
+    statusText = tp.matchLive.replace("{tc}", timeControlLabel);
+    statusTone = "live";
+  } else if (view.outcome) {
+    statusText = view.outcome.resultMessage;
+    statusTone = "result";
+  } else if (lastResult) {
+    statusText = lastResult;
+    statusTone = "result";
+  } else if (view.history.length > 0) {
+    statusText = tp.matchPaused;
+  }
+
+  const liveMatch = isLeague
+    ? undefined
+    : bracket.matches.find((m) => m.id === (liveMatchId ?? activeMatchId));
+  const leagueRoundLabel =
+    league &&
+    tp.leagueRound
+      .replace("{n}", String(currentLeagueRound(league) + 1))
+      .replace("{total}", String(league.totalRounds));
+  const boardHeader = (
+    <div className="space-y-1" data-testid="playoff-board-header">
+      {progressLabel && (
+        <p className="text-[11px] font-medium text-cyan-300/90" data-testid="playoff-progress">
+          {progressLabel}
+        </p>
+      )}
+      {isLeague
+        ? series && leagueRoundLabel && (
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+              <span className="font-semibold text-amber-300">{leagueRoundLabel}</span>
+              <span className="text-slate-400">
+                {format === "swiss" ? tp.formatSwiss : tp.formatRoundRobin}
+              </span>
+            </div>
+          )
+        : series &&
+          liveMatch && (
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+              <span className="font-semibold text-amber-300">
+                {roundLabel(liveMatch.round, bracket.size, roundLabels)}
+              </span>
+              <span className="flex items-center gap-1.5 text-slate-400">
+                {tp.gameLabel
+                  .replace("{n}", String(series.index + 1))
+                  .replace("{total}", String(PLAYOFF_SERIES_MAX_GAMES))}
+                {series.armageddon && (
+                  <span className="rounded bg-red-900/70 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-red-100">
+                    {tp.armageddonBadge}
+                  </span>
+                )}
+              </span>
+            </div>
+          )}
+    </div>
+  );
+
+  const controls = engineRecovery ? (
+    <>
+      <Button
+        size="sm"
+        className="bg-amber-600 hover:bg-amber-500"
+        onClick={() => resolveEngineRecovery("retry")}
+        data-testid="playoff-engine-retry"
+      >
+        <Play className="h-4 w-4 mr-1" />
+        {tp.engineRetry}
+      </Button>
+      <Button
+        size="sm"
+        variant="outline"
+        className="border-rose-700/60 text-rose-200"
+        onClick={() => resolveEngineRecovery("forfeit")}
+        data-testid="playoff-engine-forfeit"
+      >
+        {tp.engineForfeit}
+      </Button>
+      <Button
+        size="sm"
+        variant="destructive"
+        onClick={() => resolveEngineRecovery("abort")}
+        data-testid="playoff-engine-abort"
+      >
+        <Pause className="h-4 w-4 mr-1" />
+        {ap.pause}
+      </Button>
+    </>
+  ) : busy ? (
+    <Button size="sm" variant="destructive" onClick={handlePause} data-testid="playoff-pause">
+      <Pause className="h-4 w-4 mr-1" />
+      {ap.pause}
+    </Button>
+  ) : canContinue && rosterComplete ? (
+    <Button
+      size="sm"
+      className="bg-amber-600 hover:bg-amber-500"
+      disabled={!canRun}
+      onClick={() => void runTournament()}
+    >
+      <Play className="h-4 w-4 mr-1" />
+      {anyDone ? tp.resumeTournament : tp.runTournament}
+    </Button>
+  ) : null;
+
+  const formatLabels: Record<PlayoffFormat, string> = {
+    knockout: tp.formatKnockout,
+    roundrobin: tp.formatRoundRobin,
+    swiss: tp.formatSwiss,
+  };
+  const formatHint = isLeague
+    ? `${tp.leagueHint.replace("{games}", String(leagueGameCount(format, bracket.size)))}${
+        format === "swiss" ? ` ${tp.swissHint}` : ""
+      }`
+    : `${tp.tiebreakHint} ${tp.crushingHint}`;
+
+  const platformButtons: { id: ProfilePlatformFilter; label: string }[] = [
+    { id: "all", label: t.library.platformAll },
+    { id: "lichess", label: t.library.platformLichess },
+    { id: "chesscom", label: t.library.platformChesscom },
+    { id: "human", label: ap.platformHumanShort },
+  ];
+
   return (
     <div className="arena-playoff-layout space-y-3">
-      <div className="flex flex-wrap items-center gap-2 rounded-lg border border-amber-500/20 bg-slate-900/50 px-3 py-2">
+      <div className="arena-panel flex flex-wrap items-center gap-2 px-3 py-2">
         <Swords className="h-4 w-4 text-amber-400 shrink-0" />
-        <span className="text-xs text-slate-400 hidden sm:inline">
-          {timeControlLabel}
-          <span className="text-slate-500"> · {t.arenaPlayoff.crushingHint}</span>
-        </span>
-        <div className="flex gap-1">
-          <Button
-            size="sm"
-            variant={bracketSize === 4 ? "default" : "outline"}
-            className="h-7 text-xs"
-            onClick={() => setBracketSize(4)}
-            disabled={matchRunning || tournamentRunning}
-          >
-            4
-          </Button>
-          <Button
-            size="sm"
-            variant={bracketSize === 8 ? "default" : "outline"}
-            className="h-7 text-xs"
-            onClick={() => setBracketSize(8)}
-            disabled={matchRunning || tournamentRunning}
-          >
-            8
-          </Button>
+        <div role="radiogroup" aria-label={tp.formatLabel} className="arena-segmented">
+          {PLAYOFF_FORMATS.map((f) => (
+            <button
+              key={f}
+              type="button"
+              role="radio"
+              aria-checked={format === f}
+              data-active={format === f}
+              className="arena-segmented__item"
+              disabled={seedsLocked}
+              onClick={() => changeFormat(f)}
+              data-testid={`playoff-format-${f}`}
+            >
+              {formatLabels[f]}
+            </button>
+          ))}
+        </div>
+        <div role="radiogroup" aria-label={tp.bracketTitle} className="arena-segmented">
+          {FORMAT_SIZES[format].map((size) => (
+            <button
+              key={size}
+              type="button"
+              role="radio"
+              aria-checked={bracket.size === size}
+              data-active={bracket.size === size}
+              className="arena-segmented__item"
+              disabled={seedsLocked}
+              onClick={() => changeSize(size)}
+            >
+              {tp.playersCount.replace("{n}", String(size))}
+            </button>
+          ))}
         </div>
         <Button
           size="sm"
           variant="outline"
-          className="h-7 text-xs"
-          onClick={handleAutoSeed}
-          disabled={poolOptions.length < bracketSize}
+          className="h-8 text-xs"
+          disabled={seedsLocked}
+          onClick={() => autoSeed("elo")}
+          data-testid="playoff-seed-elo"
         >
-          {t.arenaPlayoff.autoSeed}
+          {tp.autoSeed}
         </Button>
         <Button
           size="sm"
-          className="h-7 text-xs bg-amber-600 hover:bg-amber-500"
-          disabled={!canStartTournament || !isReady}
-          onClick={() => void handleRunTournament()}
+          variant="outline"
+          className="h-8 text-xs"
+          disabled={seedsLocked}
+          onClick={() => autoSeed("random")}
+        >
+          <Shuffle className="h-3.5 w-3.5 mr-1" />
+          {tp.randomSeed}
+        </Button>
+        <Button
+          size="sm"
+          className="h-8 text-xs bg-amber-600 hover:bg-amber-500"
+          disabled={!canRun}
+          onClick={() => void runTournament()}
+          data-testid="playoff-run"
         >
           <Play className="h-3.5 w-3.5 mr-1" />
-          {t.arenaPlayoff.runTournament}
+          {anyDone ? tp.resumeTournament : tp.runTournament}
         </Button>
-        <span className="text-[10px] text-slate-500 ml-auto">
-          {filledSeeds}/{bracketSize}
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-8 text-xs"
+          disabled={busy || (filledSeeds === 0 && !anyDone && !league)}
+          onClick={newTournament}
+        >
+          <RotateCcw className="h-3.5 w-3.5 mr-1" />
+          {tp.newTournament}
+        </Button>
+        <span className="text-[11px] text-slate-500 ml-auto tabular-nums">
+          {tp.seedsFilled
+            .replace("{{n}}", String(filledSeeds))
+            .replace("{{total}}", String(bracket.size))}
         </span>
+        <p className="basis-full text-[11px] text-slate-500">
+          {formatHint}
+          {!humansOnly && allOptions.some((o) => o.human) ? ` ${tp.mixedSeedHint}` : ""}
+        </p>
       </div>
 
-      {isSupabaseConfigured && userId ? (
-        <div className="flex items-center justify-between gap-3 rounded-lg border border-amber-500/20 bg-slate-900/50 px-3 py-2">
-          <div className="space-y-0.5 min-w-0">
-            <Label
-              htmlFor="playoff-save-cloud"
-              className="text-sm text-slate-200"
-            >
-              {t.arenaPlayoff.saveCloudLabel}
-            </Label>
-            <p className="text-[11px] text-slate-500 leading-snug">
-              {t.arenaPlayoff.saveCloudHint}
+      {champion && (
+        <div className="arena-champion" role="status" data-testid="playoff-champion">
+          <Trophy className="h-8 w-8 text-amber-400 shrink-0" />
+          {champion.config.avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={champion.config.avatarUrl} alt="" className="h-12 w-12 rounded-full border-2 border-amber-400 object-cover" />
+          ) : null}
+          <div className="min-w-0">
+            <p className="text-xs uppercase tracking-wide text-amber-400">{tp.tournamentDone}</p>
+            <p className="text-xl font-bold text-cyan-50 truncate">
+              {tp.champion} : {champion.config.name}
             </p>
           </div>
-          <Switch
-            id="playoff-save-cloud"
-            checked={saveCloudGames}
-            onCheckedChange={setSaveCloudGames}
-            className="shrink-0"
-          />
         </div>
-      ) : isSupabaseConfigured && !userId ? (
-        <p className="text-xs text-slate-500 px-1">
-          {t.arenaPlayoff.saveCloudNeedLogin}
-        </p>
-      ) : null}
+      )}
 
       <div
-        className={`arena-playoff-grid grid gap-3 items-start ${
+        className={`grid gap-3 items-start ${
           showBoard
-            ? "grid-cols-1 xl:grid-cols-[minmax(0,1.15fr)_minmax(260px,0.85fr)]"
+            ? "grid-cols-1 xl:grid-cols-[minmax(0,1.2fr)_minmax(300px,0.8fr)]"
             : "grid-cols-1 lg:grid-cols-[minmax(20rem,0.95fr)_minmax(0,1.05fr)]"
         }`}
       >
-        {!showBoard && (
-          <ArenaPlayoffRosterDeck
-            pool={poolOptions}
-            rosterFilter={rosterFilter}
-            onRosterFilterChange={setRosterFilter}
-            tapPickKey={tapPickKey}
-            onTapPickKey={handleTapPickKey}
-            dragOptionKey={dragOptionKey}
-            onDragStartOption={setDragOptionKey}
-            onDragEnd={() => setDragOptionKey(null)}
-            placedKeys={placedKeys}
-          />
+        {showBoard ? (
+          <div className="min-w-0 space-y-2">
+            <ArenaBoardPanel
+              white={whiteOpt}
+              black={blackOpt}
+              view={view}
+              showEval={isReady}
+              statusText={statusText}
+              statusTone={statusTone}
+              controls={controls}
+              header={boardHeader}
+              onHumanMove={submitHumanMove}
+              onHumanResign={resignHuman}
+              onHumanDraw={offerDrawHuman}
+              pgnEvent={humansOnly ? "Chess Avatar Arena Humans" : "Chess Avatar Arena Playoff"}
+              pgnRound={
+                isLeague
+                  ? league
+                    ? String(currentLeagueRound(league) + 1)
+                    : undefined
+                  : liveMatch && series
+                    ? `${liveMatch.id}.${series.index + 1}`
+                    : undefined
+              }
+              pgnTimeControl={pgnTimeControl(cadence)}
+              orientation={orientation}
+              onFlip={flip}
+            />
+          </div>
+        ) : (
+          <div className="space-y-2 min-w-0">
+            {!humansOnly && (
+              <div className="flex flex-wrap items-center gap-2">
+                <div role="radiogroup" aria-label={t.library.platformFilter} className="arena-segmented">
+                  {platformButtons.map((b) => (
+                    <button
+                      key={b.id}
+                      type="button"
+                      role="radio"
+                      aria-checked={platformFilter === b.id}
+                      data-active={platformFilter === b.id}
+                      className="arena-segmented__item"
+                      onClick={() => setPlatformFilter(b.id)}
+                    >
+                      {b.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            <ArenaPlayoffRosterDeck
+              pool={rosterOptions}
+              rosterFilter={rosterFilter}
+              onRosterFilterChange={setRosterFilter}
+              tapPickKey={tapPickKey}
+              onTapPickKey={(key) => setTapPickKey((prev) => (prev === key ? null : key))}
+              dragOptionKey={dragOptionKey}
+              onDragStartOption={setDragOptionKey}
+              onDragEnd={() => setDragOptionKey(null)}
+              placedKeys={placedKeys}
+            />
+            <p className="text-xs text-slate-500 px-1">{tp.boardPlaceholder}</p>
+          </div>
         )}
-        {showBoard && (
-        <Card
-          className="bg-slate-900/70 border-cyan-500/20 xl:order-1"
-        >
-          <CardHeader className="py-2 px-3">
-            <CardTitle className="text-cyan-300 text-sm">
-              {activeSides.white && activeSides.black
-                ? `${activeSides.white.config.name} vs ${activeSides.black.config.name}`
-                : t.arenaPlayoff.selectMatch}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 px-3 pb-3">
+
+        <div className="space-y-3 min-w-0">
+          <section className="arena-panel overflow-hidden">
+            <button
+              type="button"
+              className="arena-collapsible-trigger xl:pointer-events-none"
+              aria-expanded={bracketOpen}
+              aria-controls="playoff-bracket"
+              onClick={() => setBracketOpen((v) => !v)}
+            >
+              {isLeague ? tp.standingsTitle : tp.bracketTitle}
+              <span className="xl:hidden">
+                {bracketOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              </span>
+            </button>
+            <div
+              id="playoff-bracket"
+              ref={bracketRef}
+              className={`border-t border-slate-800 p-3 ${bracketOpen ? "block" : "hidden xl:block"}`}
+            >
+              <ArenaPlayoffBracket
+                state={bracket}
+                pool={allOptions}
+                activeMatchId={activeMatchId}
+                liveMatchId={liveMatchId}
+                onSelectMatch={(id) => {
+                  if (!busy) setActiveMatchId(id);
+                }}
+                onDropSeed={handleDropSeed}
+                tapPickKey={tapPickKey}
+                onTapPickKey={setTapPickKey}
+                seedsLocked={seedsLocked}
+                showRounds={!isLeague}
+              />
+              {isLeague && league && (
+                <ArenaLeagueTable league={league} pool={allOptions} liveGameId={liveMatchId} />
+              )}
+              {!isLeague && activeMatch?.status === "ready" && !busy && (
+                <Button
+                  className="w-full mt-2 h-8 text-xs"
+                  disabled={!isReady}
+                  onClick={() => void playSelected()}
+                  data-testid="playoff-play-selected"
+                  data-share-exclude="true"
+                >
+                  <Play className="h-3.5 w-3.5 mr-1" />
+                  {tp.playSelectedMatch}
+                </Button>
+              )}
+              {anyDone && (
+                <button
+                  type="button"
+                  className="arena-icon-btn mt-2 w-full"
+                  onClick={() => void shareBracket()}
+                  disabled={sharing}
+                  data-share-exclude="true"
+                  data-testid="playoff-share-image"
+                >
+                  {sharing ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <ImageDown className="h-4 w-4" />
+                  )}
+                  <span>{tp.shareBracket}</span>
+                </button>
+              )}
+            </div>
+          </section>
+
+          {humansOnly ? null : isSupabaseConfigured && userId ? (
+            <div className="arena-panel flex items-center justify-between gap-3 px-3 py-2">
+              <div className="space-y-0.5 min-w-0">
+                <Label htmlFor="playoff-save-cloud" className="text-sm text-slate-200">
+                  {tp.saveCloudLabel}
+                </Label>
+                <p className="text-[11px] text-slate-500 leading-snug">{tp.saveCloudHint}</p>
+              </div>
+              <Switch
+                id="playoff-save-cloud"
+                checked={saveCloudGames}
+                onCheckedChange={setSaveCloudGames}
+                className="shrink-0"
+              />
+            </div>
+          ) : isSupabaseConfigured && !userId ? (
+            <p className="text-xs text-slate-500 px-1">{tp.saveCloudNeedLogin}</p>
+          ) : null}
+
+          {showBoard && !humansOnly && (
             <BotEngineSelector
               chessAvatarReady={isChessAvatarReady}
               chessAvatarPlayReady={isChessAvatarPlayReady}
@@ -744,125 +1052,15 @@ export default function ArenaPlayoffMode({
               chessAvatarSearchStats={chessAvatarSearchStats}
               stockfishReady={isStockfishReady}
               lastBotEngineUsed={lastBotEngineUsed}
-              botElo={Math.max(
-                activeSides.white?.config.elo ?? 0,
-                activeSides.black?.config.elo ?? 0
-              ) || undefined}
-              botDifficulty={Math.max(
-                activeSides.white?.config.difficulty ?? 0,
-                activeSides.black?.config.difficulty ?? 0
-              ) || undefined}
+              botElo={Math.max(whiteOpt?.config.elo ?? 0, blackOpt?.config.elo ?? 0) || undefined}
+              botDifficulty={
+                Math.max(whiteOpt?.config.difficulty ?? 0, blackOpt?.config.difficulty ?? 0) ||
+                undefined
+              }
               compact
             />
-            {clock && activeSides.white && activeSides.black && (
-              <ArenaBotClockBar
-                clock={clock}
-                sideToMove={stm}
-                whiteLabel={activeSides.white.config.name || "W"}
-                blackLabel={activeSides.black.config.name || "B"}
-                active={matchRunning}
-              />
-            )}
-
-            <div className="flex justify-center">
-              <div className="w-full max-w-md space-y-2 min-w-0">
-                {isReady && matchRunning && (
-                  <EvaluationBar evaluation={barEval} />
-                )}
-                <div className="chessboard-frame chessboard-frame--md w-full overflow-hidden">
-                  <SimpleChessboard
-                    position={fen}
-                    lastMove={lastMove}
-                    orientation="white"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-2 justify-center">
-              {matchRunning ? (
-                <Button variant="outline" size="sm" onClick={handlePause}>
-                  <Pause className="h-4 w-4 mr-1" />
-                  {t.arenaPage.pause}
-                </Button>
-              ) : null}
-              <Button variant="outline" size="sm" onClick={resetBoard}>
-                <RotateCcw className="h-4 w-4 mr-1" />
-                {t.arenaPage.reset}
-              </Button>
-            </div>
-
-            <p className="text-center text-xs text-slate-400 min-h-[1.25rem]">
-              {statusNote ??
-                (matchRunning
-                  ? t.arenaPage.statusThinking
-                  : !isReady
-                    ? t.arenaPage.needEngine
-                    : t.arenaPage.statusIdle)}
-            </p>
-            <p className="text-center text-[10px] text-slate-500">
-              {t.arenaPage.movesPlayed}: {moveCount}
-            </p>
-
-            {bracket.championKey && (
-              <div className="rounded-lg border border-amber-500/40 bg-amber-950/30 px-3 py-2 text-center">
-                <Label className="text-amber-400 text-xs">
-                  {t.arenaPlayoff.champion}
-                </Label>
-                <p className="text-lg font-bold text-cyan-100">
-                  {getOptionByKey(poolOptions, bracket.championKey)?.config.name}
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-        )}
-
-        <Card
-          className={`bg-slate-900/50 border-slate-700/80 overflow-hidden ${
-            showBoard ? "xl:order-2" : ""
-          }`}
-        >
-          <button
-            type="button"
-            className="w-full flex items-center justify-between px-3 py-2 text-xs text-slate-400 border-b border-slate-800 xl:hidden"
-            onClick={() => setSetupOpen((v) => !v)}
-          >
-            {t.arenaPlayoff.bracketTitle}
-            {setupOpen ? (
-              <ChevronUp className="h-4 w-4" />
-            ) : (
-              <ChevronDown className="h-4 w-4" />
-            )}
-          </button>
-          <CardContent
-            className={`p-3 ${setupOpen ? "block" : "hidden xl:block"}`}
-          >
-            <ArenaPlayoffBracket
-              state={bracket}
-              pool={poolOptions}
-              activeMatchId={activeMatchId}
-              onSelectMatch={(id) => {
-                if (!matchRunning && !tournamentRunning) {
-                  setActiveMatchId(id);
-                }
-              }}
-              onDropSeed={handleDropSeed}
-              tapPickKey={tapPickKey}
-              onTapPickKey={setTapPickKey}
-            />
-            {activeMatch?.status === "ready" && !tournamentRunning && (
-              <Button
-                className="w-full mt-2 h-8 text-xs"
-                disabled={!isReady || matchRunning}
-                onClick={() => void playMatchById(activeMatch.id)}
-              >
-                <Play className="h-3.5 w-3.5 mr-1" />
-                {t.arenaPlayoff.playSelectedMatch}
-              </Button>
-            )}
-          </CardContent>
-        </Card>
+          )}
+        </div>
       </div>
     </div>
   );

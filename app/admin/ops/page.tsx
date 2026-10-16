@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   Activity,
@@ -13,7 +13,7 @@ import {
   Trash2,
   Users,
 } from "lucide-react";
-import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
+import type { RealtimeClient, RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 import AccountAvatar from "@/components/AccountAvatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,6 +21,12 @@ import { useSuperUser } from "@/hooks/useSuperUser";
 import { accountProfileInitials } from "@/lib/account-profile";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import type { PvpGameRow } from "@/lib/pvp-chess";
+import {
+  closeObserverRealtime,
+  createObserverRealtime,
+  latestPresenceByUser,
+  type PresenceEntry,
+} from "@/lib/realtime-observer";
 
 type OpsUserSummary = { displayName: string; avatarUrl: string | null };
 
@@ -43,12 +49,6 @@ type ActivityRow = {
   event_name: string;
   path: string | null;
   props: Record<string, unknown>;
-};
-
-type PresenceState = {
-  user_id: string;
-  page: string;
-  last_seen: string;
 };
 
 async function fetchWithAuth(path: string, init?: RequestInit) {
@@ -82,12 +82,9 @@ export default function AdminOpsPage() {
   const [userSummaries, setUserSummaries] = useState<Record<string, OpsUserSummary>>({});
   const [pvpLive, setPvpLive] = useState<PvpGameRow[]>([]);
   const [pvpActionId, setPvpActionId] = useState<string | null>(null);
-  const [presenceList, setPresenceList] = useState<PresenceState[]>([]);
+  const [presenceList, setPresenceList] = useState<PresenceEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const channelRef = useRef<ReturnType<NonNullable<typeof supabase>["channel"]> | null>(
-    null
-  );
 
   const refresh = useCallback(async () => {
     if (!isSuperUser) return;
@@ -101,9 +98,9 @@ export default function AdminOpsPage() {
           userSummaries?: Record<string, OpsUserSummary>;
         }>,
       ]);
-      setSnapshot(snap);
-      setEvents(ev.events ?? []);
-      setUserSummaries((prev) => ({ ...prev, ...(ev.userSummaries ?? {}) }));
+      setSnapshot(snap && typeof snap === "object" ? snap : null);
+      setEvents(Array.isArray(ev?.events) ? ev.events : []);
+      setUserSummaries((prev) => ({ ...prev, ...(ev?.userSummaries ?? {}) }));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error");
     } finally {
@@ -122,6 +119,8 @@ export default function AdminOpsPage() {
     if (!isSuperUser || !isSupabaseConfigured || !supabase) return;
 
     const client = supabase;
+    let cancelled = false;
+    let realtime: RealtimeClient | null = null;
 
     const loadPvp = async () => {
       const { data } = await client
@@ -132,62 +131,53 @@ export default function AdminOpsPage() {
         .in("status", ["playing", "waiting"])
         .order("updated_at", { ascending: false })
         .limit(30);
-      setPvpLive((data as PvpGameRow[]) ?? []);
+      if (cancelled) return;
+      setPvpLive(Array.isArray(data) ? (data as PvpGameRow[]) : []);
     };
 
     void loadPvp();
 
-    const ch = client
-      .channel("admin:ops:pvp")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "pvp_games" },
-        () => {
-          void loadPvp();
-        }
-      )
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "activity_events" },
-        (payload: RealtimePostgresChangesPayload<{ [key: string]: unknown }>) => {
-          const row = payload.new as ActivityRow | null;
-          if (!row?.id) return;
-          setEvents((prev) => [row, ...prev].slice(0, 40));
-        }
-      )
-      .subscribe();
+    void (async () => {
+      const {
+        data: { session },
+      } = await client.auth.getSession();
+      if (cancelled) return;
+      realtime = createObserverRealtime(session?.access_token ?? null);
+      if (!realtime) return;
 
-    channelRef.current = ch;
+      realtime
+        .channel("admin:ops:pvp")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "pvp_games" },
+          () => {
+            void loadPvp();
+          }
+        )
+        .on(
+          "postgres_changes",
+          { event: "INSERT", schema: "public", table: "activity_events" },
+          (payload: RealtimePostgresChangesPayload<{ [key: string]: unknown }>) => {
+            const row = payload.new as ActivityRow | null;
+            if (!row?.id) return;
+            setEvents((prev) => [row, ...prev].slice(0, 40));
+          }
+        )
+        .subscribe();
 
-    const presenceCh = client.channel("presence:app", {
-      config: { presence: { key: "admin-observer" } },
-    });
-
-    presenceCh
-      .on("presence", { event: "sync" }, () => {
-        const state = presenceCh.presenceState<PresenceState>();
-        const all: PresenceState[] = [];
-        for (const key of Object.keys(state)) {
-          const entries = state[key];
-          if (!entries?.length) continue;
-          const last = entries[entries.length - 1] as PresenceState;
-          if (last?.user_id) all.push(last);
-        }
-        const byUser = new Map<string, PresenceState>();
-        for (const p of all) {
-          const prev = byUser.get(p.user_id);
-          if (!prev || p.last_seen > prev.last_seen) byUser.set(p.user_id, p);
-        }
-        setPresenceList(
-          [...byUser.values()].sort((a, b) => b.last_seen.localeCompare(a.last_seen))
-        );
-      })
-      .subscribe();
+      const presenceCh = realtime.channel("presence:app", {
+        config: { presence: { key: "admin-observer" } },
+      });
+      presenceCh
+        .on("presence", { event: "sync" }, () => {
+          setPresenceList(latestPresenceByUser(presenceCh.presenceState()));
+        })
+        .subscribe();
+    })();
 
     return () => {
-      void client.removeChannel(ch);
-      void client.removeChannel(presenceCh);
-      channelRef.current = null;
+      cancelled = true;
+      if (realtime) void closeObserverRealtime(realtime);
     };
   }, [isSuperUser]);
 
@@ -354,7 +344,7 @@ export default function AdminOpsPage() {
                         </Link>
                       </div>
                       <p className="text-slate-400 truncate text-xs">
-                        {g.white_display_name ?? g.white_user_id.slice(0, 8)}
+                        {g.white_display_name ?? g.white_user_id?.slice(0, 8) ?? "—"}
                         {g.black_display_name || g.black_user_id
                           ? ` vs ${g.black_display_name ?? g.black_user_id?.slice(0, 8)}`
                           : " · en attente"}
@@ -429,8 +419,8 @@ export default function AdminOpsPage() {
             <div>
               <p className="text-slate-500">Intégrations</p>
               <p className="text-slate-300 text-xs mt-1">
-                Sentry: {snapshot?.integrations.sentry ? "oui" : "non"} · PostHog:{" "}
-                {snapshot?.integrations.posthog ? "oui" : "non"}
+                Sentry: {snapshot?.integrations?.sentry ? "oui" : "non"} · PostHog:{" "}
+                {snapshot?.integrations?.posthog ? "oui" : "non"}
               </p>
             </div>
           </CardContent>

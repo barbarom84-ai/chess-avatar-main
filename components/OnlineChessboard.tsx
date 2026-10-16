@@ -23,6 +23,7 @@ interface OnlineChessboardProps {
   playerRole?: "white" | "black" | null;
   premoveUci?: string | null;
   onPremoveChange?: (uci: string | null) => void;
+  boardMaxWidth?: string;
 }
 
 export default function OnlineChessboard({
@@ -36,6 +37,7 @@ export default function OnlineChessboard({
   playerRole = null,
   premoveUci = null,
   onPremoveChange,
+  boardMaxWidth = "100%",
 }: OnlineChessboardProps) {
   const [promotionOpen, setPromotionOpen] = useState(false);
   const [pending, setPending] = useState<{ from: string; to: string; premove: boolean } | null>(
@@ -171,7 +173,7 @@ export default function OnlineChessboard({
         orientation={orientation}
         lastMove={lastMove}
         arrows={boardArrows}
-        boardMaxWidth="100%"
+        boardMaxWidth={boardMaxWidth}
       />
       <PromotionDialog
         open={promotionOpen}

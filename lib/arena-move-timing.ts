@@ -10,6 +10,15 @@ import {
 export type ArenaPhase = "opening" | "middlegame" | "endgame";
 export type ArenaTimingContext = "spectator" | "playoff";
 export type ArenaThinkMode = "theoretical" | "main" | "zeitnot";
+export type ArenaSpeed = "fast" | "normal" | "realistic";
+
+export const ARENA_SPEEDS: readonly ArenaSpeed[] = ["fast", "normal", "realistic"];
+export const ARENA_DEFAULT_SPEED: ArenaSpeed = "normal";
+export const ARENA_SPEED_STORAGE = "chess-arena.speed";
+
+export function isArenaSpeed(value: unknown): value is ArenaSpeed {
+  return value === "fast" || value === "normal" || value === "realistic";
+}
 
 /** Réflexion standard après la sortie du répertoire théorique. */
 export const ARENA_MAIN_THINK_MS = 3000;
@@ -19,6 +28,18 @@ export const ARENA_ZEITNOT_THRESHOLD_MS = 20_000;
 export const ARENA_ZEITNOT_THINK_MS = 900;
 /** Réflexion pendant l’ouverture théorique (coup livre). */
 export const ARENA_THEORETICAL_THINK_MS = 350;
+/** Plancher absolu : en dessous, le moteur n’a plus le temps de répondre. */
+export const ARENA_MIN_THINK_MS = 50;
+/** Part de la pendule restante qu’un coup « normal » peut consommer (1/25). */
+const ARENA_CLOCK_SHARE_DIVISOR = 25;
+/** En zeitnot, 1/30 du temps restant : ~100 coups jouables sans incrément avant le plancher. */
+const ARENA_ZEITNOT_SHARE_DIVISOR = 30;
+
+const SPEED_BUDGETS: Record<ArenaSpeed, { main: number; theoretical: number }> = {
+  fast: { main: 800, theoretical: 120 },
+  normal: { main: ARENA_MAIN_THINK_MS, theoretical: ARENA_THEORETICAL_THINK_MS },
+  realistic: { main: 6000, theoretical: 700 },
+};
 
 const OPENING_MAX_PLY = 16;
 const ENDGAME_MAX_PIECES = 10;
@@ -117,13 +138,29 @@ export function getArenaThinkMode(
 export function getArenaThinkBudgetMs(
   inTheoreticalOpening: boolean,
   sideClockMs?: number,
-  singleLegalMove = false
+  singleLegalMove = false,
+  speed: ArenaSpeed = ARENA_DEFAULT_SPEED
 ): number {
   if (singleLegalMove) return 0;
+  const budgets = SPEED_BUDGETS[speed] ?? SPEED_BUDGETS.normal;
   const mode = getArenaThinkMode(inTheoreticalOpening, sideClockMs);
-  if (mode === "theoretical") return ARENA_THEORETICAL_THINK_MS;
-  if (mode === "zeitnot") return ARENA_ZEITNOT_THINK_MS;
-  return ARENA_MAIN_THINK_MS;
+  if (mode === "theoretical") return budgets.theoretical;
+  if (mode === "zeitnot") {
+    const zeitnot = Math.min(ARENA_ZEITNOT_THINK_MS, budgets.main);
+    if (sideClockMs == null) return zeitnot;
+    return Math.max(
+      ARENA_MIN_THINK_MS,
+      Math.min(zeitnot, Math.floor(sideClockMs / ARENA_ZEITNOT_SHARE_DIVISOR))
+    );
+  }
+  if (sideClockMs == null) return budgets.main;
+  return Math.min(
+    budgets.main,
+    Math.max(
+      ARENA_ZEITNOT_THINK_MS,
+      Math.floor(sideClockMs / ARENA_CLOCK_SHARE_DIVISOR)
+    )
+  );
 }
 
 /** Movetime / depth pour Stockfish — le pad complète le budget si le moteur finit tôt. */

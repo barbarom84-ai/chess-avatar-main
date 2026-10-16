@@ -7,6 +7,14 @@ export const ARENA_CRUSHING_WIN_PAWNS = 10;
 /** Dedicated Stockfish depth when deciding a move-limit or crushing result. */
 export const ARENA_MOVE_LIMIT_EVAL_DEPTH = 12;
 
+/** Shallower referee depth under "fast" speed (long brackets / battery). */
+export const ARENA_FAST_EVAL_DEPTH = 8;
+
+/** Referee eval depth for Arena games; lower on fast to spare CPU. */
+export function arenaRefereeEvalDepth(speed?: "fast" | "normal" | "realistic"): number {
+  return speed === "fast" ? ARENA_FAST_EVAL_DEPTH : ARENA_MOVE_LIMIT_EVAL_DEPTH;
+}
+
 export type ArenaMoveLimitWinner = "white" | "black" | "draw";
 
 export function winnerFromWhitePovEval(

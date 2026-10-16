@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { Chess } from "chess.js";
 import {
   ARENA_MAIN_THINK_MS,
+  ARENA_MIN_THINK_MS,
   ARENA_THEORETICAL_THINK_MS,
   ARENA_ZEITNOT_THINK_MS,
   getArenaMoveDisplayDelayMs,
@@ -50,7 +51,39 @@ describe("getArenaThinkBudgetMs", () => {
   });
 
   it("uses zeitnot budget under 20 seconds", () => {
-    expect(getArenaThinkBudgetMs(false, 19_000)).toBe(ARENA_ZEITNOT_THINK_MS);
+    expect(getArenaThinkBudgetMs(false)).toBe(ARENA_MAIN_THINK_MS);
+    expect(getArenaThinkBudgetMs(false, 19_000)).toBeLessThanOrEqual(ARENA_ZEITNOT_THINK_MS);
+    expect(getArenaThinkBudgetMs(false, 19_000)).toBe(633);
+  });
+
+  it("scales with the selected speed", () => {
+    const fast = getArenaThinkBudgetMs(false, undefined, false, "fast");
+    const normal = getArenaThinkBudgetMs(false, undefined, false, "normal");
+    const realistic = getArenaThinkBudgetMs(false, undefined, false, "realistic");
+    expect(fast).toBeLessThan(normal);
+    expect(realistic).toBeGreaterThan(normal);
+    expect(getArenaThinkBudgetMs(true, undefined, false, "fast")).toBeLessThan(
+      ARENA_THEORETICAL_THINK_MS
+    );
+  });
+
+  it("never spends more than 1/25 of a comfortable clock", () => {
+    expect(getArenaThinkBudgetMs(false, 30_000, false, "realistic")).toBe(1_200);
+    expect(getArenaThinkBudgetMs(false, 600_000, false, "realistic")).toBe(6_000);
+  });
+
+  it("spends only 1/30 of the remaining time in zeitnot", () => {
+    expect(getArenaThinkBudgetMs(false, 15_000)).toBe(500);
+    expect(getArenaThinkBudgetMs(false, 900)).toBe(ARENA_MIN_THINK_MS);
+    expect(getArenaThinkBudgetMs(false, 19_500, false, "fast")).toBe(650);
+  });
+
+  it("survives a long 1+0 game without increment", () => {
+    let clock = 60_000;
+    for (let move = 0; move < 100; move++) {
+      clock -= getArenaThinkBudgetMs(false, clock, false, "realistic");
+      expect(clock).toBeGreaterThan(0);
+    }
   });
 });
 

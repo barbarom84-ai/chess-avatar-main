@@ -20,13 +20,27 @@ function escapePgnHeader(s: string): string {
   return s.replace(/\\/g, "\\\\").replace(/"/g, "'");
 }
 
+/** PGN `TimeControl` tag value, e.g. `180+2`. */
+export function pgnTimeControl(cadence: {
+  initialSec: number;
+  incrementSec: number;
+}): string {
+  return `${Math.max(0, cadence.initialSec)}+${Math.max(0, cadence.incrementSec)}`;
+}
+
 export function buildArenaPgn(params: {
   whiteName: string;
   blackName: string;
-  outcome: Pick<ArenaOutcome, "pgnResult" | "resultMessage">;
+  /** `*` marks a game still in progress. */
+  outcome: {
+    pgnResult: ArenaOutcome["pgnResult"] | "*";
+    resultMessage: string;
+  };
   uciMoves: string[];
   event?: string;
   round?: string;
+  timeControl?: string;
+  date?: Date;
 }): string {
   const {
     whiteName,
@@ -35,8 +49,9 @@ export function buildArenaPgn(params: {
     uciMoves,
     event = "Chess Avatar Arena",
     round = "1",
+    timeControl = "-",
+    date = new Date(),
   } = params;
-  const date = new Date();
   const dateStr = `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, "0")}.${String(date.getDate()).padStart(2, "0")}`;
   const timeStr = `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}:${String(date.getSeconds()).padStart(2, "0")}`;
 
@@ -48,9 +63,12 @@ export function buildArenaPgn(params: {
     const to = uci.slice(2, 4);
     const promotion =
       uci.length > 4 ? (uci[4] as "q" | "r" | "b" | "n") : undefined;
-    const m = replay.move(
-      promotion ? { from, to, promotion } : { from, to }
-    );
+    let m;
+    try {
+      m = replay.move(promotion ? { from, to, promotion } : { from, to });
+    } catch {
+      m = null;
+    }
     if (!m) break;
     sans.push(m.san);
   }
@@ -64,8 +82,10 @@ export function buildArenaPgn(params: {
     `[White "${escapePgnHeader(whiteName)}"]`,
     `[Black "${escapePgnHeader(blackName)}"]`,
     `[Result "${outcome.pgnResult}"]`,
-    `[TimeControl "-"]`,
-    `[Termination "${escapePgnHeader(outcome.resultMessage)}"]`,
+    `[TimeControl "${escapePgnHeader(timeControl)}"]`,
+    ...(outcome.resultMessage
+      ? [`[Termination "${escapePgnHeader(outcome.resultMessage)}"]`]
+      : []),
   ];
 
   let movesStr = "";

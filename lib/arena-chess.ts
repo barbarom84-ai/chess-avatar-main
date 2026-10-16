@@ -7,6 +7,7 @@ import {
   getArenaThinkBudgetMs,
   getArenaThinkMode,
   isArenaTheoreticalOpening,
+  type ArenaSpeed,
 } from "@/lib/arena-move-timing";
 import type { ArenaCadence } from "@/lib/arena-time-controls";
 
@@ -21,10 +22,11 @@ export function replayUci(history: string[]): Chess {
     const to = u.slice(2, 4);
     const promotion =
       u.length > 4 ? (u[4] as "q" | "r" | "b" | "n") : undefined;
-    const ok = g.move(
-      promotion ? { from, to, promotion } : { from, to }
-    );
-    if (!ok) break;
+    try {
+      if (!g.move(promotion ? { from, to, promotion } : { from, to })) break;
+    } catch {
+      break;
+    }
   }
   return g;
 }
@@ -48,6 +50,7 @@ export function applyArenaMoveConfig(
     cadence: ArenaCadence;
     historyUci: string[];
     sideClockMs?: number;
+    speed?: ArenaSpeed;
   }
 ): EngineConfig {
   const phase = getArenaPhase(opts.ply, opts.game);
@@ -58,7 +61,9 @@ export function applyArenaMoveConfig(
   );
   const thinkBudgetMs = getArenaThinkBudgetMs(
     inTheoretical,
-    opts.sideClockMs
+    opts.sideClockMs,
+    false,
+    opts.speed
   );
   const thinkMode = getArenaThinkMode(inTheoretical, opts.sideClockMs);
   const { timeControl, depth } = getArenaMoveParams(
@@ -92,6 +97,109 @@ export type ArenaOutcome = {
   pgnResult: "1-0" | "0-1" | "1/2-1/2";
   winner: "white" | "black" | "draw";
 };
+
+function classifyArenaDraw(
+  game: Chess,
+  lang: "fr" | "en"
+): Pick<ArenaOutcome, "result" | "resultType" | "resultMessage"> {
+  const fr = lang === "fr";
+  if (game.isStalemate()) {
+    return {
+      result: "draw",
+      resultType: "arena_draw_stalemate",
+      resultMessage: fr ? "Pat — partie nulle." : "Stalemate — draw.",
+    };
+  }
+  if (game.isInsufficientMaterial()) {
+    return {
+      result: "draw",
+      resultType: "arena_draw_insufficient",
+      resultMessage: fr
+        ? "Nulle — matériel insuffisant."
+        : "Draw — insufficient material.",
+    };
+  }
+  if (game.isThreefoldRepetition()) {
+    return {
+      result: "draw",
+      resultType: "arena_draw_threefold",
+      resultMessage: fr
+        ? "Nulle — triple répétition."
+        : "Draw — threefold repetition.",
+    };
+  }
+  if (game.isDrawByFiftyMoves()) {
+    return {
+      result: "draw",
+      resultType: "arena_draw_fifty",
+      resultMessage: fr
+        ? "Nulle — règle des 50 coups."
+        : "Draw — fifty-move rule.",
+    };
+  }
+  return {
+    result: "draw",
+    resultType: "arena_draw",
+    resultMessage: fr ? "Partie nulle." : "Draw.",
+  };
+}
+
+/** The side that played an illegal move (or none) loses the game. */
+export function arenaForfeitOutcome(
+  loser: "white" | "black",
+  lang: "fr" | "en"
+): ArenaOutcome {
+  const winner = loser === "white" ? "black" : "white";
+  const fr = lang === "fr";
+  return {
+    result: winner === "white" ? "win" : "loss",
+    resultType: "arena_forfeit",
+    resultMessage:
+      winner === "white"
+        ? fr
+          ? "Coup illégal des noirs — victoire des blancs."
+          : "Illegal move by Black — White wins."
+        : fr
+          ? "Coup illégal des blancs — victoire des noirs."
+          : "Illegal move by White — Black wins.",
+    pgnResult: winner === "white" ? "1-0" : "0-1",
+    winner,
+  };
+}
+
+/** Local human resigns on their turn. */
+export function arenaResignOutcome(
+  loser: "white" | "black",
+  lang: "fr" | "en"
+): ArenaOutcome {
+  const winner = loser === "white" ? "black" : "white";
+  const fr = lang === "fr";
+  return {
+    result: winner === "white" ? "win" : "loss",
+    resultType: "arena_resign",
+    resultMessage:
+      winner === "white"
+        ? fr
+          ? "Abandon des noirs — victoire des blancs."
+          : "Black resigns — White wins."
+        : fr
+          ? "Abandon des blancs — victoire des noirs."
+          : "White resigns — Black wins.",
+    pgnResult: winner === "white" ? "1-0" : "0-1",
+    winner,
+  };
+}
+
+/** Hot-seat players agree to a draw. */
+export function arenaAgreedDrawOutcome(lang: "fr" | "en"): ArenaOutcome {
+  return {
+    result: "draw",
+    resultType: "arena_draw_agreed",
+    resultMessage: lang === "fr" ? "Nulle d’accord." : "Draw by agreement.",
+    pgnResult: "1/2-1/2",
+    winner: "draw",
+  };
+}
 
 export function classifyArenaOutcome(
   game: Chess,
@@ -173,13 +281,7 @@ export function classifyArenaOutcome(
     };
   }
   if (game.isStalemate() || game.isDraw()) {
-    return {
-      result: "draw",
-      resultType: "arena_draw",
-      resultMessage: lang === "fr" ? "Partie nulle." : "Draw.",
-      pgnResult: "1/2-1/2",
-      winner: "draw",
-    };
+    return { ...classifyArenaDraw(game, lang), pgnResult: "1/2-1/2", winner: "draw" };
   }
   return {
     result: "draw",

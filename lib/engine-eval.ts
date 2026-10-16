@@ -1,5 +1,5 @@
 import { Chess } from "chess.js";
-import { stmEvalToWhitePov } from "@/lib/arena-spectator-helpers";
+import { stmEvalToWhitePov } from "@/lib/arena-chess";
 
 /** Raw Stockfish score from the side-to-move's perspective. */
 export type EngineStmScore = {

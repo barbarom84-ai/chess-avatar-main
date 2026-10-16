@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { Chess } from "chess.js";
 import { classifyArenaOutcome as classifyChess } from "./arena-chess";
-import { classifyArenaOutcome as classifySpectator } from "./arena-spectator-helpers";
 import {
   arenaBotVsBotSide,
   classifyArenaCrushing,
@@ -82,13 +81,13 @@ describe("classifyArenaMoveLimit", () => {
 });
 
 describe("classifyArenaOutcome move limit", () => {
-  it("uses eval in spectator and playoff classifiers", () => {
+  it("uses eval for crushing and move-limit outcomes", () => {
     const game = new Chess();
-    const crush = classifySpectator(game, false, "en", 10);
+    const crush = classifyChess(game, false, "en", undefined, 10);
     expect(crush.resultType).toBe("arena_eval_white");
     expect(crush.pgnResult).toBe("1-0");
 
-    const spec = classifySpectator(game, true, "en", 3.2);
+    const spec = classifyChess(game, true, "en", undefined, 3.2);
     expect(spec.resultType).toBe("arena_move_limit_white");
     expect(spec.pgnResult).toBe("1-0");
 

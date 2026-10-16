@@ -29,6 +29,7 @@ import {
   stockfishGetBestMoveForFen,
   stockfishGetPositionEvaluation,
   stockfishGetPositionEvaluationDetails,
+  parseStockfishPvInfoLine,
 } from "@/lib/stockfish-client";
 import { parseEngineScoreLine, toWhitePovEval } from "@/lib/engine-eval";
 import {
@@ -50,6 +51,10 @@ import {
 import { useChessAvatarAccess } from "@/hooks/useChessAvatarAccess";
 
 const DEBUG = typeof window !== "undefined" && (window as unknown as { __CHESS_DEBUG?: boolean }).__CHESS_DEBUG;
+
+/** Searched score of the played line, side-to-move POV in pawns (Stockfish only). */
+export type BotMoveInfo = { scoreStm?: number };
+type BotMoveResult = { move: string; scoreStm?: number };
 
 function botEngineContext(config: EngineConfig): BotEngineContext {
   return { elo: config.elo, difficulty: config.difficulty };
@@ -141,7 +146,7 @@ export function useStockfish() {
   const getBestMove = (
     fen: string,
     config: EngineConfig,
-    onMove: (move: string) => void,
+    onMove: (move: string, info?: BotMoveInfo) => void,
     options?: {
       moveHistoryUci: string[];
       playerColor: "white" | "black";
@@ -260,8 +265,9 @@ export function useStockfish() {
     };
 
     const playWithStockfish = () =>
-      stockfishClient.enqueue<string>((ctx) => {
+      stockfishClient.enqueue<BotMoveResult>((ctx) => {
         const lineMoves = new Map<number, string>();
+        const lineScores = new Map<string, number>();
         const baseMultiPv = arenaStyle
         ? engineOpts.multiPv
         : multiPvCountForPlay(config);
@@ -283,13 +289,11 @@ export function useStockfish() {
         };
 
         ctx.onLine((line) => {
-          if (multiPv > 1 && line.startsWith("info ") && line.includes(" pv ")) {
-            const mp = line.match(/\bmultipv\s+(\d+)/i);
-            const pvMatch = line.match(/\bpv\s+(\S+)/);
-            if (mp && pvMatch) {
-              const idx = parseInt(mp[1], 10);
-              const first = pvMatch[1];
-              if (first && /^[a-h][1-8][a-h][1-8]/.test(first)) lineMoves.set(idx, first);
+          if (line.startsWith("info ") && line.includes(" pv ")) {
+            const parsed = parseStockfishPvInfoLine(line);
+            if (parsed) {
+              lineMoves.set(parsed.multipv, parsed.pvUci[0]!);
+              lineScores.set(parsed.pvUci[0]!, parsed.evalPawns);
             }
           }
 
@@ -307,10 +311,14 @@ export function useStockfish() {
                 : pickPersonaBiasedMove(move, lineMoves, config, Math.random, arenaStyle);
             }
             resetEngineOptions();
-            return move;
+            return { move, scoreStm: move ? lineScores.get(move) : undefined };
           }
           return undefined;
         });
+
+        // Arena bots share one worker: start each search with an empty hash so
+        // neither side (nor the referee) benefits from the other's analysis.
+        if (arenaStyle) ctx.send("ucinewgame");
 
         ctx.send(`setoption name Skill Level value ${skill}`);
         ctx.send(`setoption name Threads value ${threads}`);
@@ -343,14 +351,14 @@ export function useStockfish() {
         chessAvatarAllowed
       );
 
-      const markChessAvatar = (move: string) => {
+      const markChessAvatar = (move: string): BotMoveResult => {
         setLastBotEngineUsed("chessavatar");
         trackChessAvatarTelemetry("chessavatar_move_ok", { context: "bot" });
-        return move;
+        return { move };
       };
-      const markStockfish = (move: string) => {
+      const markStockfish = (result: BotMoveResult): BotMoveResult => {
         setLastBotEngineUsed("stockfish");
-        return move;
+        return result;
       };
 
       if (resolved === "chessavatar") {
@@ -371,9 +379,9 @@ export function useStockfish() {
     })();
 
     void botMovePromise
-      .then((move) => {
+      .then(({ move, scoreStm }) => {
         setIsThinking(false);
-        onMove(move);
+        onMove(move, { scoreStm });
       })
       .catch(() => setIsThinking(false));
   };

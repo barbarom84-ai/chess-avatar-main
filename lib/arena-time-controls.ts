@@ -8,7 +8,7 @@ export const ARENA_DEFAULT_TIME_PRESET_ID = "blitz_3_0";
 
 export const ARENA_TIME_PRESET_STORAGE = "chess-arena.timePresetId";
 
-/** Bullet 1+0 — arène uniquement (absent du PvP). */
+/** Bullet 1+0 — garanti en arène même si le PvP ne le propose pas. */
 const ARENA_BULLET_1_0: PvpTimePreset = {
   id: "bullet_1_0",
   mode: "timed",
@@ -16,11 +16,11 @@ const ARENA_BULLET_1_0: PvpTimePreset = {
   incrementSec: 0,
 };
 
-/** Cadences disponibles en arène (sans illimitée). */
+/** Cadences disponibles en arène (sans illimitée), sans doublon d’id. */
 export const ARENA_TIME_PRESETS: readonly PvpTimePreset[] = [
   ARENA_BULLET_1_0,
   ...PVP_TIME_PRESETS.filter((p) => p.mode === "timed"),
-] as const;
+].filter((p, i, all) => all.findIndex((q) => q.id === p.id) === i);
 
 const PRESET_BY_ID = new Map(ARENA_TIME_PRESETS.map((p) => [p.id, p]));
 

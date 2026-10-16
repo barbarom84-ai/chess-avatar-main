@@ -5,7 +5,7 @@ import {
   stmMateToWhitePov,
   toWhitePovEval,
 } from "@/lib/engine-eval";
-import { stmEvalToWhitePov } from "@/lib/arena-spectator-helpers";
+import { stmEvalToWhitePov } from "@/lib/arena-chess";
 
 const WHITE_TO_MOVE =
   "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";

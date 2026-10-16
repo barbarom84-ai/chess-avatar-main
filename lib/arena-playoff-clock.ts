@@ -83,8 +83,21 @@ export function commitPlayoffClockTurn(
   };
 }
 
-export function switchPlayoffClockTurn(clock: PlayoffClockState): PlayoffClockState {
-  return { ...clock, turnStartedAt: Date.now() };
+export function switchPlayoffClockTurn(
+  clock: PlayoffClockState,
+  nowMs = Date.now()
+): PlayoffClockState {
+  return { ...clock, turnStartedAt: nowMs };
+}
+
+/** Remaining time of `side` if it were to stop thinking at `nowMs`. */
+export function remainingPlayoffClockMs(
+  clock: PlayoffClockState,
+  side: "w" | "b",
+  nowMs = Date.now()
+): number {
+  const base = side === "w" ? clock.whiteMs : clock.blackMs;
+  return base - Math.max(0, nowMs - clock.turnStartedAt);
 }
 
 export function getPlayoffClockDisplay(

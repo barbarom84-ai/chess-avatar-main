@@ -16,6 +16,7 @@ import { BookOpen, Loader2 } from "lucide-react";
 type ArenaForcedOpeningPickerProps = {
   value: string | null;
   onChange: (openingId: string | null) => void;
+  disabled?: boolean;
 };
 
 function openingMatchesQuery(opening: Opening, q: string, lang: string): boolean {
@@ -33,6 +34,7 @@ function openingMatchesQuery(opening: Opening, q: string, lang: string): boolean
 export default function ArenaForcedOpeningPicker({
   value,
   onChange,
+  disabled = false,
 }: ArenaForcedOpeningPickerProps) {
   const { t, lang } = useLanguage();
   const ap = t.arenaPage;
@@ -64,17 +66,12 @@ export default function ArenaForcedOpeningPicker({
     : undefined;
 
   return (
-    <div className="rounded-lg border border-cyan-500/20 bg-slate-900/60 px-3 py-3 space-y-2">
+    <fieldset disabled={disabled} className="space-y-2 disabled:opacity-60">
       <div className="flex flex-wrap items-start justify-between gap-2">
-        <div className="space-y-0.5 min-w-0">
-          <Label className="text-sm text-slate-200 flex items-center gap-1.5">
-            <BookOpen className="h-4 w-4 text-cyan-400 shrink-0" />
-            {ap.forcedOpeningLabel}
-          </Label>
-          <p className="text-[11px] text-slate-500 leading-snug">
-            {ap.adaptiveTimingHint}
-          </p>
-        </div>
+        <Label className="text-sm text-slate-200 flex items-center gap-1.5">
+          <BookOpen className="h-4 w-4 text-cyan-400 shrink-0" />
+          {ap.forcedOpeningLabel}
+        </Label>
         {loading && (
           <Loader2 className="h-4 w-4 animate-spin text-cyan-500 shrink-0" />
         )}
@@ -85,8 +82,9 @@ export default function ArenaForcedOpeningPicker({
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         placeholder={ap.forcedOpeningSearch}
+        aria-label={ap.forcedOpeningSearch}
         className="h-8 text-xs bg-slate-950 border-slate-700"
-        disabled={loading}
+        disabled={loading || disabled}
       />
 
       <ScrollArea className="h-[140px] rounded-md border border-slate-800 bg-slate-950/80">
@@ -156,6 +154,6 @@ export default function ArenaForcedOpeningPicker({
           ) : null}
         </div>
       )}
-    </div>
+    </fieldset>
   );
 }

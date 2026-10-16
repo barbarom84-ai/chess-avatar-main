@@ -6,4 +6,6 @@ export type ProfileOption = {
   config: EngineConfig;
   stats?: PersonaStats;
   savedAt: number;
+  /** Local human player: moves come from the board, not from the engine. */
+  human?: boolean;
 };
