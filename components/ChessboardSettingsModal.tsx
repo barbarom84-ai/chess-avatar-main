@@ -21,6 +21,10 @@ import {
   type ChessboardSettings,
   type NavIconTheme,
 } from "@/contexts/ChessboardSettingsContext";
+import {
+  BOARD_SCALE_MAX_PERCENT,
+  BOARD_SCALE_MIN_PERCENT,
+} from "@/lib/board-scale";
 import { useLanguage } from "@/lib/language-context";
 import { usePremium } from "@/hooks/usePremium";
 import UpgradeModal from "@/components/UpgradeModal";
@@ -437,6 +441,36 @@ export default function ChessboardSettingsModal({ open, onOpenChange }: Chessboa
                         />
                         <span className="text-sm tabular-nums text-cyan-300 w-12 text-right shrink-0">
                           {settings.lastMoveArrowOpacityPercent}%
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="p-3 bg-slate-900 rounded-lg space-y-3">
+                      <div>
+                        <Label htmlFor="board-scale" className="text-slate-200 font-medium">
+                          {t.chessboardSettings.boardScale}
+                        </Label>
+                        <p className="text-xs text-slate-400 mt-1">
+                          {t.chessboardSettings.boardScaleDesc}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <Slider
+                          id="board-scale"
+                          min={BOARD_SCALE_MIN_PERCENT}
+                          max={BOARD_SCALE_MAX_PERCENT}
+                          step={5}
+                          value={[settings.boardScalePercent]}
+                          onValueChange={(v) => {
+                            const n = v[0];
+                            if (typeof n === "number") {
+                              updateSettings({ boardScalePercent: n });
+                            }
+                          }}
+                          className="flex-1"
+                        />
+                        <span className="text-sm tabular-nums text-cyan-300 w-12 text-right shrink-0">
+                          {settings.boardScalePercent}%
                         </span>
                       </div>
                     </div>

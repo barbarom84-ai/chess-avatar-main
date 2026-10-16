@@ -16,6 +16,8 @@ import {
   type PendingSyntheticClick,
 } from "@/lib/board-synthetic-click";
 import { premoveDestinations } from "@/lib/pvp-premove";
+import { resolveScaledBoardMaxWidth } from "@/lib/board-scale";
+import BoardScaleQuickControl from "@/components/BoardScaleQuickControl";
 
 const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
 const RANKS = ["8", "7", "6", "5", "4", "3", "2", "1"];
@@ -44,6 +46,10 @@ interface SimpleChessboardProps {
   className?: string;
   /** Override default max-width; omit to use className-based sizing or the default cap. */
   boardMaxWidth?: string;
+  /** Skip the global board-scale preference (mini boards, previews). */
+  ignoreBoardScale?: boolean;
+  /** Hide the on-board +/- size control (defaults to hidden when ignoreBoardScale or compact). */
+  showScaleControl?: boolean;
   /** Override the global coordinates setting (e.g. hide files/ranks on a mini board). */
   showCoordinates?: boolean;
   /** Tighter padding so a small board does not eat piece space. */
@@ -64,11 +70,15 @@ export default function SimpleChessboard({
   squareEffects,
   className,
   boardMaxWidth,
+  ignoreBoardScale = false,
+  showScaleControl,
   showCoordinates: showCoordinatesProp,
   compact = false,
   premoveColor = null,
   onSquareTap,
 }: SimpleChessboardProps) {
+  const scaleControlVisible =
+    showScaleControl ?? (!ignoreBoardScale && !compact);
   const { settings } = useChessboardSettings();
   const {
     boardTheme,
@@ -449,19 +459,20 @@ export default function SimpleChessboard({
       tabIndex={onDrop ? 0 : undefined}
       role={onDrop ? "application" : undefined}
       aria-label={onDrop ? "Chessboard, use arrow keys to move focus and Enter to select" : "Chessboard"}
-      className={`w-full max-w-full aspect-square h-auto shrink-0 self-center bg-slate-800 ${
+      className={`group/board w-full max-w-full aspect-square h-auto shrink-0 self-center bg-slate-800 ${
         compact ? "p-0.5" : "p-1.5 sm:p-2"
       } rounded-lg shadow-2xl relative mx-auto min-h-0 outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/70 ${
         onDrop && isBoardDragging ? "touch-none" : onDrop ? "touch-manipulation" : ""
       } ${isBoardDragging ? "cursor-grabbing select-none" : ""} ${className ?? ""}`}
-      style={
-        boardMaxWidth
-          ? { maxWidth: boardMaxWidth }
-          : className
-            ? undefined
-            : { maxWidth: "min(96vw, 84vh, 820px)" }
-      }
+      style={(() => {
+        const maxWidth = resolveScaledBoardMaxWidth(boardMaxWidth, {
+          hasClassName: !!className,
+          ignoreBoardScale,
+        });
+        return maxWidth ? { maxWidth } : undefined;
+      })()}
     >
+      {scaleControlVisible && <BoardScaleQuickControl />}
       <div className="relative w-full aspect-square min-h-0">
       <div className="grid grid-cols-8 grid-rows-8 gap-0 w-full h-full min-h-0" role="grid">
         {displayRanks.map((rank, rankIdx) =>

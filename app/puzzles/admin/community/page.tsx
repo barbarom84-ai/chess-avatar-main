@@ -489,11 +489,12 @@ export default function CommunityPuzzleManualAdminPage() {
                       <span className="hidden sm:inline text-xs">{p.flipBoard}</span>
                     </Button>
                   </div>
-                  <div className="flex justify-center max-w-[min(100%,380px)] mx-auto aspect-square w-full">
+                  <div className="chessboard-frame chessboard-frame--md flex justify-center aspect-square w-full">
                     <SimpleChessboard
                       position={boardState.fen}
                       orientation={viewOrientation}
                       lastMove={boardState.lastMove}
+                      boardMaxWidth="100%"
                     />
                   </div>
                   <div className="flex flex-wrap items-center justify-center gap-2">
@@ -547,13 +548,14 @@ export default function CommunityPuzzleManualAdminPage() {
                       <p className="text-sm font-medium text-cyan-200/95">{p.composeTitle}</p>
                       <p className="text-xs text-slate-500 mt-1 leading-relaxed">{p.composeHint}</p>
                     </div>
-                    <div className="flex justify-center max-w-[min(100%,380px)] mx-auto aspect-square w-full">
+                    <div className="chessboard-frame chessboard-frame--md flex justify-center aspect-square w-full">
                       {composerPlayFen ? (
                         <SimpleChessboard
                           position={composerPlayFen}
                           orientation={viewOrientation}
                           lastMove={composerLastMove}
                           onDrop={handleComposerDrop}
+                          boardMaxWidth="100%"
                         />
                       ) : (
                         <p className="text-xs text-slate-500 self-center">

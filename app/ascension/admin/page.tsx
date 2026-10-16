@@ -957,6 +957,8 @@ export default function AscensionAdminPage() {
                               orientation={boardOrientationFromFen(
                                 normalizeFen(form.fen, form.side_to_move)
                               )}
+                              boardMaxWidth="100%"
+                              ignoreBoardScale
                             />
                           </div>
                         )}

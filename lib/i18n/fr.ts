@@ -1730,6 +1730,11 @@ export const fr = {
       lastMoveArrowOpacity: "Opacité de la flèche (dernier coup)",
       lastMoveArrowOpacityDesc:
         "Transparence de la flèche du dernier coup sur l’échiquier (minimum 10 %). Les flèches au clic droit ne sont pas modifiées.",
+      boardScale: "Taille de l’échiquier",
+      boardScaleDesc:
+        "Taille relative de l’échiquier sur toutes les pages (75–140 %). S’adapte à la hauteur d’écran et à la mise en page — pas une largeur fixe en pixels.",
+      boardScaleIncrease: "Agrandir l’échiquier",
+      boardScaleDecrease: "Réduire l’échiquier",
       soundDisabled: "Les effets sonores sont actuellement désactivés",
       close: "Fermer",
       themePreview: "Aperçu du Thème",

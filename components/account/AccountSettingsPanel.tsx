@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { Check, Cpu, Eye, Languages, Lock, Palette, Settings2, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
 import {
   BOARD_THEMES,
   PIECE_SETS,
@@ -13,6 +14,10 @@ import {
   type ChessboardSettings,
   type PieceSet,
 } from "@/contexts/ChessboardSettingsContext";
+import {
+  BOARD_SCALE_MAX_PERCENT,
+  BOARD_SCALE_MIN_PERCENT,
+} from "@/lib/board-scale";
 import { useBotEnginePreference } from "@/hooks/useBotEnginePreference";
 import type { BotEngineId } from "@/lib/bot-engine-preference";
 import { useLanguage } from "@/lib/language-context";
@@ -147,6 +152,29 @@ export function AccountSettingsPanel({ copy, isPremium, onUpgrade }: AccountSett
                 { value: "slow", label: cb.animSlow },
               ]}
             />
+          </div>
+          <div className="setting-row flex-col !items-stretch gap-2">
+            <span className="min-w-0">
+              <span className="block text-sm text-slate-200">{cb.boardScale}</span>
+              <span className="block text-[11px] text-slate-400">{cb.boardScaleDesc}</span>
+            </span>
+            <div className="flex items-center gap-3">
+              <Slider
+                min={BOARD_SCALE_MIN_PERCENT}
+                max={BOARD_SCALE_MAX_PERCENT}
+                step={5}
+                value={[settings.boardScalePercent]}
+                onValueChange={(v) => {
+                  const n = v[0];
+                  if (typeof n === "number") updateSettings({ boardScalePercent: n });
+                }}
+                className="flex-1"
+                aria-label={cb.boardScale}
+              />
+              <span className="text-sm tabular-nums text-cyan-300 w-12 text-right shrink-0">
+                {settings.boardScalePercent}%
+              </span>
+            </div>
           </div>
         </div>
       </section>

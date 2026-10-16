@@ -42,6 +42,7 @@ export default function ReviewCoachSightBoard({
           lastMove={sight.lastMove}
           arrows={sight.arrows}
           boardMaxWidth="8.25rem"
+          ignoreBoardScale
           showCoordinates={false}
           compact
         />

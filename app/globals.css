@@ -166,6 +166,56 @@ nextjs-portal {
   /* Accents */
   --purple-accent: 138 43 226;   /* #8A2BE2 - Violet néon */
   --cyan-glow: 0 255 255;        /* Effet lumineux */
+
+  /* Board size: layout-aware bases × user scale (see ChessboardSettings.boardScalePercent) */
+  --board-scale: 1;
+  --board-max-default: min(96vw, 84vh, 880px);
+  --board-max-puzzle: min(94vw, 70vh, 640px);
+  --board-max-lesson: min(94vw, 68vh, 560px);
+  --board-max-md: min(92vw, 56vh, 480px);
+  --board-max-pvp: min(100%, max(18rem, calc(100dvh - 14rem)));
+  --board-max-arena: min(94vw, max(280px, calc(100dvh - 330px)), 720px);
+}
+
+/* Shared board frames — scale with --board-scale for all play surfaces */
+.chessboard-frame {
+  width: 100%;
+  max-width: min(100%, calc(var(--board-max-default) * var(--board-scale)));
+  margin-inline: auto;
+}
+
+.chessboard-frame--puzzle {
+  max-width: min(100%, calc(var(--board-max-puzzle) * var(--board-scale)));
+}
+
+.chessboard-frame--lesson {
+  max-width: min(100%, calc(var(--board-max-lesson) * var(--board-scale)));
+}
+
+.chessboard-frame--md {
+  max-width: min(100%, calc(var(--board-max-md) * var(--board-scale)));
+}
+
+.chessboard-frame--pvp {
+  max-width: min(100%, calc(var(--board-max-pvp) * var(--board-scale)));
+}
+
+.chessboard-frame--arena {
+  max-width: min(100%, calc(var(--board-max-arena) * var(--board-scale)));
+}
+
+.chessboard-column--pvp {
+  max-width: 100%;
+}
+
+@media (orientation: landscape) {
+  .chessboard-column--pvp {
+    max-width: min(100%, calc(var(--board-max-pvp) * var(--board-scale)));
+  }
+}
+
+.chessboard-column--arena {
+  max-width: min(100%, calc(var(--board-max-arena) * var(--board-scale)));
 }
 
 .dark {

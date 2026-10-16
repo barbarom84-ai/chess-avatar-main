@@ -202,7 +202,9 @@ export default function MoveChallengeCard({
   const titleClass = lichessMode
     ? "text-base text-cyan-100/95"
     : "text-base text-amber-200/90";
-  const boardMax = lichessMode ? "max-w-[min(100%,400px)]" : "max-w-[min(100%,360px)]";
+  const boardFrameClass = lichessMode
+    ? "chessboard-frame chessboard-frame--puzzle"
+    : "chessboard-frame chessboard-frame--lesson";
 
   const choicesButtons = (
     <div className="flex flex-wrap gap-2 justify-center">
@@ -249,7 +251,7 @@ export default function MoveChallengeCard({
       )}
 
       <div
-        className={`chessboard-frame chessboard-frame--puzzle flex justify-center ${boardMax} mx-auto transition-opacity ${
+        className={`${boardFrameClass} flex justify-center transition-opacity ${
           wrongFlash ? "opacity-70 ring-2 ring-rose-600/50 rounded-sm" : ""
         }`}
       >
@@ -258,6 +260,7 @@ export default function MoveChallengeCard({
           orientation={boardOrientation}
           onDrop={picked ? undefined : handleBoardDrop}
           lastMove={lastMoveHighlight}
+          boardMaxWidth="100%"
         />
       </div>
 

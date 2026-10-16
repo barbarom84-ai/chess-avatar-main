@@ -238,7 +238,7 @@ export default function LichessPuzzlePlayer({
       </p>
 
       <div
-        className={`chessboard-frame chessboard-frame--puzzle flex justify-center max-w-[min(100%,400px)] mx-auto transition-opacity ${
+        className={`chessboard-frame chessboard-frame--puzzle flex justify-center transition-opacity ${
           wrongFlash ? "opacity-70 ring-2 ring-rose-600/50 rounded-sm" : ""
         }`}
       >
@@ -247,6 +247,7 @@ export default function LichessPuzzlePlayer({
           orientation={orientation}
           onDrop={solved || awaitingReply ? undefined : handleDrop}
           lastMove={lastMove}
+          boardMaxWidth="100%"
         />
       </div>
 

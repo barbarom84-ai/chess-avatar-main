@@ -38,8 +38,8 @@ import { useLanguage } from "@/lib/language-context";
 
 export type ArenaStatusTone = "idle" | "live" | "result" | "warn";
 
-/** Leaves room for both player bars under the page header on short screens. */
-const BOARD_MAX_WIDTH = "min(94vw, max(280px, calc(100dvh - 330px)), 600px)";
+/** Leaves room for both player bars under the page header on short screens.
+ * Size is driven by `.chessboard-column--arena` / `--board-scale` in globals.css. */
 
 function scoresFor(view: ArenaMatchView): { w: ArenaPlayerScore; b: ArenaPlayerScore } {
   const winner = view.outcome?.winner;
@@ -258,8 +258,7 @@ export default function ArenaBoardPanel({
     >
       <div
         ref={boardColumnRef}
-        className="arena-scroll-anchor min-w-0 space-y-2 mx-auto w-full"
-        style={{ maxWidth: BOARD_MAX_WIDTH }}
+        className="arena-scroll-anchor chessboard-column--arena min-w-0 space-y-2 mx-auto w-full"
       >
         {header}
         {hotSeatPass && (
@@ -269,7 +268,11 @@ export default function ArenaBoardPanel({
           </div>
         )}
         {barFor(topColor)}
-        <div data-testid="arena-board" data-interactive={humanTurn}>
+        <div
+          className="chessboard-frame chessboard-frame--arena"
+          data-testid="arena-board"
+          data-interactive={humanTurn}
+        >
           {humanTurn ? (
             <OnlineChessboard
               fen={view.fen}
@@ -277,14 +280,14 @@ export default function ArenaBoardPanel({
               lastMove={view.lastMove}
               canMove
               onSubmitUci={submitHumanMove}
-              boardMaxWidth={BOARD_MAX_WIDTH}
+              boardMaxWidth="100%"
             />
           ) : (
             <SimpleChessboard
               position={displayed.fen}
               orientation={boardOrientation}
               lastMove={displayed.lastMove}
-              boardMaxWidth={BOARD_MAX_WIDTH}
+              boardMaxWidth="100%"
             />
           )}
         </div>

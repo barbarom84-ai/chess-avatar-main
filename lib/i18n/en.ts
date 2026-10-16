@@ -1724,6 +1724,11 @@ export const en = {
       lastMoveArrowOpacity: "Last-move arrow opacity",
       lastMoveArrowOpacityDesc:
         "Transparency of the last-move arrow on the board (minimum 10%). Right-drawn arrows are unchanged.",
+      boardScale: "Board size",
+      boardScaleDesc:
+        "Relative size of the chessboard on every page (75–140%). Adapts to screen height and layout — not a fixed pixel width.",
+      boardScaleIncrease: "Enlarge board",
+      boardScaleDecrease: "Shrink board",
       soundDisabled: "Sound effects are currently disabled",
       close: "Close",
       themePreview: "Theme Preview",

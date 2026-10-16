@@ -5,8 +5,14 @@ import {
   useContext,
   useState,
   useLayoutEffect,
+  useEffect,
   ReactNode,
 } from "react";
+import {
+  BOARD_SCALE_DEFAULT_PERCENT,
+  boardScaleCssVar,
+  clampBoardScalePercent,
+} from "@/lib/board-scale";
 
 const STORAGE_KEY = 'chessboard-settings';
 
@@ -45,6 +51,11 @@ export interface ChessboardSettings {
   highlightLastMove: boolean;
   /** Opacité de la flèche « dernier coup » (10–100 %). */
   lastMoveArrowOpacityPercent: number;
+  /**
+   * Taille relative de l’échiquier (75–140 %), multiplie les formules
+   * viewport / layout — pas une largeur fixe en pixels.
+   */
+  boardScalePercent: number;
   animationSpeed: 'none' | 'fast' | 'normal' | 'slow';
   soundEnabled: boolean;
   /** Menu icons only — independent of the board piece set. */
@@ -299,10 +310,19 @@ const defaultSettings: ChessboardSettings = {
   showLegalMoves: true,
   highlightLastMove: true,
   lastMoveArrowOpacityPercent: 45,
+  boardScalePercent: BOARD_SCALE_DEFAULT_PERCENT,
   animationSpeed: 'normal',
   soundEnabled: false,
   navIconTheme: "android",
 };
+
+function applyBoardScaleCssVar(percent: number) {
+  if (typeof document === "undefined") return;
+  document.documentElement.style.setProperty(
+    "--board-scale",
+    boardScaleCssVar(percent)
+  );
+}
 
 function persistToStorage(data: ChessboardSettings) {
   if (typeof window === 'undefined') return;
@@ -343,12 +363,14 @@ export function ChessboardSettingsProvider({ children }: { children: ReactNode }
           typeof rawOp === "number" && !Number.isNaN(rawOp)
             ? Math.min(100, Math.max(10, Math.round(rawOp)))
             : defaultSettings.lastMoveArrowOpacityPercent;
+        const clampedScale = clampBoardScalePercent(parsed.boardScalePercent);
         setSettings({
           ...defaultSettings,
           ...parsed,
           boardTheme: savedTheme,
           pieceSet: savedPieceSet,
           lastMoveArrowOpacityPercent: clampedOp,
+          boardScalePercent: clampedScale,
           navIconTheme: parseNavIconTheme(parsed.navIconTheme),
         });
       }
@@ -357,9 +379,16 @@ export function ChessboardSettingsProvider({ children }: { children: ReactNode }
     }
   }, []);
 
+  useEffect(() => {
+    applyBoardScaleCssVar(settings.boardScalePercent);
+  }, [settings.boardScalePercent]);
+
   const updateSettings = (newSettings: Partial<ChessboardSettings>) => {
     setSettings((prev) => {
       const next = { ...prev, ...newSettings };
+      if (typeof newSettings.boardScalePercent === "number") {
+        next.boardScalePercent = clampBoardScalePercent(newSettings.boardScalePercent);
+      }
       if (typeof window !== "undefined") persistToStorage(next);
       return next;
     });
