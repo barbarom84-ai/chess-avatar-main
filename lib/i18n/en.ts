@@ -1444,8 +1444,17 @@ export const en = {
 
     puzzlesPage: {
       title: "Tactical puzzles",
-      subtitle:
-        "Start with ChessAvatar challenges — positions from historic games in our catalog (same material as opening lessons). Plus daily and random puzzles via Lichess.",
+      subtitle: "One board. Pick a mode — daily, random, catalog, or community.",
+      brandLoadingLabel: "Puzzles",
+      modeLabel: "Mode",
+      modeDaily: "Daily",
+      modeRandom: "Random",
+      modeCatalog: "Catalog",
+      modeCommunity: "Community",
+      challengesHeading: "Challenges",
+      pickAChallenge: "Pick a challenge in the list to play.",
+      startRandom: "Load a random puzzle to start.",
+      startCommunity: "Load a community puzzle to start.",
       chessAvatarBadge: "ChessAvatar catalog",
       featuredSectionTitle: "ChessAvatar games & challenges",
       featuredSectionDesc:

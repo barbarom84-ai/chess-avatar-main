@@ -44,8 +44,8 @@ interface MoveChallengeCardProps {
   uciMoves: string[];
   lang: "fr" | "en";
   labels: MoveChallengeCardLabels;
-  /** `lichess`: board-first layout, multiple-choice hidden under details (puzzles page). */
-  presentation?: "classic" | "lichess";
+  /** `lichess` / `embedded`: board-first layout, multiple-choice hidden under details. `embedded` drops outer Card chrome. */
+  presentation?: "classic" | "lichess" | "embedded";
   lichessLike?: LichessLikeLabels;
   /** Suite affichée avec icônes de pièces après succès (ex. puzzles cloud manuels). */
   curatorLineVerboseMoves?: ChessJsMove[];
@@ -63,7 +63,9 @@ export default function MoveChallengeCard({
   curatorLinePrefix,
 }: MoveChallengeCardProps) {
   const { settings } = useChessboardSettings();
-  const lichessMode = presentation === "lichess" && !!lichessLike;
+  const lichessMode =
+    (presentation === "lichess" || presentation === "embedded") && !!lichessLike;
+  const embedded = presentation === "embedded";
 
   const [picked, setPicked] = useState<string | null>(null);
   const [hintIdx, setHintIdx] = useState(-1);
@@ -238,85 +240,72 @@ export default function MoveChallengeCard({
     </div>
   );
 
-  return (
-    <Card className={cardBorder}>
-      <PromotionDialog
-        open={promotionOpen}
-        pieceColor={sideToMove}
-        onSelect={handlePromotionSelect}
-      />
-      <CardHeader className="pb-2">
-        <CardTitle className={titleClass}>{pickLocalized(challenge.prompt, lang)}</CardTitle>
-        <p className="text-xs text-slate-500">{labels.positionLabel}</p>
-        {!picked && labels.playOnBoard && (
-          <p className="text-xs text-slate-500 pt-0.5">{labels.playOnBoard}</p>
-        )}
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {lichessMode && lichessLike && !isCorrectPick && stmLabel && (
-          <p className="text-xs text-center text-slate-400">
-            {lichessLike.sideToMove}: {stmLabel}
-          </p>
-        )}
+  const playContent = (
+    <div className="space-y-4">
+      {lichessMode && lichessLike && !isCorrectPick && stmLabel && (
+        <p className="text-xs text-center text-slate-400">
+          {lichessLike.sideToMove}: {stmLabel}
+        </p>
+      )}
 
-        <div
-          className={`flex justify-center ${boardMax} mx-auto transition-opacity ${
-            wrongFlash ? "opacity-70 ring-2 ring-rose-600/50 rounded-sm" : ""
-          }`}
-        >
-          <SimpleChessboard
-            position={displayFen}
-            orientation={boardOrientation}
-            onDrop={picked ? undefined : handleBoardDrop}
-            lastMove={lastMoveHighlight}
-          />
-        </div>
+      <div
+        className={`chessboard-frame chessboard-frame--puzzle flex justify-center ${boardMax} mx-auto transition-opacity ${
+          wrongFlash ? "opacity-70 ring-2 ring-rose-600/50 rounded-sm" : ""
+        }`}
+      >
+        <SimpleChessboard
+          position={displayFen}
+          orientation={boardOrientation}
+          onDrop={picked ? undefined : handleBoardDrop}
+          lastMove={lastMoveHighlight}
+        />
+      </div>
 
-        {lichessMode && lichessLike?.choicesAid ? (
-          <details className="rounded-md border border-slate-700/60 bg-slate-900/25 px-3 py-2 text-sm">
-            <summary className="cursor-pointer text-cyan-400/90 hover:text-cyan-300 select-none">
-              {lichessLike.choicesAid}
-            </summary>
-            <div className="pt-3">{choicesButtons}</div>
-          </details>
-        ) : (
-          choicesButtons
-        )}
+      {lichessMode && lichessLike?.choicesAid ? (
+        <details className="rounded-md border border-slate-700/60 bg-slate-900/25 px-3 py-2 text-sm">
+          <summary className="cursor-pointer text-cyan-400/90 hover:text-cyan-300 select-none">
+            {lichessLike.choicesAid}
+          </summary>
+          <div className="pt-3">{choicesButtons}</div>
+        </details>
+      ) : (
+        choicesButtons
+      )}
 
-        {picked && !isCorrectPick && (
-          <p className="text-sm text-rose-300 text-center">{labels.wrong}</p>
-        )}
+      {picked && !isCorrectPick && (
+        <p className="text-sm text-rose-300 text-center">{labels.wrong}</p>
+      )}
 
-        {showInsight && (
-          <p className="text-sm text-emerald-200/90 text-center border border-emerald-900/40 rounded-md p-3 bg-emerald-950/20">
-            <span className="inline-block max-w-full">
-              {labels.correct} —{" "}
-              {curatorLineVerboseMoves &&
-              curatorLineVerboseMoves.length > 0 &&
-              curatorLinePrefix ? (
-                <span
-                  className="inline-flex flex-wrap items-center justify-center gap-x-2 gap-y-1.5 align-middle"
-                  aria-label={curatorLineVerboseMoves.map((m) => m.san).join(" ")}
-                >
-                  <span>{pickLocalized(curatorLinePrefix, lang)}</span>
-                  {curatorLineVerboseMoves.map((mv, i) => (
-                    <SanNotation
-                      key={`cur-${i}-${mv.from}-${mv.to}`}
-                      verboseMove={mv}
-                      pieceSet={settings.pieceSet}
-                      size="sm"
-                    />
-                  ))}
-                </span>
-              ) : (
-                pickLocalized(challenge.insight, lang)
-              )}
-            </span>
-          </p>
-        )}
+      {showInsight && (
+        <p className="text-sm text-emerald-200/90 text-center border border-emerald-900/40 rounded-md p-3 bg-emerald-950/20">
+          <span className="inline-block max-w-full">
+            {labels.correct} —{" "}
+            {curatorLineVerboseMoves &&
+            curatorLineVerboseMoves.length > 0 &&
+            curatorLinePrefix ? (
+              <span
+                className="inline-flex flex-wrap items-center justify-center gap-x-2 gap-y-1.5 align-middle"
+                aria-label={curatorLineVerboseMoves.map((m) => m.san).join(" ")}
+              >
+                <span>{pickLocalized(curatorLinePrefix, lang)}</span>
+                {curatorLineVerboseMoves.map((mv, i) => (
+                  <SanNotation
+                    key={`cur-${i}-${mv.from}-${mv.to}`}
+                    verboseMove={mv}
+                    pieceSet={settings.pieceSet}
+                    size="sm"
+                  />
+                ))}
+              </span>
+            ) : (
+              pickLocalized(challenge.insight, lang)
+            )}
+          </span>
+        </p>
+      )}
 
-        <div className="flex flex-wrap gap-2 justify-center items-center">
-          {challenge.hints.length > 0 && (
+      <div className="flex flex-wrap gap-2 justify-center items-center">
+        {challenge.hints.length > 0 && (
           <Button
             type="button"
             variant="ghost"
@@ -327,27 +316,61 @@ export default function MoveChallengeCard({
           >
             {hintIdx < 0 ? labels.hint : labels.nextHint}
           </Button>
-          )}
-          {lichessMode && lichessLike ? (
-            <Button type="button" variant="secondary" size="sm" onClick={resetChallenge}>
-              {lichessLike.reset}
+        )}
+        {lichessMode && lichessLike ? (
+          <Button type="button" variant="secondary" size="sm" onClick={resetChallenge}>
+            {lichessLike.reset}
+          </Button>
+        ) : (
+          picked && (
+            <Button type="button" variant="ghost" size="sm" onClick={resetChallenge}>
+              {labels.tryAgain}
             </Button>
-          ) : (
-            picked && (
-              <Button type="button" variant="ghost" size="sm" onClick={resetChallenge}>
-                {labels.tryAgain}
-              </Button>
-            )
-          )}
-        </div>
+          )
+        )}
+      </div>
 
-        {challenge.hints.length > 0 && hintIdx >= 0 &&
-          challenge.hints.slice(0, hintIdx + 1).map((h, i) => (
-            <p key={i} className="text-sm text-slate-400 text-center italic">
-              {pickLocalized(h, lang)}
-            </p>
-          ))}
-      </CardContent>
-    </Card>
+      {challenge.hints.length > 0 &&
+        hintIdx >= 0 &&
+        challenge.hints.slice(0, hintIdx + 1).map((h, i) => (
+          <p key={i} className="text-sm text-slate-400 text-center italic">
+            {pickLocalized(h, lang)}
+          </p>
+        ))}
+    </div>
+  );
+
+  return (
+    <>
+      <PromotionDialog
+        open={promotionOpen}
+        pieceColor={sideToMove}
+        onSelect={handlePromotionSelect}
+      />
+      {embedded ? (
+        <div className="space-y-3">
+          <div className="space-y-1">
+            <h3 className={`text-sm font-semibold ${titleClass}`}>
+              {pickLocalized(challenge.prompt, lang)}
+            </h3>
+            {!picked && labels.playOnBoard && (
+              <p className="text-xs text-slate-500">{labels.playOnBoard}</p>
+            )}
+          </div>
+          {playContent}
+        </div>
+      ) : (
+        <Card className={cardBorder}>
+          <CardHeader className="pb-2">
+            <CardTitle className={titleClass}>{pickLocalized(challenge.prompt, lang)}</CardTitle>
+            <p className="text-xs text-slate-500">{labels.positionLabel}</p>
+            {!picked && labels.playOnBoard && (
+              <p className="text-xs text-slate-500 pt-0.5">{labels.playOnBoard}</p>
+            )}
+          </CardHeader>
+          <CardContent>{playContent}</CardContent>
+        </Card>
+      )}
+    </>
   );
 }

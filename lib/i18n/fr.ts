@@ -1448,8 +1448,17 @@ export const fr = {
 
     puzzlesPage: {
       title: "Puzzles tactiques",
-      subtitle:
-        "Retrouvez d’abord les défis pensés pour ChessAvatar — positions tirées de parties historiques du catalogue (comme dans les leçons d’ouverture). En complément, des puzzles quotidiens et aléatoires via Lichess.",
+      subtitle: "Un plateau. Choisissez un mode — jour, aléatoire, catalogue ou communauté.",
+      brandLoadingLabel: "Puzzles",
+      modeLabel: "Mode",
+      modeDaily: "Du jour",
+      modeRandom: "Aléatoire",
+      modeCatalog: "Catalogue",
+      modeCommunity: "Communauté",
+      challengesHeading: "Défis",
+      pickAChallenge: "Choisissez un défi dans la liste pour jouer.",
+      startRandom: "Chargez un puzzle aléatoire pour commencer.",
+      startCommunity: "Chargez un puzzle communautaire pour commencer.",
       chessAvatarBadge: "Catalogue ChessAvatar",
       featuredSectionTitle: "Parties & défis ChessAvatar",
       featuredSectionDesc:

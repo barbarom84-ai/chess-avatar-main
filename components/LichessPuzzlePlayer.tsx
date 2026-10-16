@@ -36,9 +36,19 @@ export interface LichessPuzzlePlayerProps {
     white: string;
     black: string;
   };
+  /** `minimal`: hide rating/themes/players (shown in meta rail). */
+  chrome?: "full" | "minimal";
+  /** Hide the “Open on Lichess” link (e.g. when already in meta rail). */
+  hideLichessLink?: boolean;
 }
 
-export default function LichessPuzzlePlayer({ puzzle, labels }: LichessPuzzlePlayerProps) {
+export default function LichessPuzzlePlayer({
+  puzzle,
+  labels,
+  chrome = "full",
+  hideLichessLink = false,
+}: LichessPuzzlePlayerProps) {
+  const minimal = chrome === "minimal";
   const solution = puzzle.solutionUci;
   const initialFen = puzzle.fen;
 
@@ -195,27 +205,32 @@ export default function LichessPuzzlePlayer({ puzzle, labels }: LichessPuzzlePla
   }, [puzzle.players]);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <PromotionDialog
         open={promotionOpen}
         pieceColor={sideToMoveChar === "w" ? "w" : "b"}
         onSelect={onPromotionPick}
       />
 
-      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-400 justify-center">
-        {playersLine && <span className="text-slate-300">{playersLine}</span>}
-        <span>
-          {labels.rating}: <strong className="text-slate-200">{puzzle.rating}</strong>
-        </span>
-        <span>
-          {labels.plays}: <strong className="text-slate-200">{puzzle.plays.toLocaleString()}</strong>
-        </span>
-      </div>
+      {!minimal && (
+        <>
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-400 justify-center">
+            {playersLine && <span className="text-slate-300">{playersLine}</span>}
+            <span>
+              {labels.rating}: <strong className="text-slate-200">{puzzle.rating}</strong>
+            </span>
+            <span>
+              {labels.plays}:{" "}
+              <strong className="text-slate-200">{puzzle.plays.toLocaleString()}</strong>
+            </span>
+          </div>
 
-      {puzzle.themes.length > 0 && (
-        <p className="text-xs text-center text-slate-500">
-          {labels.themes}: {puzzle.themes.join(", ")}
-        </p>
+          {puzzle.themes.length > 0 && (
+            <p className="text-xs text-center text-slate-500">
+              {labels.themes}: {puzzle.themes.join(", ")}
+            </p>
+          )}
+        </>
       )}
 
       <p className="text-xs text-center text-slate-400">
@@ -223,7 +238,7 @@ export default function LichessPuzzlePlayer({ puzzle, labels }: LichessPuzzlePla
       </p>
 
       <div
-        className={`flex justify-center max-w-[min(100%,400px)] mx-auto transition-opacity ${
+        className={`chessboard-frame chessboard-frame--puzzle flex justify-center max-w-[min(100%,400px)] mx-auto transition-opacity ${
           wrongFlash ? "opacity-70 ring-2 ring-rose-600/50 rounded-sm" : ""
         }`}
       >
@@ -239,14 +254,16 @@ export default function LichessPuzzlePlayer({ puzzle, labels }: LichessPuzzlePla
         <Button type="button" variant="secondary" size="sm" onClick={reset}>
           {labels.reset}
         </Button>
-        <a
-          href={`https://lichess.org/training/${puzzle.puzzleId}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-sm text-cyan-400 hover:text-cyan-300 underline-offset-2 hover:underline"
-        >
-          {labels.openOnLichess}
-        </a>
+        {!hideLichessLink && (
+          <a
+            href={`https://lichess.org/training/${puzzle.puzzleId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-cyan-400 hover:text-cyan-300 underline-offset-2 hover:underline"
+          >
+            {labels.openOnLichess}
+          </a>
+        )}
       </div>
 
       {solved && (
