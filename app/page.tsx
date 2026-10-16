@@ -2,252 +2,296 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Sparkles, Gamepad2, User, Search, BookOpen, Trophy, Zap, Target } from "lucide-react";
+import { Gamepad2, Search, Swords, Users, BookOpen, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { useLanguage } from "@/lib/language-context";
 
 export default function HomePage() {
   const { lang, t } = useLanguage();
 
-  const features = [
+  const steps = [
     {
-      icon: <Search className="h-8 w-8 text-cyan-400" />,
-      title: lang === "fr" ? "Analyse Intelligente" : "Smart Analysis",
-      description: lang === "fr" 
-        ? "Analysez votre profil Lichess ou Chess.com en quelques secondes" 
-        : "Analyze your Lichess or Chess.com profile in seconds"
+      num: "1",
+      title: lang === "fr" ? "Analysez" : "Analyze",
+      text:
+        lang === "fr"
+          ? "Entrez votre pseudo Lichess ou Chess.com"
+          : "Enter your Lichess or Chess.com username",
     },
     {
-      icon: <Sparkles className="h-8 w-8 text-purple-400" />,
-      title: lang === "fr" ? "Game Review" : "Game Review",
-      description: lang === "fr"
-        ? "Classification coup-par-coup, ACPL, moments clés et meilleures lignes"
-        : "Move-by-move classification, ACPL, key moments and best lines"
+      num: "2",
+      title: lang === "fr" ? "Créez" : "Build",
+      text:
+        lang === "fr"
+          ? "Votre clone IA est prêt en quelques secondes"
+          : "Your AI clone is ready in seconds",
     },
     {
-      icon: <Sparkles className="h-8 w-8 text-purple-400" />,
-      title: lang === "fr" ? "IA Personnalisée" : "Personalized AI",
-      description: lang === "fr"
-        ? "Créez un bot qui joue exactement comme vous"
-        : "Create a bot that plays exactly like you"
+      num: "3",
+      title: lang === "fr" ? "Jouez" : "Play",
+      text:
+        lang === "fr"
+          ? "Affrontez-le sur le site — ou en PvP"
+          : "Challenge it on the site — or play PvP",
+    },
+  ];
+
+  const modes = [
+    {
+      href: "/play",
+      icon: Gamepad2,
+      title: lang === "fr" ? "Contre un avatar" : "Vs an avatar",
+      text:
+        lang === "fr"
+          ? "Votre clone ou la bibliothèque publique"
+          : "Your clone or the public library",
     },
     {
-      icon: <Gamepad2 className="h-8 w-8 text-green-400" />,
-      title: lang === "fr" ? "Jeu en Ligne" : "Online Play",
-      description: lang === "fr"
-        ? "Affrontez votre clone IA directement sur le site"
-        : "Challenge your AI clone directly on the site"
+      href: "/online",
+      icon: Users,
+      title: lang === "fr" ? "PvP en ligne" : "Online PvP",
+      text:
+        lang === "fr"
+          ? "Matchmaking, amis et parties en cours"
+          : "Matchmaking, friends, and active games",
     },
     {
-      icon: <Target className="h-8 w-8 text-orange-400" />,
-      title: lang === "fr" ? "Lignes Forcées" : "Forced Lines",
-      description: lang === "fr"
-        ? "Programmez des ouvertures spécifiques pour votre bot"
-        : "Program specific openings for your bot"
+      href: "/arena",
+      icon: Swords,
+      title: lang === "fr" ? "Arène" : "Arena",
+      text:
+        lang === "fr"
+          ? "Avatar contre avatar en spectateur"
+          : "Avatar vs avatar, spectator mode",
     },
     {
-      icon: <BookOpen className="h-8 w-8 text-blue-400" />,
-      title: lang === "fr" ? "Export UCI" : "UCI Export",
-      description: lang === "fr"
-        ? "Compatible avec Fritz 20, ChessBase et Arena"
-        : "Compatible with Fritz 20, ChessBase and Arena"
+      href: "/games",
+      icon: Sparkles,
+      title: lang === "fr" ? "Analyser une partie" : "Review a game",
+      text:
+        lang === "fr"
+          ? "Import PGN et revue coup par coup"
+          : "PGN import and move-by-move review",
     },
-    {
-      icon: <Trophy className="h-8 w-8 text-yellow-400" />,
-      title: lang === "fr" ? "Sauvegarde Cloud" : "Cloud Save",
-      description: lang === "fr"
-        ? "Sauvegardez et partagez vos bots (inscription optionnelle)"
-        : "Save and share your bots (optional registration)"
-    }
   ];
 
   return (
     <main className="min-h-screen theme-gradient theme-text-primary">
-      
-      {/* HERO SECTION */}
-      <div className="relative overflow-hidden">
-        {/* Background Effects */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute w-96 h-96 -top-48 -left-48 bg-cyan-500/10 rounded-full blur-3xl"></div>
-          <div className="absolute w-96 h-96 -bottom-48 -right-48 bg-purple-500/10 rounded-full blur-3xl"></div>
+      {/* HERO — one composition: brand, headline, support, CTAs */}
+      <section className="relative overflow-hidden min-h-[calc(100dvh-4rem)] flex items-center">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden>
+          <div className="absolute w-[28rem] h-[28rem] -top-40 -left-40 bg-cyan-500/10 rounded-full blur-3xl" />
+          <div className="absolute w-[32rem] h-[32rem] -bottom-48 -right-40 bg-blue-600/10 rounded-full blur-3xl" />
+          <div
+            className="absolute inset-0 opacity-[0.04]"
+            style={{
+              backgroundImage:
+                "linear-gradient(rgba(34,211,238,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(34,211,238,0.5) 1px, transparent 1px)",
+              backgroundSize: "48px 48px",
+            }}
+          />
         </div>
 
-        <div className="relative max-w-7xl mx-auto px-4 py-16 md:py-24">
-          
-          {/* Logo & Title */}
-          <div className="text-center space-y-6 mb-12">
-            <div className="flex justify-center mb-6">
-              <div className="relative w-24 h-24">
-                <Image
-                  src="/knight-logo.png"
-                  alt="Chess Avatar"
-                  width={96}
-                  height={96}
-                  className="drop-shadow-2xl w-auto h-auto"
-                />
-              </div>
-            </div>
-
-            <h1 className="text-6xl md:text-7xl font-bold tracking-tight">
-              <span className="bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent">
-                Chess Avatar
-              </span>
-            </h1>
-
-            <p className="text-xl md:text-2xl text-cyan-300/80 max-w-3xl mx-auto">
-              {lang === "fr" 
-                ? "Créez une IA qui joue exactement comme vous"
-                : "Create an AI that plays exactly like you"}
-            </p>
-
-            <p className="text-lg text-slate-400 max-w-2xl mx-auto">
-              {lang === "fr"
-                ? "Analysez vos parties, personnalisez votre bot et affrontez votre clone aux échecs"
-                : "Analyze your games, customize your bot and challenge your chess clone"}
-            </p>
-
-            {/* CTA Buttons */}
-            <div className="flex flex-wrap gap-4 justify-center pt-8">
-              <Link href="/analyze">
-                <Button size="lg" className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-lg px-8 py-6 shadow-2xl shadow-cyan-900/50 border-2 border-cyan-400/30">
-                  <Search className="mr-2 h-6 w-6" />
-                  {lang === "fr" ? "Analyser mon Profil" : "Analyze my Profile"}
-                </Button>
-              </Link>
-
-              <Link href="/games">
-                <Button size="lg" variant="outline" className="border-2 border-purple-500/50 text-purple-300 hover:bg-purple-500/10 hover:border-purple-400 font-bold text-lg px-8 py-6">
-                  <Sparkles className="mr-2 h-6 w-6" />
-                  {lang === "fr" ? "Analyser une partie" : "Review a Game"}
-                </Button>
-              </Link>
-
-              <Link href="/play">
-                <Button size="lg" variant="outline" className="border-2 border-cyan-500/50 text-cyan-300 hover:bg-cyan-500/10 hover:border-cyan-400 font-bold text-lg px-8 py-6">
-                  <Gamepad2 className="mr-2 h-6 w-6" />
-                  {lang === "fr" ? "Jouer en Ligne" : "Play Online"}
-                </Button>
-              </Link>
-
-              <Link href="/profile">
-                <Button size="lg" variant="ghost" className="text-slate-300 hover:text-cyan-300 text-lg px-8 py-6">
-                  <User className="mr-2 h-6 w-6" />
-                  {t.myProfile}
-                </Button>
-              </Link>
-            </div>
-
-            {/* Info Badge */}
-            <div className="pt-4">
-              <Card className="bg-blue-900/30 border-cyan-500/30 backdrop-blur-sm inline-block">
-                <CardContent className="py-3 px-6">
-                  <p className="text-sm text-cyan-200">
-                    ✨ {lang === "fr" 
-                      ? "Aucune inscription requise pour tester" 
-                      : "No registration required to try"}
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
+        <div className="relative max-w-5xl mx-auto px-4 py-16 md:py-20 w-full text-center">
+          <div className="flex justify-center mb-8">
+            <Image
+              src="/knight-logo.png"
+              alt=""
+              width={112}
+              height={112}
+              priority
+              className="drop-shadow-2xl w-24 h-24 md:w-28 md:h-28"
+            />
           </div>
-        </div>
-      </div>
 
-      {/* FEATURES SECTION */}
-      <div className="bg-slate-950/50 py-16">
-        <div className="max-w-7xl mx-auto px-4">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-cyan-400">
-            {lang === "fr" ? "Fonctionnalités" : "Features"}
-          </h2>
+          <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-5">
+            <span className="bg-gradient-to-r from-cyan-300 via-cyan-400 to-blue-400 bg-clip-text text-transparent">
+              Chess Avatar
+            </span>
+          </h1>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {features.map((feature, idx) => (
-              <Card key={idx} className="bg-slate-900/50 border-slate-800 hover:border-cyan-500/50 transition-all duration-300 hover:shadow-xl hover:shadow-cyan-900/20">
-                <CardContent className="pt-6 pb-6 text-center space-y-4">
-                  <div className="flex justify-center">
-                    <div className="bg-slate-800/50 p-4 rounded-full">
-                      {feature.icon}
-                    </div>
-                  </div>
-                  <h3 className="text-xl font-semibold text-slate-100">
-                    {feature.title}
-                  </h3>
-                  <p className="text-slate-400 text-sm">
-                    {feature.description}
-                  </p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* HOW IT WORKS */}
-      <div className="py-16">
-        <div className="max-w-7xl mx-auto px-4">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-cyan-400">
-            {lang === "fr" ? "Comment ça marche ?" : "How does it work?"}
-          </h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            {[
-              { num: "1", emoji: "📊", text: lang === "fr" ? "Analysez" : "Analyze" },
-              { num: "2", emoji: "⚙️", text: lang === "fr" ? "Personnalisez" : "Customize" },
-              { num: "3", emoji: "💾", text: lang === "fr" ? "Sauvegardez" : "Save" },
-              { num: "4", emoji: "📥", text: lang === "fr" ? "Installez" : "Install" },
-              { num: "5", emoji: "🎮", text: lang === "fr" ? "Jouez !" : "Play!" }
-            ].map((step, idx) => (
-              <div key={idx} className="text-center">
-                <div className="bg-gradient-to-br from-cyan-500/20 to-blue-500/20 border-2 border-cyan-500/30 rounded-xl p-6 hover:scale-105 transition-transform">
-                  <div className="text-5xl mb-3">{step.emoji}</div>
-                  <div className="text-cyan-400 font-bold text-lg">{step.text}</div>
-                </div>
-                {idx < 4 && (
-                  <div className="hidden md:block text-cyan-500/30 text-2xl mt-4">→</div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* CTA SECTION */}
-      <div className="bg-gradient-to-r from-cyan-900/30 to-blue-900/30 py-16">
-        <div className="max-w-4xl mx-auto px-4 text-center space-y-6">
-          <h2 className="text-4xl font-bold text-cyan-300">
-            {lang === "fr" ? "Prêt à créer votre avatar ?" : "Ready to create your avatar?"}
-          </h2>
-          <p className="text-xl text-slate-300">
+          <p className="text-xl md:text-2xl text-cyan-100/90 max-w-2xl mx-auto font-medium">
             {lang === "fr"
-              ? "Commencez en quelques secondes, aucune inscription requise"
-              : "Get started in seconds, no registration required"}
+              ? "Une IA qui joue exactement comme vous"
+              : "An AI that plays exactly like you"}
+          </p>
+
+          <p className="mt-4 text-base md:text-lg text-slate-400 max-w-xl mx-auto">
+            {lang === "fr"
+              ? "Analysez votre profil Lichess ou Chess.com, puis affrontez votre clone."
+              : "Analyze your Lichess or Chess.com profile, then challenge your clone."}
+          </p>
+
+          <div className="flex flex-col sm:flex-row flex-wrap gap-3 justify-center items-center pt-10">
+            <Link href="/analyze">
+              <Button
+                size="lg"
+                className="bg-cyan-600 hover:bg-cyan-500 text-white font-semibold text-base md:text-lg px-8 py-6 shadow-xl shadow-cyan-950/40 border border-cyan-400/20"
+              >
+                <Search className="mr-2 h-5 w-5" />
+                {lang === "fr" ? "Créer mon avatar" : "Build my avatar"}
+              </Button>
+            </Link>
+
+            <Link href="/play">
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-2 border-cyan-500/40 text-cyan-200 hover:bg-cyan-500/10 hover:border-cyan-400 font-semibold text-base md:text-lg px-8 py-6"
+              >
+                <Gamepad2 className="mr-2 h-5 w-5" />
+                {lang === "fr" ? "Jouer contre un avatar" : "Play vs an avatar"}
+              </Button>
+            </Link>
+          </div>
+
+          <p className="pt-6 text-sm text-slate-500">
+            {lang === "fr"
+              ? "Aucune inscription requise pour tester"
+              : "No registration required to try"}
+            <span className="mx-2 text-slate-700" aria-hidden>
+              ·
+            </span>
+            <Link
+              href="/online"
+              className="text-cyan-400/80 hover:text-cyan-300 transition-colors"
+            >
+              {lang === "fr" ? "Ou jouer en PvP" : "Or play PvP"}
+            </Link>
+          </p>
+        </div>
+      </section>
+
+      {/* HOW IT WORKS — 3 steps, product funnel */}
+      <section className="border-t border-slate-800/80 py-16 md:py-20">
+        <div className="max-w-5xl mx-auto px-4">
+          <h2 className="text-2xl md:text-3xl font-bold text-center text-cyan-300 mb-12">
+            {t.howItWorks.title}
+          </h2>
+
+          <ol className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-6">
+            {steps.map((step, idx) => (
+              <li key={step.num} className="relative text-center md:text-left">
+                <div className="flex md:block items-start gap-4">
+                  <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-cyan-500/40 bg-cyan-500/10 text-cyan-300 font-bold">
+                    {step.num}
+                  </span>
+                  <div className="md:mt-4">
+                    <h3 className="text-lg font-semibold text-slate-100">
+                      {step.title}
+                    </h3>
+                    <p className="mt-1 text-sm text-slate-400">{step.text}</p>
+                  </div>
+                </div>
+                {idx < steps.length - 1 && (
+                  <span
+                    className="hidden md:block absolute top-5 right-0 translate-x-1/2 text-cyan-500/25 text-xl"
+                    aria-hidden
+                  >
+                    →
+                  </span>
+                )}
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      {/* MODES — secondary destinations, not a feature dump */}
+      <section className="border-t border-slate-800/80 bg-slate-950/40 py-16 md:py-20">
+        <div className="max-w-5xl mx-auto px-4">
+          <h2 className="text-2xl md:text-3xl font-bold text-center text-cyan-300 mb-3">
+            {lang === "fr" ? "Continuer à jouer" : "Keep playing"}
+          </h2>
+          <p className="text-center text-slate-400 text-sm mb-10 max-w-lg mx-auto">
+            {lang === "fr"
+              ? "Une fois votre avatar créé, choisissez comment l’utiliser."
+              : "Once your avatar is ready, choose how to use it."}
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
+            {modes.map((mode) => {
+              const Icon = mode.icon;
+              return (
+                <Link
+                  key={mode.href}
+                  href={mode.href}
+                  className="group flex gap-4 items-start rounded-lg p-3 -mx-3 transition-colors hover:bg-slate-900/60"
+                >
+                  <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-900 border border-slate-800 text-cyan-400 group-hover:border-cyan-500/40 transition-colors">
+                    <Icon className="h-5 w-5" />
+                  </span>
+                  <span>
+                    <span className="block font-semibold text-slate-100 group-hover:text-cyan-300 transition-colors">
+                      {mode.title}
+                    </span>
+                    <span className="block text-sm text-slate-400 mt-0.5">
+                      {mode.text}
+                    </span>
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+
+          <p className="mt-10 text-center">
+            <Link
+              href="/learn"
+              className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-cyan-400 transition-colors"
+            >
+              <BookOpen className="h-4 w-4" />
+              {lang === "fr"
+                ? "Ouvertures, puzzles et Ascension"
+                : "Openings, puzzles, and Ascension"}
+            </Link>
+          </p>
+        </div>
+      </section>
+
+      {/* CLOSING CTA */}
+      <section className="border-t border-slate-800/80 py-16">
+        <div className="max-w-2xl mx-auto px-4 text-center space-y-5">
+          <h2 className="text-2xl md:text-3xl font-bold text-cyan-200">
+            {lang === "fr"
+              ? "Prêt à créer votre avatar ?"
+              : "Ready to create your avatar?"}
+          </h2>
+          <p className="text-slate-400">
+            {lang === "fr"
+              ? "Quelques secondes, aucune inscription requise."
+              : "A few seconds, no registration required."}
           </p>
           <Link href="/analyze">
-            <Button size="lg" className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-xl px-12 py-7 shadow-2xl">
-              <Zap className="mr-2 h-6 w-6" />
-              {lang === "fr" ? "Commencer Maintenant" : "Get Started Now"}
+            <Button
+              size="lg"
+              className="bg-cyan-600 hover:bg-cyan-500 text-white font-semibold px-10 py-6"
+            >
+              <Search className="mr-2 h-5 w-5" />
+              {lang === "fr" ? "Commencer" : "Get started"}
             </Button>
           </Link>
         </div>
-      </div>
+      </section>
 
-      {/* FOOTER */}
       <footer className="bg-slate-950/80 py-10 border-t border-slate-800">
         <div className="max-w-7xl mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-sm">
-            {/* Navigation */}
             <div>
-              <h4 className="font-semibold text-slate-300 mb-3">{lang === "fr" ? "Navigation" : "Navigation"}</h4>
+              <h4 className="font-semibold text-slate-300 mb-3">
+                {lang === "fr" ? "Navigation" : "Navigation"}
+              </h4>
               <div className="flex flex-col gap-2 text-slate-500">
                 <Link href="/analyze" className="hover:text-cyan-400 transition-colors">
-                  {lang === "fr" ? "Analyser" : "Analyze"}
+                  {lang === "fr" ? "Créer" : "Build"}
                 </Link>
                 <Link href="/play" className="hover:text-cyan-400 transition-colors">
                   {lang === "fr" ? "Jouer" : "Play"}
                 </Link>
-                <Link href="/profile" className="hover:text-cyan-400 transition-colors">
-                  {lang === "fr" ? "Mon Profil" : "My Profile"}
+                <Link href="/online" className="hover:text-cyan-400 transition-colors">
+                  PvP
+                </Link>
+                <Link href="/games" className="hover:text-cyan-400 transition-colors">
+                  {lang === "fr" ? "Parties" : "Games"}
                 </Link>
                 <Link href="/guide" className="hover:text-cyan-400 transition-colors">
                   {lang === "fr" ? "Guide d'installation" : "Installation Guide"}
@@ -255,23 +299,27 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Legal */}
             <div>
-              <h4 className="font-semibold text-slate-300 mb-3">{lang === "fr" ? "Légal" : "Legal"}</h4>
+              <h4 className="font-semibold text-slate-300 mb-3">
+                {lang === "fr" ? "Légal" : "Legal"}
+              </h4>
               <div className="flex flex-col gap-2 text-slate-500">
                 <Link href="/terms" className="hover:text-cyan-400 transition-colors">
                   {lang === "fr" ? "Conditions générales" : "Terms of Service"}
                 </Link>
                 <Link href="/privacy" className="hover:text-cyan-400 transition-colors">
-                  {lang === "fr" ? "Politique de confidentialité" : "Privacy Policy"}
+                  {lang === "fr"
+                    ? "Politique de confidentialité"
+                    : "Privacy Policy"}
                 </Link>
                 <Link href="/refund" className="hover:text-cyan-400 transition-colors">
-                  {lang === "fr" ? "Politique de remboursement" : "Refund Policy"}
+                  {lang === "fr"
+                    ? "Politique de remboursement"
+                    : "Refund Policy"}
                 </Link>
               </div>
             </div>
 
-            {/* Contact */}
             <div>
               <h4 className="font-semibold text-slate-300 mb-3">Contact</h4>
               <div className="flex flex-col gap-2 text-slate-500">
@@ -300,11 +348,13 @@ export default function HomePage() {
           </div>
 
           <div className="text-center mt-8 pt-6 border-t border-slate-800 text-slate-600 text-xs">
-            © 2025 Chess Avatar • {lang === "fr" ? "Créez votre clone IA aux échecs" : "Create your chess AI clone"}
+            © 2026 Chess Avatar •{" "}
+            {lang === "fr"
+              ? "Créez votre clone IA aux échecs"
+              : "Create your chess AI clone"}
           </div>
         </div>
       </footer>
-
     </main>
   );
 }

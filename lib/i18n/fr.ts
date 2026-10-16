@@ -53,8 +53,8 @@ export const fr = {
       },
       games: {
         nav: "Parties",
-        title: "Mes parties et analyses",
-        subtitle: "Archive cloud, statistiques et import PGN rapide",
+        title: "Analyser une partie",
+        subtitle: "Import PGN, revue coup par coup, puis bibliothèque cloud",
         metaTitle: "Mes parties",
       },
       coach: {
@@ -108,6 +108,10 @@ export const fr = {
     // Results Section
     historyTitle: "Historique Analysé",
     selectGame: "Sélectionnez une partie pour voir le replay",
+    analyzeResults: {
+      statsTab: "Statistiques",
+      gamesTab: "Parties analysées",
+    },
     victory: "Victoire",
     draw: "Nulle",
     defeat: "Défaite",
@@ -120,22 +124,22 @@ export const fr = {
         description: "Entrez votre pseudo Lichess ou Chess.com et cliquez sur Analyser"
       },
       step2: {
-        title: "2. Personnalisez",
-        description: "Ajustez le niveau, le style de jeu et les ouvertures de votre bot"
+        title: "2. Créez",
+        description: "Votre clone IA est prêt — style, niveau et ouvertures calculés"
       },
       step3: {
-        title: "3. Sauvegardez",
-        description: "Téléchargez le profil JSON ou sauvegardez-le dans le cloud"
+        title: "3. Jouez",
+        description: "Affrontez-le sur le site, en PvP, ou exportez le moteur pour Fritz"
       },
       step4: {
         title: "4. Installez",
-        description: "Suivez le guide pour installer votre bot dans Fritz/Arena/ChessBase"
+        description: "Optionnel : suivez le guide pour Fritz, Arena ou ChessBase"
       },
       step5: {
-        title: "5. Jouez !",
-        description: "Affrontez votre clone IA directement en ligne ou dans votre logiciel"
+        title: "5. Encore plus",
+        description: "Arène, ouvertures, puzzles et Ascension pour aller plus loin"
       },
-      tip: "Astuce : Vous pouvez aussi jouer contre votre bot directement sur ce site en cliquant sur \"Jouer Contre ce Moteur\""
+      tip: "Astuce : après l'analyse, cliquez sur « Jouer Contre ce Moteur » pour démarrer tout de suite."
     },
     
     // Profile Page
@@ -575,8 +579,8 @@ export const fr = {
     
     // Games Page
     games: {
-      title: "Mes parties et analyses",
-      subtitle: "Archive cloud, statistiques et import PGN rapide",
+      title: "Analyser une partie",
+      subtitle: "Import PGN, revue coup par coup, puis bibliothèque cloud",
       stats: "Statistiques",
       totalGames: "Total Parties",
       total: "Total",
@@ -648,8 +652,10 @@ export const fr = {
       importPgnGenericError: "Erreur lors de l'import.",
       importPgnInProgress: "Import en cours...",
       importPgnNoFile: "Veuillez choisir un fichier .pgn.",
-      quickReviewSection: "Game Review rapide",
-      quickReviewSectionHint: "Analysez n'importe quel PGN, puis enregistrez-le dans votre bibliothèque via le bouton ou l'onglet Sauvegarde.",
+      quickReviewSection: "Importer et analyser",
+      quickReviewSectionHint: "Collez ou importez un PGN pour la revue coup par coup. Sauvegardez ensuite dans votre bibliothèque si vous le souhaitez.",
+      librarySection: "Bibliothèque de parties",
+      librarySectionHint: "Parties sauvegardées sur votre compte — filtrer, revoir, exporter.",
       backToHub: "Retour à mes parties",
       reviewing: "Analyse en cours",
       /** Badge au tableau des parties et dans l’en-tête de revue : résultat pour votre compte (évite la confusion avec le nom de l’adversaire). */
@@ -681,10 +687,10 @@ export const fr = {
       },
       step1: {
         title: "Générez votre pack moteur",
-        description: "Depuis la page d'accueil, analysez votre profil puis téléchargez votre pack personnalisé.",
+        description: "Depuis Créer (/analyze), analysez votre profil puis téléchargez votre pack personnalisé.",
         steps: [
-          "Allez sur la page d'accueil et analysez votre pseudo Lichess ou Chess.com",
-          "Sur la carte de votre avatar, cliquez sur le bouton vert « Pack moteur »",
+          "Allez sur Créer et analysez votre pseudo Lichess ou Chess.com",
+          "Sur la carte de votre avatar, cliquez sur « Pack moteur »",
           "Un fichier ChessAvatar_<VotreNom>_Pack.zip se télécharge dans votre dossier Téléchargements"
         ],
         contents: "Le pack contient : AvatarEngine.exe (moteur pré-compilé), install_engine.bat (installation auto), swap_profile.bat (changement d'avatar), votre profil JSON et un README."
@@ -2047,7 +2053,7 @@ export const fr = {
       cloudSavedToast: "Partie d’arène enregistrée.",
       cloudSaveErrorToast: "Impossible d’enregistrer la partie d’arène.",
       adaptiveTimingHint:
-        "3 s par coup après l’ouverture théorique ; coup instantané s’il n’y en a qu’un de légal ; mode rapide sous 20 s.",
+        "La réflexion suit la vitesse choisie et s’adapte à la pendule : coup instantané s’il n’y en a qu’un de légal, accélération sous 20 s.",
       forcedOpeningLabel: "Ouverture imposée (tous les avatars)",
       forcedOpeningNone: "Aucune — répertoire de chaque avatar",
       forcedOpeningSearch: "Rechercher une ouverture (nom, ECO, tag)…",
@@ -2055,11 +2061,136 @@ export const fr = {
       forcedOpeningNoUci: "Ligne UCI indisponible",
       forcedOpeningPlies: "{{n}} coups UCI",
       forcedOpeningLoading: "Chargement du catalogue…",
+      forcedOpeningChange: "Changer",
+      gameSettings: "Réglages de partie",
+      speedLabel: "Vitesse",
+      speedFast: "Rapide",
+      speedNormal: "Normal",
+      speedRealistic: "Réaliste",
+      speedHint:
+        "Rapide ≈ 0,8 s par coup, Normal ≈ 3 s, Réaliste ≈ 6 s — toujours limité par la pendule.",
+      lockedDuringGame: "Réglages verrouillés pendant la partie.",
+      needTwoProfiles:
+        "Il faut au moins deux profils (locaux ou publics dans la bibliothèque cloud) pour lancer l’arène.",
+      matchupTitle: "Affiche",
+      chooseAvatars: "Choisir les avatars",
+      editingSide: "Vous choisissez :",
+      swapColors: "Inverser les couleurs",
+      randomMatchup: "Matchup aléatoire",
+      showMore: "Afficher plus ({n})",
+      advancedSettings: "Réglages avancés",
+      depthHint:
+        "Plafond de profondeur du moteur. La cadence peut le réduire automatiquement.",
+      flipBoard: "Retourner l’échiquier",
+      soundToggle: "Sons",
+      reviewTitle: "Bilan de la partie",
+      evalGraphLabel: "Évaluation",
+      blunders: "Gaffes",
+      mistakes: "Erreurs",
+      inaccuracies: "Imprécisions",
+      keyMoments: "Moments clés",
+      noKeyMoments: "Aucune erreur marquante : partie propre des deux côtés.",
+      analyzeGame: "Analyser cette partie",
+      seriesLengthLabel: "Match",
+      seriesSingle: "1 partie",
+      seriesGameLabel: "Partie {n} / {total}",
+      seriesScoreLabel: "Score du match",
+      seriesWon: "{name} remporte le match",
+      seriesDrawn: "Match nul",
+      seriesNextGame: "Partie suivante",
+      seriesNextSoon: "Partie suivante dans un instant (couleurs inversées)…",
+      showLess: "Afficher moins",
+      shareImage: "Image",
+      imageSaved: "Image enregistrée.",
+      imageError: "Impossible de générer l’image.",
+      arenaElo: "Elo Arène",
+      h2hTitle: "Face-à-face",
+      h2hDraws: "{n} nulle(s)",
+      h2hNone: "Jamais affrontés",
+      leaderboardTitle: "Classement Arène",
+      leaderboardHint:
+        "Elo calculé à partir des parties Arène jouées dans ce navigateur (Spectateur et Playoff). Départ = Elo estimé de l’avatar.",
+      leaderboardEmpty: "Aucune partie classée pour l’instant : lancez un match !",
+      leaderboardAvatar: "Avatar",
+      leaderboardGames: "Parties",
+      leaderboardRecord: "V / N / D",
+      leaderboardRecordHint: "Victoires / Nulles / Défaites",
+      leaderboardProvisional: "Classement provisoire (moins de 10 parties)",
+      leaderboardReset: "Réinitialiser",
+      leaderboardResetConfirm: "Effacer le classement Arène et tous les face-à-face ?",
+      copyPgn: "Copier le PGN",
+      downloadPgn: "Télécharger le PGN",
+      pgnCopied: "PGN copié dans le presse-papiers.",
+      pgnCopyError: "Impossible de copier le PGN.",
+      moveListTitle: "Coups",
+      moveListEmpty: "Aucun coup joué pour l’instant.",
+      navFirst: "Position de départ",
+      navPrev: "Coup précédent",
+      navNext: "Coup suivant",
+      navLive: "Revenir au direct",
+      viewingPast: "Vous regardez le coup {n} sur {total}.",
+      statusPaused: "En pause",
+      engineError: "Le moteur n’a pas répondu. Relancez la partie.",
+      shortcutsHint: "Raccourcis : Espace = lancer / pause · → = un coup · F = retourner",
+      platformLichessShort: "Lichess",
+      platformChesscomShort: "Chess.com",
+      platformHumanShort: "Humain",
+      newGame: "Nouvelle partie",
+      yourMove: "À vous",
+      statusHumanTurn: "{name}, à vous de jouer sur l’échiquier",
+      humanPlayerLabel: "Joueur humain (local)",
+      humansTitle: "Joueurs humains",
+      humansHint:
+        "Ajoutez les joueurs présents : ils jouent sur cet appareil, chacun son tour, contre les avatars ou entre eux. Ils apparaissent dans le Spectateur, le Playoff et l’onglet Humains.",
+      humanNamePlaceholder: "Nom du joueur",
+      humanEloLabel: "Elo estimé",
+      humanAdd: "Ajouter",
+      humansEmpty: "Aucun joueur humain pour l’instant.",
+      humanRemove: "Retirer {name}",
+      humanRemoveConfirm: "Retirer {name} de l’Arène ? Son Elo Arène est conservé.",
+      humanNameDuplicate: "Ce nom est déjà pris.",
+      humanNameTooLong: "Le nom ne doit pas dépasser {n} caractères.",
+      humanNameEmpty: "Indiquez un nom.",
+      humanAdded: "{name} a rejoint l’Arène",
+      humanUpdated: "{name} mis à jour",
+      humanEdit: "Modifier {name}",
+      humanSave: "Enregistrer",
+      humanCancelEdit: "Annuler",
+      humanSeedEloHint:
+        "L’Elo indiqué ici sert au seeding du tableau. Le classement Arena (en bas) évolue après chaque partie.",
+      humanExport: "Exporter",
+      humanImport: "Importer",
+      humanExportDone: "Roster exporté.",
+      humanImportDone: "{n} ajouté(s), {skip} ignoré(s).",
+      humanImportError: "Fichier JSON invalide.",
+      leaderboardHumansTitle: "Classement des humains",
+      globalSettings: "Cadence & ouverture",
+      shortcutsHintMobile: "Utilisez Lancer / Pause et Coup par coup sur l’échiquier.",
+      passDeviceTo: "Passez l’appareil à {name}",
+      resign: "Abandonner",
+      resignConfirm: "Confirmer l’abandon ?",
+      offerDraw: "Nulle",
+      drawConfirm: "Accepter la nulle ?",
     },
 
     arenaPlayoff: {
       tabSpectator: "Spectateur",
       tabPlayoff: "Playoff",
+      tabHumans: "Humains",
+      humansSubtitle:
+        "Tournois entre joueurs humains sur cet appareil : élimination directe, toutes-rondes ou suisse, avec classement.",
+      notEnoughHumans: "Il faut au moins {n} joueurs humains pour remplir le tableau.",
+      humansNeedPlayers: "Ajoutez au moins {n} joueurs humains pour lancer un tournoi.",
+      humansNeedPlayersHint:
+        "Utilisez le panneau « Joueurs humains » ci-dessus. Chaque partie se joue sur cet échiquier, à tour de rôle.",
+      mixedSeedHint: "Les humains placés gardent leur place lors du remplissage automatique.",
+      swissHint:
+        "Suisse : 8 ou 16 joueurs, rondes générées au fil des résultats (pas de tableau préfixe).",
+      tournamentProgress: "Match {done} / {total}",
+      engineRecoveryHint: "Le moteur n’a pas répondu. Réessayer la partie, forfait, ou arrêter le tournoi.",
+      engineRetry: "Réessayer",
+      engineForfeit: "Forfait (camp au trait)",
+      engineForfeitNote: "Forfait moteur",
       title: "Playoff — tournoi à élimination",
       subtitle:
         "Glissez les cartes avatar sur les emplacements, puis lancez le bracket. Chaque duel respecte la cadence choisie ci-dessus.",
@@ -2072,16 +2203,34 @@ export const fr = {
       rosterDeckHint:
         "Glissez une mini-carte vers un emplacement, ou touchez une carte puis un slot.",
       rosterHint:
-        "Faites glisser une carte vers un emplacement #1–8. Cliquez sur × pour vider un slot.",
+        "Faites glisser une carte vers un emplacement numéroté. Cliquez sur × pour vider un slot.",
       dropHere: "Déposer ici",
       clearSlot: "Vider l’emplacement",
       champion: "Champion",
-      autoSeed: "Remplir auto (tops du roster)",
+      autoSeed: "Remplir par Elo",
+      randomSeed: "Remplir au hasard",
+      newTournament: "Nouveau tournoi",
+      notEnoughProfiles: "Il faut au moins {n} profils pour remplir le tableau.",
+      tiebreakHint:
+        "Nulle : revanche couleurs inversées, puis Armageddon (nulle = victoire des Noirs).",
+      rematchSwap: "Nulle — revanche avec couleurs inversées.",
+      armageddonStart:
+        "Encore nulle — partie Armageddon : les Noirs se qualifient en cas de nulle.",
+      armageddonDrawNote: "Armageddon nul — {name} (Noirs) se qualifie.",
+      gameLabel: "Partie {n}/{total}",
+      armageddonBadge: "Armageddon",
+      tournamentDone: "Tournoi terminé !",
+      lastResult: "Dernier résultat",
+      roundQuarter: "Quarts",
+      roundSemi: "Demi-finales",
+      roundFinal: "Finale",
+      boardPlaceholder:
+        "Placez les joueurs dans le tableau puis lancez le bracket : la partie s’affichera ici.",
       runTournament: "Lancer tout le bracket",
       seedsFilled: "{{n}} / {{total}} emplacements",
       playSelectedMatch: "Jouer le match sélectionné",
       selectMatch: "Sélectionnez un match prêt dans le bracket",
-      matchLive: "Match en cours — blitz 3+0",
+      matchLive: "Match en cours — {tc}",
       matchPaused: "Match interrompu",
       drawRematch: "Nulle — relance du duel.",
       crushingHint: "Victoire automatique si l’avantage atteint ±10.",
@@ -2094,9 +2243,26 @@ export const fr = {
       rosterSearch: "Filtrer le roster…",
       championsCachedHint:
         "Les champions viennent de la bibliothèque cloud (profils publics) — import manuel, pas de sync automatique.",
-      tapAssignHint: "Touchez un joueur, puis un emplacement #1–8 (mobile).",
+      tapAssignHint: "Touchez un joueur, puis un emplacement numéroté (mobile).",
       tapAssignActive: "Joueur sélectionné — choisissez un emplacement",
       tapAssignClear: "Annuler la sélection",
+      roundOf16: "Huitièmes",
+      formatLabel: "Format du tournoi",
+      formatKnockout: "Élimination",
+      formatRoundRobin: "Toutes-rondes",
+      formatSwiss: "Suisse",
+      playersCount: "{n} joueurs",
+      leagueHint:
+        "Une partie par appariement ({games} parties) : 1 point la victoire, ½ la nulle. Départage : Buchholz (suisse) ou Sonneborn-Berger (toutes-rondes).",
+      leagueRound: "Ronde {n} / {total}",
+      leaguePoints: "Pts",
+      leagueBye: "exempt",
+      tiebreakShort: "Dép.",
+      tiebreakBuchholz: "Buchholz : somme des points des adversaires",
+      tiebreakSb: "Sonneborn-Berger : points des adversaires battus (+ moitié pour les nulles)",
+      standingsTitle: "Classement du tournoi",
+      resumeTournament: "Reprendre le tournoi",
+      shareBracket: "Partager en image",
     },
 
     // Forced line editor
@@ -2323,6 +2489,7 @@ export const fr = {
       jsonOnly: "JSON seul",
       jsonOnlyTooltip: "Télécharger uniquement le profil JSON (utilisateurs avancés)",
       coach: "Coach",
+      moreActions: "Configurer & exporter",
     },
 
     avatarCard: {

@@ -53,8 +53,8 @@ export const en = {
       },
       games: {
         nav: "Games",
-        title: "My games and reviews",
-        subtitle: "Cloud archive, stats, and quick PGN import",
+        title: "Review a game",
+        subtitle: "PGN import, move-by-move review, then your cloud library",
         metaTitle: "My games",
       },
       coach: {
@@ -108,6 +108,10 @@ export const en = {
     // Results Section
     historyTitle: "Analyzed History",
     selectGame: "Select a game to see the replay",
+    analyzeResults: {
+      statsTab: "Statistics",
+      gamesTab: "Analyzed games",
+    },
     victory: "Victory",
     draw: "Draw",
     defeat: "Defeat",
@@ -120,22 +124,22 @@ export const en = {
         description: "Enter your Lichess or Chess.com username and click Analyze"
       },
       step2: {
-        title: "2. Customize",
-        description: "Adjust the level, playing style and openings of your bot"
+        title: "2. Build",
+        description: "Your AI clone is ready — style, level, and openings computed"
       },
       step3: {
-        title: "3. Save",
-        description: "Download the JSON profile or save it to the cloud"
+        title: "3. Play",
+        description: "Challenge it on the site, in PvP, or export the engine for Fritz"
       },
       step4: {
         title: "4. Install",
-        description: "Follow the guide to install your bot in Fritz/Arena/ChessBase"
+        description: "Optional: follow the guide for Fritz, Arena, or ChessBase"
       },
       step5: {
-        title: "5. Play!",
-        description: "Challenge your AI clone directly online or in your chess software"
+        title: "5. Go further",
+        description: "Arena, openings, puzzles, and Ascension when you want more"
       },
-      tip: "Tip: You can also play against your bot directly on this site by clicking \"Play Against this Engine\""
+      tip: "Tip: after analysis, click \"Play Against this Engine\" to start right away."
     },
     
     // Profile Page
@@ -575,8 +579,8 @@ export const en = {
     
     // Games Page
     games: {
-      title: "My games and reviews",
-      subtitle: "Cloud archive, stats, and quick PGN import",
+      title: "Review a game",
+      subtitle: "PGN import, move-by-move review, then your cloud library",
       stats: "Statistics",
       totalGames: "Total Games",
       total: "Total",
@@ -648,8 +652,10 @@ export const en = {
       importPgnGenericError: "Import failed.",
       importPgnInProgress: "Importing...",
       importPgnNoFile: "Please choose a .pgn file.",
-      quickReviewSection: "Quick Game Review",
-      quickReviewSectionHint: "Analyze any PGN, then save it to your library with the Save button or tab.",
+      quickReviewSection: "Import and review",
+      quickReviewSectionHint: "Paste or import a PGN for move-by-move review. Save to your library afterwards if you want.",
+      librarySection: "Game library",
+      librarySectionHint: "Games saved to your account — filter, review, export.",
       backToHub: "Back to my games",
       reviewing: "Reviewing",
       resultBadgeYouWon: "You won",
@@ -679,10 +685,10 @@ export const en = {
       },
       step1: {
         title: "Generate your engine pack",
-        description: "From the homepage, analyze your profile then download your personalized pack.",
+        description: "From Build (/analyze), analyze your profile then download your personalized pack.",
         steps: [
-          "Go to the homepage and analyze your Lichess or Chess.com username",
-          "On your avatar card, click the green \"Engine pack\" button",
+          "Go to Build and analyze your Lichess or Chess.com username",
+          "On your avatar card, click \"Engine pack\"",
           "A ChessAvatar_<YourName>_Pack.zip file downloads to your Downloads folder"
         ],
         contents: "The pack contains: AvatarEngine.exe (pre-compiled engine), install_engine.bat (auto installer), swap_profile.bat (avatar swap tool), your JSON profile and a README."
@@ -2040,7 +2046,7 @@ export const en = {
       cloudSavedToast: "Arena game saved.",
       cloudSaveErrorToast: "Could not save the arena game.",
       adaptiveTimingHint:
-        "3 s per move after the theoretical opening; instant when only one legal move; fast mode under 20 s.",
+        "Thinking time follows the selected speed and adapts to the clock: instant when only one legal move, faster under 20 s.",
       forcedOpeningLabel: "Forced opening (all avatars)",
       forcedOpeningNone: "None — each avatar's repertoire",
       forcedOpeningSearch: "Search an opening (name, ECO, tag)…",
@@ -2048,11 +2054,136 @@ export const en = {
       forcedOpeningNoUci: "UCI line unavailable",
       forcedOpeningPlies: "{{n}} UCI moves",
       forcedOpeningLoading: "Loading catalogue…",
+      forcedOpeningChange: "Change",
+      gameSettings: "Game settings",
+      speedLabel: "Speed",
+      speedFast: "Fast",
+      speedNormal: "Normal",
+      speedRealistic: "Realistic",
+      speedHint:
+        "Fast ≈ 0.8 s per move, Normal ≈ 3 s, Realistic ≈ 6 s — always capped by the clock.",
+      lockedDuringGame: "Settings are locked during the game.",
+      needTwoProfiles:
+        "You need at least two profiles (local or public in the cloud library) to run the arena.",
+      matchupTitle: "Matchup",
+      chooseAvatars: "Choose avatars",
+      editingSide: "You are picking:",
+      swapColors: "Swap colors",
+      randomMatchup: "Random matchup",
+      showMore: "Show more ({n})",
+      advancedSettings: "Advanced settings",
+      depthHint:
+        "Engine depth ceiling. The time control may lower it automatically.",
+      flipBoard: "Flip board",
+      soundToggle: "Sound",
+      reviewTitle: "Game summary",
+      evalGraphLabel: "Evaluation",
+      blunders: "Blunders",
+      mistakes: "Mistakes",
+      inaccuracies: "Inaccuracies",
+      keyMoments: "Key moments",
+      noKeyMoments: "No notable errors: a clean game on both sides.",
+      analyzeGame: "Analyze this game",
+      seriesLengthLabel: "Match",
+      seriesSingle: "1 game",
+      seriesGameLabel: "Game {n} / {total}",
+      seriesScoreLabel: "Match score",
+      seriesWon: "{name} wins the match",
+      seriesDrawn: "Match drawn",
+      seriesNextGame: "Next game",
+      seriesNextSoon: "Next game starting shortly (colors swapped)…",
+      showLess: "Show less",
+      shareImage: "Image",
+      imageSaved: "Image saved.",
+      imageError: "Could not generate the image.",
+      arenaElo: "Arena Elo",
+      h2hTitle: "Head-to-head",
+      h2hDraws: "{n} draw(s)",
+      h2hNone: "Never met",
+      leaderboardTitle: "Arena leaderboard",
+      leaderboardHint:
+        "Elo computed from the Arena games played in this browser (Spectator and Playoff). Starts at the avatar's estimated Elo.",
+      leaderboardEmpty: "No rated games yet: start a match!",
+      leaderboardAvatar: "Avatar",
+      leaderboardGames: "Games",
+      leaderboardRecord: "W / D / L",
+      leaderboardRecordHint: "Wins / Draws / Losses",
+      leaderboardProvisional: "Provisional rating (fewer than 10 games)",
+      leaderboardReset: "Reset",
+      leaderboardResetConfirm: "Clear the Arena leaderboard and all head-to-head records?",
+      copyPgn: "Copy PGN",
+      downloadPgn: "Download PGN",
+      pgnCopied: "PGN copied to clipboard.",
+      pgnCopyError: "Could not copy the PGN.",
+      moveListTitle: "Moves",
+      moveListEmpty: "No moves played yet.",
+      navFirst: "Starting position",
+      navPrev: "Previous move",
+      navNext: "Next move",
+      navLive: "Back to live",
+      viewingPast: "Viewing move {n} of {total}.",
+      statusPaused: "Paused",
+      engineError: "The engine did not answer. Restart the game.",
+      shortcutsHint: "Shortcuts: Space = start / pause · → = one move · F = flip",
+      platformLichessShort: "Lichess",
+      platformChesscomShort: "Chess.com",
+      platformHumanShort: "Human",
+      newGame: "New game",
+      yourMove: "Your move",
+      statusHumanTurn: "{name}, your move on the board",
+      humanPlayerLabel: "Human player (local)",
+      humansTitle: "Human players",
+      humansHint:
+        "Add the people around: they play on this device, taking turns, against avatars or each other. They show up in Spectator, Playoff and the Humans tab.",
+      humanNamePlaceholder: "Player name",
+      humanEloLabel: "Estimated Elo",
+      humanAdd: "Add",
+      humansEmpty: "No human players yet.",
+      humanRemove: "Remove {name}",
+      humanRemoveConfirm: "Remove {name} from the Arena? Their Arena Elo is kept.",
+      humanNameDuplicate: "This name is already taken.",
+      humanNameTooLong: "The name must be at most {n} characters.",
+      humanNameEmpty: "Enter a name.",
+      humanAdded: "{name} joined the Arena",
+      humanUpdated: "{name} updated",
+      humanEdit: "Edit {name}",
+      humanSave: "Save",
+      humanCancelEdit: "Cancel",
+      humanSeedEloHint:
+        "The Elo here is for bracket seeding. The Arena leaderboard below updates after each game.",
+      humanExport: "Export",
+      humanImport: "Import",
+      humanExportDone: "Roster exported.",
+      humanImportDone: "{n} added, {skip} skipped.",
+      humanImportError: "Invalid JSON file.",
+      leaderboardHumansTitle: "Human leaderboard",
+      globalSettings: "Time control & opening",
+      shortcutsHintMobile: "Use Start / Pause and Step on the board.",
+      passDeviceTo: "Pass the device to {name}",
+      resign: "Resign",
+      resignConfirm: "Confirm resignation?",
+      offerDraw: "Draw",
+      drawConfirm: "Agree to a draw?",
     },
 
     arenaPlayoff: {
       tabSpectator: "Spectator",
       tabPlayoff: "Playoff",
+      tabHumans: "Humans",
+      humansSubtitle:
+        "Tournaments between human players on this device: knockout, round-robin or Swiss, with standings.",
+      notEnoughHumans: "You need at least {n} human players to fill the bracket.",
+      humansNeedPlayers: "Add at least {n} human players to start a tournament.",
+      humansNeedPlayersHint:
+        "Use the “Human players” panel above. Every game is played on this board, taking turns.",
+      mixedSeedHint: "Placed humans keep their seat when auto-filling.",
+      swissHint:
+        "Swiss: 8 or 16 players; rounds are generated as results come in (no fixed bracket).",
+      tournamentProgress: "Match {done} / {total}",
+      engineRecoveryHint: "The engine did not answer. Retry the game, forfeit, or stop the tournament.",
+      engineRetry: "Retry",
+      engineForfeit: "Forfeit (side to move)",
+      engineForfeitNote: "Engine forfeit",
       title: "Playoff — single elimination",
       subtitle:
         "Drag avatar cards onto seed slots, then run the bracket. Each duel uses the time control selected above.",
@@ -2065,16 +2196,34 @@ export const en = {
       rosterDeckHint:
         "Drag a mini card onto a slot, or tap a card then tap a slot.",
       rosterHint:
-        "Drag a card onto slots #1–8. Click × to clear a slot.",
+        "Drag a card onto a numbered slot. Click × to clear a slot.",
       dropHere: "Drop here",
       clearSlot: "Clear slot",
       champion: "Champion",
-      autoSeed: "Auto-fill (top of roster)",
+      autoSeed: "Fill by Elo",
+      randomSeed: "Random fill",
+      newTournament: "New tournament",
+      notEnoughProfiles: "You need at least {n} profiles to fill the bracket.",
+      tiebreakHint:
+        "Draw: rematch with swapped colors, then Armageddon (draw = Black wins).",
+      rematchSwap: "Draw — rematch with swapped colors.",
+      armageddonStart:
+        "Another draw — Armageddon game: Black advances on a draw.",
+      armageddonDrawNote: "Armageddon drawn — {name} (Black) advances.",
+      gameLabel: "Game {n}/{total}",
+      armageddonBadge: "Armageddon",
+      tournamentDone: "Tournament complete!",
+      lastResult: "Last result",
+      roundQuarter: "Quarterfinals",
+      roundSemi: "Semifinals",
+      roundFinal: "Final",
+      boardPlaceholder:
+        "Place players in the bracket, then run it: the game will appear here.",
       runTournament: "Run full bracket",
       seedsFilled: "{{n}} / {{total}} slots filled",
       playSelectedMatch: "Play selected match",
       selectMatch: "Select a ready match in the bracket",
-      matchLive: "Match live — blitz 3+0",
+      matchLive: "Match live — {tc}",
       matchPaused: "Match stopped",
       drawRematch: "Draw — rematch.",
       crushingHint: "Automatic win if the eval reaches ±10.",
@@ -2086,9 +2235,26 @@ export const en = {
       rosterSearch: "Filter roster…",
       championsCachedHint:
         "Champions come from the cloud library (public profiles) — manual import, no automatic sync.",
-      tapAssignHint: "Tap a player, then a slot #1–8 (mobile).",
+      tapAssignHint: "Tap a player, then a numbered slot (mobile).",
       tapAssignActive: "Player selected — pick a slot",
       tapAssignClear: "Clear selection",
+      roundOf16: "Round of 16",
+      formatLabel: "Tournament format",
+      formatKnockout: "Knockout",
+      formatRoundRobin: "Round-robin",
+      formatSwiss: "Swiss",
+      playersCount: "{n} players",
+      leagueHint:
+        "One game per pairing ({games} games): 1 point for a win, ½ for a draw. Tiebreak: Buchholz (Swiss) or Sonneborn-Berger (round-robin).",
+      leagueRound: "Round {n} / {total}",
+      leaguePoints: "Pts",
+      leagueBye: "bye",
+      tiebreakShort: "TB",
+      tiebreakBuchholz: "Buchholz: sum of the opponents' points",
+      tiebreakSb: "Sonneborn-Berger: points of beaten opponents (+ half for draws)",
+      standingsTitle: "Tournament standings",
+      resumeTournament: "Resume tournament",
+      shareBracket: "Share as image",
     },
 
     // Forced line editor
@@ -2315,6 +2481,7 @@ export const en = {
       jsonOnly: "JSON only",
       jsonOnlyTooltip: "Download only the JSON profile (advanced users)",
       coach: "Coach",
+      moreActions: "Configure & export",
     },
 
     avatarCard: {

@@ -11,9 +11,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area"; 
-import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Imports Logique
 import PersonaCard from "@/components/PersonaCard";
@@ -192,110 +191,117 @@ export default function AnalyzePage() {
           </CardContent>
         </Card>
 
-        {/* RESULTATS */}
+        {/* RESULTATS — avatar d'abord, stats & parties en secondaire */}
         {personaStats && engineConfig && (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            
-            {/* 1. CARTE D'IDENTITÉ IA + GRAPHIQUES */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-1">
-                <PersonaCard stats={personaStats} config={engineConfig} />
-              </div>
-              
-              <div className="lg:col-span-2">
-                <PerformanceCharts stats={personaStats} />
-              </div>
+            <div className="max-w-lg mx-auto">
+              <PersonaCard stats={personaStats} config={engineConfig} />
             </div>
 
-            <Separator className="bg-slate-800" />
+            <Tabs defaultValue="stats" className="w-full">
+              <TabsList className="bg-slate-900 border border-slate-800">
+                <TabsTrigger value="stats">{t.analyzeResults.statsTab}</TabsTrigger>
+                <TabsTrigger value="games">{t.analyzeResults.gamesTab}</TabsTrigger>
+              </TabsList>
 
-            {/* 2. REPLAY */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[60dvh] lg:h-[600px]">
-              
-              {/* Liste des parties */}
-              <Card className="lg:col-span-4 theme-bg-secondary theme-border flex flex-col h-full overflow-hidden">
-                <CardHeader className="pb-2 bg-slate-950/50">
-                  <CardTitle className="text-xs uppercase tracking-wider theme-text-secondary font-bold">
-                    {t.historyTitle}
-                  </CardTitle>
-                </CardHeader>
-                <ScrollArea className="flex-1 px-4 pb-4">
-                  <div className="space-y-2 mt-2">
-                    {games.map((game, idx) => {
-                      const whiteName =
-                        game.players?.white?.user?.name ||
-                        game.players?.white?.username ||
-                        "?";
-                      const blackName =
-                        game.players?.black?.user?.name ||
-                        game.players?.black?.username ||
-                        "?";
-                      const isWhite =
-                        whiteName.toLowerCase() === username.toLowerCase();
-                      
-                      const resultClass = 
-                        (game.winner === (isWhite ? 'white' : 'black')) ? "border-green-500/40 bg-green-500/5" :
-                        (!game.winner || game.winner === 'draw') ? "border-slate-700 bg-slate-800/30" :
-                        "border-red-500/40 bg-red-500/5";
+              <TabsContent value="stats" className="mt-4">
+                <PerformanceCharts stats={personaStats} />
+              </TabsContent>
 
-                      return (
-                        <div 
-                          key={game.id || idx}
-                          onClick={() => setSelectedGame(game)}
-                          className={`
+              <TabsContent value="games" className="mt-4">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[60dvh] lg:h-[600px]">
+                  <Card className="lg:col-span-4 theme-bg-secondary theme-border flex flex-col h-full overflow-hidden">
+                    <CardHeader className="pb-2 bg-slate-950/50">
+                      <CardTitle className="text-xs uppercase tracking-wider theme-text-secondary font-bold">
+                        {t.historyTitle}
+                      </CardTitle>
+                    </CardHeader>
+                    <ScrollArea className="flex-1 px-4 pb-4">
+                      <div className="space-y-2 mt-2">
+                        {games.map((game, idx) => {
+                          const whiteName =
+                            game.players?.white?.user?.name ||
+                            game.players?.white?.username ||
+                            "?";
+                          const blackName =
+                            game.players?.black?.user?.name ||
+                            game.players?.black?.username ||
+                            "?";
+                          const isWhite =
+                            whiteName.toLowerCase() === username.toLowerCase();
+
+                          const resultClass =
+                            game.winner === (isWhite ? "white" : "black")
+                              ? "border-green-500/40 bg-green-500/5"
+                              : !game.winner || game.winner === "draw"
+                                ? "border-slate-700 bg-slate-800/30"
+                                : "border-red-500/40 bg-red-500/5";
+
+                          return (
+                            <div
+                              key={game.id || idx}
+                              onClick={() => setSelectedGame(game)}
+                              className={`
                             p-3 rounded border cursor-pointer transition-all hover:bg-slate-800
                             ${selectedGame?.id === game.id ? "ring-1 ring-green-500 bg-slate-800" : "border-slate-800"}
                             ${resultClass}
                           `}
-                        >
-                          <div className="flex justify-between items-center mb-1">
-                            <span className="font-bold text-sm text-slate-200">vs {isWhite ? blackName : whiteName}</span>
-                            <span className="text-xs font-mono text-slate-500">
-                                {game.createdAt ? new Date(game.createdAt).toLocaleDateString() : ""}
-                            </span>
-                          </div>
-                          <div className="flex items-center justify-between gap-2 text-xs text-slate-400">
-                            <div className="flex items-center gap-2">
-                              <Trophy className="h-3 w-3" />
-                              <span>
-                                  {(game.winner === (isWhite ? 'white' : 'black')) ? t.victory : 
-                                   (!game.winner || game.winner === 'draw') ? t.draw : t.defeat}
-                              </span>
-                            </div>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                openReview(game.pgn);
-                              }}
-                              disabled={!game.pgn}
-                              className="h-6 px-2 text-[11px] text-cyan-300 hover:text-cyan-100 hover:bg-cyan-500/10"
-                              title={t.review.reviewThisGame}
                             >
-                              <Sparkles className="h-3 w-3 mr-1" />
-                              {t.review.reviewThisGame}
-                            </Button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </ScrollArea>
-              </Card>
+                              <div className="flex justify-between items-center mb-1">
+                                <span className="font-bold text-sm text-slate-200">
+                                  vs {isWhite ? blackName : whiteName}
+                                </span>
+                                <span className="text-xs font-mono text-slate-500">
+                                  {game.createdAt
+                                    ? new Date(game.createdAt).toLocaleDateString()
+                                    : ""}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between gap-2 text-xs text-slate-400">
+                                <div className="flex items-center gap-2">
+                                  <Trophy className="h-3 w-3" />
+                                  <span>
+                                    {game.winner === (isWhite ? "white" : "black")
+                                      ? t.victory
+                                      : !game.winner || game.winner === "draw"
+                                        ? t.draw
+                                        : t.defeat}
+                                  </span>
+                                </div>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openReview(game.pgn);
+                                  }}
+                                  disabled={!game.pgn}
+                                  className="h-6 px-2 text-[11px] text-cyan-300 hover:text-cyan-100 hover:bg-cyan-500/10"
+                                  title={t.review.reviewThisGame}
+                                >
+                                  <Sparkles className="h-3 w-3 mr-1" />
+                                  {t.review.reviewThisGame}
+                                </Button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </ScrollArea>
+                  </Card>
 
-              {/* Échiquier */}
-              <div className="lg:col-span-8 h-full">
-                {selectedGame ? (
-                  <GameViewer pgn={selectedGame.pgn ?? ""} />
-                ) : (
-                  <div className="h-full flex items-center justify-center bg-slate-900 rounded-xl border border-slate-800 text-slate-500">
-                    {t.selectGame}
+                  <div className="lg:col-span-8 h-full">
+                    {selectedGame ? (
+                      <GameViewer pgn={selectedGame.pgn ?? ""} />
+                    ) : (
+                      <div className="h-full flex items-center justify-center bg-slate-900 rounded-xl border border-slate-800 text-slate-500">
+                        {t.selectGame}
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-
-            </div>
+                </div>
+              </TabsContent>
+            </Tabs>
           </div>
         )}
       </div>

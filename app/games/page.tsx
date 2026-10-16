@@ -550,23 +550,34 @@ export default function GamesPage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 py-8 px-4">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="text-center">
+        <div className="text-center max-w-2xl mx-auto">
           <h1 className="text-3xl font-bold neon-cyan mb-2">{t.games.title}</h1>
           <p className="text-cyan-400/70">{t.games.subtitle}</p>
         </div>
 
-        {/* Quick Game Review entry — analyse jetable, ne sauvegarde rien */}
-        <section aria-label={t.games.quickReviewSection} className="space-y-2">
-          <div className="flex items-baseline justify-between gap-3 flex-wrap">
+        {/* Primary: import + review — job #1 of this page */}
+        <section
+          aria-label={t.games.quickReviewSection}
+          className="space-y-3 rounded-xl border border-cyan-500/25 bg-slate-900/60 p-4 md:p-5"
+        >
+          <div className="space-y-1">
             <h2 className="text-lg md:text-xl font-bold text-cyan-300">
               {t.games.quickReviewSection}
             </h2>
-            <p className="text-xs text-slate-400">
+            <p className="text-sm text-slate-400">
               {t.games.quickReviewSectionHint}
             </p>
           </div>
           <PgnImportCard onPgnReady={openReviewForAdhoc} />
         </section>
+
+        {/* Library — saved games */}
+        <div className="pt-2 space-y-1">
+          <h2 className="text-lg md:text-xl font-bold text-slate-200">
+            {t.games.librarySection}
+          </h2>
+          <p className="text-sm text-slate-500">{t.games.librarySectionHint}</p>
+        </div>
 
         {/* Statistiques */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

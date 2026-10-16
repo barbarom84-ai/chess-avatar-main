@@ -259,6 +259,28 @@ export default function PersonaCard({ stats, config, profileId }: PersonaCardPro
           </div>
         </div>
 
+        {/* CTA principal — juste après l'identité */}
+        <div className="space-y-2">
+          <Button
+            onClick={handlePlayAgainst}
+            size="lg"
+            className="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold shadow-lg shadow-cyan-950/40 border border-cyan-400/20"
+          >
+            <Play className="mr-2 h-5 w-5" />
+            {t.personaCard.playAgainst}
+          </Button>
+          {savedProfileId ? (
+            <Button
+              onClick={() => router.push(`/coach/${savedProfileId}`)}
+              variant="ghost"
+              className="w-full text-cyan-300/90 hover:text-cyan-200 hover:bg-cyan-500/10"
+            >
+              <MessageCircle className="mr-2 h-4 w-4" />
+              {t.personaCard.coach}
+            </Button>
+          ) : null}
+        </div>
+
         {/* Configuration du Moteur */}
         <div className="space-y-3">
           <h3 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
@@ -358,57 +380,40 @@ export default function PersonaCard({ stats, config, profileId }: PersonaCardPro
           )}
         </div>
 
-        {/* Boutons d'action */}
-        <div className="space-y-2">
-          <Button 
-            onClick={handlePlayAgainst} 
-            className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white font-bold shadow-lg border border-blue-800"
-          >
-            <Play className="mr-2 h-4 w-4" />
-            {t.personaCard.playAgainst}
-          </Button>
-
-          {savedProfileId ? (
+        {/* Actions secondaires : config / sauvegarde / export */}
+        <div className="space-y-2 pt-1 border-t border-slate-800">
+          <p className="text-xs font-medium uppercase tracking-wider text-slate-500 pt-3">
+            {t.personaCard.moreActions}
+          </p>
+          <div className="grid grid-cols-2 gap-2">
             <Button
-              onClick={() => router.push(`/coach/${savedProfileId}`)}
-              variant="outline"
-              className="w-full border-2 border-cyan-500 bg-cyan-500/10 text-cyan-200 hover:bg-cyan-500/20 font-bold"
-            >
-              <MessageCircle className="mr-2 h-4 w-4" />
-              {t.personaCard.coach}
-            </Button>
-          ) : null}
-
-          <div className="grid grid-cols-3 gap-2">
-            <Button 
               onClick={() => {
                 setConfigPanelNonce((n) => n + 1);
                 setShowConfigDialog(true);
-              }} 
+              }}
               variant="outline"
-              className="border-2 border-purple-500 bg-purple-500/10 text-purple-300 hover:bg-purple-500/20 hover:text-purple-200 hover:border-purple-400 font-semibold shadow-md"
+              className="border-slate-600 bg-slate-950/50 text-slate-200 hover:bg-slate-800 hover:text-white"
             >
               <Settings className="mr-2 h-4 w-4" />
               Config
             </Button>
 
-            {/* 🆕 Bouton Éditer (si profileId disponible) */}
             {profileId ? (
-              <Button 
+              <Button
                 onClick={() => setShowProfileEditor(true)}
                 variant="outline"
-                className="border-2 border-amber-500 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 hover:text-amber-200 hover:border-amber-400 font-semibold shadow-md"
+                className="border-slate-600 bg-slate-950/50 text-slate-200 hover:bg-slate-800 hover:text-white"
                 title={t.engineConfig.editProfile}
               >
                 <Edit className="mr-2 h-4 w-4" />
                 {t.engineConfig.edit}
               </Button>
             ) : (
-              <Button 
+              <Button
                 onClick={handleSaveToCloud}
                 disabled={savingCloud}
                 variant="outline"
-                className="border-2 border-cyan-500 bg-cyan-500/10 text-cyan-300 hover:bg-cyan-500/20 hover:text-cyan-200 hover:border-cyan-400 font-semibold shadow-md"
+                className="border-slate-600 bg-slate-950/50 text-slate-200 hover:bg-slate-800 hover:text-white"
               >
                 <Save className="mr-2 h-4 w-4" />
                 {t.personaCard.save}
@@ -419,17 +424,18 @@ export default function PersonaCard({ stats, config, profileId }: PersonaCardPro
               onClick={handleDownloadPack}
               disabled={downloadingPack}
               variant="outline"
-              className="border-2 border-green-500 bg-green-500/10 text-green-300 hover:bg-green-500/20 hover:text-green-200 hover:border-green-400 font-semibold shadow-md"
+              className="border-slate-600 bg-slate-950/50 text-slate-200 hover:bg-slate-800 hover:text-white"
             >
               <Download className="mr-2 h-4 w-4" />
-              {downloadingPack ? t.personaCard.packDownloading : t.personaCard.packDownload}
+              {downloadingPack
+                ? t.personaCard.packDownloading
+                : t.personaCard.packDownload}
             </Button>
 
             <Button
               onClick={handleDownloadJson}
               variant="outline"
-              size="sm"
-              className="border border-cyan-500/50 bg-transparent text-cyan-300/80 hover:bg-cyan-500/10 hover:text-cyan-200 text-xs"
+              className="border-slate-700 bg-transparent text-slate-400 hover:bg-slate-800 hover:text-slate-200"
               title={t.personaCard.jsonOnlyTooltip}
             >
               {t.personaCard.jsonOnly}

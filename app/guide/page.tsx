@@ -21,7 +21,7 @@ export default function GuidePage() {
           <p className="text-cyan-400/70">{t.guide.subtitle}</p>
 
           <div className="flex justify-center mt-6">
-            <Link href="/">
+            <Link href="/analyze">
               <Button className="bg-cyan-600 hover:bg-cyan-700 text-white shadow-lg glow-cyan text-lg px-8 py-6">
                 <Sparkles className="mr-2 h-5 w-5" />
                 {t.guide.ctaGeneratePack}
