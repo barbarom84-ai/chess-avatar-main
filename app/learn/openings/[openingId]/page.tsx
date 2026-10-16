@@ -1,22 +1,21 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowLeft, BookOpen, Shield } from "lucide-react";
+import { ArrowLeft, Shield } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import BrandLoadingScreen from "@/components/BrandLoadingScreen";
+import LessonChessboard from "@/components/learn/LessonChessboard";
+import LearnModeRail, { type LearnMode } from "@/components/learn/LearnModeRail";
+import LearnMetaPanel from "@/components/learn/LearnMetaPanel";
+import MoveChallengeCard from "@/components/learn/MoveChallengeCard";
 import { useLanguage } from "@/lib/language-context";
 import { pickLocalized } from "@/lib/opening-lessons";
 import { lessonWithMergedOpening } from "@/lib/learn-merge";
 import { useLearnCatalog } from "@/hooks/useLearnCatalog";
 import { useSuperUser } from "@/hooks/useSuperUser";
-import OpeningLevelBadge from "@/components/learn/OpeningLevelBadge";
-import LessonChessboard from "@/components/learn/LessonChessboard";
-import HistoricGameSection from "@/components/learn/HistoricGameSection";
-import OpeningVariantSection from "@/components/learn/OpeningVariantSection";
-import MoveChallengeCard from "@/components/learn/MoveChallengeCard";
 
 export default function OpeningLessonPage() {
   const params = useParams();
@@ -27,9 +26,8 @@ export default function OpeningLessonPage() {
   const { isSuperUser, loading: superLoading } = useSuperUser();
   const lesson = useMemo(
     () => catalog.lessons.find((l) => l.openingId === openingId),
-    [catalog.lessons, openingId],
+    [catalog.lessons, openingId]
   );
-  const [modelMoveIndex, setModelMoveIndex] = useState(0);
 
   const { opening, title } = useMemo(() => {
     if (!lesson) return { opening: undefined, title: "" };
@@ -37,6 +35,7 @@ export default function OpeningLessonPage() {
   }, [lesson, lang, catalog.openingById]);
 
   const labels = t.learn.difficultyLabels as [string, string, string, string, string];
+  const d = t.learn.detail;
   const commentaryLabels = {
     moveLabel: t.learn.commentary.move,
     of: t.learn.commentary.of,
@@ -45,6 +44,63 @@ export default function OpeningLessonPage() {
 
   const modelComments = lesson?.modelLine.map((m) => m.comment);
   const modelUci = lesson?.modelLine.map((m) => m.uci) ?? [];
+  const hasModel = modelUci.length > 0;
+  const variants = lesson?.variants ?? [];
+  const games = lesson?.historicalGames ?? [];
+  const flatChallenges = useMemo(
+    () =>
+      (lesson?.historicalGames ?? []).flatMap((g) =>
+        (g.challenges ?? []).map((c) => ({ game: g, challenge: c }))
+      ),
+    [lesson]
+  );
+
+  const [mode, setMode] = useState<LearnMode>("study");
+  const [modelMoveIndex, setModelMoveIndex] = useState(0);
+  const [variantMoveIndex, setVariantMoveIndex] = useState(0);
+  const [historyMoveIndex, setHistoryMoveIndex] = useState(0);
+  const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
+  const [selectedChallengeKey, setSelectedChallengeKey] = useState<string | null>(null);
+  const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!lesson) return;
+    setMode(lesson.modelLine.length > 0 ? "model" : "study");
+    setModelMoveIndex(0);
+    setSelectedVariantId(lesson.variants?.[0]?.id ?? null);
+    setVariantMoveIndex(0);
+    const firstChallenge = lesson.historicalGames.flatMap((g) =>
+      (g.challenges ?? []).map((c) => ({ game: g, challenge: c }))
+    )[0];
+    setSelectedChallengeKey(
+      firstChallenge
+        ? `${firstChallenge.game.id}:${firstChallenge.challenge.id}`
+        : null
+    );
+    setSelectedGameId(lesson.historicalGames[0]?.id ?? null);
+    setHistoryMoveIndex(0);
+  }, [lesson?.openingId]); // eslint-disable-line react-hooks/exhaustive-deps -- reset selection when navigating lessons
+
+  const selectedVariant = useMemo(
+    () => variants.find((v) => v.id === selectedVariantId) ?? variants[0] ?? null,
+    [variants, selectedVariantId]
+  );
+
+  const selectedChallenge = useMemo(() => {
+    if (!selectedChallengeKey) return flatChallenges[0] ?? null;
+    return (
+      flatChallenges.find(
+        ({ game, challenge }) => `${game.id}:${challenge.id}` === selectedChallengeKey
+      ) ??
+      flatChallenges[0] ??
+      null
+    );
+  }, [flatChallenges, selectedChallengeKey]);
+
+  const selectedGame = useMemo(
+    () => games.find((g) => g.id === selectedGameId) ?? games[0] ?? null,
+    [games, selectedGameId]
+  );
 
   const boardOrientation = opening?.color === "black" ? "black" : "white";
 
@@ -60,10 +116,20 @@ export default function OpeningLessonPage() {
     playOnBoard: ch?.playOnBoard,
   };
 
+  const moveChallengeLichessLike = {
+    sideToMove: t.puzzlesPage.lichess.sideToMove,
+    white: t.puzzlesPage.lichess.white,
+    black: t.puzzlesPage.lichess.black,
+    reset: t.puzzlesPage.lichess.reset,
+    choicesAid: t.puzzlesPage.lichessChoicesAid,
+  };
+
   if (catalogLoading && !lesson) {
     return (
-      <main className="min-h-screen theme-gradient theme-text-primary p-8 flex flex-col items-center justify-center gap-4">
-        <p className="text-slate-400">{t.learn.loadingCatalog}</p>
+      <main className="min-h-screen theme-gradient theme-text-primary p-3 md:p-6">
+        <div className="max-w-[1400px] mx-auto">
+          <BrandLoadingScreen label={t.learn.brandLoadingLabel} />
+        </div>
       </main>
     );
   }
@@ -71,231 +137,299 @@ export default function OpeningLessonPage() {
   if (!lesson || !opening) {
     return (
       <main className="min-h-screen theme-gradient theme-text-primary p-8 flex flex-col items-center justify-center gap-4">
-        <p className="text-slate-400">{t.learn.detail.notFound}</p>
+        <p className="text-slate-400">{d.notFound}</p>
         <Button asChild variant="outline">
-          <Link href="/learn">{t.learn.detail.backToHub}</Link>
+          <Link href="/learn">{d.backToHub}</Link>
         </Button>
       </main>
     );
   }
 
-  const variantCount = lesson.variants?.length ?? 0;
-  const flatChallenges = lesson.historicalGames.flatMap((g) =>
-    (g.challenges ?? []).map((c) => ({ game: g, challenge: c })),
-  );
+  const hook = pickLocalized(lesson.hook, lang);
+
+  const metaExtra = (() => {
+    if (mode === "variants" && selectedVariant) {
+      return selectedVariant.description
+        ? pickLocalized(selectedVariant.description, lang)
+        : pickLocalized(selectedVariant.title, lang);
+    }
+    if (mode === "challenges" && selectedChallenge) {
+      return `${pickLocalized(selectedChallenge.game.event, lang)} · ${selectedChallenge.game.white} – ${selectedChallenge.game.black}`;
+    }
+    if (mode === "history" && selectedGame) {
+      return d.historyMeta
+        .replace("{white}", selectedGame.white)
+        .replace("{black}", selectedGame.black)
+        .replace("{event}", pickLocalized(selectedGame.event, lang))
+        .replace("{date}", selectedGame.date)
+        .replace("{result}", selectedGame.result);
+    }
+    return null;
+  })();
+
+  const centerTitle =
+    mode === "study"
+      ? d.modeStudy
+      : mode === "model"
+        ? d.modelLineTitle
+        : mode === "variants"
+          ? selectedVariant
+            ? pickLocalized(selectedVariant.title, lang)
+            : d.modeVariants
+          : mode === "challenges"
+            ? d.modeChallenges
+            : d.modeHistory;
 
   return (
-    <main className="min-h-screen theme-gradient theme-text-primary p-4 md:p-8">
-      <div className="max-w-4xl mx-auto space-y-6">
-        <div className="flex flex-wrap items-center gap-3">
-          <Button asChild variant="ghost" size="sm" className="text-cyan-400">
-            <Link href="/learn" className="flex items-center gap-2">
-              <ArrowLeft className="h-4 w-4" />
-              {t.learn.detail.backToHub}
-            </Link>
-          </Button>
+    <main className="min-h-screen theme-gradient theme-text-primary p-3 md:p-6">
+      <div className="max-w-[1400px] mx-auto space-y-4">
+        <header className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center gap-2 min-w-0">
+            <Button asChild variant="ghost" size="sm" className="text-cyan-400 shrink-0">
+              <Link href="/learn" className="flex items-center gap-1.5">
+                <ArrowLeft className="h-4 w-4" />
+                {d.backToHub}
+              </Link>
+            </Button>
+            <div className="min-w-0">
+              <h1 className="text-xl md:text-2xl font-bold text-slate-100 truncate">
+                {title}
+              </h1>
+              <p className="text-slate-500 text-xs line-clamp-1">{hook}</p>
+            </div>
+          </div>
           {isSuperUser && !superLoading && (
-            <Button asChild variant="outline" size="sm" className="border-amber-600/50 text-amber-200/90 gap-2">
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="border-amber-600/50 text-amber-200/90 gap-1.5"
+            >
               <Link href={`/learn/admin/edit/${openingId}`}>
-                <Shield className="h-4 w-4" />
+                <Shield className="h-3.5 w-3.5" />
                 {t.learn.admin.editThisLesson}
               </Link>
             </Button>
           )}
-        </div>
-
-        <div className="flex flex-wrap items-start gap-3">
-          <BookOpen className="h-10 w-10 text-cyan-400 shrink-0 mt-1" />
-          <div>
-            <div className="flex flex-wrap items-center gap-2 mb-1">
-              <span className="text-sm font-mono text-amber-400/90">
-                {t.learn.eco} {opening.eco}
-              </span>
-              <OpeningLevelBadge difficulty={opening.difficulty} labels={labels} />
-            </div>
-            <h1 className="text-3xl font-bold neon-cyan">{title}</h1>
-            <p className="text-slate-400 mt-2 max-w-2xl">{pickLocalized(lesson.hook, lang)}</p>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          <Button asChild variant="outline" className="border-cyan-600/50">
-            <Link href="/">{t.learn.detail.useInRepertoire}</Link>
-          </Button>
-          <p className="text-xs text-slate-500 self-center max-w-md">{t.learn.detail.useInRepertoireHint}</p>
-        </div>
+        </header>
 
         {isRepertoireAuto && (
-          <Card className="theme-bg-secondary border-amber-800/50 bg-amber-950/20">
-            <CardContent className="py-3 text-sm text-amber-100/90 leading-relaxed">
-              {t.learn.detail.repertoireAutoNotice}
-            </CardContent>
-          </Card>
+          <p className="text-xs text-amber-100/85 rounded-lg border border-amber-800/50 bg-amber-950/25 px-3 py-2 leading-relaxed">
+            {d.repertoireAutoNotice}
+          </p>
         )}
 
-        <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="flex flex-wrap h-auto gap-1 bg-slate-950 border border-slate-800 p-1">
-            <TabsTrigger value="overview">{t.learn.detail.tabs.overview}</TabsTrigger>
-            <TabsTrigger value="ideas">{t.learn.detail.tabs.ideas}</TabsTrigger>
-            <TabsTrigger value="traps">{t.learn.detail.tabs.traps}</TabsTrigger>
-            <TabsTrigger value="model">{t.learn.detail.tabs.modelLine}</TabsTrigger>
-            {variantCount > 0 && (
-              <TabsTrigger value="variants">{t.learn.detail.tabs.variants}</TabsTrigger>
-            )}
-            {flatChallenges.length > 0 && (
-              <TabsTrigger value="challenges">{t.learn.detail.tabs.challenges}</TabsTrigger>
-            )}
-            <TabsTrigger value="history">{t.learn.detail.tabs.history}</TabsTrigger>
-          </TabsList>
+        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_220px] xl:grid-cols-[300px_1fr_240px] 2xl:grid-cols-[320px_1fr_260px] gap-4">
+          <div className="order-1">
+            <LearnModeRail
+              mode={mode}
+              onModeChange={setMode}
+              labels={{
+                modeStudy: d.modeStudy,
+                modeModel: d.modeModel,
+                modeVariants: d.modeVariants,
+                modeChallenges: d.modeChallenges,
+                modeHistory: d.modeHistory,
+                studyHint: d.studyHint,
+                modelLineHint: d.modelLineHint,
+                pickVariant: d.pickVariant,
+                pickChallenge: d.pickChallenge,
+                pickGame: d.pickGame,
+                variantsEmpty: d.variantsEmpty,
+                challengesEmpty: d.challengesEmpty,
+                historyEmpty: d.historyEmpty,
+              }}
+              lang={lang}
+              hasModel={hasModel}
+              variants={variants}
+              selectedVariantId={selectedVariant?.id ?? null}
+              onSelectVariant={(id) => {
+                setSelectedVariantId(id);
+                setVariantMoveIndex(0);
+                setMode("variants");
+              }}
+              challenges={flatChallenges}
+              selectedChallengeKey={
+                selectedChallenge
+                  ? `${selectedChallenge.game.id}:${selectedChallenge.challenge.id}`
+                  : null
+              }
+              onSelectChallenge={(key) => {
+                setSelectedChallengeKey(key);
+                setMode("challenges");
+              }}
+              games={games}
+              selectedGameId={selectedGame?.id ?? null}
+              onSelectGame={(id) => {
+                setSelectedGameId(id);
+                setHistoryMoveIndex(0);
+                setMode("history");
+              }}
+            />
+          </div>
 
-          <TabsContent value="overview" className="mt-4 space-y-4">
-            <Card className="theme-bg-secondary theme-border">
-              <CardHeader>
-                <CardTitle className="text-lg text-cyan-200">{t.learn.detail.recommendedFor}</CardTitle>
+          <div className="order-2">
+            <Card className="theme-bg-secondary border-cyan-500/20">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base text-slate-100">{centerTitle}</CardTitle>
               </CardHeader>
-              <CardContent className="text-slate-300 leading-relaxed">
-                {pickLocalized(lesson.recommendedFor, lang)}
-              </CardContent>
-            </Card>
-            <Card className="theme-bg-secondary theme-border">
-              <CardHeader>
-                <CardTitle className="text-lg text-cyan-200">{t.learn.detail.tabs.overview}</CardTitle>
-              </CardHeader>
-              <CardContent className="text-slate-300 leading-relaxed">
-                {pickLocalized(lesson.overview, lang)}
-              </CardContent>
-            </Card>
-          </TabsContent>
+              <CardContent className="space-y-4">
+                {mode === "study" && (
+                  <div className="space-y-5 text-sm text-slate-300 leading-relaxed max-h-[min(70vh,720px)] overflow-y-auto pr-1">
+                    <section className="space-y-1.5">
+                      <h3 className="text-xs font-semibold uppercase tracking-wide text-cyan-200/90">
+                        {d.recommendedFor}
+                      </h3>
+                      <p>{pickLocalized(lesson.recommendedFor, lang)}</p>
+                    </section>
+                    <section className="space-y-1.5">
+                      <h3 className="text-xs font-semibold uppercase tracking-wide text-cyan-200/90">
+                        {d.tabs.overview}
+                      </h3>
+                      <p>{pickLocalized(lesson.overview, lang)}</p>
+                    </section>
+                    <section className="space-y-1.5">
+                      <h3 className="text-xs font-semibold uppercase tracking-wide text-cyan-200/90">
+                        {d.mainIdeas}
+                      </h3>
+                      <ul className="list-disc list-inside space-y-1">
+                        {lesson.mainIdeas.map((x, i) => (
+                          <li key={i}>{pickLocalized(x, lang)}</li>
+                        ))}
+                      </ul>
+                    </section>
+                    <section className="space-y-1.5">
+                      <h3 className="text-xs font-semibold uppercase tracking-wide text-cyan-200/90">
+                        {d.typicalPlans}
+                      </h3>
+                      <ul className="list-disc list-inside space-y-1">
+                        {lesson.typicalPlans.map((x, i) => (
+                          <li key={i}>{pickLocalized(x, lang)}</li>
+                        ))}
+                      </ul>
+                    </section>
+                    <section className="space-y-1.5">
+                      <h3 className="text-xs font-semibold uppercase tracking-wide text-cyan-200/90">
+                        {d.traps}
+                      </h3>
+                      <ul className="list-disc list-inside space-y-1">
+                        {lesson.traps.map((x, i) => (
+                          <li key={i}>{pickLocalized(x, lang)}</li>
+                        ))}
+                      </ul>
+                    </section>
+                    <section className="space-y-1.5">
+                      <h3 className="text-xs font-semibold uppercase tracking-wide text-cyan-200/90">
+                        {d.remember}
+                      </h3>
+                      <ul className="list-disc list-inside space-y-1">
+                        {lesson.whatToRemember.map((x, i) => (
+                          <li key={i}>{pickLocalized(x, lang)}</li>
+                        ))}
+                      </ul>
+                    </section>
+                  </div>
+                )}
 
-          <TabsContent value="ideas" className="mt-4 space-y-4">
-            <Card className="theme-bg-secondary theme-border">
-              <CardHeader>
-                <CardTitle className="text-lg text-cyan-200">{t.learn.detail.mainIdeas}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ul className="list-disc list-inside space-y-2 text-slate-300">
-                  {lesson.mainIdeas.map((x, i) => (
-                    <li key={i}>{pickLocalized(x, lang)}</li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
-            <Card className="theme-bg-secondary theme-border">
-              <CardHeader>
-                <CardTitle className="text-lg text-cyan-200">{t.learn.detail.typicalPlans}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ul className="list-disc list-inside space-y-2 text-slate-300">
-                  {lesson.typicalPlans.map((x, i) => (
-                    <li key={i}>{pickLocalized(x, lang)}</li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="traps" className="mt-4 space-y-4">
-            <Card className="theme-bg-secondary theme-border">
-              <CardHeader>
-                <CardTitle className="text-lg text-cyan-200">{t.learn.detail.traps}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ul className="list-disc list-inside space-y-2 text-slate-300">
-                  {lesson.traps.map((x, i) => (
-                    <li key={i}>{pickLocalized(x, lang)}</li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
-            <Card className="theme-bg-secondary theme-border">
-              <CardHeader>
-                <CardTitle className="text-lg text-cyan-200">{t.learn.detail.remember}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ul className="list-disc list-inside space-y-2 text-slate-300">
-                  {lesson.whatToRemember.map((x, i) => (
-                    <li key={i}>{pickLocalized(x, lang)}</li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="model" className="mt-4 space-y-4">
-            <Card className="theme-bg-secondary theme-border">
-              <CardHeader>
-                <CardTitle className="text-lg text-cyan-200">{t.learn.detail.modelLineTitle}</CardTitle>
-                <p className="text-sm text-slate-500">{t.learn.detail.modelLineHint}</p>
-              </CardHeader>
-              <CardContent>
-                <LessonChessboard
-                  uciMoves={modelUci}
-                  comments={modelComments}
-                  lang={lang}
-                  commentaryLabels={commentaryLabels}
-                  moveIndex={modelMoveIndex}
-                  onMoveIndexChange={setModelMoveIndex}
-                  orientation={boardOrientation}
-                />
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {variantCount > 0 && (
-            <TabsContent value="variants" className="mt-4 space-y-6">
-              <h2 className="text-xl font-semibold text-cyan-200">{t.learn.detail.variantsTitle}</h2>
-              {lesson.variants!.map((v) => (
-                <OpeningVariantSection
-                  key={v.id}
-                  variant={v}
-                  lang={lang}
-                  commentaryLabels={commentaryLabels}
-                  orientation={boardOrientation}
-                />
-              ))}
-            </TabsContent>
-          )}
-
-          {flatChallenges.length > 0 && (
-            <TabsContent value="challenges" className="mt-4 space-y-6">
-              <p className="text-slate-400 text-sm">{t.learn.detail.challengesTitle}</p>
-              {flatChallenges.map(({ game, challenge }) => (
-                <div key={`${game.id}-${challenge.id}`} className="space-y-2">
-                  <p className="text-xs font-mono text-amber-500/90">
-                    {pickLocalized(game.event, lang)} · {game.white} – {game.black}
-                  </p>
-                  <MoveChallengeCard
-                    challenge={challenge}
-                    uciMoves={game.uciMoves}
-                    lang={lang}
-                    labels={challengeLabels}
-                  />
-                </div>
-              ))}
-            </TabsContent>
-          )}
-
-          <TabsContent value="history" className="mt-4 space-y-6">
-            {lesson.historicalGames.length === 0 ? (
-              <p className="text-slate-500">{t.learn.detail.historyEmpty}</p>
-            ) : (
-              <>
-                <h2 className="text-xl font-semibold text-cyan-200">{t.learn.detail.historyTitle}</h2>
-                {lesson.historicalGames.map((g) => (
-                  <HistoricGameSection
-                    key={g.id}
-                    game={g}
+                {mode === "model" && hasModel && (
+                  <LessonChessboard
+                    uciMoves={modelUci}
+                    comments={modelComments}
                     lang={lang}
                     commentaryLabels={commentaryLabels}
-                    metaTemplate={t.learn.detail.historyMeta}
-                    challengeLabels={challengeLabels}
-                    challengesHeading={t.learn.detail.challengesInGame}
+                    moveIndex={modelMoveIndex}
+                    onMoveIndexChange={setModelMoveIndex}
+                    orientation={boardOrientation}
                   />
-                ))}
-              </>
-            )}
-          </TabsContent>
-        </Tabs>
+                )}
+
+                {mode === "variants" && selectedVariant && (
+                  <LessonChessboard
+                    key={selectedVariant.id}
+                    uciMoves={selectedVariant.line.map((m) => m.uci)}
+                    comments={selectedVariant.line.map((m) => m.comment)}
+                    lang={lang}
+                    commentaryLabels={commentaryLabels}
+                    moveIndex={variantMoveIndex}
+                    onMoveIndexChange={setVariantMoveIndex}
+                    orientation={boardOrientation}
+                  />
+                )}
+
+                {mode === "variants" && !selectedVariant && (
+                  <p className="text-sm text-slate-500 text-center py-10">{d.variantsEmpty}</p>
+                )}
+
+                {mode === "challenges" && selectedChallenge && (
+                  <MoveChallengeCard
+                    key={`${selectedChallenge.game.id}-${selectedChallenge.challenge.id}`}
+                    challenge={selectedChallenge.challenge}
+                    uciMoves={selectedChallenge.game.uciMoves}
+                    lang={lang}
+                    labels={challengeLabels}
+                    presentation="embedded"
+                    lichessLike={moveChallengeLichessLike}
+                  />
+                )}
+
+                {mode === "challenges" && !selectedChallenge && (
+                  <p className="text-sm text-slate-500 text-center py-10">
+                    {d.challengesEmpty}
+                  </p>
+                )}
+
+                {mode === "history" && selectedGame && (
+                  <div className="space-y-3">
+                    {selectedGame.anecdote && (
+                      <blockquote className="border-l-4 border-amber-600/60 pl-3 text-slate-300 text-sm leading-relaxed italic">
+                        {pickLocalized(selectedGame.anecdote, lang)}
+                      </blockquote>
+                    )}
+                    <LessonChessboard
+                      key={selectedGame.id}
+                      uciMoves={selectedGame.uciMoves}
+                      historicalAnnotations={selectedGame.annotations}
+                      lang={lang}
+                      commentaryLabels={commentaryLabels}
+                      moveIndex={historyMoveIndex}
+                      onMoveIndexChange={setHistoryMoveIndex}
+                    />
+                  </div>
+                )}
+
+                {mode === "history" && !selectedGame && (
+                  <p className="text-sm text-slate-500 text-center py-10">{d.historyEmpty}</p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="order-3">
+            <LearnMetaPanel
+              mode={mode}
+              labels={{
+                modeLabel: d.modeLabel,
+                modeStudy: d.modeStudy,
+                modeModel: d.modeModel,
+                modeVariants: d.modeVariants,
+                modeChallenges: d.modeChallenges,
+                modeHistory: d.modeHistory,
+                eco: t.learn.eco,
+                useInRepertoire: d.useInRepertoire,
+                useInRepertoireHint: d.useInRepertoireHint,
+                backToHub: d.backToHub,
+                editLesson: t.learn.admin.editThisLesson,
+              }}
+              title={title}
+              hook={hook}
+              opening={opening}
+              difficultyLabels={labels}
+              metaExtra={metaExtra}
+              showAdminEdit={!!isSuperUser && !superLoading}
+              openingId={openingId}
+            />
+          </div>
+        </div>
       </div>
     </main>
   );

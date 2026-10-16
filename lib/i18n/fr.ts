@@ -752,8 +752,8 @@ export const fr = {
 
     learn: {
       title: "Leçons d'ouvertures",
-      subtitle:
-        "Plans, niveaux recommandés, pièges à connaître et parties historiques commentées — pour progresser au-delà de la simple mémorisation.",
+      subtitle: "Plans, lignes modèles et pratique — choisissez une leçon ou parcourez le catalogue.",
+      brandLoadingLabel: "Ouvertures",
       headerNav: "Ouvertures",
       hubIntro:
         "Chaque fiche relie l’ouverture à des idées de milieu de partie. Utilisez les filtres pour trouver une ligne adaptée à votre niveau.",
@@ -761,13 +761,15 @@ export const fr = {
         lessonsTab: "Leçons",
         openingsTab: "Toutes les ouvertures",
         intro:
-          "Liste complète des lignes répertoriées dans l’application (noyau + extensions JSON). Chaque ligne a au minimum une fiche Apprendre dérivée du répertoire ; les leçons détaillées « guidées » sont repérées à part. Les super-abonnés peuvent publier des fiches cloud via l’admin Learn lorsque Supabase est configuré.",
+          "Toutes les ouvertures suivies. Les leçons guidées sont mises en avant ; les Super peuvent publier des fiches cloud dans l’admin Learn.",
         searchPlaceholder: "Rechercher (nom, code ECO, identifiant, tag)…",
         countListed: "{count} ouvertures répertoriées",
         hasLessonBadge: "Guidée",
         repertoireAutoBadge: "Répertoire",
         customLessonBadge: "Publiée",
         noLessonBadge: "Pas encore de fiche",
+        openingCol: "Ouverture",
+        actionCol: "Action",
       },
       filters: {
         allColors: "Toutes couleurs",
@@ -786,6 +788,16 @@ export const fr = {
       difficultyLabels: ["Débutant", "Facile", "Intermédiaire", "Avancé", "Expert"],
       detail: {
         backToHub: "Toutes les leçons",
+        modeLabel: "Mode",
+        modeStudy: "Étude",
+        modeModel: "Modèle",
+        modeVariants: "Variantes",
+        modeChallenges: "Défis",
+        modeHistory: "Histoire",
+        pickVariant: "Variantes",
+        pickChallenge: "Défis",
+        pickGame: "Parties",
+        studyHint: "Vue d’ensemble, plans et pièges pour cette ouverture.",
         tabs: {
           overview: "Vue d’ensemble",
           ideas: "Plans & idées",

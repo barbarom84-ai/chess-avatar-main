@@ -750,8 +750,8 @@ export const en = {
 
     learn: {
       title: "Opening lessons",
-      subtitle:
-        "Recommended levels, plans, traps to know, and annotated historic games — go beyond rote memorization.",
+      subtitle: "Plans, model lines, and practice — pick a lesson or browse the full catalog.",
+      brandLoadingLabel: "Learn",
       headerNav: "Learn",
       hubIntro:
         "Each lesson connects the opening to middlegame ideas. Use filters to find a line suited to your level.",
@@ -759,13 +759,15 @@ export const en = {
         lessonsTab: "Lessons",
         openingsTab: "All openings",
         intro:
-          "Full list of lines tracked in the app (core library + JSON partitions). Each line has at least a Learn page derived from the repertoire; fully guided lessons are called out separately. Super subscribers can publish cloud lessons via Learn admin when Supabase is configured.",
+          "All tracked openings. Guided lessons are highlighted; Super users can publish cloud lessons in Learn admin.",
         searchPlaceholder: "Search (name, ECO code, id, tag)…",
         countListed: "{count} openings listed",
         hasLessonBadge: "Guided",
         repertoireAutoBadge: "Repertoire",
         customLessonBadge: "Published",
         noLessonBadge: "No page yet",
+        openingCol: "Opening",
+        actionCol: "Action",
       },
       filters: {
         allColors: "All colors",
@@ -784,6 +786,16 @@ export const en = {
       difficultyLabels: ["Beginner", "Easy", "Intermediate", "Advanced", "Expert"],
       detail: {
         backToHub: "All lessons",
+        modeLabel: "Mode",
+        modeStudy: "Study",
+        modeModel: "Model",
+        modeVariants: "Variations",
+        modeChallenges: "Challenges",
+        modeHistory: "History",
+        pickVariant: "Variations",
+        pickChallenge: "Challenges",
+        pickGame: "Games",
+        studyHint: "Overview, plans, and traps for this opening.",
         tabs: {
           overview: "Overview",
           ideas: "Plans & ideas",
