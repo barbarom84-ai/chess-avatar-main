@@ -1,6 +1,7 @@
 import { getOpeningByIdFromCore as getOpeningById } from "@/lib/openings-library";
 import type { EngineConfig } from "@/lib/analysis";
 import { buildFritzBlackOpeningFallback } from "@/lib/fritz-opening-fallback";
+import { engineOptionsForConfig } from "@/lib/persona-engine-params";
 
 export type ForcedLineSource = "openings" | "custom";
 
@@ -203,10 +204,18 @@ export function normalizeEngineConfigForcedLines(config: EngineConfig): EngineCo
   };
 }
 
+/** Champs UCI stampés dans le JSON pack (consommés par AvatarEngine.py / Fritz). */
+export type ExportedEngineConfig = EngineConfig & {
+  skill: number;
+  uciElo: number;
+  /** Aligné web: LimitStrength si difficulty ≤ 3. */
+  uciLimitStrength: boolean;
+};
+
 export function prepareConfigForExport(
   config: EngineConfig,
   options?: { openingsDatabase?: { id: string; uciMoves?: string[] }[] }
-): EngineConfig {
+): ExportedEngineConfig {
   const normalized = normalizeEngineConfigForcedLines(config);
   const { white, black } = getEffectiveForcedLinesByColor(normalized);
   let next: EngineConfig = { ...normalized };
@@ -217,7 +226,15 @@ export function prepareConfigForExport(
   if (fritz.length > 0) {
     next = { ...next, fritzBlackOpeningFallback: fritz };
   }
-  return next;
+  const engineOpts = engineOptionsForConfig(next);
+  const difficulty = Math.min(5, Math.max(1, Math.round(next.difficulty || 3)));
+  return {
+    ...next,
+    skill: engineOpts.skill,
+    uciElo: engineOpts.uciElo,
+    // Même règle que hooks/useStockfish (hors arène) : Elo limité aux niveaux 1–3.
+    uciLimitStrength: difficulty <= 3,
+  };
 }
 
 export function getEditableForcedLines(config: EngineConfig): { white: string[]; black: string[] } {

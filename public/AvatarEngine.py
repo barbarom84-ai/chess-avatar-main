@@ -77,7 +77,77 @@ class AvatarEngine:
                 self.human_blunder_interval = int(_hb)
             except (TypeError, ValueError):
                 self.human_blunder_interval = 10
-    
+
+        # Force UCI (Skill / Elo) — aligné lib/persona-engine-params.ts + useStockfish
+        self.skill, self.uci_elo, self.uci_limit_strength = self._resolve_strength_from_profile()
+        self._strength_applied = False
+
+    # Stockfish UCI Elo bounds (parity/constants.json)
+    UCI_ELO_MIN = 1320
+    UCI_ELO_MAX = 3190
+    # difficulty 1–5 → Skill Level (skillLevelFromDifficulty)
+    SKILL_FROM_DIFFICULTY = {1: 2, 2: 5, 3: 9, 4: 15, 5: 20}
+
+    def _resolve_strength_from_profile(self):
+        """skill / UCI_Elo / LimitStrength depuis le profil exporté ChessAvatar."""
+        try:
+            difficulty = int(self.profile.get('difficulty', 3))
+        except (TypeError, ValueError):
+            difficulty = 3
+        difficulty = max(1, min(5, difficulty))
+
+        skill = self.profile.get('skill')
+        if skill is None:
+            skill = self.SKILL_FROM_DIFFICULTY.get(difficulty, 9)
+        try:
+            skill = int(skill)
+        except (TypeError, ValueError):
+            skill = self.SKILL_FROM_DIFFICULTY.get(difficulty, 9)
+        skill = max(0, min(20, skill))
+
+        raw_elo = self.profile.get('uciElo', self.profile.get('elo', 2000))
+        try:
+            uci_elo = int(round(float(raw_elo)))
+        except (TypeError, ValueError):
+            uci_elo = 2000
+        uci_elo = max(self.UCI_ELO_MIN, min(self.UCI_ELO_MAX, uci_elo))
+
+        if 'uciLimitStrength' in self.profile:
+            limit = bool(self.profile.get('uciLimitStrength'))
+        else:
+            # Même règle que hooks/useStockfish (hors arène)
+            limit = difficulty <= 3
+
+        return skill, uci_elo, limit
+
+    def apply_strength_from_profile(self):
+        """Applique Skill Level + UCI_Elo au Stockfish sous-jacent (indépendamment de Fritz)."""
+        self.send_to_engine(f'setoption name Skill Level value {self.skill}')
+        if self.uci_limit_strength:
+            self.send_to_engine('setoption name UCI_LimitStrength value true')
+            self.send_to_engine(f'setoption name UCI_Elo value {self.uci_elo}')
+        else:
+            self.send_to_engine('setoption name UCI_LimitStrength value false')
+        self._strength_applied = True
+        print(
+            f"info string Strength: skill={self.skill} elo={self.uci_elo} "
+            f"limitStrength={str(self.uci_limit_strength).lower()}",
+            file=sys.stderr,
+        )
+
+    def _rewrite_uci_option_defaults(self, option_line):
+        """Annonce à Fritz les défauts du profil (sinon Skill Level = 20 Stockfish)."""
+        if not option_line.startswith('option name '):
+            return option_line
+        if 'name Skill Level' in option_line:
+            return re.sub(r'\bdefault\s+\S+', f'default {self.skill}', option_line, count=1)
+        if 'name UCI_LimitStrength' in option_line:
+            default = 'true' if self.uci_limit_strength else 'false'
+            return re.sub(r'\bdefault\s+\S+', f'default {default}', option_line, count=1)
+        if 'name UCI_Elo' in option_line:
+            return re.sub(r'\bdefault\s+\S+', f'default {self.uci_elo}', option_line, count=1)
+        return option_line
+
     def _normalize_uci(self, uci):
         """Normalise un coup UCI (minuscules) pour comparaisons."""
         if not uci or not isinstance(uci, str):
@@ -264,9 +334,12 @@ class AvatarEngine:
             return {
                 'name': 'Avatar Engine',
                 'username': 'Chess Avatar',
-                'skill': 15,
+                'skill': 9,
+                'difficulty': 3,
                 'depth': 16,
-                'elo': 2000
+                'elo': 1500,
+                'uciElo': 1500,
+                'uciLimitStrength': True,
             }
         
         try:
@@ -279,9 +352,12 @@ class AvatarEngine:
             return {
                 'name': 'Avatar Engine',
                 'username': 'Chess Avatar',
-                'skill': 15,
+                'skill': 9,
+                'difficulty': 3,
                 'depth': 16,
-                'elo': 2000
+                'elo': 1500,
+                'uciElo': 1500,
+                'uciLimitStrength': True,
             }
     
     def select_opening_move(self, is_white):
@@ -442,12 +518,15 @@ class AvatarEngine:
                     print(f"id name {self.name}", flush=True)
                     print(f"id author {self.author}", flush=True)
                     
-                    # 2. Toutes les options de Stockfish
+                    # 2. Options Stockfish avec défauts = force du profil ChessAvatar
                     for option in self.uci_options:
-                        print(option, flush=True)
+                        print(self._rewrite_uci_option_defaults(option), flush=True)
                     
                     # 3. uciok
                     print("uciok", flush=True)
+                    
+                    # 4. Appliquer immédiatement (Fritz n'envoie pas toujours setoption)
+                    self.apply_strength_from_profile()
                     
                     # Reinitialiser
                     self.waiting_for_uciok = False
@@ -610,18 +689,15 @@ class AvatarEngine:
         self.send_to_engine(line)
     
     def handle_setoption(self, line):
-        """Handle setoption commands with profile overrides"""
-        # Apply profile-based configurations
+        """Handle setoption — force Skill/Elo du profil (évite Skill 20 Fritz par défaut)."""
         if 'name Skill Level' in line:
-            skill = self.profile.get('skill', 15)
-            self.send_to_engine(f'setoption name Skill Level value {skill}')
+            self.send_to_engine(f'setoption name Skill Level value {self.skill}')
         elif 'name UCI_LimitStrength' in line:
-            self.send_to_engine('setoption name UCI_LimitStrength value true')
+            val = 'true' if self.uci_limit_strength else 'false'
+            self.send_to_engine(f'setoption name UCI_LimitStrength value {val}')
         elif 'name UCI_Elo' in line:
-            elo = self.profile.get('elo', 2000)
-            self.send_to_engine(f'setoption name UCI_Elo value {elo}')
+            self.send_to_engine(f'setoption name UCI_Elo value {self.uci_elo}')
         else:
-            # Forward other options
             self.send_to_engine(line)
     
     def run(self):
@@ -631,6 +707,11 @@ class AvatarEngine:
         print(f"info string AvatarEngine initialized", flush=True)
         print(f"info string Name: {self.name}", flush=True)
         print(f"info string Author: {self.author}", flush=True)
+        print(
+            f"info string Profile strength: skill={self.skill} uciElo={self.uci_elo} "
+            f"limitStrength={str(self.uci_limit_strength).lower()}",
+            flush=True,
+        )
         
         # 🆕 Afficher info sur la ligne forcée (par couleur + aperçu entrelacé)
         if self.forced_white or self.forced_black:
@@ -669,6 +750,10 @@ class AvatarEngine:
                 if self.engine_process:
                     self.engine_process.wait()
                 sys.exit(0)
+            elif line == 'isready':
+                # Réappliquer la force avant readyok (GUI parfois sans setoption)
+                self.apply_strength_from_profile()
+                self.send_to_engine(line)
             elif line.startswith('position'):
                 self.handle_position(line)
             elif line.startswith('go'):
@@ -683,6 +768,7 @@ class AvatarEngine:
                 with self._blunder_lock:
                     self._blunder_search_active = False
                     self._blunder_line_moves.clear()
+                self.apply_strength_from_profile()
                 self.send_to_engine(line)
             elif line.startswith('setoption'):
                 self.handle_setoption(line)
