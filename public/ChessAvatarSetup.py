@@ -10,9 +10,11 @@ import ctypes
 import json
 import os
 import shutil
+import subprocess
 import sys
 import tempfile
 import threading
+import time
 import traceback
 import urllib.request
 import zipfile
@@ -199,6 +201,86 @@ def make_fritz_bmp(src: Path | None, dest: Path, initials: str, log) -> bool:
     return True
 
 
+def release_engine_file_locks(motor_dir: Path, log) -> list[str]:
+    """Stop AvatarEngine/stockfish still loaded by Fritz so reinstall can overwrite files."""
+    target = str(motor_dir.resolve()).lower().rstrip("\\/")
+    if not target:
+        return []
+    # Escape for PowerShell single-quoted string
+    ps_target = target.replace("'", "''")
+    script = (
+        f"$t = '{ps_target}'; "
+        "$killed = @(); "
+        "Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | ForEach-Object { "
+        "  $p = $_.ExecutablePath; "
+        "  if (-not $p) { return }; "
+        "  $pl = $p.ToLower(); "
+        "  if ($pl.StartsWith($t + '\\') -or $pl.StartsWith($t + '/')) { "
+        "    try { Stop-Process -Id $_.ProcessId -Force -ErrorAction Stop; "
+        "      $killed += ($_.Name + ' (PID ' + $_.ProcessId + ')') } catch {} "
+        "  } "
+        "}; "
+        "$killed -join '|'"
+    )
+    try:
+        r = subprocess.run(
+            ["powershell", "-NoProfile", "-Command", script],
+            capture_output=True,
+            text=True,
+            timeout=20,
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+        )
+        out = (r.stdout or "").strip()
+        if not out:
+            return []
+        killed = [x for x in out.split("|") if x.strip()]
+        for item in killed:
+            log(f"Stopped locked process: {item}")
+        if killed:
+            time.sleep(0.4)
+        return killed
+    except Exception as e:
+        log(f"Could not auto-stop locked engines: {e}")
+        return []
+
+
+def copy_into_motor_dir(src: Path, dest_dir: Path, log) -> None:
+    """Copy with retry: stop Fritz-held locks, else rename locked dest (Windows)."""
+    dest = dest_dir / src.name
+
+    def _try_copy() -> None:
+        shutil.copy2(src, dest)
+
+    try:
+        _try_copy()
+    except PermissionError:
+        log(f"{src.name} is locked (engine still open in Fritz) — releasing…")
+        release_engine_file_locks(dest_dir, log)
+        try:
+            _try_copy()
+        except PermissionError:
+            # Windows often allows rename of a locked EXE; Fritz keeps the old handle.
+            bak = dest.with_suffix(dest.suffix + ".old")
+            try:
+                if bak.exists():
+                    bak.unlink(missing_ok=True)
+                if dest.exists():
+                    dest.rename(bak)
+                    log(f"Renamed locked {src.name} → {bak.name}")
+                _try_copy()
+                try:
+                    bak.unlink(missing_ok=True)
+                except OSError:
+                    log(f"Left {bak.name} (still held by Fritz — safe to delete after closing Fritz)")
+            except OSError as e:
+                raise PermissionError(
+                    f"Cannot overwrite {src.name}: still in use.\n\n"
+                    "Close Fritz 20 (or unload this engine from the module list), "
+                    "then click Install engine again."
+                ) from e
+    log(f"Copied {src.name}")
+
+
 def write_uci_registration(engine_name: str, engine_exe: Path, log) -> Path:
     uci_dir = Path(os.environ.get("APPDATA", "")) / "ChessBase" / "Engines.uci"
     uci_dir.mkdir(parents=True, exist_ok=True)
@@ -249,13 +331,15 @@ def run_install(base: Path, log) -> dict:
     motor_dir.mkdir(parents=True, exist_ok=True)
     log(f"Install folder: {motor_dir}")
 
+    # Reinstall: Fritz often keeps AvatarEngine/stockfish running → WinError 32
+    release_engine_file_locks(motor_dir, log)
+
     for src in (engine_exe, stockfish, profile_path, ini_path):
-        shutil.copy2(src, motor_dir / src.name)
-        log(f"Copied {src.name}")
+        copy_into_motor_dir(src, motor_dir, log)
 
     swap = base / "swap_profile.bat"
     if swap.is_file():
-        shutil.copy2(swap, motor_dir / swap.name)
+        copy_into_motor_dir(swap, motor_dir, log)
 
     avatar_img = find_avatar_image(base)
     initials = sanitize_name(
@@ -444,9 +528,10 @@ def launch_gui() -> None:
                 err = f"{e}\n\n{traceback.format_exc()}"
 
                 def fail() -> None:
-                    set_busy(False)
+                    install_btn.configure(state="normal")
                     status.configure(text="Failed", fg="#f87171")
-                    log(str(e))
+                    log("")
+                    log(f"ERROR: {e}")
                     messagebox.showerror("Chess Avatar Setup", str(e))
 
                 root.after(0, fail)
