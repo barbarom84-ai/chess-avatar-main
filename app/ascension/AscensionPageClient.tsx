@@ -100,6 +100,10 @@ export default function AscensionPageClient() {
   const [animateToIndex, setAnimateToIndex] = useState<number | null>(null);
   const [pendingAdvance, setPendingAdvance] = useState<PendingAdvance | null>(null);
   const [puzzleSessionKey, setPuzzleSessionKey] = useState(0);
+  /** Deferred advance after post-success review (`id` = next puzzle, `session` = remount). */
+  const [reviewAdvance, setReviewAdvance] = useState<
+    null | { kind: "id"; id: string } | { kind: "session" }
+  >(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [activeTab, setActiveTab] = useState("puzzles");
@@ -113,8 +117,21 @@ export default function AscensionPageClient() {
 
   /** Select a puzzle AND always switch to the puzzle tab so it's immediately visible. */
   const handleSelectPuzzle = useCallback((id: string) => {
+    setReviewAdvance(null);
     setSelectedPuzzleId(id);
     setActiveTab("puzzles");
+  }, []);
+
+  const handleContinueAfterReview = useCallback(() => {
+    setReviewAdvance((advance) => {
+      if (!advance) return null;
+      if (advance.kind === "id") {
+        queueMicrotask(() => setSelectedPuzzleId(advance.id));
+      } else {
+        queueMicrotask(() => setPuzzleSessionKey((k) => k + 1));
+      }
+      return null;
+    });
   }, []);
 
   const sortedPuzzles = useMemo(() => sortPuzzles(puzzles), [puzzles]);
@@ -309,26 +326,23 @@ export default function AscensionPageClient() {
           // transitions never fire there, so jump the token immediately.
           const skipAnim = shouldSkipPathAnim(unlockedSkills) || focusPuzzle;
 
+          // Defer switching the player until the user finishes the post-success review.
           if (trackDef?.layout === "sequential" && selectedPuzzle.track !== "main") {
             const nextInTrack = nextItemAfterId(trackPuzzles, selectedPuzzle.id);
-            if (nextInTrack) {
-              setSelectedPuzzleId(nextInTrack.id);
-            } else {
-              setPuzzleSessionKey((k) => k + 1);
-            }
+            setReviewAdvance(
+              nextInTrack ? { kind: "id", id: nextInTrack.id } : { kind: "session" }
+            );
           } else if (isFantasy) {
-            setPuzzleSessionKey((k) => k + 1);
+            setReviewAdvance({ kind: "session" });
           } else {
             const { nextIndex, nextId } = nextFrontierAfterSolve(
               sortedStandard.map((p) => p.id),
               selectedPuzzle.id,
               progressNodeIndex
             );
-            if (nextId) {
-              setSelectedPuzzleId(nextId);
-            } else {
-              setPuzzleSessionKey((k) => k + 1);
-            }
+            setReviewAdvance(
+              nextId ? { kind: "id", id: nextId } : { kind: "session" }
+            );
             if (nextIndex !== progressNodeIndex) {
               if (skipAnim) {
                 setPendingAdvance(null);
@@ -371,6 +385,7 @@ export default function AscensionPageClient() {
       setCampaign(slug);
       const list = sortedPuzzles.filter((p) => (p.track ?? "main") === slug);
       const open = list.find((p) => !p.completed && !p.locked) ?? list[0];
+      setReviewAdvance(null);
       setSelectedPuzzleId(open?.id ?? null);
       setActiveTab("puzzles");
     },
@@ -567,6 +582,8 @@ export default function AscensionPageClient() {
                         puzzle={selectedPuzzle}
                         unlockedSkills={unlockedSkills}
                         onComplete={handleComplete}
+                        onContinueAfterReview={handleContinueAfterReview}
+                        hasNextAfterReview={reviewAdvance != null}
                         frozen={!!pendingReward}
                       />
                     ) : (

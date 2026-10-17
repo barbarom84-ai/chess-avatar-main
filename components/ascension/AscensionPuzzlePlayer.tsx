@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Info, Lock, Sparkles, Star } from "lucide-react";
+import { Info, Lock, Play, Sparkles, Star } from "lucide-react";
 import { Chess } from "chess.js";
 import SimpleChessboard from "@/components/SimpleChessboard";
 import { Button } from "@/components/ui/button";
@@ -34,13 +34,21 @@ interface AscensionPuzzlePlayerProps {
   puzzle: AscensionPuzzleListItem;
   unlockedSkills: string[];
   onComplete: (moves: string[], timeMs: number) => Promise<boolean>;
+  /** Called when the player leaves the post-success review for the next puzzle. */
+  onContinueAfterReview?: () => void;
+  /** True when Ascension has a deferred next puzzle / remount waiting. */
+  hasNextAfterReview?: boolean;
   frozen?: boolean;
 }
+
+const REPLAY_STEP_MS = 550;
 
 export default function AscensionPuzzlePlayer({
   puzzle,
   unlockedSkills,
   onComplete,
+  onContinueAfterReview,
+  hasNextAfterReview = false,
   frozen = false,
 }: AscensionPuzzlePlayerProps) {
   const { lang, t } = useLanguage();
@@ -59,11 +67,16 @@ export default function AscensionPuzzlePlayer({
   const moveIndexRef = useRef(0);
   const [hintIdx, setHintIdx] = useState(-1);
   const [undosUsed, setUndosUsed] = useState(0);
-  const [status, setStatus] = useState<"playing" | "success" | "fail">("playing");
+  const [status, setStatus] = useState<"playing" | "success" | "fail" | "review">(
+    "playing"
+  );
+  const [replaying, setReplaying] = useState(false);
   const [startTime] = useState(() => Date.now());
+  const replayCancelRef = useRef(false);
   const hasExtraHint = unlockedSkills.includes("extra_hint");
   const hasUndo = unlockedSkills.includes("undo_move");
   const maxUndos = hasUndo ? 1 : 0;
+  const insightText = (puzzle.insight?.[uiLang] ?? "").trim();
 
   const fantasyRules: FantasyRuleSet = useMemo(() => {
     const playerAbilities = playerFantasyAbilities(unlockedSkills);
@@ -106,6 +119,8 @@ export default function AscensionPuzzlePlayer({
     (puzzle.fantasy_rules.specialSquares?.length ?? 0) === 0;
 
   const reset = useCallback(() => {
+    replayCancelRef.current = true;
+    setReplaying(false);
     setLineMoves([]);
     setPlayerMoves([]);
     setHistory([]);
@@ -118,6 +133,46 @@ export default function AscensionPuzzlePlayer({
   useEffect(() => {
     reset();
   }, [puzzle.id, puzzle.fen, reset]);
+
+  const sleep = (ms: number) =>
+    new Promise<void>((resolve) => {
+      setTimeout(resolve, ms);
+    });
+
+  const replaySolution = useCallback(async () => {
+    if (solution.length === 0 || replaying) return;
+    replayCancelRef.current = false;
+    setReplaying(true);
+    setStatus("review");
+    setLineMoves([]);
+    setPlayerMoves([]);
+    setHistory([]);
+    moveIndexRef.current = 0;
+
+    for (let i = 0; i < solution.length; i++) {
+      if (replayCancelRef.current) break;
+      await sleep(REPLAY_STEP_MS);
+      if (replayCancelRef.current) break;
+      const step = solution.slice(0, i + 1);
+      setLineMoves(step);
+      setPlayerMoves(
+        extractPlayerMoves(
+          puzzle.fen,
+          step,
+          puzzle.kind === "fantasy" ? fantasyRules : undefined
+        )
+      );
+      moveIndexRef.current = step.length;
+    }
+
+    setReplaying(false);
+  }, [solution, replaying, puzzle.fen, puzzle.kind, fantasyRules]);
+
+  useEffect(() => {
+    return () => {
+      replayCancelRef.current = true;
+    };
+  }, [puzzle.id]);
 
   const applyLineMoveStandard = useCallback((fen: string, moves: string[]): string => {
     const chess = new Chess(fen);
@@ -181,6 +236,15 @@ export default function AscensionPuzzlePlayer({
     [onComplete, startTime]
   );
 
+  const handleContinue = useCallback(() => {
+    if (replaying) return;
+    if (hasNextAfterReview && onContinueAfterReview) {
+      onContinueAfterReview();
+      return;
+    }
+    reset();
+  }, [replaying, hasNextAfterReview, onContinueAfterReview, reset]);
+
   const handleDrop = useCallback(
     (from: string, to: string): boolean => {
       // A wrong move puts the puzzle in "fail" but does not commit anything, so the
@@ -189,6 +253,7 @@ export default function AscensionPuzzlePlayer({
       if (
         (status !== "playing" && status !== "fail") ||
         frozen ||
+        replaying ||
         puzzle.locked ||
         missingRequiredPower
       ) {
@@ -301,6 +366,7 @@ export default function AscensionPuzzlePlayer({
     [
       status,
       frozen,
+      replaying,
       puzzle,
       missingRequiredPower,
       solution,
@@ -314,7 +380,8 @@ export default function AscensionPuzzlePlayer({
   );
 
   const undo = useCallback(() => {
-    if (!hasUndo || status === "success" || history.length === 0) return;
+    if (!hasUndo || status === "success" || status === "review" || history.length === 0)
+      return;
     if (undosUsed >= maxUndos) return;
     const prev = history[history.length - 1]!;
     setHistory((h) => h.slice(0, -1));
@@ -676,7 +743,12 @@ export default function AscensionPuzzlePlayer({
               {` (${Math.max(0, maxUndos - undosUsed)})`}
             </Button>
           )}
-          <Button variant="ghost" size="sm" onClick={reset}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={reset}
+            disabled={replaying}
+          >
             {t.ascension.reset}
           </Button>
         </div>
@@ -694,11 +766,62 @@ export default function AscensionPuzzlePlayer({
             </p>
           )}
 
-        {status === "success" && !frozen && (
-          <p className="text-emerald-400 font-medium">{t.ascension.puzzleSuccess}</p>
-        )}
         {status === "fail" && (
           <p className="text-rose-400 font-medium">{t.ascension.puzzleFail}</p>
+        )}
+
+        {!blocked &&
+          !frozen &&
+          (status === "success" || status === "review" || puzzle.completed) && (
+          <div className="space-y-3 rounded-lg border border-emerald-500/25 bg-emerald-950/25 p-3">
+            <div className="space-y-1">
+              <p className="text-sm font-semibold text-emerald-300">
+                {status === "success"
+                  ? t.ascension.puzzleSuccess
+                  : t.ascension.puzzleReviewTitle}
+              </p>
+              {puzzle.completed && status === "playing" && (
+                <p className="text-xs text-slate-400">
+                  {t.ascension.puzzleReviewCompleted}
+                </p>
+              )}
+              <p className="text-sm text-slate-200 leading-relaxed">
+                {insightText || t.ascension.puzzleReviewInsightFallback}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="gap-1.5"
+                onClick={() => void replaySolution()}
+                disabled={replaying || solution.length === 0}
+              >
+                {replaying ? (
+                  t.ascension.puzzleReplaying
+                ) : (
+                  <>
+                    <Play className="h-3.5 w-3.5" />
+                    {t.ascension.puzzleReplaySolution}
+                  </>
+                )}
+              </Button>
+              {status === "success" && (
+                <Button
+                  type="button"
+                  size="sm"
+                  className="gap-1.5 bg-emerald-700 hover:bg-emerald-600"
+                  onClick={handleContinue}
+                  disabled={replaying}
+                >
+                  {hasNextAfterReview
+                    ? t.ascension.puzzleNextPuzzle
+                    : t.ascension.continue}
+                </Button>
+              )}
+            </div>
+          </div>
         )}
       </CardContent>
     </Card>
