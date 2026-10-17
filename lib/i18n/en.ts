@@ -2955,14 +2955,18 @@ export const en = {
       adminBrilliantButton: "Analyze & import",
       adminBrilliantCancel: "Cancel",
       adminBrilliantProgress:
-        "Game {current}/{total} · {found} brilliant(s) · {imported} imported",
+        "Game {current}/{total} ({pct}%)",
+      adminBrilliantProgressStats:
+        "{found} found · {imported} created ({successPct}%) · {skipped} duplicate(s)",
       adminBrilliantFetching: "Fetching games…",
       adminBrilliantEngineWait: "Loading Stockfish…",
       adminBrilliantDone:
-        "{imported} imported · {found} found · {skipped} duplicate(s) · {games} game(s)",
+        "Done — {imported}/{found} puzzle(s) created ({successPct}%) · {skipped} duplicate(s) · {games} game(s) · analysis {pct}%",
       adminBrilliantNone: "No brilliant moves detected in this batch.",
       adminBrilliantError: "Brilliant-move import failed.",
       adminBrilliantCancelled: "Import cancelled.",
+      adminBrilliantAnalysisLabel: "Game analysis",
+      adminBrilliantImportLabel: "Puzzle creation",
       backToAscension: "Back to Ascension",
       tierMilestone: "Milestone reached",
       tierMilestoneHint: "Complete {count} puzzles to reach this milestone",

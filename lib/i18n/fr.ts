@@ -2966,14 +2966,18 @@ export const fr = {
       adminBrilliantButton: "Analyser & importer",
       adminBrilliantCancel: "Annuler",
       adminBrilliantProgress:
-        "Partie {current}/{total} · {found} brillant(s) · {imported} importé(s)",
+        "Partie {current}/{total} ({pct}%)",
+      adminBrilliantProgressStats:
+        "{found} trouvé(s) · {imported} créé(s) ({successPct}%) · {skipped} doublon(s)",
       adminBrilliantFetching: "Récupération des parties…",
       adminBrilliantEngineWait: "Chargement de Stockfish…",
       adminBrilliantDone:
-        "{imported} importé(s) · {found} trouvé(s) · {skipped} doublon(s) · {games} partie(s)",
+        "Terminé — {imported}/{found} puzzle(s) créés ({successPct}%) · {skipped} doublon(s) · {games} partie(s) · analyse {pct}%",
       adminBrilliantNone: "Aucun coup brillant détecté dans ce lot.",
       adminBrilliantError: "Échec de l'import des coups brillants.",
       adminBrilliantCancelled: "Import annulé.",
+      adminBrilliantAnalysisLabel: "Analyse des parties",
+      adminBrilliantImportLabel: "Création des puzzles",
       backToAscension: "Retour à Ascension",
       tierMilestone: "Palier atteint",
       tierMilestoneHint: "Complète {count} puzzles pour franchir ce palier",

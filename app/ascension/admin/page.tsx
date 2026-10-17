@@ -46,6 +46,31 @@ import { useStockfish } from "@/hooks/useStockfish";
 
 const BRILLIANT_UPLOAD_BATCH = 50;
 
+type BrilliantProgressState = {
+  phase: "idle" | "fetching" | "analyzing" | "done" | "cancelled" | "none";
+  current: number;
+  total: number;
+  found: number;
+  imported: number;
+  skipped: number;
+  failed: number;
+};
+
+const EMPTY_BRILLIANT_PROGRESS: BrilliantProgressState = {
+  phase: "idle",
+  current: 0,
+  total: 0,
+  found: 0,
+  imported: 0,
+  skipped: 0,
+  failed: 0,
+};
+
+function pctOf(part: number, whole: number): number {
+  if (!Number.isFinite(part) || !Number.isFinite(whole) || whole <= 0) return 0;
+  return Math.min(100, Math.round((part / whole) * 100));
+}
+
 type PuzzleForm = {
   id: string | null;
   slug: string;
@@ -142,6 +167,8 @@ export default function AscensionAdminPage() {
   const [brilliantDepth, setBrilliantDepth] = useState(12);
   const [brilliantImporting, setBrilliantImporting] = useState(false);
   const [brilliantMsg, setBrilliantMsg] = useState<string | null>(null);
+  const [brilliantProgress, setBrilliantProgress] =
+    useState<BrilliantProgressState>(EMPTY_BRILLIANT_PROGRESS);
   const brilliantCancelRef = useRef(false);
 
   const loadTracks = useCallback(async () => {
@@ -493,6 +520,7 @@ export default function AscensionAdminPage() {
     }
     if (!stockfishReady) {
       setBrilliantMsg(t.ascension.adminBrilliantEngineWait);
+      setBrilliantProgress(EMPTY_BRILLIANT_PROGRESS);
       toast.message(t.ascension.adminBrilliantEngineWait);
       return;
     }
@@ -500,13 +528,16 @@ export default function AscensionAdminPage() {
     brilliantCancelRef.current = false;
     setBrilliantImporting(true);
     setBrilliantMsg(t.ascension.adminBrilliantFetching);
+    setBrilliantProgress({ ...EMPTY_BRILLIANT_PROGRESS, phase: "fetching" });
     setError(null);
 
     const track = adminTrack;
     let totalImported = 0;
     let totalSkipped = 0;
+    let totalFailed = 0;
     let totalFound = 0;
     let gamesAnalyzed = 0;
+    let gamesTotal = 0;
 
     type PendingPuzzle = {
       fen: string;
@@ -518,6 +549,21 @@ export default function AscensionAdminPage() {
       san?: string;
     };
     const pending: PendingPuzzle[] = [];
+
+    const publishProgress = (
+      phase: BrilliantProgressState["phase"],
+      currentOverride?: number
+    ) => {
+      setBrilliantProgress({
+        phase,
+        current: currentOverride ?? gamesAnalyzed,
+        total: gamesTotal,
+        found: totalFound,
+        imported: totalImported,
+        skipped: totalSkipped,
+        failed: totalFailed,
+      });
+    };
 
     const flushPending = async (opts?: { ignoreCancel?: boolean }) => {
       while (pending.length > 0) {
@@ -531,6 +577,8 @@ export default function AscensionAdminPage() {
           body: JSON.stringify({ track, puzzles: batch }),
         });
         if (!res.ok) {
+          totalFailed += batch.length;
+          publishProgress("analyzing");
           throw new Error(
             await readAccountApiError(res, t.ascension.adminBrilliantError)
           );
@@ -538,9 +586,13 @@ export default function AscensionAdminPage() {
         const data = (await res.json()) as {
           imported: number;
           skippedDuplicates: number;
+          failed?: number;
+          invalid?: number;
         };
         totalImported += data.imported;
         totalSkipped += data.skippedDuplicates;
+        totalFailed += Number(data.failed ?? 0) + Number(data.invalid ?? 0);
+        publishProgress("analyzing");
       }
     };
 
@@ -563,28 +615,44 @@ export default function AscensionAdminPage() {
         games: ChessComCampaignGame[];
       };
       const games = Array.isArray(gamesData.games) ? gamesData.games : [];
+      gamesTotal = games.length;
       if (games.length === 0) {
         setBrilliantMsg(t.ascension.adminBrilliantNone);
+        setBrilliantProgress({
+          ...EMPTY_BRILLIANT_PROGRESS,
+          phase: "none",
+        });
         toast.message(t.ascension.adminBrilliantNone);
         return;
       }
 
+      publishProgress("analyzing", 0);
+
       for (let i = 0; i < games.length; i++) {
         if (brilliantCancelRef.current) throw new ReviewCancelledError();
         const game = games[i]!;
+        const analysisPct = pctOf(i + 1, games.length);
         setBrilliantMsg(
           t.ascension.adminBrilliantProgress
             .replace("{current}", String(i + 1))
             .replace("{total}", String(games.length))
-            .replace("{found}", String(totalFound))
-            .replace("{imported}", String(totalImported))
+            .replace("{pct}", String(analysisPct))
         );
+        publishProgress("analyzing", i);
 
         const side = playerSideFromUsernames(username, game.white, game.black);
-        if (!side) continue;
+        if (!side) {
+          gamesAnalyzed++;
+          publishProgress("analyzing", i + 1);
+          continue;
+        }
 
         const parsed = parsePgnForReview(game.pgn);
-        if (!parsed || parsed.uci.length === 0) continue;
+        if (!parsed || parsed.uci.length === 0) {
+          gamesAnalyzed++;
+          publishProgress("analyzing", i + 1);
+          continue;
+        }
 
         const review = await analyzeParsedGameForReview({
           parsed,
@@ -600,7 +668,10 @@ export default function AscensionAdminPage() {
           side
         );
         for (const c of found) {
-          if (!validateStandardPuzzleLine(c.fen, [c.uci]).ok) continue;
+          if (!validateStandardPuzzleLine(c.fen, [c.uci]).ok) {
+            totalFailed++;
+            continue;
+          }
           totalFound++;
           pending.push({
             fen: c.fen,
@@ -613,6 +684,8 @@ export default function AscensionAdminPage() {
           });
         }
 
+        publishProgress("analyzing", i + 1);
+
         if (pending.length >= BRILLIANT_UPLOAD_BATCH) {
           await flushPending();
         }
@@ -621,16 +694,39 @@ export default function AscensionAdminPage() {
       await flushPending();
       await load();
 
+      const successPct = pctOf(totalImported + totalSkipped, totalFound);
+      const analysisPct = pctOf(gamesAnalyzed, gamesTotal);
+
       if (totalFound === 0 && totalImported === 0) {
         setBrilliantMsg(t.ascension.adminBrilliantNone);
+        setBrilliantProgress({
+          phase: "none",
+          current: gamesAnalyzed,
+          total: gamesTotal,
+          found: 0,
+          imported: 0,
+          skipped: 0,
+          failed: totalFailed,
+        });
         toast.message(t.ascension.adminBrilliantNone);
       } else {
         const msg = t.ascension.adminBrilliantDone
           .replace("{imported}", String(totalImported))
           .replace("{found}", String(totalFound))
           .replace("{skipped}", String(totalSkipped))
-          .replace("{games}", String(gamesAnalyzed));
+          .replace("{games}", String(gamesAnalyzed))
+          .replace("{successPct}", String(successPct))
+          .replace("{pct}", String(analysisPct));
         setBrilliantMsg(msg);
+        setBrilliantProgress({
+          phase: "done",
+          current: gamesAnalyzed,
+          total: gamesTotal,
+          found: totalFound,
+          imported: totalImported,
+          skipped: totalSkipped,
+          failed: totalFailed,
+        });
         toast.success(msg);
       }
     } catch (err) {
@@ -640,13 +736,26 @@ export default function AscensionAdminPage() {
         } catch {
           /* best-effort upload of already-found brillants */
         }
+        const successPct = pctOf(totalImported + totalSkipped, totalFound);
+        const analysisPct = pctOf(gamesAnalyzed, gamesTotal);
+        setBrilliantProgress({
+          phase: "cancelled",
+          current: gamesAnalyzed,
+          total: gamesTotal,
+          found: totalFound,
+          imported: totalImported,
+          skipped: totalSkipped,
+          failed: totalFailed,
+        });
         setBrilliantMsg(
-          totalImported > 0
+          totalImported > 0 || totalFound > 0
             ? t.ascension.adminBrilliantDone
                 .replace("{imported}", String(totalImported))
                 .replace("{found}", String(totalFound))
                 .replace("{skipped}", String(totalSkipped))
                 .replace("{games}", String(gamesAnalyzed))
+                .replace("{successPct}", String(successPct))
+                .replace("{pct}", String(analysisPct))
             : t.ascension.adminBrilliantCancelled
         );
         toast.message(t.ascension.adminBrilliantCancelled);
@@ -656,6 +765,7 @@ export default function AscensionAdminPage() {
           err instanceof Error ? err.message : t.ascension.adminBrilliantError;
         setError(message);
         setBrilliantMsg(null);
+        setBrilliantProgress((prev) => ({ ...prev, phase: "idle" }));
         toast.error(message);
       }
     } finally {
@@ -695,6 +805,35 @@ export default function AscensionAdminPage() {
   }
 
   const trackPuzzles = puzzles.filter((p) => (p.track ?? "main") === adminTrack);
+
+  const brilliantAnalysisPct = pctOf(
+    brilliantProgress.current,
+    brilliantProgress.total
+  );
+  const brilliantHandled =
+    brilliantProgress.imported +
+    brilliantProgress.skipped +
+    brilliantProgress.failed;
+  const brilliantSuccessPct =
+    brilliantProgress.found > 0
+      ? pctOf(
+          brilliantProgress.imported + brilliantProgress.skipped,
+          brilliantProgress.found
+        )
+      : brilliantProgress.phase === "done" ||
+          brilliantProgress.phase === "cancelled"
+        ? 100
+        : 0;
+  const brilliantImportBarPct =
+    brilliantProgress.found > 0
+      ? pctOf(brilliantHandled, brilliantProgress.found)
+      : brilliantAnalysisPct;
+  const showBrilliantProgress =
+    brilliantImporting ||
+    brilliantProgress.phase === "done" ||
+    brilliantProgress.phase === "cancelled" ||
+    brilliantProgress.phase === "analyzing" ||
+    brilliantProgress.phase === "fetching";
 
   const maxLevel = Math.max(
     ASCENSION_ADMIN_MIN_LEVELS,
@@ -914,6 +1053,68 @@ export default function AscensionAdminPage() {
                 />
               </div>
             </div>
+            {showBrilliantProgress && (
+              <div className="space-y-3 rounded-lg border border-amber-500/20 bg-slate-950/50 p-3">
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between gap-2 text-xs text-slate-300">
+                    <span>{t.ascension.adminBrilliantAnalysisLabel}</span>
+                    <span className="font-semibold tabular-nums text-amber-200">
+                      {brilliantAnalysisPct}%
+                    </span>
+                  </div>
+                  <div
+                    className="h-2 overflow-hidden rounded-full bg-slate-800"
+                    role="progressbar"
+                    aria-valuenow={brilliantAnalysisPct}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                  >
+                    <div
+                      className="h-full rounded-full bg-amber-500 transition-[width] duration-300"
+                      style={{ width: `${brilliantAnalysisPct}%` }}
+                    />
+                  </div>
+                  <p className="text-xs text-amber-100/90">
+                    {brilliantProgress.phase === "fetching"
+                      ? t.ascension.adminBrilliantFetching
+                      : t.ascension.adminBrilliantProgress
+                          .replace("{current}", String(brilliantProgress.current))
+                          .replace(
+                            "{total}",
+                            String(brilliantProgress.total || "—")
+                          )
+                          .replace("{pct}", String(brilliantAnalysisPct))}
+                  </p>
+                </div>
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between gap-2 text-xs text-slate-300">
+                    <span>{t.ascension.adminBrilliantImportLabel}</span>
+                    <span className="font-semibold tabular-nums text-emerald-300">
+                      {brilliantSuccessPct}%
+                    </span>
+                  </div>
+                  <div
+                    className="h-2 overflow-hidden rounded-full bg-slate-800"
+                    role="progressbar"
+                    aria-valuenow={brilliantImportBarPct}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                  >
+                    <div
+                      className="h-full rounded-full bg-emerald-500 transition-[width] duration-300"
+                      style={{ width: `${brilliantImportBarPct}%` }}
+                    />
+                  </div>
+                  <p className="text-xs text-emerald-100/90">
+                    {t.ascension.adminBrilliantProgressStats
+                      .replace("{found}", String(brilliantProgress.found))
+                      .replace("{imported}", String(brilliantProgress.imported))
+                      .replace("{successPct}", String(brilliantSuccessPct))
+                      .replace("{skipped}", String(brilliantProgress.skipped))}
+                  </p>
+                </div>
+              </div>
+            )}
             <div className="flex flex-wrap items-center justify-between gap-3">
               {brilliantMsg ? (
                 <p className="text-sm text-amber-200">{brilliantMsg}</p>
