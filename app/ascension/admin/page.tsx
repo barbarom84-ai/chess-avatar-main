@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Download, Loader2, RotateCcw, Save, Trash2 } from "lucide-react";
+import { ArrowLeft, Download, Loader2, RotateCcw, Save, Sparkles, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,9 +29,22 @@ import { ASCENSION_ADMIN_MIN_LEVELS } from "@/lib/ascension/constants";
 import { trackLabel, type DbCampaignTrack } from "@/lib/ascension/campaign-tracks";
 import AdminTrackManager from "@/components/ascension/AdminTrackManager";
 import { nextFreeStandardLevel } from "@/lib/ascension/lichess-import";
+import {
+  collectBrilliantCandidates,
+  playerSideFromUsernames,
+} from "@/lib/ascension/brilliant-import";
+import type { ChessComCampaignGame } from "@/lib/ascension/chesscom-games";
+import {
+  analyzeParsedGameForReview,
+  parsePgnForReview,
+  ReviewCancelledError,
+} from "@/lib/game-review";
 import SimpleChessboard from "@/components/SimpleChessboard";
 import { useLanguage } from "@/lib/language-context";
 import { useSuperUser } from "@/hooks/useSuperUser";
+import { useStockfish } from "@/hooks/useStockfish";
+
+const BRILLIANT_UPLOAD_BATCH = 50;
 
 type PuzzleForm = {
   id: string | null;
@@ -104,6 +117,7 @@ function emptyForm(level: number, track: CampaignTrack = "main"): PuzzleForm {
 export default function AscensionAdminPage() {
   const { t, lang } = useLanguage();
   const { isSuperUser, loading } = useSuperUser();
+  const { isReady: stockfishReady, getBestMoveAndEval } = useStockfish();
   const [puzzles, setPuzzles] = useState<DbCampaignPuzzle[]>([]);
   const [selectedPuzzleId, setSelectedPuzzleId] = useState<string | null>(null);
   const [selectedLevel, setSelectedLevel] = useState<number | null>(null);
@@ -122,6 +136,13 @@ export default function AscensionAdminPage() {
   const [importing, setImporting] = useState(false);
   const [importMsg, setImportMsg] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [brilliantUsername, setBrilliantUsername] = useState("FondueMan");
+  const [brilliantMaxMonths, setBrilliantMaxMonths] = useState(24);
+  const [brilliantMaxGames, setBrilliantMaxGames] = useState(80);
+  const [brilliantDepth, setBrilliantDepth] = useState(12);
+  const [brilliantImporting, setBrilliantImporting] = useState(false);
+  const [brilliantMsg, setBrilliantMsg] = useState<string | null>(null);
+  const brilliantCancelRef = useRef(false);
 
   const loadTracks = useCallback(async () => {
     try {
@@ -460,6 +481,189 @@ export default function AscensionAdminPage() {
     }
   };
 
+  const cancelBrilliantImport = () => {
+    brilliantCancelRef.current = true;
+  };
+
+  const importBrilliantFromChessCom = async () => {
+    const username = brilliantUsername.trim();
+    if (!username) {
+      toast.error(t.ascension.adminBrilliantError);
+      return;
+    }
+    if (!stockfishReady) {
+      setBrilliantMsg(t.ascension.adminBrilliantEngineWait);
+      toast.message(t.ascension.adminBrilliantEngineWait);
+      return;
+    }
+
+    brilliantCancelRef.current = false;
+    setBrilliantImporting(true);
+    setBrilliantMsg(t.ascension.adminBrilliantFetching);
+    setError(null);
+
+    const track = adminTrack;
+    let totalImported = 0;
+    let totalSkipped = 0;
+    let totalFound = 0;
+    let gamesAnalyzed = 0;
+
+    type PendingPuzzle = {
+      fen: string;
+      uci: string;
+      gameId: string;
+      ply: number;
+      username: string;
+      gameUrl?: string;
+      san?: string;
+    };
+    const pending: PendingPuzzle[] = [];
+
+    const flushPending = async (opts?: { ignoreCancel?: boolean }) => {
+      while (pending.length > 0) {
+        if (!opts?.ignoreCancel && brilliantCancelRef.current) {
+          throw new ReviewCancelledError();
+        }
+        const batch = pending.splice(0, BRILLIANT_UPLOAD_BATCH);
+        const res = await fetch("/api/ascension/admin/import-brilliant", {
+          method: "POST",
+          headers: await accountApiHeaders(),
+          body: JSON.stringify({ track, puzzles: batch }),
+        });
+        if (!res.ok) {
+          throw new Error(
+            await readAccountApiError(res, t.ascension.adminBrilliantError)
+          );
+        }
+        const data = (await res.json()) as {
+          imported: number;
+          skippedDuplicates: number;
+        };
+        totalImported += data.imported;
+        totalSkipped += data.skippedDuplicates;
+      }
+    };
+
+    try {
+      const qs = new URLSearchParams({
+        username,
+        maxMonths: String(brilliantMaxMonths),
+        maxGames: String(brilliantMaxGames),
+      });
+      const gamesRes = await fetch(
+        `/api/ascension/admin/chesscom-games?${qs.toString()}`,
+        { headers: await accountApiHeaders(false) }
+      );
+      if (!gamesRes.ok) {
+        throw new Error(
+          await readAccountApiError(gamesRes, t.ascension.adminBrilliantError)
+        );
+      }
+      const gamesData = (await gamesRes.json()) as {
+        games: ChessComCampaignGame[];
+      };
+      const games = Array.isArray(gamesData.games) ? gamesData.games : [];
+      if (games.length === 0) {
+        setBrilliantMsg(t.ascension.adminBrilliantNone);
+        toast.message(t.ascension.adminBrilliantNone);
+        return;
+      }
+
+      for (let i = 0; i < games.length; i++) {
+        if (brilliantCancelRef.current) throw new ReviewCancelledError();
+        const game = games[i]!;
+        setBrilliantMsg(
+          t.ascension.adminBrilliantProgress
+            .replace("{current}", String(i + 1))
+            .replace("{total}", String(games.length))
+            .replace("{found}", String(totalFound))
+            .replace("{imported}", String(totalImported))
+        );
+
+        const side = playerSideFromUsernames(username, game.white, game.black);
+        if (!side) continue;
+
+        const parsed = parsePgnForReview(game.pgn);
+        if (!parsed || parsed.uci.length === 0) continue;
+
+        const review = await analyzeParsedGameForReview({
+          parsed,
+          getBestMoveAndEval,
+          depth: brilliantDepth,
+          isCancelled: () => brilliantCancelRef.current,
+        });
+        gamesAnalyzed++;
+
+        const found = collectBrilliantCandidates(
+          review.moves,
+          parsed.fenBefore,
+          side
+        );
+        for (const c of found) {
+          if (!validateStandardPuzzleLine(c.fen, [c.uci]).ok) continue;
+          totalFound++;
+          pending.push({
+            fen: c.fen,
+            uci: c.uci,
+            gameId: game.id,
+            ply: c.ply,
+            username,
+            gameUrl: game.url,
+            san: c.san,
+          });
+        }
+
+        if (pending.length >= BRILLIANT_UPLOAD_BATCH) {
+          await flushPending();
+        }
+      }
+
+      await flushPending();
+      await load();
+
+      if (totalFound === 0 && totalImported === 0) {
+        setBrilliantMsg(t.ascension.adminBrilliantNone);
+        toast.message(t.ascension.adminBrilliantNone);
+      } else {
+        const msg = t.ascension.adminBrilliantDone
+          .replace("{imported}", String(totalImported))
+          .replace("{found}", String(totalFound))
+          .replace("{skipped}", String(totalSkipped))
+          .replace("{games}", String(gamesAnalyzed));
+        setBrilliantMsg(msg);
+        toast.success(msg);
+      }
+    } catch (err) {
+      if (err instanceof ReviewCancelledError) {
+        try {
+          await flushPending({ ignoreCancel: true });
+        } catch {
+          /* best-effort upload of already-found brillants */
+        }
+        setBrilliantMsg(
+          totalImported > 0
+            ? t.ascension.adminBrilliantDone
+                .replace("{imported}", String(totalImported))
+                .replace("{found}", String(totalFound))
+                .replace("{skipped}", String(totalSkipped))
+                .replace("{games}", String(gamesAnalyzed))
+            : t.ascension.adminBrilliantCancelled
+        );
+        toast.message(t.ascension.adminBrilliantCancelled);
+        if (totalImported > 0) await load();
+      } else {
+        const message =
+          err instanceof Error ? err.message : t.ascension.adminBrilliantError;
+        setError(message);
+        setBrilliantMsg(null);
+        toast.error(message);
+      }
+    } finally {
+      setBrilliantImporting(false);
+      brilliantCancelRef.current = false;
+    }
+  };
+
   const resetProgress = async () => {
     if (!window.confirm(t.ascension.adminResetConfirm)) return;
     setResetting(true);
@@ -616,7 +820,7 @@ export default function AscensionAdminPage() {
               )}
               <Button
                 onClick={() => void importFromLichess()}
-                disabled={importing}
+                disabled={importing || brilliantImporting}
                 className="gap-2 bg-emerald-700 hover:bg-emerald-600"
               >
                 {importing ? (
@@ -626,6 +830,122 @@ export default function AscensionAdminPage() {
                 )}
                 {t.ascension.adminImportButton}
               </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="theme-bg-secondary border-amber-500/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-amber-400" />
+              {t.ascension.adminBrilliantTitle}
+            </CardTitle>
+            <p className="text-sm text-slate-400">{t.ascension.adminBrilliantSubtitle}</p>
+            <p className="text-xs text-amber-200/80">
+              {t.ascension.adminBrilliantTrackHint.replace(
+                "{track}",
+                trackLabel(
+                  tracks.find((tr) => tr.slug === adminTrack) ?? {
+                    slug: adminTrack,
+                    label: { fr: adminTrack, en: adminTrack },
+                    sort_order: 0,
+                    layout: "sequential",
+                    unlock_rule: { type: "always" },
+                    is_system: false,
+                  },
+                  lang
+                )
+              )}
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="space-y-1">
+                <Label>{t.ascension.adminBrilliantUsername}</Label>
+                <Input
+                  value={brilliantUsername}
+                  onChange={(e) => setBrilliantUsername(e.target.value)}
+                  disabled={brilliantImporting}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label>{t.ascension.adminBrilliantMaxMonths}</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={120}
+                  value={brilliantMaxMonths}
+                  onChange={(e) =>
+                    setBrilliantMaxMonths(
+                      Math.max(1, Math.min(120, Number(e.target.value) || 1))
+                    )
+                  }
+                  disabled={brilliantImporting}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label>{t.ascension.adminBrilliantMaxGames}</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={500}
+                  value={brilliantMaxGames}
+                  onChange={(e) =>
+                    setBrilliantMaxGames(
+                      Math.max(1, Math.min(500, Number(e.target.value) || 1))
+                    )
+                  }
+                  disabled={brilliantImporting}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label>{t.ascension.adminBrilliantDepth}</Label>
+                <Input
+                  type="number"
+                  min={8}
+                  max={20}
+                  value={brilliantDepth}
+                  onChange={(e) =>
+                    setBrilliantDepth(
+                      Math.max(8, Math.min(20, Number(e.target.value) || 12))
+                    )
+                  }
+                  disabled={brilliantImporting}
+                />
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              {brilliantMsg ? (
+                <p className="text-sm text-amber-200">{brilliantMsg}</p>
+              ) : (
+                <span />
+              )}
+              <div className="flex flex-wrap gap-2">
+                {brilliantImporting ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={cancelBrilliantImport}
+                    className="gap-2"
+                  >
+                    {t.ascension.adminBrilliantCancel}
+                  </Button>
+                ) : null}
+                <Button
+                  onClick={() => void importBrilliantFromChessCom()}
+                  disabled={brilliantImporting || importing || !stockfishReady}
+                  className="gap-2 bg-amber-700 hover:bg-amber-600"
+                >
+                  {brilliantImporting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Sparkles className="h-4 w-4" />
+                  )}
+                  {!stockfishReady && !brilliantImporting
+                    ? t.ascension.adminBrilliantEngineWait
+                    : t.ascension.adminBrilliantButton}
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>

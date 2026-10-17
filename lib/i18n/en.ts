@@ -2944,6 +2944,25 @@ export const en = {
       adminImportError: "Lichess import failed.",
       adminImportRateLimited:
         "Lichess rate limit reached. {imported} puzzle(s) imported — wait about a minute before retrying.",
+      adminBrilliantTitle: "Import brilliant moves (Chess.com)",
+      adminBrilliantSubtitle:
+        "Local analysis of public games — labels close to Chess.com Insights, not an exact copy. Appends puzzles to the track selected below.",
+      adminBrilliantUsername: "Chess.com username",
+      adminBrilliantMaxMonths: "Archive months",
+      adminBrilliantMaxGames: "Max games",
+      adminBrilliantDepth: "Stockfish depth",
+      adminBrilliantTrackHint: "Target track: {track}",
+      adminBrilliantButton: "Analyze & import",
+      adminBrilliantCancel: "Cancel",
+      adminBrilliantProgress:
+        "Game {current}/{total} · {found} brilliant(s) · {imported} imported",
+      adminBrilliantFetching: "Fetching games…",
+      adminBrilliantEngineWait: "Loading Stockfish…",
+      adminBrilliantDone:
+        "{imported} imported · {found} found · {skipped} duplicate(s) · {games} game(s)",
+      adminBrilliantNone: "No brilliant moves detected in this batch.",
+      adminBrilliantError: "Brilliant-move import failed.",
+      adminBrilliantCancelled: "Import cancelled.",
       backToAscension: "Back to Ascension",
       tierMilestone: "Milestone reached",
       tierMilestoneHint: "Complete {count} puzzles to reach this milestone",

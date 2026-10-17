@@ -2955,6 +2955,25 @@ export const fr = {
       adminImportError: "Échec de l'import depuis Lichess.",
       adminImportRateLimited:
         "Limite de débit Lichess atteinte. {imported} puzzle(s) importé(s) — patientez environ une minute avant de réessayer.",
+      adminBrilliantTitle: "Import coups brillants (Chess.com)",
+      adminBrilliantSubtitle:
+        "Analyse locale des parties publiques — labels proches de Chess.com Insights, pas une copie exacte. Ajoute les puzzles à la piste sélectionnée ci-dessous.",
+      adminBrilliantUsername: "Pseudo Chess.com",
+      adminBrilliantMaxMonths: "Mois d'archives",
+      adminBrilliantMaxGames: "Parties max",
+      adminBrilliantDepth: "Profondeur Stockfish",
+      adminBrilliantTrackHint: "Piste cible : {track}",
+      adminBrilliantButton: "Analyser & importer",
+      adminBrilliantCancel: "Annuler",
+      adminBrilliantProgress:
+        "Partie {current}/{total} · {found} brillant(s) · {imported} importé(s)",
+      adminBrilliantFetching: "Récupération des parties…",
+      adminBrilliantEngineWait: "Chargement de Stockfish…",
+      adminBrilliantDone:
+        "{imported} importé(s) · {found} trouvé(s) · {skipped} doublon(s) · {games} partie(s)",
+      adminBrilliantNone: "Aucun coup brillant détecté dans ce lot.",
+      adminBrilliantError: "Échec de l'import des coups brillants.",
+      adminBrilliantCancelled: "Import annulé.",
       backToAscension: "Retour à Ascension",
       tierMilestone: "Palier atteint",
       tierMilestoneHint: "Complète {count} puzzles pour franchir ce palier",
