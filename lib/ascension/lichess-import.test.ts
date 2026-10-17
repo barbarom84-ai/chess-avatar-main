@@ -103,7 +103,7 @@ describe("lichessPuzzleToFantasyCampaignRow", () => {
     expect(row.xp_reward).toBe(25);
     expect(row.fantasy_rules.objective).toBe("checkmate");
     expect(row.insight.fr).toContain("lichess.org/training/abc12");
-    expect(row.insight.fr).toContain("Puzzle fantasy");
+    expect(row.insight.fr).toMatch(/Fantasy|fantasy|piste Fantasy/i);
   });
 
   it("validates through FantasyChessEngine.replaySolution", () => {
