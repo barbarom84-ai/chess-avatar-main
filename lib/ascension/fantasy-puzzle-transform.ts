@@ -150,9 +150,14 @@ function buildRules(
   objectivePiece?: string,
   specialSquares?: SquareEffect[]
 ): FantasyRuleSet {
+  const activeSkills =
+    enabledAbilities.length > 0
+      ? enabledAbilities.map((id) => ({ id, charges: 1 }))
+      : undefined;
   return {
     enabledAbilities,
     objective,
+    ...(activeSkills ? { activeSkills } : {}),
     ...(objective === "reach_square" && objectiveSquare
       ? { objectiveSquare }
       : {}),
@@ -466,6 +471,13 @@ function buildMechanismNote(
     }
   }
 
+  if (source === "fallback") {
+    return {
+      fr: "Mécanique : tactique classique (sans pouvoir fantasy) — piste Fantasy.",
+      en: "Mechanic: classic tactics (no fantasy power) — Fantasy track.",
+    };
+  }
+
   const effect = rules.specialSquares?.[0];
   if (source === "special_square" && effect) {
     if (effect.type === "tunnel") {
@@ -501,6 +513,15 @@ function buildHints(rules: FantasyRuleSet, source: FantasyTransformSource): Loca
       hints.push(...(ABILITY_HINTS[ability] ?? []));
     }
     return hints.slice(0, 2);
+  }
+
+  if (source === "fallback") {
+    return [
+      {
+        fr: "Aucune case spéciale ni pouvoir ici : résolvez comme un puzzle classique.",
+        en: "No special squares or powers here — solve it like a classic puzzle.",
+      },
+    ];
   }
 
   const effect = rules.specialSquares?.[0];
@@ -567,6 +588,12 @@ function buildPrompt(
   }
 
   const base = buildPromptFromThemes(themes);
+  if (source === "fallback") {
+    return {
+      fr: `${base.fr} · classique (Fantasy)`,
+      en: `${base.en} · classic (Fantasy)`,
+    };
+  }
   return {
     fr: `${base.fr} (piste Fantasy)`,
     en: `${base.en} (Fantasy track)`,

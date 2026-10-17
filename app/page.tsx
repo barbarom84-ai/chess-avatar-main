@@ -123,26 +123,28 @@ export default function HomePage() {
           </p>
 
           <div className="flex flex-col sm:flex-row flex-wrap gap-3 justify-center items-center pt-10">
-            <Link href="/analyze">
-              <Button
-                size="lg"
-                className="bg-cyan-600 hover:bg-cyan-500 text-white font-semibold text-base md:text-lg px-8 py-6 shadow-xl shadow-cyan-950/40 border border-cyan-400/20"
-              >
+            <Button
+              asChild
+              size="lg"
+              className="bg-cyan-600 hover:bg-cyan-500 text-white font-semibold text-base md:text-lg px-8 py-6 shadow-xl shadow-cyan-950/40 border border-cyan-400/20"
+            >
+              <Link href="/analyze">
                 <Search className="mr-2 h-5 w-5" />
                 {lang === "fr" ? "Créer mon avatar" : "Build my avatar"}
-              </Button>
-            </Link>
+              </Link>
+            </Button>
 
-            <Link href="/play">
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-2 border-cyan-500/40 text-cyan-200 hover:bg-cyan-500/10 hover:border-cyan-400 font-semibold text-base md:text-lg px-8 py-6"
-              >
+            <Button
+              asChild
+              size="lg"
+              variant="outline"
+              className="border-2 border-cyan-500/40 text-cyan-200 hover:bg-cyan-500/10 hover:border-cyan-400 font-semibold text-base md:text-lg px-8 py-6"
+            >
+              <Link href="/play">
                 <Gamepad2 className="mr-2 h-5 w-5" />
                 {lang === "fr" ? "Jouer contre un avatar" : "Play vs an avatar"}
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </div>
 
           <p className="pt-6 text-sm text-slate-500">
@@ -261,15 +263,16 @@ export default function HomePage() {
               ? "Quelques secondes, aucune inscription requise."
               : "A few seconds, no registration required."}
           </p>
-          <Link href="/analyze">
-            <Button
-              size="lg"
-              className="bg-cyan-600 hover:bg-cyan-500 text-white font-semibold px-10 py-6"
-            >
+          <Button
+            asChild
+            size="lg"
+            className="bg-cyan-600 hover:bg-cyan-500 text-white font-semibold px-10 py-6"
+          >
+            <Link href="/analyze">
               <Search className="mr-2 h-5 w-5" />
               {lang === "fr" ? "Commencer" : "Get started"}
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         </div>
       </section>
 

@@ -279,10 +279,43 @@ export class FantasyChessEngine {
   private greedyPawnSquare: Square | null = null;
   private queenSplitSquare: Square | null = null;
   private triggeredSquares: Set<string> = new Set();
+  private activeCharges: Map<string, number> = new Map();
 
   constructor(fen: string, rules: FantasyRuleSet) {
     this.chess = new Chess(fen);
     this.rules = rules;
+    for (const slot of rules.activeSkills ?? []) {
+      this.activeCharges.set(slot.id, Math.max(0, slot.charges));
+    }
+  }
+
+  /** Remaining charges for puzzle-defined active skills (empty if none). */
+  getActiveSkillCharges(): { id: string; charges: number }[] {
+    if (!this.rules.activeSkills?.length) return [];
+    return this.rules.activeSkills.map((s) => ({
+      id: s.id,
+      charges: this.activeCharges.get(s.id) ?? 0,
+    }));
+  }
+
+  private consumeActiveCharge(abilityId: PieceAbilityId): void {
+    if (!this.rules.activeSkills?.length) return;
+    const slot = this.rules.activeSkills.find((s) => s.id === abilityId);
+    if (!slot) return;
+    const left = Math.max(0, (this.activeCharges.get(abilityId) ?? 0) - 1);
+    this.activeCharges.set(abilityId, left);
+  }
+
+  /** Abilities already used or out of active charges — treated as blocked for generation. */
+  private abilitiesBlockedForGeneration(): PieceAbilityId[] {
+    const blocked = [...this.usedAbilities];
+    for (const slot of this.rules.activeSkills ?? []) {
+      const id = slot.id as PieceAbilityId;
+      if ((this.activeCharges.get(id) ?? 0) <= 0 && !blocked.includes(id)) {
+        blocked.push(id);
+      }
+    }
+    return blocked;
   }
 
   getSpecialSquares(): SquareEffect[] {
@@ -532,11 +565,12 @@ export class FantasyChessEngine {
       return standard;
     }
 
+    const blocked = this.abilitiesBlockedForGeneration();
     const fantasy: FantasyMove[] = [
-      ...generateKnightCrazyHorseMoves(this.chess, from, this.rules, this.usedAbilities),
-      ...generateBishopOrthogonalMoves(this.chess, from, this.rules, this.usedAbilities),
+      ...generateKnightCrazyHorseMoves(this.chess, from, this.rules, blocked),
+      ...generateBishopOrthogonalMoves(this.chess, from, this.rules, blocked),
       ...generateRookTunnelMoves(this.chess, from, this.rules),
-      ...generatePawnChargeMoves(this.chess, from, this.rules, this.usedAbilities),
+      ...generatePawnChargeMoves(this.chess, from, this.rules, blocked),
     ];
 
     const seen = new Set<string>();
@@ -652,6 +686,7 @@ export class FantasyChessEngine {
       !this.usedAbilities.includes(match.abilityId)
     ) {
       this.usedAbilities.push(match.abilityId);
+      this.consumeActiveCharge(match.abilityId);
     }
 
     const wasPawnCapture =

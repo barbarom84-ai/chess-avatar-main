@@ -50,35 +50,44 @@ function DockLink({
   const label = navItemLabel(item, lang, t);
   const badge = navConfig[item.href]?.badge ?? "none";
 
+  const showLabel = expanded || vertical;
+
   const link = (
     <Link
       href={item.href}
       aria-current={isActive ? "page" : undefined}
-      title={!expanded && vertical ? label : undefined}
+      aria-label={label}
       className={cn(
         "flex items-center gap-2 rounded-lg px-2 py-2 text-sm transition-colors",
-        vertical ? "flex-col py-2.5 min-w-[3rem]" : "w-full",
+        vertical ? "flex-col gap-0.5 py-1.5 min-w-[3.25rem]" : "w-full",
         isActive
           ? "bg-cyan-600/25 text-cyan-100 ring-1 ring-cyan-500/50 glow-cyan"
           : "text-slate-400 hover:bg-slate-800/80 hover:text-cyan-300"
       )}
     >
       <NavItemIcon item={item} pieceSet={pieceSet} navIconTheme={navIconTheme} size={22} />
-      {expanded && (
-        <span className={cn("truncate", vertical ? "text-[10px] text-center leading-tight max-w-[4.5rem]" : "flex-1")}>
+      {showLabel && (
+        <span
+          className={cn(
+            "truncate",
+            vertical
+              ? "max-w-[4.5rem] text-center text-[10px] font-medium leading-tight text-slate-400"
+              : "flex-1"
+          )}
+        >
           {label}
-          <NavItemBadges item={item} badge={badge} lang={lang} />
+          {!vertical && <NavItemBadges item={item} badge={badge} lang={lang} />}
         </span>
       )}
     </Link>
   );
 
-  if (expanded || vertical) return link;
+  if (expanded) return link;
 
   return (
     <Tooltip>
       <TooltipTrigger asChild>{link}</TooltipTrigger>
-      <TooltipContent side="right">{label}</TooltipContent>
+      <TooltipContent side={vertical ? "top" : "right"}>{label}</TooltipContent>
     </Tooltip>
   );
 }

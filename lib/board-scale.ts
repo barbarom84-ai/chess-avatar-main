@@ -18,8 +18,20 @@ export function boardScaleCssVar(percent: number): string {
 }
 
 /**
+ * CSS max-width that tracks --board-scale even when the parent is narrower than
+ * the absolute board max (otherwise min(100%, maxToken*scale) stays at 100%
+ * for the whole 75–140% range).
+ *
+ * Formula: min(100%, 100%*scale, token*scale)
+ */
+export function scaledBoardMaxWidthExpr(maxTokenOrExpr: string): string {
+  const expr = maxTokenOrExpr.trim();
+  return `min(100%, calc(100% * var(--board-scale, 1)), calc((${expr}) * var(--board-scale, 1)))`;
+}
+
+/**
  * Apply `--board-scale` to a CSS max-width expression.
- * Pass-through for fill values (`100%`) so parent frames are not double-scaled.
+ * Fill values (`100%`) scale against the parent width so shrink/grow is visible.
  */
 export function resolveScaledBoardMaxWidth(
   boardMaxWidth: string | undefined,
@@ -29,13 +41,15 @@ export function resolveScaledBoardMaxWidth(
 
   if (boardMaxWidth) {
     const trimmed = boardMaxWidth.trim();
+    // Fill parents that already apply --board-scale (chessboard-frame--*).
+    // Scaling again here would square the factor.
     if (trimmed === "100%" || trimmed === "100cqw" || trimmed === "100cqh") {
       return trimmed;
     }
-    return `min(100%, calc((${trimmed}) * var(--board-scale, 1)))`;
+    return scaledBoardMaxWidthExpr(trimmed);
   }
 
   if (opts.hasClassName) return undefined;
 
-  return "min(100%, calc(var(--board-max-default) * var(--board-scale, 1)))";
+  return scaledBoardMaxWidthExpr("var(--board-max-default)");
 }

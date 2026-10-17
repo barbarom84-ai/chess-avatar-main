@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { FantasyChessEngine } from "@/lib/ascension/fantasy-chess/engine";
 import type {
   PieceAbilityId,
   FantasyObjective,
   SquareEffect,
 } from "@/lib/ascension/fantasy-chess/types";
 import { computePuzzleRewards, ELO_CAP } from "@/lib/ascension/progression";
-import { playerFantasyAbilities } from "@/lib/ascension/skill-tree";
+import {
+  playerFantasyAbilities,
+  playerPassiveSkills,
+} from "@/lib/ascension/skill-tree";
 import type { ChampionCardCustomization } from "@/lib/ascension/types";
 import {
   mapDbCampaignPuzzle,
@@ -21,52 +23,11 @@ import {
   isTrackUnlocked,
   mapDbCampaignTrack,
 } from "@/lib/ascension/campaign-tracks";
-import {
-  getSolverColor,
-  validatePlayerSolution,
-} from "@/lib/ascension/puzzle-sequence";
-import { getSideToMoveFromFen } from "@/lib/ascension/fen-utils";
+import { validatePlayerSolution } from "@/lib/ascension/puzzle-sequence";
+import { validateFantasySolution } from "@/lib/ascension/fantasy-objective-validation";
 
 import type { AscensionCompleteResponse } from "@/lib/api-contract";
 export const runtime = "nodejs";
-
-function validateFantasyPlayerSolution(
-  fen: string,
-  rules: {
-    enabledAbilities: PieceAbilityId[];
-    objective?: FantasyObjective;
-    objectiveSquare?: string;
-    objectivePiece?: string;
-    specialSquares?: SquareEffect[];
-  },
-  solutionUcis: string[],
-  playerMoves: string[]
-): boolean {
-  const normalizedSolution = solutionUcis.map((m) => m.trim().toLowerCase());
-  const normalizedPlayer = playerMoves.map((m) => m.trim().toLowerCase());
-  const solverColor = getSolverColor(fen);
-
-  const expectedIndices: number[] = [];
-  const engine = new FantasyChessEngine(fen, {
-    enabledAbilities: rules.enabledAbilities,
-    objective: rules.objective,
-    objectiveSquare: rules.objectiveSquare,
-    objectivePiece: rules.objectivePiece,
-    specialSquares: rules.specialSquares,
-    fantasySide: solverColor,
-  });
-
-  for (let i = 0; i < normalizedSolution.length; i++) {
-    if (getSideToMoveFromFen(engine.fen) === solverColor) {
-      expectedIndices.push(i);
-    }
-    if (!engine.applyMove(normalizedSolution[i]!)) return false;
-  }
-
-  const expectedPlayer = expectedIndices.map((i) => normalizedSolution[i]!);
-  if (normalizedPlayer.length !== expectedPlayer.length) return false;
-  return normalizedPlayer.every((m, i) => m === expectedPlayer[i]);
-}
 
 export async function POST(request: NextRequest) {
   const auth = await requireAscensionAuth(request);
@@ -177,14 +138,21 @@ export async function POST(request: NextRequest) {
   let solved = false;
   if (puzzle.kind === "fantasy") {
     const fr = puzzle.fantasy_rules;
+    const mergedAbilities = [
+      ...new Set([
+        ...((fr.enabledAbilities ?? []) as PieceAbilityId[]),
+        ...playerAbilities,
+      ]),
+    ];
     const rules = {
-      enabledAbilities: (fr.enabledAbilities ?? []) as PieceAbilityId[],
+      enabledAbilities: mergedAbilities,
       objective: fr.objective as FantasyObjective | undefined,
       objectiveSquare: fr.objectiveSquare as string | undefined,
       objectivePiece: fr.objectivePiece as string | undefined,
       specialSquares: fr.specialSquares as SquareEffect[] | undefined,
+      passiveSkills: playerPassiveSkills(unlockedSkills),
     };
-    solved = validateFantasyPlayerSolution(puzzle.fen, rules, solution, submitted);
+    solved = validateFantasySolution(puzzle.fen, rules, solution, submitted);
   } else {
     solved = validatePlayerSolution(puzzle.fen, solution, submitted);
   }

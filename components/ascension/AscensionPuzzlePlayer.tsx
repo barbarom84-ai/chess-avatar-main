@@ -58,10 +58,12 @@ export default function AscensionPuzzlePlayer({
   >([]);
   const moveIndexRef = useRef(0);
   const [hintIdx, setHintIdx] = useState(-1);
+  const [undosUsed, setUndosUsed] = useState(0);
   const [status, setStatus] = useState<"playing" | "success" | "fail">("playing");
   const [startTime] = useState(() => Date.now());
   const hasExtraHint = unlockedSkills.includes("extra_hint");
   const hasUndo = unlockedSkills.includes("undo_move");
+  const maxUndos = hasUndo ? 1 : 0;
 
   const fantasyRules: FantasyRuleSet = useMemo(() => {
     const playerAbilities = playerFantasyAbilities(unlockedSkills);
@@ -72,6 +74,7 @@ export default function AscensionPuzzlePlayer({
       objectiveSquare: puzzle.fantasy_rules.objectiveSquare,
       objectivePiece: puzzle.fantasy_rules.objectivePiece,
       specialSquares: puzzle.fantasy_rules.specialSquares,
+      activeSkills: puzzle.fantasy_rules.activeSkills,
       passiveSkills: playerPassiveSkills(unlockedSkills),
       fantasySide: solverColor,
     };
@@ -95,9 +98,12 @@ export default function AscensionPuzzlePlayer({
   const missingRequiredPower = missingAbilities.length > 0;
   const blocked = missingRequiredPower || puzzle.locked;
 
-  const hasFantasyCodex =
-    unlockedSkills.includes("fantasy_codex") || puzzle.kind === "fantasy";
+  const hasFantasyCodex = unlockedSkills.includes("fantasy_codex");
   const hasTunnelSense = unlockedSkills.includes("tunnel_sense");
+  const isClassicFantasy =
+    puzzle.kind === "fantasy" &&
+    (puzzle.fantasy_rules.enabledAbilities?.length ?? 0) === 0 &&
+    (puzzle.fantasy_rules.specialSquares?.length ?? 0) === 0;
 
   const reset = useCallback(() => {
     setLineMoves([]);
@@ -105,6 +111,7 @@ export default function AscensionPuzzlePlayer({
     setHistory([]);
     moveIndexRef.current = 0;
     setHintIdx(-1);
+    setUndosUsed(0);
     setStatus("playing");
   }, []);
 
@@ -204,37 +211,79 @@ export default function AscensionPuzzlePlayer({
       const uci = `${from}${to}`.toLowerCase();
       const expectedFrom = expected.slice(0, 2);
       const expectedTo = expected.slice(2, 4);
+      const matchesSolution =
+        from.toLowerCase() === expectedFrom && to.toLowerCase() === expectedTo;
 
-      if (from.toLowerCase() !== expectedFrom || to.toLowerCase() !== expectedTo) {
+      if (puzzle.kind === "fantasy") {
+        const engine = new FantasyChessEngine(puzzle.fen, fantasyRules);
+        for (const m of lineMoves) engine.applyMove(m);
+
+        const playedUci = matchesSolution && expected.length > 4 ? expected : uci;
+        if (!engine.applyMove(playedUci)) {
+          setStatus("fail");
+          return false;
+        }
+
+        const snapshot = { line: lineMoves, player: playerMoves, index: idx };
+        const nextPlayer = [...playerMoves, playedUci];
+
+        if (engine.isObjectiveMet(fantasyRules.objective ?? "checkmate")) {
+          moveIndexRef.current = solution.length;
+          setHistory((h) => [...h, snapshot]);
+          setLineMoves([...lineMoves, playedUci]);
+          setPlayerMoves(nextPlayer);
+          finishSuccess(nextPlayer);
+          return true;
+        }
+
+        if (matchesSolution) {
+          const nextLine = [...lineMoves, playedUci];
+          const nextIndex = idx + 1;
+          const auto = autoPlayOpponent(nextLine, nextIndex);
+          moveIndexRef.current = auto.index;
+          setHistory((h) => [...h, snapshot]);
+          setLineMoves(auto.line);
+          setPlayerMoves(nextPlayer);
+          if (auto.done) {
+            finishSuccess(nextPlayer);
+          } else {
+            setStatus("playing");
+          }
+          return true;
+        }
+
+        // Alternate legal line: keep play if solver still to move (chains), else fail.
+        const afterFen = engine.fen;
+        if (getSideToMoveFromFen(afterFen) === solverColor) {
+          moveIndexRef.current = idx;
+          setHistory((h) => [...h, snapshot]);
+          setLineMoves([...lineMoves, playedUci]);
+          setPlayerMoves(nextPlayer);
+          setStatus("playing");
+          return true;
+        }
+
+        setStatus("fail");
+        return false;
+      }
+
+      if (!matchesSolution) {
         setStatus("fail");
         return false;
       }
 
       const playedUci = expected.length > 4 ? expected : uci;
-
-      if (puzzle.kind === "fantasy") {
-        const engine = new FantasyChessEngine(puzzle.fen, fantasyRules);
-        for (const m of lineMoves) engine.applyMove(m);
-        if (!engine.applyMove(playedUci)) {
-          setStatus("fail");
-          return false;
-        }
-      } else {
-        const chess = new Chess(puzzle.fen);
-        for (const m of lineMoves) applyMoveToChess(chess, m);
-        if (!applyMoveToChess(chess, playedUci)) {
-          setStatus("fail");
-          return false;
-        }
+      const chess = new Chess(puzzle.fen);
+      for (const m of lineMoves) applyMoveToChess(chess, m);
+      if (!applyMoveToChess(chess, playedUci)) {
+        setStatus("fail");
+        return false;
       }
 
-      // Snapshot the pre-move state so Undo can step back one player move.
       const snapshot = { line: lineMoves, player: playerMoves, index: idx };
-
       const nextLine = [...lineMoves, playedUci];
       const nextPlayer = [...playerMoves, playedUci];
       const nextIndex = idx + 1;
-
       const auto = autoPlayOpponent(nextLine, nextIndex);
       moveIndexRef.current = auto.index;
       setHistory((h) => [...h, snapshot]);
@@ -244,7 +293,6 @@ export default function AscensionPuzzlePlayer({
       if (auto.done) {
         finishSuccess(nextPlayer);
       } else {
-        // Clear any prior wrong-move feedback now that a correct move landed.
         setStatus("playing");
       }
 
@@ -259,6 +307,7 @@ export default function AscensionPuzzlePlayer({
       lineMoves,
       playerMoves,
       fantasyRules,
+      solverColor,
       autoPlayOpponent,
       finishSuccess,
     ]
@@ -266,15 +315,22 @@ export default function AscensionPuzzlePlayer({
 
   const undo = useCallback(() => {
     if (!hasUndo || status === "success" || history.length === 0) return;
+    if (undosUsed >= maxUndos) return;
     const prev = history[history.length - 1]!;
     setHistory((h) => h.slice(0, -1));
     setLineMoves(prev.line);
     setPlayerMoves(prev.player);
     moveIndexRef.current = prev.index;
+    setUndosUsed((n) => n + 1);
     setStatus("playing");
-  }, [hasUndo, status, history]);
+  }, [hasUndo, status, history, undosUsed, maxUndos]);
 
   const maxHints = puzzle.hints.length + (hasExtraHint ? 1 : 0);
+  const nextSolutionHint = useMemo(() => {
+    const expected = solution[lineMoves.length];
+    if (!expected || expected.length < 4) return null;
+    return `${expected.slice(0, 2).toUpperCase()} → ${expected.slice(2, 4).toUpperCase()}`;
+  }, [solution, lineMoves]);
 
   const playerOrientation = useMemo(
     () => boardOrientationFromFen(puzzle.fen),
@@ -419,6 +475,11 @@ export default function AscensionPuzzlePlayer({
                 {t.ascension.bonusQuestLabel}
               </span>
             )}
+            {isClassicFantasy && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-300/90 bg-slate-900/50 border border-slate-600/40 rounded-full px-2 py-0.5">
+                {t.ascension.classicFantasyLabel}
+              </span>
+            )}
           </div>
         </div>
       </CardHeader>
@@ -519,7 +580,7 @@ export default function AscensionPuzzlePlayer({
                 )}
               </div>
 
-              {hasFantasyCodex && (
+              {hasFantasyCodex ? (
                 <div className="rounded-lg border border-slate-700/60 bg-slate-900/50 px-3 py-2 text-[11px] text-slate-400 space-y-1">
                   <p className="font-semibold text-slate-300">{t.ascension.fantasyRulesTitle}</p>
                   <ul className="list-disc list-inside space-y-0.5">
@@ -530,7 +591,16 @@ export default function AscensionPuzzlePlayer({
                   {(fantasyRules.specialSquares?.length ?? 0) > 0 && (
                     <p className="text-[10px] text-slate-500 pt-1">{t.ascension.fantasySquaresHint}</p>
                   )}
+                  {(fantasyRules.activeSkills?.length ?? 0) > 0 && (
+                    <p className="text-[10px] text-amber-400/80 pt-1">
+                      {t.ascension.activeChargesHint}
+                    </p>
+                  )}
                 </div>
+              ) : (
+                <p className="text-[11px] text-slate-500 italic px-1">
+                  {t.ascension.fantasyCodexLockedHint}
+                </p>
               )}
             </div>
           </TooltipProvider>
@@ -579,13 +649,16 @@ export default function AscensionPuzzlePlayer({
 
         {!blocked && (
         <div className="flex flex-wrap gap-2">
-          {hintIdx < maxHints - 1 && hintIdx < puzzle.hints.length - 1 && (
+          {hintIdx < maxHints - 1 && (
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setHintIdx((i) => Math.min(i + 1, puzzle.hints.length - 1))}
+              onClick={() => setHintIdx((i) => i + 1)}
             >
               {t.ascension.hint}
+              {hasExtraHint && puzzle.hints.length > 0
+                ? ` (${hintIdx + 2}/${maxHints})`
+                : ""}
             </Button>
           )}
           {hasUndo && (
@@ -593,9 +666,14 @@ export default function AscensionPuzzlePlayer({
               variant="outline"
               size="sm"
               onClick={undo}
-              disabled={history.length === 0 || status === "success"}
+              disabled={
+                history.length === 0 ||
+                status === "success" ||
+                undosUsed >= maxUndos
+              }
             >
               {t.ascension.undo}
+              {` (${Math.max(0, maxUndos - undosUsed)})`}
             </Button>
           )}
           <Button variant="ghost" size="sm" onClick={reset}>
@@ -604,9 +682,17 @@ export default function AscensionPuzzlePlayer({
         </div>
         )}
 
-        {!blocked && hintIdx >= 0 && puzzle.hints[hintIdx] && (
+        {!blocked && hintIdx >= 0 && hintIdx < puzzle.hints.length && puzzle.hints[hintIdx] && (
           <p className="text-sm text-cyan-300/90">{puzzle.hints[hintIdx]![uiLang]}</p>
         )}
+        {!blocked &&
+          hintIdx >= puzzle.hints.length &&
+          hasExtraHint &&
+          nextSolutionHint && (
+            <p className="text-sm text-amber-300/90">
+              {t.ascension.extraHintPrefix} {nextSolutionHint}
+            </p>
+          )}
 
         {status === "success" && !frozen && (
           <p className="text-emerald-400 font-medium">{t.ascension.puzzleSuccess}</p>

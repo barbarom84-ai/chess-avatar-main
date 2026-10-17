@@ -69,9 +69,20 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: insertSkill.error.message }, { status: 500 });
   }
 
+  const cardPatch: Record<string, unknown> = { xp: newXp };
+  if (body.skillId === "card_aura") {
+    const customization = {
+      ...(card.customization ?? {}),
+      frame: card.customization?.frame ?? "legendary",
+      background: card.customization?.background ?? "aurora",
+      badge: card.customization?.badge ?? "Aura",
+    };
+    cardPatch.customization = customization;
+  }
+
   const cardUpdate = await auth.ctx.admin
     .from("player_champion_cards")
-    .update({ xp: newXp })
+    .update(cardPatch)
     .eq("user_id", auth.ctx.user.id)
     .select("*")
     .single();

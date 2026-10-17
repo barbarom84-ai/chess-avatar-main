@@ -1,6 +1,10 @@
 import type { EngineConfig } from "@/lib/analysis";
 import type { AvatarCardElement } from "@/lib/avatar-card-model";
-import type { PieceAbilityId, SquareEffect } from "@/lib/ascension/fantasy-chess/types";
+import type {
+  ActiveSkillSlot,
+  PieceAbilityId,
+  SquareEffect,
+} from "@/lib/ascension/fantasy-chess/types";
 
 export type ChampionTier =
   | "stone"
@@ -64,6 +68,7 @@ export interface DbCampaignPuzzle {
     objectiveSquare?: string;
     objectivePiece?: string;
     specialSquares?: SquareEffect[];
+    activeSkills?: ActiveSkillSlot[];
   };
   prompt: LocalizedText;
   hints: LocalizedText[];

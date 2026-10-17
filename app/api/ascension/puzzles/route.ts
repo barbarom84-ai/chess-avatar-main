@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
 
   const completions = await auth.ctx.admin
     .from("player_puzzle_completions")
-    .select("puzzle_id, completed_at, attempts")
+    .select("puzzle_id, completed_at, attempts, best_time_ms")
     .eq("user_id", auth.ctx.user.id);
 
   const completionMap = new Map(
@@ -72,7 +72,9 @@ export async function GET(request: NextRequest) {
     return {
       ...puzzle,
       completed: !!completion,
-      attempts: completion?.attempts ?? 0,
+      attempts: Number(completion?.attempts ?? 0),
+      best_time_ms:
+        completion?.best_time_ms != null ? Number(completion.best_time_ms) : null,
     };
   });
 

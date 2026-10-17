@@ -177,31 +177,58 @@ nextjs-portal {
   --board-max-arena: min(94vw, max(280px, calc(100dvh - 330px)), 720px);
 }
 
-/* Shared board frames — scale with --board-scale for all play surfaces */
+/*
+ * Board frames: include `100% * --board-scale` so shrink works when the parent
+ * is already narrower than --board-max-* (otherwise min(100%, max*scale) stays
+ * glued to 100% for the whole 75–140% range and only the % badge moves).
+ */
 .chessboard-frame {
   width: 100%;
-  max-width: min(100%, calc(var(--board-max-default) * var(--board-scale)));
+  max-width: min(
+    100%,
+    calc(100% * var(--board-scale)),
+    calc(var(--board-max-default) * var(--board-scale))
+  );
   margin-inline: auto;
+  overflow: visible;
 }
 
 .chessboard-frame--puzzle {
-  max-width: min(100%, calc(var(--board-max-puzzle) * var(--board-scale)));
+  max-width: min(
+    100%,
+    calc(100% * var(--board-scale)),
+    calc(var(--board-max-puzzle) * var(--board-scale))
+  );
 }
 
 .chessboard-frame--lesson {
-  max-width: min(100%, calc(var(--board-max-lesson) * var(--board-scale)));
+  max-width: min(
+    100%,
+    calc(100% * var(--board-scale)),
+    calc(var(--board-max-lesson) * var(--board-scale))
+  );
 }
 
 .chessboard-frame--md {
-  max-width: min(100%, calc(var(--board-max-md) * var(--board-scale)));
+  max-width: min(
+    100%,
+    calc(100% * var(--board-scale)),
+    calc(var(--board-max-md) * var(--board-scale))
+  );
 }
 
 .chessboard-frame--pvp {
-  max-width: min(100%, calc(var(--board-max-pvp) * var(--board-scale)));
+  max-width: min(
+    100%,
+    calc(100% * var(--board-scale)),
+    calc(var(--board-max-pvp) * var(--board-scale))
+  );
 }
 
 .chessboard-frame--arena {
-  max-width: min(100%, calc(var(--board-max-arena) * var(--board-scale)));
+  width: 100%;
+  max-width: 100%;
+  overflow: visible;
 }
 
 .chessboard-column--pvp {
@@ -209,13 +236,23 @@ nextjs-portal {
 }
 
 @media (orientation: landscape) {
+  /* Column stays unscaled; .chessboard-frame--pvp owns --board-scale. */
   .chessboard-column--pvp {
-    max-width: min(100%, calc(var(--board-max-pvp) * var(--board-scale)));
+    max-width: min(100%, var(--board-max-pvp));
   }
 }
 
 .chessboard-column--arena {
-  max-width: min(100%, calc(var(--board-max-arena) * var(--board-scale)));
+  /*
+   * Full width of the Arena left column (controls sit below, not beside).
+   * Scale changes real size: shrink and grow both track --board-max-arena,
+   * capped at 100% so the board never covers Matchup.
+   */
+  width: min(100%, calc(var(--board-max-arena) * var(--board-scale)));
+  max-width: 100%;
+  justify-self: center;
+  overflow: visible;
+  box-sizing: border-box;
 }
 
 .dark {

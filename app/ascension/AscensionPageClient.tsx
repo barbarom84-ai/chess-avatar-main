@@ -2,10 +2,21 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { ChevronDown, Pencil, Settings2 } from "lucide-react";
+import { ChevronDown, Maximize2, Minimize2, Pencil, Settings2 } from "lucide-react";
 import AscensionLoadingScreen from "@/components/ascension/AscensionLoadingScreen";
+import AscensionOnboarding, {
+  ASCENSION_ONBOARDING_KEY,
+} from "@/components/ascension/AscensionOnboarding";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import AscensionProgressPath from "@/components/ascension/AscensionProgressPath";
 import AscensionRewardModal, {
@@ -41,11 +52,27 @@ import { useSuperUser } from "@/hooks/useSuperUser";
 import { track } from "@/lib/track";
 
 const SKIP_PATH_ANIM_KEY = "ascension_skip_path_anim";
+const STREAK_KEY = "ascension_solve_streak";
 
 function shouldSkipPathAnim(unlockedSkills: string[]): boolean {
   if (!unlockedSkills.includes("skip_path_anim")) return false;
   if (typeof window === "undefined") return false;
-  return localStorage.getItem(SKIP_PATH_ANIM_KEY) !== "0";
+  // Only skip when explicitly enabled — null/missing means animate.
+  return localStorage.getItem(SKIP_PATH_ANIM_KEY) === "1";
+}
+
+function trackUnlockHint(
+  track: DbCampaignTrack,
+  t: { ascension: { trackLockedMain: string; trackLockedElo: string; trackLockedPrereq: string } }
+): string {
+  const rule = track.unlock_rule;
+  if (rule?.type === "main_complete_or_elo") {
+    return t.ascension.trackLockedElo.replace("{elo}", String(rule.min_elo ?? 3000));
+  }
+  if (rule?.type === "prerequisite_track") {
+    return t.ascension.trackLockedPrereq.replace("{track}", rule.track ?? "");
+  }
+  return t.ascension.trackLockedMain;
 }
 
 type PendingAdvance = {
@@ -78,6 +105,10 @@ export default function AscensionPageClient() {
   const [activeTab, setActiveTab] = useState("puzzles");
   const [campaign, setCampaign] = useState<string>("main");
   const [mainCampaignComplete, setMainCampaignComplete] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [skipPathAnimPref, setSkipPathAnimPref] = useState(false);
+  const [focusPuzzle, setFocusPuzzle] = useState(false);
+  const [solveStreak, setSolveStreak] = useState(0);
   const progressInitialized = useRef(false);
 
   /** Select a puzzle AND always switch to the puzzle tab so it's immediately visible. */
@@ -152,10 +183,38 @@ export default function AscensionPageClient() {
   }, [load]);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    setShowOnboarding(localStorage.getItem(ASCENSION_ONBOARDING_KEY) !== "1");
+    setSkipPathAnimPref(localStorage.getItem(SKIP_PATH_ANIM_KEY) === "1");
+    setSolveStreak(Number(localStorage.getItem(STREAK_KEY) ?? "0") || 0);
+  }, []);
+
+  // Recover a stuck token if the frontier moved ahead of progressNodeIndex
+  // (e.g. CSS transitionend never fired while the path was display:none).
+  useEffect(() => {
+    if (!isMainLayout || animateToIndex != null || pendingAdvance != null) return;
+    const openIdx = firstOpenStandardPuzzleIndex(mainTrackPuzzles);
+    if (openIdx > progressNodeIndex) {
+      setProgressNodeIndex(openIdx);
+    }
+  }, [
+    isMainLayout,
+    animateToIndex,
+    pendingAdvance,
+    mainTrackPuzzles,
+    progressNodeIndex,
+  ]);
+
+  useEffect(() => {
     if (tracks.length > 0 && !tracks.some((tr) => tr.slug === campaign)) {
       setCampaign(tracks[0]!.slug);
     }
   }, [tracks, campaign]);
+
+  const completedCount = useMemo(
+    () => puzzles.filter((p) => p.completed).length,
+    [puzzles]
+  );
 
   const selectedPuzzle =
     activePuzzles.find((p) => p.id === selectedPuzzleId) ?? activePuzzles[0];
@@ -177,7 +236,17 @@ export default function AscensionPageClient() {
 
           setPuzzles((prev) => {
             const updated = prev.map((p) =>
-              p.id === selectedPuzzle.id ? { ...p, completed: true } : p
+              p.id === selectedPuzzle.id
+                ? {
+                    ...p,
+                    completed: true,
+                    attempts: (p.attempts ?? 0) + 1,
+                    best_time_ms:
+                      p.best_time_ms == null
+                        ? timeMs
+                        : Math.min(p.best_time_ms, timeMs),
+                  }
+                : p
             );
             const newElo = result.rewards!.newElo;
             const locked = applyPuzzleLocks(updated, newElo, tracks, isPremium);
@@ -213,16 +282,32 @@ export default function AscensionPageClient() {
           );
 
           if (!isSpecialReward) {
+            const nextStreak = (() => {
+              if (typeof window === "undefined") return 1;
+              const prev = Number(localStorage.getItem(STREAK_KEY) ?? "0") || 0;
+              const next = prev + 1;
+              localStorage.setItem(STREAK_KEY, String(next));
+              return next;
+            })();
+            setSolveStreak(nextStreak);
+            const baseToast = t.ascension.rewardToast
+              .replace("{xp}", String(result.rewards.xpGain))
+              .replace("{elo}", String(result.rewards.eloGain));
             toast.success(
-              t.ascension.rewardToast
-                .replace("{xp}", String(result.rewards.xpGain))
-                .replace("{elo}", String(result.rewards.eloGain))
+              nextStreak >= 3
+                ? `${baseToast} · ${t.ascension.streakToast.replace("{n}", String(nextStreak))}`
+                : baseToast
             );
+          } else if (typeof window !== "undefined") {
+            localStorage.setItem(STREAK_KEY, "0");
+            setSolveStreak(0);
           }
 
           const trackPuzzles = sortedPuzzles.filter((p) => p.track === selectedPuzzle.track);
           const trackDef = tracks.find((tr) => tr.slug === selectedPuzzle.track);
-          const skipAnim = shouldSkipPathAnim(unlockedSkills);
+          // Focus mode hides the path on small screens (display:none) — CSS
+          // transitions never fire there, so jump the token immediately.
+          const skipAnim = shouldSkipPathAnim(unlockedSkills) || focusPuzzle;
 
           if (trackDef?.layout === "sequential" && selectedPuzzle.track !== "main") {
             const nextInTrack = nextItemAfterId(trackPuzzles, selectedPuzzle.id);
@@ -246,6 +331,8 @@ export default function AscensionPageClient() {
             }
             if (nextIndex !== progressNodeIndex) {
               if (skipAnim) {
+                setPendingAdvance(null);
+                setAnimateToIndex(null);
                 setProgressNodeIndex(nextIndex);
               } else {
                 setPendingAdvance({ toIndex: nextIndex });
@@ -254,9 +341,6 @@ export default function AscensionPageClient() {
             }
           }
 
-          if (unlockedSkills.includes("skip_path_anim") && typeof window !== "undefined") {
-            localStorage.setItem(SKIP_PATH_ANIM_KEY, "1");
-          }
           return true;
         }
         return false;
@@ -275,8 +359,10 @@ export default function AscensionPageClient() {
       isPremium,
       progressNodeIndex,
       unlockedSkills,
+      focusPuzzle,
       t.ascension.completeError,
       t.ascension.rewardToast,
+      t.ascension.streakToast,
     ]
   );
 
@@ -361,31 +447,52 @@ export default function AscensionPageClient() {
             <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr_220px] xl:grid-cols-[380px_1fr_240px] 2xl:grid-cols-[420px_1fr_260px] gap-4">
 
               {/* LEFT: Parcours d'ascension */}
-              <div className="lg:row-span-2 space-y-3">
+              <div className={`lg:row-span-2 space-y-3 ${focusPuzzle ? "hidden lg:block" : ""}`}>
                 {hasMultipleTracks && (
-                  <div className="inline-flex w-full rounded-lg border border-slate-800 overflow-hidden flex-wrap">
-                    {tracks.map((track) => {
-                      const locked = !trackUnlock[track.slug];
-                      const isFantasyTrack = track.slug === "fantasy";
-                      return (
-                        <button
-                          key={track.slug}
-                          type="button"
-                          onClick={() => handleSelectCampaign(track.slug)}
-                          className={`flex-1 min-w-[80px] px-3 py-2 text-xs font-medium transition-colors ${
-                            campaign === track.slug
+                  <TooltipProvider delayDuration={150}>
+                    <div className="inline-flex w-full rounded-lg border border-slate-800 overflow-hidden flex-wrap">
+                      {tracks.map((trackItem) => {
+                        const locked = !trackUnlock[trackItem.slug];
+                        const isFantasyTrack = trackItem.slug === "fantasy";
+                        const className = `flex-1 min-w-[80px] px-3 py-2 text-xs font-medium transition-colors inline-flex items-center justify-center gap-1 ${
+                          locked
+                            ? "bg-slate-950/40 text-slate-600 cursor-not-allowed"
+                            : campaign === trackItem.slug
                               ? isFantasyTrack
                                 ? "bg-purple-800 text-purple-50"
                                 : "bg-cyan-700 text-white"
                               : "bg-slate-950/60 text-slate-400 hover:text-slate-200"
-                          }`}
-                        >
-                          {trackLabel(track, lang)}
-                          {locked ? " 🔒" : ""}
-                        </button>
-                      );
-                    })}
-                  </div>
+                        }`;
+                        if (locked) {
+                          return (
+                            <Tooltip key={trackItem.slug}>
+                              <TooltipTrigger asChild>
+                                <span className="flex-1 min-w-[80px]">
+                                  <button type="button" disabled className={`w-full ${className}`}>
+                                    {trackLabel(trackItem, lang)}
+                                    <span aria-hidden>🔒</span>
+                                  </button>
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent side="bottom">
+                                {trackUnlockHint(trackItem, t)}
+                              </TooltipContent>
+                            </Tooltip>
+                          );
+                        }
+                        return (
+                          <button
+                            key={trackItem.slug}
+                            type="button"
+                            onClick={() => handleSelectCampaign(trackItem.slug)}
+                            className={className}
+                          >
+                            {trackLabel(trackItem, lang)}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </TooltipProvider>
                 )}
 
                 {mainCampaignComplete &&
@@ -421,7 +528,33 @@ export default function AscensionPageClient() {
               </div>
 
               {/* CENTER: Puzzle / Skills (tabs) */}
-              <div>
+              <div className={focusPuzzle ? "lg:col-span-2" : ""}>
+                <div className="flex items-center gap-2 mb-2 lg:hidden">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 text-xs"
+                    onClick={() => setFocusPuzzle((v) => !v)}
+                  >
+                    {focusPuzzle ? (
+                      <>
+                        <Minimize2 className="h-3.5 w-3.5 mr-1" />
+                        {t.ascension.focusExit}
+                      </>
+                    ) : (
+                      <>
+                        <Maximize2 className="h-3.5 w-3.5 mr-1" />
+                        {t.ascension.focusPuzzle}
+                      </>
+                    )}
+                  </Button>
+                  {solveStreak >= 2 && (
+                    <span className="text-[11px] text-amber-300/90">
+                      {t.ascension.streakToast.replace("{n}", String(solveStreak))}
+                    </span>
+                  )}
+                </div>
                 <Tabs value={activeTab} onValueChange={setActiveTab}>
                   <TabsList className="w-full">
                     <TabsTrigger value="puzzles" className="flex-1">{t.ascension.tabPuzzles}</TabsTrigger>
@@ -454,8 +587,17 @@ export default function AscensionPageClient() {
               </div>
 
               {/* RIGHT: Champion card + compact settings */}
-              <div className="space-y-3">
-                <ChampionTradingCard model={cardModel} className="mx-auto" />
+              <div className={`space-y-3 ${focusPuzzle ? "hidden lg:block" : ""}`}>
+                <ChampionTradingCard
+                  model={cardModel}
+                  completedCount={completedCount}
+                  hasCardAura={unlockedSkills.includes("card_aura")}
+                  className="mx-auto"
+                />
+
+                <Button asChild variant="outline" size="sm" className="w-full h-8 text-xs">
+                  <Link href="/avatars">{t.ascension.changeAvatar}</Link>
+                </Button>
 
                 {/* Compact settings — collapsible */}
                 <div className="rounded-lg border border-slate-800 bg-slate-950/40 overflow-hidden">
@@ -545,6 +687,27 @@ export default function AscensionPageClient() {
                           ))}
                         </select>
                       </div>
+
+                      {unlockedSkills.includes("skip_path_anim") && (
+                        <div className="flex items-center justify-between gap-2 pt-1">
+                          <label
+                            htmlFor="skip-path-anim"
+                            className="text-[10px] text-slate-400 flex-1"
+                          >
+                            {t.ascension.skipPathAnimLabel}
+                          </label>
+                          <Switch
+                            id="skip-path-anim"
+                            checked={skipPathAnimPref}
+                            onCheckedChange={(checked) => {
+                              setSkipPathAnimPref(checked);
+                              if (typeof window !== "undefined") {
+                                localStorage.setItem(SKIP_PATH_ANIM_KEY, checked ? "1" : "0");
+                              }
+                            }}
+                          />
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -554,6 +717,16 @@ export default function AscensionPageClient() {
           )}
         </div>
       </main>
+
+      <AscensionOnboarding
+        open={showOnboarding && !loading && !!card}
+        onDismiss={() => {
+          setShowOnboarding(false);
+          if (typeof window !== "undefined") {
+            localStorage.setItem(ASCENSION_ONBOARDING_KEY, "1");
+          }
+        }}
+      />
 
       <AscensionRewardModal
         open={!!pendingReward}

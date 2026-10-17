@@ -11,6 +11,7 @@ export interface AscensionCardResponse {
 export interface AscensionPuzzleListItem extends DbCampaignPuzzle {
   completed: boolean;
   attempts: number;
+  best_time_ms?: number | null;
   /** True when the puzzle cannot be played yet (sequential lock for standard puzzles). */
   locked: boolean;
   /** True when the puzzle exceeds the free plan limit for its track. */

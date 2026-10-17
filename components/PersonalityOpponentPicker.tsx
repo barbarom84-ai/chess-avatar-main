@@ -306,8 +306,8 @@ export default function PersonalityOpponentPicker({
         </div>
 
         {selected && resolved && radarStyle && (
-          <Card className="bg-slate-900 border-slate-700/80 lg:sticky lg:top-20">
-            <CardContent className="pt-5 space-y-4">
+          <Card className="flex max-h-[min(42rem,calc(100dvh-6rem))] flex-col overflow-hidden bg-slate-900 border-slate-700/80 lg:sticky lg:top-20">
+            <CardContent className="flex-1 space-y-4 overflow-y-auto pt-5 pb-3">
               <div className="flex items-start gap-3">
                 {selected.portraitUrl ? (
                   <img
@@ -437,6 +437,8 @@ export default function PersonalityOpponentPicker({
                 </div>
               </div>
 
+            </CardContent>
+            <div className="sticky bottom-0 z-10 shrink-0 border-t border-slate-800 bg-slate-900/95 px-4 py-3 backdrop-blur-sm">
               <Button
                 type="button"
                 className="w-full bg-cyan-600 hover:bg-cyan-500 text-white"
@@ -445,7 +447,7 @@ export default function PersonalityOpponentPicker({
                 <Play className="h-4 w-4" />
                 {copy.startGame}
               </Button>
-            </CardContent>
+            </div>
           </Card>
         )}
       </div>

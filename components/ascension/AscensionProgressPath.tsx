@@ -16,6 +16,7 @@ import { useLanguage } from "@/lib/language-context";
 import { playerFantasyAbilities, getSkillById, skillIdForAbility } from "@/lib/ascension/skill-tree";
 import type { PieceAbilityId } from "@/lib/ascension/fantasy-chess/types";
 import { TIER_PUZZLE_THRESHOLDS } from "@/lib/ascension/tiers";
+import { puzzleDifficultyFromElo } from "@/lib/ascension/difficulty";
 import type { ChampionTier } from "@/lib/ascension/types";
 
 const MAX_VISIBLE_HEIGHT = 680;
@@ -160,6 +161,7 @@ export default function AscensionProgressPath({
 
   const [visualIndex, setVisualIndex] = useState(progressNodeIndex);
   const hasJumped = useRef(false);
+  const TOKEN_ANIM_MS = 550;
 
   useEffect(() => {
     if (animateToIndex == null) {
@@ -167,13 +169,26 @@ export default function AscensionProgressPath({
       animationHandled.current = false;
       return;
     }
+    // Start from the current frontier, then ease to the target.
     setVisualIndex(progressNodeIndex);
     animationHandled.current = false;
-    const frame = requestAnimationFrame(() => {
-      requestAnimationFrame(() => setVisualIndex(animateToIndex));
+    let innerFrame = 0;
+    const outerFrame = requestAnimationFrame(() => {
+      innerFrame = requestAnimationFrame(() => setVisualIndex(animateToIndex));
     });
-    return () => cancelAnimationFrame(frame);
-  }, [animateToIndex, progressNodeIndex]);
+    // transitionend is unreliable when the path is hidden or the browser
+    // skips the transition — always commit after the animation window.
+    const fallback = window.setTimeout(() => {
+      if (animationHandled.current) return;
+      animationHandled.current = true;
+      onAnimationComplete?.();
+    }, TOKEN_ANIM_MS + 100);
+    return () => {
+      cancelAnimationFrame(outerFrame);
+      cancelAnimationFrame(innerFrame);
+      window.clearTimeout(fallback);
+    };
+  }, [animateToIndex, progressNodeIndex, onAnimationComplete]);
 
   const visualNode = standardNodes[visualIndex] ?? standardNodes[0];
 
@@ -277,13 +292,23 @@ export default function AscensionProgressPath({
 
         {/* Bonus quest count */}
         {fantasyPuzzles.length > 0 && (
-          <div className="flex items-center gap-1.5 text-[10px] text-purple-300/70">
-            <Star className="h-3 w-3 text-amber-400/70" />
-            <span>
-              {fantasyPuzzles.filter((p) => p.completed).length}/{fantasyPuzzles.length}{" "}
-              {t.ascension.bonusColumn}
-            </span>
+          <div className="space-y-1">
+            <div className="flex items-center gap-1.5 text-[10px] text-purple-300/70">
+              <Star className="h-3 w-3 text-amber-400/70" />
+              <span>
+                {fantasyPuzzles.filter((p) => p.completed).length}/{fantasyPuzzles.length}{" "}
+                {t.ascension.bonusColumn}
+              </span>
+            </div>
+            <p className="text-[10px] text-purple-400/60 leading-snug">
+              {t.ascension.bonusColumnHint}
+            </p>
           </div>
+        )}
+        {variant === "fantasy" && (
+          <p className="text-[10px] text-fuchsia-300/70 leading-snug">
+            {t.ascension.fantasyTrackHint}
+          </p>
         )}
       </div>
 
@@ -351,6 +376,22 @@ export default function AscensionProgressPath({
             const isTokenHere = visualIndex === idx;
             const isLocked = puzzle.locked && !puzzle.completed;
             const isNext = !puzzle.completed && !isLocked && idx === visualIndex + 1;
+            const difficulty = puzzleDifficultyFromElo(puzzle.min_elo, puzzle.max_elo);
+            const difficultyLabel =
+              difficulty === "easy"
+                ? t.ascension.difficultyEasy
+                : difficulty === "hard"
+                  ? t.ascension.difficultyHard
+                  : t.ascension.difficultyMedium;
+            const pbLabel =
+              puzzle.completed && puzzle.best_time_ms != null
+                ? t.ascension.bestTimeShort.replace(
+                    "{s}",
+                    (puzzle.best_time_ms / 1000).toFixed(1)
+                  )
+                : puzzle.completed && puzzle.attempts > 0
+                  ? t.ascension.attemptsShort.replace("{n}", String(puzzle.attempts))
+                  : null;
 
             return (
               <button
@@ -397,6 +438,22 @@ export default function AscensionProgressPath({
                       puzzle.sort_order
                     )}
                   </div>
+                  {!isLocked && (
+                    <span
+                      className={`text-[8px] uppercase tracking-wider font-semibold ${
+                        difficulty === "easy"
+                          ? "text-emerald-400/80"
+                          : difficulty === "hard"
+                            ? "text-rose-400/80"
+                            : "text-amber-400/80"
+                      }`}
+                    >
+                      {difficultyLabel}
+                    </span>
+                  )}
+                  {pbLabel && (
+                    <span className="text-[8px] text-cyan-400/70 tabular-nums">{pbLabel}</span>
+                  )}
                   <span
                     className={`max-w-[72px] text-[10px] leading-tight text-center line-clamp-2 ${
                       isLocked

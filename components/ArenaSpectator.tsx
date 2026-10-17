@@ -569,7 +569,7 @@ export default function ArenaSpectator({
 
   return (
     <div className="grid gap-4 items-start lg:grid-cols-[minmax(0,1fr)_minmax(320px,400px)]">
-      <div className="lg:sticky lg:top-4 min-w-0">
+      <div className="lg:sticky lg:top-4 min-w-0 overflow-x-clip">
         <ArenaBoardPanel
           white={boardWhite}
           black={boardBlack}

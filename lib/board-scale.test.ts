@@ -6,6 +6,7 @@ import {
   boardScaleCssVar,
   clampBoardScalePercent,
   resolveScaledBoardMaxWidth,
+  scaledBoardMaxWidthExpr,
 } from "./board-scale";
 
 describe("clampBoardScalePercent", () => {
@@ -31,14 +32,22 @@ describe("boardScaleCssVar", () => {
   });
 });
 
+describe("scaledBoardMaxWidthExpr", () => {
+  it("includes parent-relative scale so shrink works in narrow columns", () => {
+    expect(scaledBoardMaxWidthExpr("var(--board-max-arena)")).toBe(
+      "min(100%, calc(100% * var(--board-scale, 1)), calc((var(--board-max-arena)) * var(--board-scale, 1)))"
+    );
+  });
+});
+
 describe("resolveScaledBoardMaxWidth", () => {
   it("scales explicit layout formulas", () => {
     expect(resolveScaledBoardMaxWidth("min(96vw, 84vh, 820px)")).toBe(
-      "min(100%, calc((min(96vw, 84vh, 820px)) * var(--board-scale, 1)))"
+      "min(100%, calc(100% * var(--board-scale, 1)), calc((min(96vw, 84vh, 820px)) * var(--board-scale, 1)))"
     );
   });
 
-  it("does not double-scale fill values", () => {
+  it("keeps fill values unscaled (parent frame owns --board-scale)", () => {
     expect(resolveScaledBoardMaxWidth("100%")).toBe("100%");
     expect(resolveScaledBoardMaxWidth("100cqw")).toBe("100cqw");
   });
@@ -52,7 +61,7 @@ describe("resolveScaledBoardMaxWidth", () => {
 
   it("uses the default CSS token when no override is provided", () => {
     expect(resolveScaledBoardMaxWidth(undefined)).toBe(
-      "min(100%, calc(var(--board-max-default) * var(--board-scale, 1)))"
+      "min(100%, calc(100% * var(--board-scale, 1)), calc((var(--board-max-default)) * var(--board-scale, 1)))"
     );
   });
 });

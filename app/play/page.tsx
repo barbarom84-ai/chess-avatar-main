@@ -245,24 +245,24 @@ function PlayContent() {
             </div>
 
             <div
-              className="flex items-center gap-1 shrink-0"
+              className="inline-flex shrink-0 items-stretch rounded-lg border border-slate-600/80 bg-slate-950/80 p-0.5 shadow-inner"
               role="group"
               aria-label={t.play.colorChoiceHint}
             >
               <button
                 type="button"
                 onClick={() => setPlayerColor("white")}
-                className={`flex items-center gap-1 px-2 py-1 rounded text-xs transition-all border ${
+                className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold transition-all ${
                   playerColor === "white"
-                    ? "bg-cyan-500/20 text-cyan-100 border-cyan-500"
-                    : "bg-slate-800/50 text-slate-400 border-slate-700 hover:border-cyan-500/50"
+                    ? "bg-slate-100 text-slate-900 shadow-md ring-1 ring-cyan-400/70"
+                    : "text-slate-400 hover:bg-slate-800/80 hover:text-slate-200"
                 }`}
                 title={t.play.playAsWhite}
                 aria-pressed={playerColor === "white"}
                 aria-label={t.play.playAsWhite}
               >
                 <span
-                  className="inline-block h-2.5 w-2.5 rounded-full bg-slate-100 border border-slate-400"
+                  className="inline-block h-2.5 w-2.5 rounded-full bg-slate-100 border border-slate-500 shadow-sm"
                   aria-hidden
                 />
                 <span className="hidden sm:inline">{t.play.whiteSide}</span>
@@ -270,17 +270,17 @@ function PlayContent() {
               <button
                 type="button"
                 onClick={() => setPlayerColor("black")}
-                className={`flex items-center gap-1 px-2 py-1 rounded text-xs transition-all border ${
+                className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold transition-all ${
                   playerColor === "black"
-                    ? "bg-cyan-500/20 text-cyan-100 border-cyan-500"
-                    : "bg-slate-800/50 text-slate-400 border-slate-700 hover:border-cyan-500/50"
+                    ? "bg-slate-800 text-cyan-50 shadow-md ring-1 ring-cyan-400/70"
+                    : "text-slate-400 hover:bg-slate-800/80 hover:text-slate-200"
                 }`}
                 title={t.play.playAsBlack}
                 aria-pressed={playerColor === "black"}
                 aria-label={t.play.playAsBlack}
               >
                 <span
-                  className="inline-block h-2.5 w-2.5 rounded-full bg-slate-900 border border-slate-500"
+                  className="inline-block h-2.5 w-2.5 rounded-full bg-slate-950 border border-slate-500"
                   aria-hidden
                 />
                 <span className="hidden sm:inline">{t.play.blackSide}</span>

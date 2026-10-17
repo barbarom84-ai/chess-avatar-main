@@ -453,26 +453,29 @@ export default function SimpleChessboard({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
+  const maxWidth = resolveScaledBoardMaxWidth(boardMaxWidth, {
+    hasClassName: !!className,
+    ignoreBoardScale,
+  });
+
   return (
+    <div
+      className={`relative flex w-full max-w-full flex-col items-stretch self-center mx-auto min-h-0 shrink-0 overflow-visible${
+        scaleControlVisible ? " pb-12" : ""
+      }`}
+      style={maxWidth ? { maxWidth } : undefined}
+    >
     <div
       ref={boardRootRef}
       tabIndex={onDrop ? 0 : undefined}
       role={onDrop ? "application" : undefined}
       aria-label={onDrop ? "Chessboard, use arrow keys to move focus and Enter to select" : "Chessboard"}
-      className={`group/board w-full max-w-full aspect-square h-auto shrink-0 self-center bg-slate-800 ${
+      className={`group/board w-full max-w-full aspect-square h-auto shrink-0 bg-slate-800 ${
         compact ? "p-0.5" : "p-1.5 sm:p-2"
-      } rounded-lg shadow-2xl relative mx-auto min-h-0 outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/70 ${
+      } rounded-lg shadow-2xl relative min-h-0 outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/70 ${
         onDrop && isBoardDragging ? "touch-none" : onDrop ? "touch-manipulation" : ""
       } ${isBoardDragging ? "cursor-grabbing select-none" : ""} ${className ?? ""}`}
-      style={(() => {
-        const maxWidth = resolveScaledBoardMaxWidth(boardMaxWidth, {
-          hasClassName: !!className,
-          ignoreBoardScale,
-        });
-        return maxWidth ? { maxWidth } : undefined;
-      })()}
     >
-      {scaleControlVisible && <BoardScaleQuickControl />}
       <div className="relative w-full aspect-square min-h-0">
       <div className="grid grid-cols-8 grid-rows-8 gap-0 w-full h-full min-h-0" role="grid">
         {displayRanks.map((rank, rankIdx) =>
@@ -763,6 +766,8 @@ export default function SimpleChessboard({
           </div>
         </div>
       )}
+    </div>
+    {scaleControlVisible && <BoardScaleQuickControl />}
     </div>
   );
 }

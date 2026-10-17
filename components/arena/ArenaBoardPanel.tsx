@@ -38,8 +38,8 @@ import { useLanguage } from "@/lib/language-context";
 
 export type ArenaStatusTone = "idle" | "live" | "result" | "warn";
 
-/** Leaves room for both player bars under the page header on short screens.
- * Size is driven by `.chessboard-column--arena` / `--board-scale` in globals.css. */
+/** Primary actions sit above the board; size is driven by
+ * `.chessboard-column--arena` / `--board-scale` in globals.css. */
 
 function scoresFor(view: ArenaMatchView): { w: ArenaPlayerScore; b: ArenaPlayerScore } {
   const winner = view.outcome?.winner;
@@ -252,51 +252,13 @@ export default function ArenaBoardPanel({
 
   return (
     <section
-      className="arena-panel p-3 grid gap-3 xl:grid-cols-[minmax(0,1fr)_15rem]"
+      className="arena-panel p-3 flex flex-col gap-3"
       aria-label={`${whiteName} vs ${blackName}`}
       data-testid="arena-board-panel"
     >
-      <div
-        ref={boardColumnRef}
-        className="arena-scroll-anchor chessboard-column--arena min-w-0 space-y-2 mx-auto w-full"
-      >
-        {header}
-        {hotSeatPass && (
-          <div className="arena-hotseat-banner" role="status" data-testid="arena-hotseat-banner">
-            <Smartphone className="h-4 w-4 shrink-0" aria-hidden />
-            <span>{hotSeatPass}</span>
-          </div>
-        )}
-        {barFor(topColor)}
-        <div
-          className="chessboard-frame chessboard-frame--arena"
-          data-testid="arena-board"
-          data-interactive={humanTurn}
-        >
-          {humanTurn ? (
-            <OnlineChessboard
-              fen={view.fen}
-              orientation={boardOrientation}
-              lastMove={view.lastMove}
-              canMove
-              onSubmitUci={submitHumanMove}
-              boardMaxWidth="100%"
-            />
-          ) : (
-            <SimpleChessboard
-              position={displayed.fen}
-              orientation={boardOrientation}
-              lastMove={displayed.lastMove}
-              boardMaxWidth="100%"
-            />
-          )}
-        </div>
-        {barFor(bottomColor)}
-        {showEval && showInsight && <EvaluationBar evaluation={view.evalWhitePov} compact />}
-      </div>
-
-      <div className="min-w-0 space-y-3">
-        <div className="flex flex-wrap items-center justify-center gap-2 xl:justify-start">
+      {/* Primary actions above the board so scale never covers Start / One move */}
+      <div className="min-w-0 space-y-2">
+        <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
           {controls}
           {humanTurn && onHumanResign && (
             <Button
@@ -336,7 +298,49 @@ export default function ArenaBoardPanel({
         >
           {statusText}
         </p>
-        <p className="text-center text-[11px] text-slate-500 xl:text-left" data-testid="arena-move-count">
+      </div>
+
+      <div
+        ref={boardColumnRef}
+        className="arena-scroll-anchor chessboard-column--arena min-w-0 space-y-2 mx-auto"
+      >
+        {header}
+        {hotSeatPass && (
+          <div className="arena-hotseat-banner" role="status" data-testid="arena-hotseat-banner">
+            <Smartphone className="h-4 w-4 shrink-0" aria-hidden />
+            <span>{hotSeatPass}</span>
+          </div>
+        )}
+        {barFor(topColor)}
+        <div
+          className="chessboard-frame chessboard-frame--arena"
+          data-testid="arena-board"
+          data-interactive={humanTurn}
+        >
+          {humanTurn ? (
+            <OnlineChessboard
+              fen={view.fen}
+              orientation={boardOrientation}
+              lastMove={view.lastMove}
+              canMove
+              onSubmitUci={submitHumanMove}
+              boardMaxWidth="100%"
+            />
+          ) : (
+            <SimpleChessboard
+              position={displayed.fen}
+              orientation={boardOrientation}
+              lastMove={displayed.lastMove}
+              boardMaxWidth="100%"
+            />
+          )}
+        </div>
+        {barFor(bottomColor)}
+        {showEval && showInsight && <EvaluationBar evaluation={view.evalWhitePov} compact />}
+      </div>
+
+      <div className="min-w-0 space-y-3">
+        <p className="text-center text-[11px] text-slate-500 sm:text-left" data-testid="arena-move-count">
           {ap.movesPlayed}: {total}
         </p>
         <ArenaMoveList

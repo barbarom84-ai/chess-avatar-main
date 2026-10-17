@@ -5,6 +5,12 @@ import { Chess, type Square } from "chess.js";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   RotateCcw,
@@ -1267,66 +1273,91 @@ export default function PlayableChessboard({
           )}
         </div>
 
-        {/* Droite: Actions compactes */}
-        <div className="flex items-center gap-2">
-          <Button
-            onClick={() => setBoardOrientation((prev) => (prev === "white" ? "black" : "white"))}
-            variant="outline"
-            size="sm"
-            className="border-purple-500/50 bg-purple-500/10 text-purple-300 hover:bg-purple-500/20 gap-1"
-            title={t.play.flipBoardTooltip}
-            aria-label={t.play.flipBoardTooltip}
-          >
-            <RotateCw className="h-4 w-4 shrink-0" />
-            <span className="hidden md:inline text-xs whitespace-nowrap">
-              {t.board.flipBoardShort}
-            </span>
-          </Button>
+        {/* Droite: Actions — Flip/Profile discrets, New primaire, Resign danger */}
+        <TooltipProvider delayDuration={250}>
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={() =>
+                    setBoardOrientation((prev) => (prev === "white" ? "black" : "white"))
+                  }
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0 text-slate-300 hover:bg-slate-800 hover:text-cyan-200 sm:h-8 sm:w-auto sm:gap-1 sm:px-2.5"
+                  aria-label={t.play.flipBoardTooltip}
+                >
+                  <RotateCw className="h-4 w-4 shrink-0" />
+                  <span className="hidden md:inline text-xs whitespace-nowrap">
+                    {t.board.flipBoardShort}
+                  </span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">{t.play.flipBoardTooltip}</TooltipContent>
+            </Tooltip>
 
-          {!isArchiveMode && (
-            <Button
-              onClick={() => setShowConfigDialog(true)}
-              variant="outline"
-              size="sm"
-              className="border-cyan-500/50 bg-cyan-500/10 text-cyan-300 hover:bg-cyan-500/20 gap-1"
-              title={t.play.avatarConfigToolbarTooltip}
-              aria-label={t.play.avatarConfigToolbarTooltip}
-            >
-              <Bot className="h-4 w-4 shrink-0" />
-              <span className="hidden sm:inline text-xs whitespace-nowrap">
-                {t.play.avatarConfigButtonCompact}
-              </span>
-            </Button>
-          )}
+            {!isArchiveMode && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={() => setShowConfigDialog(true)}
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 text-slate-300 hover:bg-slate-800 hover:text-cyan-200 sm:h-8 sm:w-auto sm:gap-1 sm:px-2.5"
+                    aria-label={t.play.avatarConfigToolbarTooltip}
+                  >
+                    <Bot className="h-4 w-4 shrink-0" />
+                    <span className="hidden sm:inline text-xs whitespace-nowrap">
+                      {t.play.avatarConfigButtonCompact}
+                    </span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  {t.play.avatarConfigToolbarTooltip}
+                </TooltipContent>
+              </Tooltip>
+            )}
 
-          {!isArchiveMode && (
-            <Button
-              onClick={resetGame}
-              variant="outline"
-              size="sm"
-              className="border-amber-500/50 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 gap-1"
-              title={t.play.newGameTooltip}
-              aria-label={t.play.newGameTooltip}
-            >
-              <RotateCcw className="h-4 w-4 shrink-0" />
-              <span className="hidden sm:inline text-xs">{t.play.newGame}</span>
-            </Button>
-          )}
+            {!isArchiveMode && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={resetGame}
+                    size="sm"
+                    className="h-8 gap-1 bg-cyan-600 px-2.5 text-white hover:bg-cyan-500 border border-cyan-400/30 sm:px-3"
+                    aria-label={t.play.newGameTooltip}
+                  >
+                    <RotateCcw className="h-4 w-4 shrink-0" />
+                    <span className="hidden sm:inline text-xs font-semibold">
+                      {t.play.newGame}
+                    </span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">{t.play.newGameTooltip}</TooltipContent>
+              </Tooltip>
+            )}
 
-          {!gameOver && (
-            <Button
-              onClick={resign}
-              variant="outline"
-              size="sm"
-              className="border-red-500/50 bg-red-500/10 text-red-300 hover:bg-red-500/20 gap-1"
-              title={t.play.resignTooltip}
-              aria-label={t.play.resignTooltip}
-            >
-              <Flag className="h-4 w-4 shrink-0" />
-              <span className="hidden sm:inline text-xs">{t.play.resign}</span>
-            </Button>
-          )}
-        </div>
+            {!gameOver && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={resign}
+                    variant="destructive"
+                    size="sm"
+                    className="h-8 gap-1 px-2.5 sm:px-3"
+                    aria-label={t.play.resignTooltip}
+                  >
+                    <Flag className="h-4 w-4 shrink-0" />
+                    <span className="hidden sm:inline text-xs font-semibold">
+                      {t.play.resign}
+                    </span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">{t.play.resignTooltip}</TooltipContent>
+              </Tooltip>
+            )}
+          </div>
+        </TooltipProvider>
       </div>
 
       {/* Modal de configuration - COMPACT (masqué en consultation archive) */}
